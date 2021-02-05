@@ -79,7 +79,8 @@ public class Slot : MonoBehaviour
 
     public void StartSpin()
     {
-        StopAnimation();
+        Debug.Log(gameObject.name + " starting Spin");
+        //StopAnimation();
         enSlotState = States.BaseGameSpinStart;
         Hashtable hSettings = tween_settings_spin_start(iTween.EaseType.easeInBack);
         iTween.MoveTo(this.gameObject, hSettings);
@@ -90,19 +91,14 @@ public class Slot : MonoBehaviour
         Hashtable ReturnValue = new Hashtable();
         ReturnValue.Add("name", transform.parent.name + " " + transform.name);
         ReturnValue.Add("speed", SlotEngine._instance.fStartStopSpeed);
-        //ReturnValue.Add("easetype", EaseType);
         ReturnValue.Add("easetype", EaseType);
-        //ReturnValue.Add("islocal", true);
         ReturnValue.Add("position", GeneratePosition());
         v3CurrentTweenpath = new Vector3[2];
         v3CurrentTweenpath[0] = transform.position;
         v3CurrentTweenpath[1] = GeneratePosition();
-        if (StateManager.enCurrentState == States.BaseGameSpinStart)
-        {
-            ReturnValue.Add("oncompletetarget", this.gameObject);
-            ReturnValue.Add("oncomplete", "SetSpinToLoop");
-        }
-        else if (StateManager.enCurrentState == States.BaseGameSpinLoop)
+        ReturnValue.Add("oncompletetarget", this.gameObject);
+        ReturnValue.Add("oncomplete", "SetSpinToLoop");
+        /*else if (StateManager.enCurrentState == States.BaseGameSpinLoop)
         {
             ReturnValue.Add("onupdatetarget", this.gameObject);
             //ReturnValue.Add("onupdateparams", transform);
@@ -116,7 +112,7 @@ public class Slot : MonoBehaviour
         {
             ReturnValue.Add("oncompletetarget", this.gameObject);
             ReturnValue.Add("oncomplete", "PlayAnimation");
-        }
+        }*/
         return ReturnValue;
     }
 
@@ -142,15 +138,15 @@ public class Slot : MonoBehaviour
     Vector3 GenerateSlotStartingPosition()
     {
         float yAxisValue = 0;
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot - (SyncronizePositionToNextSlot(SlotEngine._instance.fStartingSpotSlot, ReturnNextSlot().transform.position));
-        //Debug.Log("GenerateCurrentStartPosition() for " + transform.name + " is returning a yAxisValue of " + yAxisValue);
+//TODO error occuring
+        yAxisValue = SlotEngine._instance.fStartingSpotSlot() - (SyncronizePositionToNextSlot(SlotEngine._instance.fStartingSpotSlot(), ReturnNextSlot().transform.position));
         return new Vector3(transform.localPosition.x, yAxisValue, transform.localPosition.z);
     }
 
     Vector3 GenerateCurrentStartPathPositionTween()
     {
         float yAxisValue = 0;
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot - (SlotEngine._instance.slotPaddingY * iPositonInReel);
+        yAxisValue = SlotEngine._instance.fStartingSpotSlot() - (SlotEngine._instance.slotPaddingY * iPositonInReel);
         //Debug.Log("GenerateCurrentStartPosition() for " + transform.name + " is returning a yAxisValue of " + yAxisValue);
         return new Vector3(transform.localPosition.x, yAxisValue, transform.localPosition.z);
     }
@@ -158,20 +154,20 @@ public class Slot : MonoBehaviour
     Vector3 GenerateLoopPositionStart()
     {
         float yAxisValue = 0;
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot - (SlotEngine._instance.slotPaddingY * iPositonInReel);
+        yAxisValue = SlotEngine._instance.fStartingSpotSlot() - (SlotEngine._instance.slotPaddingY * iPositonInReel);
         //Debug.Log("GenerateLoopPosition() for " + transform.name + " in " + transform.parent.name + " is returning a yAxisValue of " + yAxisValue);
         return new Vector3(transform.position.x, yAxisValue, transform.position.z);
     }
 
     Vector3 GenerateEndPosition()
     {
-        return new Vector3(transform.position.x, (SlotEngine._instance.fStartingSpotSlot - (SlotEngine._instance.slotPaddingY * transform.parent.childCount)), 0);
+        return new Vector3(transform.position.x, (SlotEngine._instance.fStartingSpotSlot()- (SlotEngine._instance.slotPaddingY * transform.parent.childCount)), 0);
     }
 
     Vector3 GenerateNextTweenPosition()
     {
         float yAxisValue = 0;
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot - (SlotEngine._instance.slotPaddingY * (iPositonInReel + 1));
+        yAxisValue = SlotEngine._instance.fStartingSpotSlot()- (SlotEngine._instance.slotPaddingY * (iPositonInReel + 1));
         //Debug.Log("GenerateCurrentStartPosition() for " + transform.name + " is returning a yAxisValue of " + yAxisValue);
         return new Vector3(transform.localPosition.x, yAxisValue, transform.localPosition.z);
     }
@@ -197,18 +193,19 @@ public class Slot : MonoBehaviour
 
     private void SetSpinLoopState()
     {
+        enSlotState = States.BaseGameSpinLoop;
         //Debug.Log("Setting Spin State to loop for " + transform.name);
-        if (enSlotState != States.BaseGameSpinLoop && enSlotState != States.BonusGameSpinLoop)
+        /*if (enSlotState != States.BaseGameSpinLoop && enSlotState != States.BonusGameSpinLoop)
             if (StateManager.enCurrentState == States.BaseGameSpinStart || StateManager.enCurrentState == States.BaseGameSpinLoop)
-                enSlotState = States.BaseGameSpinLoop;
+                
             else if (StateManager.enCurrentState == States.BonusGameSpinStart || StateManager.enCurrentState == States.BonusGameSpinLoop)
-                enSlotState = States.BonusGameSpinLoop;
+                enSlotState = States.BonusGameSpinLoop;*/
     }
 
     public void SetEventCalls(Reel rParent)
     {
-        rParent.ActivateSpinState += StartSpin;
-        rParent.SpinStateSwitched += StateSwitch;
+        rParent.spin_activated_event += StartSpin;
+        rParent.spin_state_changed += StateSwitch;
     }
 
     //This will Set proper spin state and Increment Position in Reels
@@ -216,6 +213,7 @@ public class Slot : MonoBehaviour
     {
         bLoopEnabled = true;
         ResetTimeLeftFPS();
+        //Check Position
         SetSpinLoopState();
         //IncrementPositionInReel();
     }
@@ -232,7 +230,7 @@ public class Slot : MonoBehaviour
     private void SetTweenOnPathEnd()
     {
         bLoopEnabled = false;
-        rReelParentObject.fSpinSpeed = 75;
+        rReelParentObject.spin_speed = SlotEngine._instance.fStartStopSpeed;
         /*if (transform.GetComponent("iTween"))
         {
             Destroy(transform.GetComponent<iTween>());
@@ -265,7 +263,7 @@ public class Slot : MonoBehaviour
         v3CurrentTweenpath = new Vector3[2];
         v3CurrentTweenpath[0] = tTween.transform.position;
         v3CurrentTweenpath[1] = GeneratePosition();
-        float fDistance = rReelParentObject.fSpinSpeed * Time.deltaTime;
+        float fDistance = rReelParentObject.spin_speed * Time.deltaTime;
         iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, 0);
     }
 
@@ -274,7 +272,7 @@ public class Slot : MonoBehaviour
         v3CurrentTweenpath = new Vector3[2];
         v3CurrentTweenpath[0] = v3StartingPos;
         v3CurrentTweenpath[1] = GeneratePosition();
-        float fDistance = rReelParentObject.fSpinSpeed * Time.deltaTime;
+        float fDistance = rReelParentObject.spin_speed * Time.deltaTime;
         iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, 0);
     }
 
@@ -288,12 +286,13 @@ public class Slot : MonoBehaviour
         v3CurrentTweenpath = new Vector3[2];
         v3CurrentTweenpath[0] = v3StartingPos;
         v3CurrentTweenpath[1] = v3EndingPos;
-        float fDistance = rReelParentObject.fSpinSpeed * Time.deltaTime;
+        float fDistance = rReelParentObject.spin_speed * Time.deltaTime;
         iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, 0);
     }
 
     void IncrementPositionInReel()
     {
+        Debug.Log(gameObject.name + " IncrementPositionInReel to " + (iPositonInReel + 1).ToString());
         //Debug.Log(transform.name + " is Incrementing Position In Reel " + transform.parent.name + " from " + iPositonInReel + " to" + (iPositonInReel + 1));
         //GetSymbol to set self to and new reel slot position from ReelParent.
         //The reel parent by this point should have pulled the generated symbol matrix from the slot engine and sets the reel symbols based on who reaches the top first.
@@ -379,12 +378,12 @@ public class Slot : MonoBehaviour
     {
         //Need to determine if state is in loop or spin ending. if it is spin ending send transform parent a message to give what symbol to set self to
         iPositonInReel = 0;
-        transform.localPosition = GenerateSlotStartingPosition();
+        transform.localPosition = new Vector3(transform.localPosition.x,SlotEngine._instance.fStartingSpotSlot() ,transform.localPosition.z);//GenerateSlotStartingPosition();
+        DestroyTween();
         SetTweenOnPathLoop();
         SyncronizePositionToNextSlot(rReelParentObject.SyncronizePositionNextSlot(this));
-        DestroyTween();
         //Debug.log("rReelParentObject.SyncronizePositionNextSlot(this) = " + rReelParentObject.SyncronizePositionNextSlot(this));
-        //Debug.Log(transform.name + " on reel " + transform.parent.name + " localPositon has been set " + SlotEngine._instance.fStartingSpotSlot + " via MoveToTop()");
+        Debug.Log(transform.name + " on reel " + transform.parent.name + " localPositon has been set " + SlotEngine._instance.fStartingSpotSlot()+ " via MoveToTop()");
         /*if (enSlotState == States.BaseGameSpinLoop || enSlotState == States.BonusGameSpinLoop || enSlotState == States.BaseGameSpinStart || enSlotState == States.BonusGameSpinStart)
         {
             Hashtable Settings = iTweenParametersSpin(iTween.EaseType.linear);
@@ -392,6 +391,7 @@ public class Slot : MonoBehaviour
         }*/
         if (StateManager.enCurrentState == States.BaseGameSpinEnd || StateManager.enCurrentState == States.BonusGameSpinEnd)
         {
+            //TODO set reel end configuration
             //Debug.Log(transform.name + " on reel " + transform.parent.name + " is executing SetSpinToEnd()");
             SetSpinToEnd();
             if (iEndPositionInReel <= 1)
@@ -459,9 +459,9 @@ public class Slot : MonoBehaviour
         //Debug.Log("Frames Per Second = " + framesPerSecond);
         float DistanceToTravel = 0;
         if (framesPerSecond > 0)
-            DistanceToTravel = ((rReelParentObject.fSpinSpeed / fSpinTime) / 30);//Need to replace to point fps to systems FPS Cap
+            DistanceToTravel = ((rReelParentObject.spin_speed / fSpinTime) / 30);//Need to replace to point fps to systems FPS Cap
         else
-            DistanceToTravel = ((rReelParentObject.fSpinSpeed / fSpinTime) / framesPerSecond);
+            DistanceToTravel = ((rReelParentObject.spin_speed / fSpinTime) / framesPerSecond);
         float nextY = currentY - DistanceToTravel;
         //Debug.Log("DistanceToTravel = " + DistanceToTravel + " Next Y = " + nextY);
         Vector3 temp = GenerateLoopPositionStart();
@@ -479,8 +479,7 @@ public class Slot : MonoBehaviour
     }
 
     public bool bLoopEnabled = false;
-    [Range(0, 1)]
-    public float fSpinTime = .49025f;
+    public float fSpinTime = 0.006f;
 
     //Keeps track of the FPS so the reels spinning are affected by the games FPS
     float updateInterval = 0.5f;
@@ -544,7 +543,7 @@ public class Slot : MonoBehaviour
         if (bLoopEnabled)
         {
             if (fSpinTime == 0)
-                fSpinTime = .49025f;
+                fSpinTime = 0.006f;
             //GenerateLoopPositionUpdate();
             //fLoopSpeed = .49025f;
             if (transform.position.y <= v3CurrentTweenpath[1].y)

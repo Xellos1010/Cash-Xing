@@ -4,5 +4,6 @@ using System.Collections;
 public enum eSkins
 {
     None,
-    Template3x5
+    Template3x5,
+    InstaStreak
 }

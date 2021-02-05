@@ -56,7 +56,7 @@ public class TPSpriteAnimation : TPBaseAnimation {
 	public float width {
 		get {
 			if(sprite.frames.Count > 0) {
-				return TPackManager.getAtlas(sprite.frames[0].atlasPath).getTexture(sprite.frames[0].textureName).width; 
+				return SlotEngine._instance.slot_size.x;//return TPackManager.getAtlas(sprite.frames[0].atlasPath).getTexture(sprite.frames[0].textureName).width; 
 			} else {
 				return 0;
 			}
@@ -67,7 +67,7 @@ public class TPSpriteAnimation : TPBaseAnimation {
 	public float height {
 		get {
 			if(sprite.frames.Count > 0) {
-				return TPackManager.getAtlas(sprite.frames[0].atlasPath).getTexture(sprite.frames[0].textureName).height; 
+				return SlotEngine._instance.slot_size.y;//return TPackManager.getAtlas(sprite.frames[0].atlasPath).getTexture(sprite.frames[0].textureName).height; 
 			} else {
 				return 0;
 			}

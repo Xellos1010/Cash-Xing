@@ -16,6 +16,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+
+//public string[] symbol_set_supported = new string[6] { "SF01", "SF02", "MA01" };//Want this list populated by whatever output brent is using. If we are unable to have access from a list then we should pull based on assets provided in skins folder. Read folder names of folders in Base Game/Symbols Directory
+
+
 public class SlotEngine : MonoBehaviour
 {
     /// <summary>
@@ -47,16 +51,11 @@ public class SlotEngine : MonoBehaviour
 
     //Engine Options
     public eSkins eSkin;
-    public float fReelDividerWidth = 6;
-    public Vector2 MatrixPadding = new Vector2(10,10);
-    public Vector2 v2ReelTopLeft;
-    public float reelSpinTime = 5;
-    [Range(0, 50)]
-    public float reelPaddingX;
-    [Range(0, 1)]
-    public float fReelSpinDelay = .2f;
-    public float fStartingSpotSlot = 50;
-    [Range(0, 250)]
+    public Vector2 slot_size;
+    public Vector2 matrix_padding = new Vector2(10,10);
+    public Vector2 matrix_anchor_top_left;
+    public float reel_spin_speed;
+    public float fReelSpinDelay = .2f; // Delays the reels when starting to spin like waterfall effect
     public float slotPaddingY;
 
     /// <summary>
@@ -68,7 +67,6 @@ public class SlotEngine : MonoBehaviour
     public MatrixTypes mMatrixType;
     public States CurrentMode = States.BaseGame;
 
-    [Range(0, 100)]
     public float fStartStopSpeed = 50;
     [Range(1, 3)]
     public int iExtraSlotsPerReel = 2;
@@ -102,7 +100,7 @@ public class SlotEngine : MonoBehaviour
                 CurrentMode = States.BaseGame;
                 try
                 {
-                    Debug.Log("The Matrix has returned " + _MainMatrix);
+                    Debug.Log("The Matrix has returned " + mMainMatrix);
                 }
                 catch
                 {
@@ -134,11 +132,12 @@ public class SlotEngine : MonoBehaviour
     //************************************
 
     //Default Functions
-    void ZeroValues()
+
+    public float fStartingSpotSlot()
     {
-        StateManager.ActivateSwitchState -= SwitchState;
-        
+        return slot_size.y + matrix_padding.y;
     }
+    
     public static object ReturnMatrixtype()
     {
         return ReturnMatrixtype(SlotEngine._instance.mMatrixType);
@@ -260,19 +259,19 @@ class SlotEngineEditor : Editor
         }
 
         EditorGUI.BeginChangeCheck();
-        float newReelValue = EditorGUILayout.Slider(reelPaddingX.floatValue, 0, 250);
-        float slotNewValue = EditorGUILayout.Slider(slotPaddingY.floatValue, 0, 250);
+        float newReelValue = EditorGUILayout.Slider(myTarget.matrix_padding.x, 0, 800);
+        float slotNewValue = EditorGUILayout.Slider(myTarget.matrix_padding.y, 0, 800);
         if (EditorGUI.EndChangeCheck())
         {
-            if (myTarget.slotPaddingY != slotNewValue)
+            if (myTarget.matrix_padding.y != slotNewValue)
             {
-                myTarget.slotPaddingY = slotNewValue;
+                myTarget.matrix_padding = new Vector2(myTarget.matrix_padding.x, slotNewValue);
                 myTarget.UpdateReelSlotPositions();
             }
             
-            if(myTarget.reelPaddingX != newReelValue)
+            if(myTarget.matrix_padding.x != newReelValue)
             {
-                myTarget.reelPaddingX = newReelValue;
+                myTarget.matrix_padding = new Vector2(newReelValue, myTarget.matrix_padding.y);
                 myTarget.UpdateReelPositions();
             }
         }

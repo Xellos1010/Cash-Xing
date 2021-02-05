@@ -12,37 +12,51 @@ using UnityEngine;
 using System;
 #if UNITY_EDITOR
 using UnityEditor;
+
+[CanEditMultipleObjects]
+[CustomEditor(typeof(Reel))]
+class ReelEditor : Editor
+{
+    Reel myTarget;
+    
+    public void OnEnable()
+    {
+        myTarget = (Reel)target;
+    }
+
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        if (GUILayout.Button("Generate Slots"))
+        {
+            myTarget.ClearReelSlots();            
+            myTarget.GenerateSlots(myTarget.viewable_slots + 2, myTarget.transform);
+        }
+        if (GUILayout.Button("Spin Reel Test"))
+        {
+            myTarget.SpinReel();
+        }
+    }
+}
 #endif
 public class Reel : MonoBehaviour
 {
-    public MatrixTypes matrix;
-    public Slot[] slots_in_reel;
     public delegate void SpinDelegate();
     public delegate void SpinDelegateSwitch(States State);
-    public event SpinDelegate ActivateSpinState;
-    public event SpinDelegateSwitch SpinStateSwitched;
+    public event SpinDelegate spin_activated_event;
+    public event SpinDelegateSwitch spin_state_changed;
 
-    private int iSlotEndingNumber;
-    public int iExtraSlots; //Padding for smooth spins
-    private Symbols[] EndReelConfiguration;
+    [Range(1,5)]
+    public int viewable_slots = 3; //Extra 2 neeed to be generated for cushion to spin
+    public Slot[] slots_in_reel;
+    public int iSlotEndingNumber = 0;
 
-    [Range(0, 500)]
-    public float fSpinSpeed = 125;
+    private Symbols[] end_reel_configuration;
 
-    public void SpinReel()
-    {
-        fSpinSpeed = 400;
-        ActivateSpinState();
-    }
-
-    public void StopReel()
-    {
-        fSpinSpeed = 450;
-    }
+    public float spin_speed = 125;
 
     public void GenerateSlots(int iSlotCount, Transform tParent)
     {
-        GenerateStartingSlotY(iSlotCount);
         slots_in_reel = new Slot[iSlotCount];
         for (int i = 0; i < iSlotCount; i++)
         {
@@ -52,24 +66,44 @@ public class Reel : MonoBehaviour
             slots_in_reel[i].transform.parent = tParent;
             slots_in_reel[i].transform.position = GenerateLocalPosition(i);
             //slSlots[i].transform.localScale = GenerateLocalScale();
-            slots_in_reel[i].SetRandomSymbol();
+            //slots_in_reel[i].SetRandomSymbol();
             slots_in_reel[i].rReelParentObject = this;
             slots_in_reel[i].iPositonInReel = i;
             slots_in_reel[i].SetEventCalls(this);
         }
     }
+    public void SpinReel()
+    {
+        for (int i = 0; i < slots_in_reel.Length; i++)
+        {
+            //TODO Change to move slot in reel to next position;
+            //Last slot needs to ease in and out to the "next position" but 
+            slots_in_reel[i].StartSpin();
+        }
+    }
+
+    public void StartSpin(Slot slotToSpin)
+    {
+
+    }
+
+    public void StopReel()
+    {
+        Debug.Log("Input Logic for Stop Reel");
+    }
+
 
     public void SetSlotEndConfiguration()
     {
         Debug.Log("Setting Ending Slot Configuration for " + transform.name);
-        EndReelConfiguration = GenerateEndSymbols();
+        end_reel_configuration = GenerateEndSymbols();
         iSlotEndingNumber = slots_in_reel.Length;
     }
 
     public void SetSlotEndConfiguration(Symbols[] Input)
     {
         //Debug.Log("Setting Ending Slot Configuration for " + transform.name);
-        EndReelConfiguration = Input;
+        end_reel_configuration = Input;
         iSlotEndingNumber = slots_in_reel.Length;
     }
 
@@ -77,7 +111,7 @@ public class Reel : MonoBehaviour
     {
         if (iSlotEndingNumber >= 0)
         {
-            sSlot.SwitchSymbol(EndReelConfiguration[iSlotEndingNumber]);
+            sSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
         }
         else
         {
@@ -122,23 +156,18 @@ public class Reel : MonoBehaviour
         int iComparingSlot = sSlotSyncronize.iPositonInReel + 1;
         if (iComparingSlot >= slots_in_reel.Length)
             iComparingSlot = 1;
-        //Debug.Log("SyncronizePosition(" + sSlotSyncronize.name + ") iComparingSlot = " + iComparingSlot + ". Returning " + slSlots[iComparingSlot].transform.localPosition);
+        Debug.Log("SyncronizePosition(" + sSlotSyncronize.name + ") iComparingSlot = " + iComparingSlot + ". Returning " + slots_in_reel[iComparingSlot].transform.localPosition);
         foreach (Slot slot in slots_in_reel)
         {
-            //Debug.Log("Comparing " + slot.transform.name + " to " + sSlotSyncronize.name + " slot.iPositionInReel = " + slot.iPositonInReel + " iComparingSlot =" + iComparingSlot);
+            Debug.Log("Comparing " + slot.transform.name + " to " + sSlotSyncronize.name + " slot.iPositionInReel = " + slot.iPositonInReel + " iComparingSlot =" + iComparingSlot);
             if (slot.iPositonInReel == iComparingSlot)
             {
-                //Debug.Log(transform.name + " is SyncronizePositionNextSlot(" + sSlotSyncronize.transform.name + ") Next slot is " + iComparingSlot + " slot.transform.name = " + slot.transform.name + " slot.transform.localPosition = " + slot.transform.localPosition);
+                Debug.Log(transform.name + " is SyncronizePositionNextSlot(" + sSlotSyncronize.transform.name + ") Next slot is " + iComparingSlot + " slot.transform.name = " + slot.transform.name + " slot.transform.localPosition = " + slot.transform.localPosition);
                 return slot.transform.localPosition;
             }
         }
         //Debug.Log("Returning 0 for " + transform.name + " iComparingSlot = " + iComparingSlot);
         return Vector3.zero;
-    }
-
-    void GenerateStartingSlotY(int iSlotCount)
-    {
-        SlotEngine._instance.fStartingSpotSlot = SlotEngine._instance.v2ReelTopLeft.y + (SlotEngine._instance.slotPaddingY * (SlotEngine._instance.iExtraSlotsPerReel - 1));
     }
 
     //**Need to have slots generate their position
@@ -148,7 +177,7 @@ public class Reel : MonoBehaviour
         //Need To Determine How many Slots are in the Reel and calculate the iExtraSlotsPerReel (-1 to include the end slot not being active)
         //of the reel into the starting Y Position
 
-        float yAxis = SlotEngine._instance.fStartingSpotSlot - (SlotEngine._instance.slotPaddingY * iSlotNumber);
+        float yAxis = SlotEngine._instance.fStartingSpotSlot() - (SlotEngine._instance.slotPaddingY * iSlotNumber);
         //if(
         //yAxis = SlotEngine._instance.v2ReelTopLeft.y  SlotEngine._instance.iExtraSlotsPerReel
         return new Vector3(0, yAxis, 0);
@@ -165,7 +194,7 @@ public class Reel : MonoBehaviour
                 iSlotEndingNumber -= 1;
             try
             {
-                slSlot.SwitchSymbol(EndReelConfiguration[iSlotEndingNumber]);
+                slSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
             }
             catch
             {
@@ -221,69 +250,3 @@ public class Reel : MonoBehaviour
     }*/
 
 }
-
-#if UNITY_EDITOR
-[CustomEditor(typeof(Reel))]
-class ReelEditor : Editor
-{
-    Reel myTarget;
-    SerializedProperty iExtraSlots;
-    public void OnEnable()
-    {
-        myTarget = (Reel)target;
-        iExtraSlots = serializedObject.FindProperty("iExtraSlots");
-    }
-
-    public override void OnInspectorGUI()
-    {
-        base.OnInspectorGUI();
-        if (GUILayout.Button("Generate Slots"))
-        {
-            myTarget.ClearReelSlots();
-            Vector2 v2Matrixtemp = (Vector2)ReturnMatrixtype(myTarget.matrix);
-            int extraslots = 0;
-            try
-            {
-                extraslots = SlotEngine._instance.iExtraSlotsPerReel;
-            }
-            catch
-            {
-                extraslots = iExtraSlots.intValue;
-            }
-            myTarget.GenerateSlots((int)v2Matrixtemp.x + extraslots, myTarget.transform);
-        }
-        if (GUILayout.Button("Spin Reel Test"))
-        {
-            myTarget.SpinReel();
-        }
-    }
-
-    public object ReturnMatrixtype(MatrixTypes mMatrix)
-    {
-        object ReturnValue = null;
-
-        switch (mMatrix)
-        {
-            case MatrixTypes.m3x5:
-                ReturnValue = new Vector2(3, 5);
-                break;
-            case MatrixTypes.m3x6:
-                ReturnValue = new Vector2(3, 6);
-                break;
-            case MatrixTypes.m4x5:
-                ReturnValue = new Vector2(4, 5);
-                break;
-            case MatrixTypes.m4x6:
-                ReturnValue = new Vector2(4, 6);
-                break;
-            default:
-                Debug.Log("Matrix is not able to set Vector2 to Define. Sending Matrix as an int[]");
-                if (mMatrix == MatrixTypes.m3x4x5x4x3)
-                    ReturnValue = new int[5] { 3, 4, 5, 4, 3 };
-                break;
-        }
-
-        return ReturnValue;
-    }
-}
-#endif

@@ -60,7 +60,7 @@ public class Matrix : MonoBehaviour
              }
         }
 #else
-        /*if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             if (StateManager.enCurrentState != States.BaseGameSpinLoop && StateManager.enCurrentState != States.BaseGameSpinStart)
                 StartCoroutine(SpinReelsTest());
@@ -70,7 +70,7 @@ public class Matrix : MonoBehaviour
                 Debug.Log("Ending Spin State");
                 StartCoroutine(SpinEnd());
             }
-        }*/ 
+        }
 #endif
     }
 
@@ -79,9 +79,9 @@ public class Matrix : MonoBehaviour
     public void SpinTest()
     {
         StopAllCoroutines();
-        if (StateManager.enCurrentState != States.BaseGameSpinLoop && StateManager.enCurrentState != States.BaseGameSpinStart)
+        if (StateManager.enCurrentState == States.BaseGameSpinStart)
             StartCoroutine(SpinReelsTest());
-        else if (StateManager.enCurrentState == States.BaseGameSpinLoop)
+        else
         {
             //Put ending sequence coroutine here
             Debug.Log("Ending Spin State");
@@ -107,7 +107,7 @@ public class Matrix : MonoBehaviour
     
     IEnumerator SpinLoop()
     {
-        yield return new WaitForSeconds(SlotEngine._instance.reelSpinTime);
+        yield return new WaitForSeconds(SlotEngine._instance.reel_spin_speed);
         SpinTest();
     }
 
@@ -194,7 +194,8 @@ public class Matrix : MonoBehaviour
     Vector3 GeneratePosition(int iReelNumber)
     {
 
-        float XAxisValue = (SlotEngine._instance.v2ReelTopLeft.x) + (SlotEngine._instance.reelPaddingX * iReelNumber);
+        float XAxisValue = SlotEngine._instance.matrix_anchor_top_left.x + ((SlotEngine._instance.slot_size.x + SlotEngine._instance.matrix_padding.x ) * iReelNumber); // Take the topleft - add slot size plus padding to include to generate ext slot position 
+
 
         //Need to have the Y axis Value set when the slots are assigned to the Reel Area.
         float YAxisValue = 0;//SlotEngine._instance.fStartingSpotReelY;
