@@ -6,6 +6,10 @@
 [Bb]uild
 /[Bb]uilds/
 /[Ll]ibrary/
+/[Uu]ser[Ss]ettings/
+/[Ll]ogs/
+/.vs/
+*.csproj
 sysinfo.txt
 *.stackdump
 /Assets/AssetStoreTools*
