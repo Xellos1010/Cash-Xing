@@ -71,7 +71,7 @@ namespace Slot_Engine.Matrix
         public Vector3 padding;
         public float spin_speed;
         public int reel_spin_delay_ms = 0;
-        public Vector2 reel_slot_padding = new Vector2(1,1); // 1 on each side - top bottom left rigth but shouldn't be 0
+        public Vector2 reel_slot_padding = new Vector2(0,1); //TODO set from Matrix Generator
         public Reel[] rReels;
         protected List<Symbols[]> _ReelSymbols;
 

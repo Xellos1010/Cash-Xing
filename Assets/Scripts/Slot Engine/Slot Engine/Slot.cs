@@ -116,17 +116,28 @@ namespace Slot_Engine.Matrix
             Debug.LogWarning("v3 Current Tweenpath is not set");
             //v3CurrentTweenpath = reel_parent.GetTweenPathForSlot(iPositonInReel);
         }
-
-        void DestroyTween()
-        {
-            Destroy(transform.GetComponent<iTween>());
-        }
-
+        //TODO update for omni directional
         void MoveToTop()
         {
             //TODO Check if set end symbol is set and pop from reel end symbol to display if not padding slot
-            SetTimeInPathTo(time_in_path - reel_parent.reel_spin_time);
-            transform.localPosition = reel_parent.GetLoopPositionFromTime(0);
+            //transform.localPosition = reel_parent.GeneratePositionOffsetFromTopSlot();
+            //offset to stitch behind the top most slot
+            float timecal = time_in_path - reel_parent.reel_spin_time;
+            SetTimeInPathTo(timecal);
+            if (timecal >= 0)
+            { 
+                transform.localPosition = GeneratePositionUpdate(timecal);
+            }
+            else
+            {
+                transform.localPosition = reel_parent.GeneratePositionOffsetFromTopSlot();
+            }
+        }
+
+        //TODO update for omni directional
+        private void SetTimeInPathByPosition(Vector3 localPosition)
+        {
+            SetTimeInPathTo(reel_parent.GenerateTimeInPath(localPosition.y, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y));
         }
 
         private void SetTimeInPathTo(float new_time_in_path)
@@ -167,16 +178,10 @@ namespace Slot_Engine.Matrix
         {
             if (movement_enabled)
             {
-                //Debug.Log();
-                if(time_in_path > reel_parent.reel_spin_time)
-                {
+                if (transform.position.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y || time_in_path > reel_parent.reel_spin_time)
                     MoveToTop();
-                }
                 time_in_path += Time.deltaTime;
                 transform.localPosition = GeneratePositionUpdate(time_in_path);
-                if (transform.position.y < reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
-                    MoveToTop();
-
             }
         }
 

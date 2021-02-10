@@ -68,31 +68,31 @@
     <Compile Include="Assets\Scripts\Slot Engine\PanelInformation.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eEvaluationDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Features.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Managers\CreditRackManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\StateManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\WinConditions.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\GaffManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\GenericMeter.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\CycleBannerManager.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Managers\PlayerInformationManager.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\interfaces\IDispatcher.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\PlayerInformation.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Managers\MatrixPositionManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\AudioManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\LinePaysManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\MatrixEvaluation.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eMeters.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\BoomEditorUtilities.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Symbols.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SpinManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Slot.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\FeaturesManager.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Example\Scripts\Button.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Example\Scripts\ExampleListner.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSkins.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Managers\CreditRackManager.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixGenerator.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SpinManager.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Managers\MatrixPositionManager.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Managers\PlayerInformationManager.cs" />
     <Compile Include="Assets\FPSManager.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\BoomEditorUtilities.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixGenerator.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -736,10 +736,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
-      <Project>{EC097B96-AE72-A984-A682-59EAE5322C11}</Project>
-      <Name>Assembly-CSharp-firstpass</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

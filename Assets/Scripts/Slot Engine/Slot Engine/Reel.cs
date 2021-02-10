@@ -151,7 +151,7 @@ namespace Slot_Engine.Matrix
             int slot_count = 0;
             //TODO Refactor to support omni direction reel generation
             int ending_count = (int)iSlotCount.y + (int)matrix.reel_slot_padding.x + (int)matrix.reel_slot_padding.y;
-            positions_in_path_v3 = new Vector3[ending_count];
+            positions_in_path_v3 = new Vector3[ending_count+1];//Spin into empty slot then move to top
 
             //Padding Slot Before Reel Generated
             for (slot_count = 0; slot_count < ending_count; slot_count++)
@@ -160,6 +160,8 @@ namespace Slot_Engine.Matrix
             }
             //Generate Ending Padding Slot
             this.slots_in_reel = slots_in_reel.ToArray();
+            Vector3 emptyPosition = GenerateLocalPosition(positions_in_path_v3.Length - 1);
+            positions_in_path_v3[positions_in_path_v3.Length-1] = emptyPosition;
             //Set Path of Loop Curve Keys
             UpdateLoopCurve();
             for (int i = 0; i < slots_in_reel.Count; i++) // TODO refactor for OmniDirectional Support
@@ -318,15 +320,18 @@ namespace Slot_Engine.Matrix
         //TODO Implement custom offset and editor interaction
         public Vector3 offset_from_anchor = Vector3.zero;
         //**Need to have slots generate their position
-        Vector3 GenerateLocalPosition(int iSlotNumber)
+        Vector3 GenerateLocalPosition(int position_in_reel)
         {
             //Change later to enter customizes reel starting height (Matrix 3x4x5x4x3)
             //Need To Determine How many Slots are in the Reel and calculate the iExtraSlotsPerReel (-1 to include the end slot not being active)
             //of the reel into the starting Y Position
             //TODO refactor to include which direction building only supports left to right atm
+            float x = offset_from_anchor.x - (reel_number * matrix.slot_size.x + reel_number * matrix.padding.x);
+            float y = offset_from_anchor.y - (position_in_reel * matrix.slot_size.y + position_in_reel * matrix.padding.y);
+            Debug.Log("GenerateLocalPosition = " + x.ToString() + " , " + y.ToString()+","+0);
             Vector3 return_position = new Vector3(
-                offset_from_anchor.x - (reel_number*matrix.slot_size.x+reel_number * matrix.padding.x),
-                offset_from_anchor.y - (iSlotNumber * matrix.slot_size.y + iSlotNumber * matrix.padding.y),
+                x,
+                y,
                 0
                 );
             //if(
@@ -388,6 +393,25 @@ namespace Slot_Engine.Matrix
                 DestroyImmediate(transform.GetChild(i).gameObject);
         }
 
+        internal Vector3 GeneratePositionOffsetFromTopSlot()
+        {
+            Vector3 topSlot = ReturnTopSlotPosition();
+            float x = topSlot.x;
+            float y = topSlot.y + (matrix.slot_size.y + matrix.padding.y);
+            float z = topSlot.z;
+            return new Vector3(x, y, z);
+        }
+
+        private Vector3 ReturnTopSlotPosition()
+        {
+            Vector3 output = slots_in_reel[0].transform.position;
+            for (int i = 1; i < slots_in_reel.Length; i++)
+            {
+                if (output.y < slots_in_reel[0].transform.position.y)
+                    output = slots_in_reel[0].transform.position;
+            }
+            return output;
+        }
     }
 
 }
