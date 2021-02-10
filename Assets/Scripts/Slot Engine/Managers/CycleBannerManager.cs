@@ -83,7 +83,8 @@ public class CycleBannerManager : MonoBehaviour
             iCycleBannerNumber = 0;
 
         }
-        LeanTween.alphaCanvas(_canvasGroup, 0, fFadeLength);
+        //TODO Insert Logic to fade between cycle banners
+        //LeanTween.alphaCanvas(_canvasGroup, 0, fFadeLength);
         yield return new WaitForSeconds(fFadeLength);
 
     }
@@ -95,9 +96,10 @@ public class CycleBannerManager : MonoBehaviour
 
     private Texture[] ReturnBanners()
     {
-        Texture[] ReturnValue;
-        ReturnValue = Resources.LoadAll<Texture>("Skins/" + SlotEngine._instance.eSkin.ToString() + "/"+StateManager.enCurrentMode.ToString()+"/Cycle Banners");
-        ReturnValue = Resources.LoadAll<Texture>("Skins/" + SlotEngine._instance.eSkin.ToString() + "/BaseGame/Cycle Banners");
+        Texture[] ReturnValue = new Texture[0];
+        //TODO Return textures from file
+        //ReturnValue = Resources.LoadAll<Texture>("Skins/" + MatrixGenerator._instance.eSkin.ToString() + "/"+StateManager.enCurrentMode.ToString()+"/Cycle Banners");
+        //ReturnValue = Resources.LoadAll<Texture>("Skins/" + MatrixGenerator._instance.eSkin.ToString() + "/BaseGame/Cycle Banners");
         return ReturnValue;
     }
 
@@ -118,13 +120,15 @@ public class CycleBannerManager : MonoBehaviour
             if (!bBannerObjectEnabled)
             {
                 IncrementCycleBanners();
-                LeanTween.alphaCanvas(_canvasGroup, 1, fFadeLength);
+                //TODO insert logic to fade to banner
+                //LeanTween.alphaCanvas(_canvasGroup, 1, fFadeLength);
                 yield return new WaitForSeconds(fFadeLength);
                 yield return new WaitForSeconds(iCycleOnDuration);
             }
             else
             {
-                LeanTween.alphaCanvas(_canvasGroup, 0, fFadeLength);
+                //TODO insert logic to fade to banner
+                //LeanTween.alphaCanvas(_canvasGroup, 0, fFadeLength);
                 yield return new WaitForSeconds(fFadeLength);
                 yield return new WaitForSeconds(iCycleOffDuration);
             }

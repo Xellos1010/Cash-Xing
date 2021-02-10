@@ -11,6 +11,6 @@
 
 
 public class WinConditions {
-	public void CheckMatrix(Reel[] rMatrix){
-	}
+	//public void CheckMatrix(Reel[] rMatrix){
+	//}
 }

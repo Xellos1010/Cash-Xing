@@ -30,13 +30,13 @@ public class GaffManager
 
 	}
 
-	public void SetReels(Reel[] rReelConfiguration)
-    {
+	//public void SetReels(Reel[] rReelConfiguration)
+ //   {
 
-	}
+	//}
 
-	public void SetMultiSpinReels(List<Reel[]> rReelConfiguration)
-    {
+	//public void SetMultiSpinReels(List<Reel[]> rReelConfiguration)
+ //   {
 
-	}
+	//}
 }

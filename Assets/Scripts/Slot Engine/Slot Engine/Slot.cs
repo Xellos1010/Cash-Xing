@@ -12,551 +12,173 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
-public class Slot : MonoBehaviour
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+namespace Slot_Engine.Matrix
 {
-    Slot(Symbols Symbol)
+#if UNITY_EDITOR
+    [CustomEditor(typeof(Slot))]
+    class SlotEditor : Editor
     {
-        enSymbol = Symbol;
-    }
+        Slot myTarget;
 
-    public Symbols enSymbol = Symbols.None;
-    public States enSlotState = States.None;
-    public Reel rReelParentObject;
-    public int iPositonInReel = 0;
-    public int iEndPositionInReel = 0;
-
-    public Vector3[] v3CurrentTweenpath;
-    private float fEndingPos;
-    public Rect[] rects;
-
-    private TPSpriteAnimationEx _Sprite;
-    public TPSpriteAnimationEx Sprite
-    {
-        get
+        public void OnEnable()
         {
-            if (_Sprite == null)
-                _Sprite = GetComponent<TPSpriteAnimationEx>();
-            return _Sprite;
+            myTarget = (Slot)target;
         }
-        set
+
+        public override void OnInspectorGUI()
         {
-            _Sprite = value;
+            //base.OnInspectorGUI();
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Commands");
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Editable Properties");
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("To be Removed");
+            base.OnInspectorGUI();
+
         }
     }
-
-    public bool bLoopPositionSet = false;
-
-    //Unity Default Functions
-
-    //*************
-
-    void StateSwitch(States state)
-    {
-        //Debug.log("State switched to " + state.ToString());
-        if (state == States.BaseGameSpinLoop || state == States.BonusGameSpinLoop)
+#endif
+        public class Slot : MonoBehaviour
         {
-            enSlotState = state;
+        Slot(Symbols Symbol)
+        {
+            enSymbol = Symbol;
         }
-        else if (state == States.BaseGameSpinEnd || state == States.BonusGameSpinEnd)
+
+        public Symbols enSymbol = Symbols.None;
+        public States enSlotState = States.None;
+        
+        public Reel reel_parent;
+        public int iPositonInReel = 0;
+        public float time_in_path = 0.0f;
+        public int iEndPositionInReel = 0;
+
+        public Vector3[] v3CurrentTweenpath;
+        private float fEndingPos;
+        public Rect[] rects;
+
+        public bool movement_enabled = false;
+        public float fSpinTime = 0.006f;
+
+        public bool bLoopPositionSet = false;
+
+        /// <summary>
+        /// Test Var to set position along path ensure evaluation happening correct
+        /// </summary>
+        public float percentage_along_path = 0;
+        //Unity Default Functions
+
+        //*************
+
+        void StateSwitch(States state)
         {
-            enSlotState = States.BaseGameSpinEnd;
-        }
-    }
-
-    public void PlayAnimation()
-    {
-        Sprite.frameRate = 24;
-        Sprite.Play();
-
-    }
-
-    public void StopAnimation()
-    {
-        Sprite.frameRate = 24;
-        Sprite.Stop();
-    }
-
-    public void StartSpin()
-    {
-        Debug.Log(gameObject.name + " starting Spin");
-        //StopAnimation();
-        enSlotState = States.BaseGameSpinStart;
-        Hashtable hSettings = tween_settings_spin_start(iTween.EaseType.easeInBack);
-        iTween.MoveTo(this.gameObject, hSettings);
-    }
-
-    Hashtable tween_settings_spin_start(iTween.EaseType EaseType)
-    {
-        Hashtable ReturnValue = new Hashtable();
-        ReturnValue.Add("name", transform.parent.name + " " + transform.name);
-        ReturnValue.Add("speed", SlotEngine._instance.fStartStopSpeed);
-        ReturnValue.Add("easetype", EaseType);
-        ReturnValue.Add("position", GeneratePosition());
-        v3CurrentTweenpath = new Vector3[2];
-        v3CurrentTweenpath[0] = transform.position;
-        v3CurrentTweenpath[1] = GeneratePosition();
-        ReturnValue.Add("oncompletetarget", this.gameObject);
-        ReturnValue.Add("oncomplete", "SetSpinToLoop");
-        /*else if (StateManager.enCurrentState == States.BaseGameSpinLoop)
-        {
-            ReturnValue.Add("onupdatetarget", this.gameObject);
-            //ReturnValue.Add("onupdateparams", transform);
-            ReturnValue.Add("onupdate", "CheckStatePosition");
-            ReturnValue.Add("oncompletetarget", this.gameObject);
-            //ReturnValue.Add("oncomplete", "MoveToTop");
-            ReturnValue.Add("oncomplete", "IncrementPositionInReel");
-
-        }
-        else if (StateManager.enCurrentState == States.BaseGameSpinEnd)
-        {
-            ReturnValue.Add("oncompletetarget", this.gameObject);
-            ReturnValue.Add("oncomplete", "PlayAnimation");
-        }*/
-        return ReturnValue;
-    }
-
-    Vector3 GeneratePosition()
-    {
-        //Debug.Log("Generating Position in " + transform.name + " with a state of " + StateManager.enCurrentState.ToString());
-        if (enSlotState == States.BaseGameSpinStart || enSlotState == States.BonusGameSpinStart)
-            return new Vector3(transform.position.x, (transform.localPosition.y - (SlotEngine._instance.slotPaddingY)), 0);
-        else if (enSlotState == States.BaseGameSpinLoop || enSlotState == States.BonusGameSpinLoop)
-        {
-            //Debug.Log("Generateing Loop Position of " + GenerateLoopPosition() +  " for " + transform.name);
-            return GenerateLoopPositionStart();
-        }
-        else if (enSlotState == States.BaseGameSpinEnd || enSlotState == States.BonusGameSpinEnd)
-            return new Vector3(transform.position.x, fEndingPos, 0);
-        else
-        {
-            //Debug.Log(transform.name + " in reel " + transform.parent.name + " Generated a Vector3.Zero for a Position. Possible StateManager Issue current state is " + StateManager.enCurrentState.ToString());
-            return Vector3.zero;
-        }
-    }
-
-    Vector3 GenerateSlotStartingPosition()
-    {
-        float yAxisValue = 0;
-//TODO error occuring
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot() - (SyncronizePositionToNextSlot(SlotEngine._instance.fStartingSpotSlot(), ReturnNextSlot().transform.position));
-        return new Vector3(transform.localPosition.x, yAxisValue, transform.localPosition.z);
-    }
-
-    Vector3 GenerateCurrentStartPathPositionTween()
-    {
-        float yAxisValue = 0;
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot() - (SlotEngine._instance.slotPaddingY * iPositonInReel);
-        //Debug.Log("GenerateCurrentStartPosition() for " + transform.name + " is returning a yAxisValue of " + yAxisValue);
-        return new Vector3(transform.localPosition.x, yAxisValue, transform.localPosition.z);
-    }
-
-    Vector3 GenerateLoopPositionStart()
-    {
-        float yAxisValue = 0;
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot() - (SlotEngine._instance.slotPaddingY * iPositonInReel);
-        //Debug.Log("GenerateLoopPosition() for " + transform.name + " in " + transform.parent.name + " is returning a yAxisValue of " + yAxisValue);
-        return new Vector3(transform.position.x, yAxisValue, transform.position.z);
-    }
-
-    Vector3 GenerateEndPosition()
-    {
-        return new Vector3(transform.position.x, (SlotEngine._instance.fStartingSpotSlot()- (SlotEngine._instance.slotPaddingY * transform.parent.childCount)), 0);
-    }
-
-    Vector3 GenerateNextTweenPosition()
-    {
-        float yAxisValue = 0;
-        yAxisValue = SlotEngine._instance.fStartingSpotSlot()- (SlotEngine._instance.slotPaddingY * (iPositonInReel + 1));
-        //Debug.Log("GenerateCurrentStartPosition() for " + transform.name + " is returning a yAxisValue of " + yAxisValue);
-        return new Vector3(transform.localPosition.x, yAxisValue, transform.localPosition.z);
-    }
-
-    Slot ReturnNextSlot()
-    {
-        int iPositionToFind = iPositonInReel + 1;
-        if (iPositionToFind > rReelParentObject.slots_in_reel.Length)
-            iPositionToFind = 1;
-        foreach (Slot slot in rReelParentObject.slots_in_reel)
-        {
-            //Debug.Log("Checking Slot " + slot.transform.name + " with a position in reels of " + slot.iPositonInReel);
-            if (slot.iPositonInReel == iPositionToFind)
+            //Debug.log("State switched to " + state.ToString());
+            if (state == States.BaseGameSpinLoop || state == States.BonusGameSpinLoop)
             {
-                return slot;
+                enSlotState = state;
             }
-            else if (slot.iPositonInReel == iPositonInReel && transform != slot.transform)
-                return slot;
+            else if (state == States.BaseGameSpinEnd || state == States.BonusGameSpinEnd)
+            {
+                enSlotState = States.BaseGameSpinEnd;
+            }
         }
-        Debug.Log("Error Returning Next Slot for " + transform.name + " Current Position in reel = " + iPositonInReel + " trying to find position " + iPositionToFind);
-        return null;
-    }
 
-    private void SetSpinLoopState()
-    {
-        enSlotState = States.BaseGameSpinLoop;
-        //Debug.Log("Setting Spin State to loop for " + transform.name);
-        /*if (enSlotState != States.BaseGameSpinLoop && enSlotState != States.BonusGameSpinLoop)
-            if (StateManager.enCurrentState == States.BaseGameSpinStart || StateManager.enCurrentState == States.BaseGameSpinLoop)
-                
-            else if (StateManager.enCurrentState == States.BonusGameSpinStart || StateManager.enCurrentState == States.BonusGameSpinLoop)
-                enSlotState = States.BonusGameSpinLoop;*/
-    }
+        public void PlayAnimation()
+        {
+            //Sprite.frameRate = 24;
+            //Sprite.Play();
+            //TODO Insert Play Animation Logic
+        }
 
-    public void SetEventCalls(Reel rParent)
-    {
-        rParent.spin_activated_event += StartSpin;
-        rParent.spin_state_changed += StateSwitch;
-    }
+        public void StopAnimation()
+        {
+            //Sprite.frameRate = 24;
+            //Sprite.Stop();
+            //TODO Insert Stop Animation Logic
+        }
 
-    //This will Set proper spin state and Increment Position in Reels
-    private void SetSpinToLoop()
-    {
-        bLoopEnabled = true;
-        ResetTimeLeftFPS();
-        //Check Position
-        SetSpinLoopState();
-        //IncrementPositionInReel();
-    }
+        public void StartSpin(Vector3[] start_end_position)
+        {
+            Debug.Log(gameObject.name + " starting Spin");
+            StopAnimation();
+            v3CurrentTweenpath = start_end_position;
+            movement_enabled = true;
+            //iTween.EaseType easetype_to_start = iTween.EaseType.easeInBack; //TODO refactor to enable settingparent
+        }
+        private void SetReelPosition(int v)
+        {
+            iPositonInReel = v;
+            //Get new pathing
+            Debug.LogWarning("v3 Current Tweenpath is not set");
+            //v3CurrentTweenpath = reel_parent.GetTweenPathForSlot(iPositonInReel);
+        }
 
-    private void SetSpinToEnd()
-    {
-        //bLoopEnabled = false; 
-        fEndingPos = rReelParentObject.GenerateEndPositionAndSymbol(this);
-        enSlotState = States.BaseGameSpinEnd;
-        //The reel parent by this point should have pulled the generated symbol matrix from the slot engine and sets the reel symbols based on who reaches the top first.
-        //rReelParentObject.fSpinSpeed = 95;
-    }
-
-    private void SetTweenOnPathEnd()
-    {
-        bLoopEnabled = false;
-        rReelParentObject.spin_speed = SlotEngine._instance.fStartStopSpeed;
-        /*if (transform.GetComponent("iTween"))
+        void DestroyTween()
         {
             Destroy(transform.GetComponent<iTween>());
-        }*/
-        //Need to change iTween to make ending transition smoother
-        Hashtable hSettings = tween_settings_spin_start(iTween.EaseType.easeOutBack);
-        iTween.MoveTo(this.gameObject, hSettings);
-        iEndPositionInReel = 0;
-        //Need to have GenerateEndEase() Generate an update base on the reel speed to cushion the slot to spin pass the ending pos slot then ease back.
-    }
-
-    private void SetTweenOnPathLoop()
-    {
-        //Debug.Log(transform.name + " SetTweenOnPathLoop()");
-        v3CurrentTweenpath = new Vector3[2];
-        //Slot Reel needs to  be incremented before this point to accuratly check the "next" slot
-        v3CurrentTweenpath[0] = GenerateCurrentStartPathPositionTween();
-        v3CurrentTweenpath[1] = GenerateNextTweenPosition();
-
-        /*float fDistance = rReelParentObject.fSpinSpeed * Time.deltaTime;
-
-        float correctY = transform.position.y - fDistance;
-        float correctPercentage = correctY / (v3CurrentTweenpath[0].y - v3CurrentTweenpath[1].y);
-        //float fDistance = rReelParentObject.fSpinSpeed * transform.GetComponent<iTween>().
-        *///iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, correctPercentage);
-    }
-
-    private void SetTweenOnPath(iTween tTween)
-    {
-        v3CurrentTweenpath = new Vector3[2];
-        v3CurrentTweenpath[0] = tTween.transform.position;
-        v3CurrentTweenpath[1] = GeneratePosition();
-        float fDistance = rReelParentObject.spin_speed * Time.deltaTime;
-        iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, 0);
-    }
-
-    private void SetTweenOnPath(Vector3 v3StartingPos)
-    {
-        v3CurrentTweenpath = new Vector3[2];
-        v3CurrentTweenpath[0] = v3StartingPos;
-        v3CurrentTweenpath[1] = GeneratePosition();
-        float fDistance = rReelParentObject.spin_speed * Time.deltaTime;
-        iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, 0);
-    }
-
-    private void SetTweenOnPath(float fPercentage)
-    {
-        iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, fPercentage);
-    }
-
-    private void SetTweenOnPath(Vector3 v3StartingPos, Vector3 v3EndingPos)
-    {
-        v3CurrentTweenpath = new Vector3[2];
-        v3CurrentTweenpath[0] = v3StartingPos;
-        v3CurrentTweenpath[1] = v3EndingPos;
-        float fDistance = rReelParentObject.spin_speed * Time.deltaTime;
-        iTween.PutOnPath(this.gameObject, v3CurrentTweenpath, 0);
-    }
-
-    void IncrementPositionInReel()
-    {
-        Debug.Log(gameObject.name + " IncrementPositionInReel to " + (iPositonInReel + 1).ToString());
-        //Debug.Log(transform.name + " is Incrementing Position In Reel " + transform.parent.name + " from " + iPositonInReel + " to" + (iPositonInReel + 1));
-        //GetSymbol to set self to and new reel slot position from ReelParent.
-        //The reel parent by this point should have pulled the generated symbol matrix from the slot engine and sets the reel symbols based on who reaches the top first.
-        DestroyTween();
-        if (iPositonInReel + 1 >= rReelParentObject.slots_in_reel.Length && (enSlotState != States.BaseGameSpinEnd || enSlotState != States.BonusGameSpinEnd))
-        {
-            //Debug.Log("transform.parent.childCount = " + transform.parent.childCount + " iPositionInReel = " + iPositonInReel + " via IncrementPositionInReel()");
-            MoveToTop();
         }
-        else
-        {
-            iPositonInReel += 1;
-        }
-        if ((enSlotState == States.BaseGameSpinEnd || enSlotState == States.BonusGameSpinEnd) && iPositonInReel == iEndPositionInReel - 1)
-        {
-            SetTweenOnPathEnd();
-            //SetTweenOnPathLoop();
-        }
-        else
-            SetTweenOnPathLoop();
-    }
 
-    public float SyncronizePositionToNextSlot()
-    {
-        foreach (Slot slot in rReelParentObject.slots_in_reel)
+        void MoveToTop()
         {
-            if (slot.iPositonInReel == iPositonInReel + 1)
+            //TODO Check if set end symbol is set and pop from reel end symbol to display if not padding slot
+            SetTimeInPathTo(time_in_path - reel_parent.reel_spin_time);
+            transform.localPosition = reel_parent.GetLoopPositionFromTime(0);
+        }
+
+        private void SetTimeInPathTo(float new_time_in_path)
+        {
+            time_in_path = new_time_in_path;
+        }
+
+        public void SwitchSymbol()
+        {
+            ResetSpinSymbolTexture();
+        }
+
+        public void SwitchSymbol(Symbols Symbol)
+        {
+            enSymbol = Symbol;
+            ResetSpinSymbolTexture();
+        }
+
+        private void ResetSpinSymbolTexture()
+        {
+            
+            //TODO Fill in set symbol to static image logic
+        }
+
+        Symbols GenerateSymbol()
+        {
+            //TODO Set Symbol based on supported symbol set passed in
+            int iRandom = UnityEngine.Random.Range(1, (int)Symbols.End - 1);
+            return (Symbols)iRandom;
+        }
+
+        Vector3 GeneratePositionUpdate(float time_on_path) //TODO remove
+        {
+            return reel_parent.GetLoopPositionFromTime(time_on_path);
+        }
+
+        void Update()
+        {
+            if (movement_enabled)
             {
-                return SyncronizePositionToNextSlot(slot.transform.position);
+                //Debug.Log();
+                if(time_in_path > reel_parent.reel_spin_time)
+                {
+                    MoveToTop();
+                }
+                time_in_path += Time.deltaTime;
+                transform.localPosition = GeneratePositionUpdate(time_in_path);
+                if (transform.position.y < reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
+                    MoveToTop();
+
             }
         }
-        Debug.Log("Could not Sync with Next slot position " + transform.name + " Position in reel = " + iPositonInReel + " Further troubleshooting required");
-        return 0;
-    }
-
-    public float SyncronizePositionToNextSlot(Vector3 NextSlot)
-    {
-        float currentY = transform.position.y;
-        float currentPercentageOnPath = currentY / (v3CurrentTweenpath[1].y - v3CurrentTweenpath[0].y);
-
-        float correctY = NextSlot.y + SlotEngine._instance.slotPaddingY;
-        //float correctPercentage = correctY / (v3CurrentTweenpath[1].y - v3CurrentTweenpath[0].y);
-        return correctY;
-    }
-
-    public float SyncronizePositionToNextSlot(float fFutureY, Vector3 NextSlot)
-    {
-        float currentY = fFutureY;
-        float currentPercentageOnPath = currentY / (v3CurrentTweenpath[1].y - v3CurrentTweenpath[0].y);
-
-        float correctY = NextSlot.y + SlotEngine._instance.slotPaddingY;
-        float differentY = currentY - correctY;
-        return differentY;
-    }
-
-    public void CheckStatePosition()
-    {
-        if (transform.position.y <= GenerateEndPosition().y)
-        {
-            MoveToTop();
-        }
-        Debug.Log(transform.name + " is CheckingStatePosition(). transform.parent.childCount = " + transform.parent.childCount);
-
-        iTween Tween = transform.GetComponent<iTween>();
-        if (enSlotState == States.BaseGameSpinLoop || enSlotState == States.BonusGameSpinLoop)
-        {
-            Tween.easeType = iTween.EaseType.linear;
-        }
-        else if (enSlotState == States.BaseGameSpinEnd || enSlotState == States.BonusGameSpinEnd)
-        {
-            //SetPositionOfTweenOnReel and Set Symbol based on input
-            //SetTweenOnpath(Tween);
-            //SetSymbol();
-        }
-    }
-
-    void DestroyTween()
-    {
-        Destroy(transform.GetComponent<iTween>());
-    }
-
-    void MoveToTop()
-    {
-        //Need to determine if state is in loop or spin ending. if it is spin ending send transform parent a message to give what symbol to set self to
-        iPositonInReel = 0;
-        transform.localPosition = new Vector3(transform.localPosition.x,SlotEngine._instance.fStartingSpotSlot() ,transform.localPosition.z);//GenerateSlotStartingPosition();
-        DestroyTween();
-        SetTweenOnPathLoop();
-        SyncronizePositionToNextSlot(rReelParentObject.SyncronizePositionNextSlot(this));
-        //Debug.log("rReelParentObject.SyncronizePositionNextSlot(this) = " + rReelParentObject.SyncronizePositionNextSlot(this));
-        Debug.Log(transform.name + " on reel " + transform.parent.name + " localPositon has been set " + SlotEngine._instance.fStartingSpotSlot()+ " via MoveToTop()");
-        /*if (enSlotState == States.BaseGameSpinLoop || enSlotState == States.BonusGameSpinLoop || enSlotState == States.BaseGameSpinStart || enSlotState == States.BonusGameSpinStart)
-        {
-            Hashtable Settings = iTweenParametersSpin(iTween.EaseType.linear);
-            iTween.MoveTo(this.gameObject, Settings);
-        }*/
-        if (StateManager.enCurrentState == States.BaseGameSpinEnd || StateManager.enCurrentState == States.BonusGameSpinEnd)
-        {
-            //TODO set reel end configuration
-            //Debug.Log(transform.name + " on reel " + transform.parent.name + " is executing SetSpinToEnd()");
-            SetSpinToEnd();
-            if (iEndPositionInReel <= 1)
-            {
-                SetTweenOnPathEnd();
-                iPositonInReel = 0;
-            }
-        }
-    }
-
-    public void SwitchSymbol()
-    {
-        ResetSpinSymbolTexture();
-    }
-
-    public void SwitchSymbol(Symbols Symbol)
-    {
-        enSymbol = Symbol;
-        ResetSpinSymbolTexture();
-    }
-
-    private void ResetSpinSymbolTexture()
-    {
-        //Debug.Log("Trying to Reset Symbol Texture");
-        //Debug.Log("Skins/Aegean_Sunset/" + SlotEngine._instance.CurrentMode.ToString() + "/Symbols/" + enSymbol.ToString() + " " +  enSymbol.ToString() + "_0" + GenerateAdditionalString(0) + ".png");
-        if (Sprite.sprite.frames.Count != 72)
-            Sprite.sprite.frames = new System.Collections.Generic.List<TPFameInfo>(72);
-        for (int i = 0; i < Sprite.sprite.frames.Count; i++)
-            Sprite.sprite.frames[i] = new TPFameInfo("Skins/Aegean_Sunset/" + SlotEngine._instance.CurrentMode.ToString() + "/Symbols/" + enSymbol.ToString(), enSymbol.ToString() + "_0" + GenerateAdditionalString(i) + ".png");
-        //Debug.Log("Frames Cleared and renamed");
-        //TPFameInfo Frame = new TPFameInfo(Application.dataPath + "Skins/Aegean_Sunset/Base Game/","HP5");
-        Sprite.sprite.showFrame(0);
-        //Debug.Log("Showing Frame 0");
-    }
-
-    private string GenerateAdditionalString(int iPlace)
-    {
-        if (iPlace < 10)
-            return "0" + iPlace.ToString();
-        else
-            return iPlace.ToString();
-    }
-
-    private void SetSpinSymbol(int iFrame)
-    {
-        Sprite.currentFrame = iFrame;
-    }
-
-    public void SetRandomSymbol()
-    {
-        enSymbol = GenerateSymbol();
-        SwitchSymbol();
-    }
-
-    Symbols GenerateSymbol()
-    {
-        int iRandom = UnityEngine.Random.Range(1, (int)Symbols.End - 1);
-        return (Symbols)iRandom;
-    }
-
-    Vector3 GenerateLoopPositionUpdate()
-    {
-        float currentY = transform.position.y;
-        float currentPathPercentage = transform.position.y / v3CurrentTweenpath[1].y;
-        //Debug.Log("Frames Per Second = " + framesPerSecond);
-        float DistanceToTravel = 0;
-        if (framesPerSecond > 0)
-            DistanceToTravel = ((rReelParentObject.spin_speed / fSpinTime) / 30);//Need to replace to point fps to systems FPS Cap
-        else
-            DistanceToTravel = ((rReelParentObject.spin_speed / fSpinTime) / framesPerSecond);
-        float nextY = currentY - DistanceToTravel;
-        //Debug.Log("DistanceToTravel = " + DistanceToTravel + " Next Y = " + nextY);
-        Vector3 temp = GenerateLoopPositionStart();
-        //return new Vector3(temp.x, transform.position.y - fLoopSpeed, temp.z); 
-        //need to update coe to have reels spin behind background Texture.
-        /*if(iPositonInReel > SlotEngine._instance.iExtraSlotsPerReel && iPositonInReel <= (rReelParentObject.slSlots.Length - SlotEngine._instance.iExtraSlotsPerReel))
-            return new Vector3(temp.x, nextY, temp.z-10); 
-        else*/
-        return new Vector3(temp.x, nextY, temp.z);
-    }
-
-    Vector3 GenerateNextSymbolLocationWithPadding()
-    {
-        return new Vector3(transform.localPosition.x, rReelParentObject.SyncronizePositionNextSlot(this).y + SlotEngine._instance.slotPaddingY, transform.localPosition.z);
-    }
-
-    public bool bLoopEnabled = false;
-    public float fSpinTime = 0.006f;
-
-    //Keeps track of the FPS so the reels spinning are affected by the games FPS
-    float updateInterval = 0.5f;
-
-    private float accum = 0.0f; // FPS accumulated over the interval
-    private float framesPerSecond = 0;
-    private int frames = 0; // Frames drawn over the interval
-    private float timeleft = .5f; // Left time for current interval
-
-    void ResetTimeLeftFPS()
-    {
-        timeleft = updateInterval;
-    }
-
-    private void ResetAllVars()
-    {
-        v3CurrentTweenpath = new Vector3[2];
-        fEndingPos = 0;
 
     }
-
-    public void CheckPosition()
-    {
-        if (bLoopEnabled)
-        {
-            if (fSpinTime == 0)
-                fSpinTime = .49025f;
-            //GenerateLoopPositionUpdate();
-            //fLoopSpeed = .49025f;
-            if (transform.position.y <= GenerateLoopPositionStart().y)
-            {
-                IncrementPositionInReel();
-            }
-            Hashtable hSettings = new Hashtable();
-            hSettings.Add("time", fSpinTime);
-            hSettings.Add("position", GenerateLoopPositionUpdate());
-            iTween.MoveUpdate(this.gameObject, hSettings);
-            //bLoopEnabled = false;
-        }
-    }
-
-    void Update()
-    {
-        /*if (Input.GetKeyDown(KeyCode.Space) || Input.touchCount > 0)
-        {
-            PlayAnimation();
-        }*/
-        timeleft -= Time.deltaTime;
-        accum += Time.timeScale / Time.deltaTime;
-        ++frames;
-
-        // Interval ended - update GUI text and start new interval
-        if (timeleft <= 0.0)
-        {
-            framesPerSecond = accum / frames;
-            ResetTimeLeftFPS();
-            accum = 0.0f;
-            frames = 0;
-        }
-
-        if (bLoopEnabled)
-        {
-            if (fSpinTime == 0)
-                fSpinTime = 0.006f;
-            //GenerateLoopPositionUpdate();
-            //fLoopSpeed = .49025f;
-            if (transform.position.y <= v3CurrentTweenpath[1].y)
-            {
-                IncrementPositionInReel();
-            }
-            Hashtable hSettings = new Hashtable();
-            //hSettings.Add("time", fLoopSpeed);
-            hSettings.Add("position", GenerateLoopPositionUpdate());
-            iTween.MoveUpdate(this.gameObject, hSettings);
-            bLoopPositionSet = true;
-            rReelParentObject.SyncronizePositionAllSlots();
-        }
-    }
-
 }

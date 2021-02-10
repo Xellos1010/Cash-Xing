@@ -6,7 +6,7 @@ using UnityEngine;
     public class LinePaysManager : MonoBehaviour
     {
         LinePaysManager _instance;
-
+        public int[] iWinningPayLines;
         private float _fCycleDurationOn = 3.0f;
         private float _fCycleDurationOff = 0.25f;
 

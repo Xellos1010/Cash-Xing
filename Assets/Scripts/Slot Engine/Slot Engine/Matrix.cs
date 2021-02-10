@@ -15,292 +15,216 @@ using UnityEditor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
-public class Matrix : MonoBehaviour
+namespace Slot_Engine.Matrix
 {
-	private MatrixTypes enMatrixType = MatrixTypes.None;
-	public int iWinningPayLines ;
-    public int iSlotsPerReel = 0;
-	public Reel[] rReels ;
-	public List<Reel[]> rReelsMultiSpinConfiguration;
-    protected List<Symbols[]> _ReelSymbols;
-    private List<Symbols[]> ReelSymbols
-    {
-        get
-        {
-            if (_ReelSymbols == null)
-                _ReelSymbols = GenerateEndReelsSymbols();
-            if(_ReelSymbols.Count == 0)
-                _ReelSymbols = GenerateEndReelsSymbols();
-            return _ReelSymbols;
-        }
-        set
-        {
-            _ReelSymbols = value;
-        }
-    }
-    //****Unity Default Functions
-
-    void Update()
-    {
-#if UNITY_ANDROID || UNITY_IPHONE
-        if(Input.touchCount > 0)
-         {
-             Touch temp = Input.touches[0];
-             if (temp.phase == TouchPhase.Ended)
-             {
-                 if (StateManager.enCurrentState != States.BaseGameSpinLoop && StateManager.enCurrentState != States.BaseGameSpinStart)
-                     StartCoroutine(SpinReelsTest());
-                 else if (StateManager.enCurrentState == States.BaseGameSpinLoop)
-                 {
-                     //Put ending sequence coroutine here
-                     Debug.Log("Ending Spin State");
-                     StartCoroutine(SpinEnd());
-                 }
-             }
-        }
-#else
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            if (StateManager.enCurrentState != States.BaseGameSpinLoop && StateManager.enCurrentState != States.BaseGameSpinStart)
-                StartCoroutine(SpinReelsTest());
-            else if(StateManager.enCurrentState == States.BaseGameSpinLoop)
-            {
-                //Put ending sequence coroutine here
-                Debug.Log("Ending Spin State");
-                StartCoroutine(SpinEnd());
-            }
-        }
-#endif
-    }
-
-    //***********
-
-    public void SpinTest()
-    {
-        StopAllCoroutines();
-        if (StateManager.enCurrentState == States.BaseGameSpinStart)
-            StartCoroutine(SpinReelsTest());
-        else
-        {
-            //Put ending sequence coroutine here
-            Debug.Log("Ending Spin State");
-            StartCoroutine(SpinEnd());
-        }
-    }
-
-    IEnumerator SpinReelsTest()
-    {
-        //if(StateManager.state
-        StateManager.SwitchState(States.BaseGameSpinStart);
-        foreach (Reel rReel in rReels)
-        {
-            rReel.SpinReel();
-            yield return new WaitForSeconds(SlotEngine._instance.fReelSpinDelay);
-        }
-        StateManager.SwitchState(States.BaseGameSpinLoop);
-        for (int i = 0; i < rReels.Length; i++)
-        {
-            rReels[i].SetSlotEndConfiguration(GenerateEndReelSymbols());
-        }
-    }
-    
-    IEnumerator SpinLoop()
-    {
-        yield return new WaitForSeconds(SlotEngine._instance.reel_spin_speed);
-        SpinTest();
-    }
-
-    IEnumerator SpinEnd()
-    {
-        StateManager.SwitchState(States.BaseGameSpinEnd);
-        Debug.Log("ReelSymbols.Count = " + ReelSymbols.Count);
-        for (int i = 0; i < rReels.Length; i++)
-        {
-            rReels[i].StopReel();//Only use for specific reel stop features
-        }
-        yield return 0;
-    }
-
-	public void GenerateMatrix(MatrixTypes MatrixType)
-    {
-        enMatrixType = MatrixType;
-        Debug.Log("Matrix Set to " +MatrixType + " Setting Reels");
-        GenerateMatrix();
-	}
-
-	public void GenerateMatrix()
-    {
-        if(transform.childCount > 0)
-        {
-            for (int i = transform.childCount - 1; i >= 0; i--)
-                DestroyImmediate(transform.GetChild(i).gameObject);
-        }
-        Debug.Log("Matrix.cs enMatrixType int = " + (int)enMatrixType + " enMatrixType = " + enMatrixType + " rReelsLength = ");
-        //Setting the Type of matrix ex:3x5 4x5 3x4x5x4x3
-        object Matrix = SlotEngine.ReturnMatrixtype();
-        Vector2 v2Matrixtemp = new Vector2();
-        int[] iMatrixtemp = new int[0];
-            if(Matrix.GetType() == typeof(Vector2))
-            {
-                v2Matrixtemp = (Vector2)Matrix;
-                rReels = new Reel[(int)v2Matrixtemp.y];
-                //rReels = new Reel[1];
-            }
-            else if (Matrix.GetType() == typeof(int[]))
-            {
-                iMatrixtemp = (int[])Matrix;
-                //rReels = new Reel[1];
-                rReels = new Reel[iMatrixtemp.Length];
-            }
-
-        Debug.Log("Generating new reels");
-        for (int i = 0; i < rReels.Length; i++)
-        {
-            rReels[i] = GenerateReel(i);
-            //**Need to have Slots Set reference Matrix Type
-            if(Matrix.GetType() == typeof(Vector2))
-            {
-                //Add 2 or more for padding purposes SlotEngine._instance.iExtraSlotsPerReel
-                rReels[i].GenerateSlots((int)v2Matrixtemp.x+SlotEngine._instance.iExtraSlotsPerReel, rReels[i].transform);
-                if (iSlotsPerReel == 0)
-                    iSlotsPerReel = (int)v2Matrixtemp.x + SlotEngine._instance.iExtraSlotsPerReel;
-            }
-            else if (Matrix.GetType() == typeof(int[]))
-            {
-                //Add 2 or more for padding purposes SlotEngine._instance.iExtraSlotsPerReel
-                rReels[i].GenerateSlots(iMatrixtemp[i] + (SlotEngine._instance.iExtraSlotsPerReel), rReels[i].transform);
-                if (iSlotsPerReel == 0)
-                    iSlotsPerReel = iMatrixtemp[i] + (SlotEngine._instance.iExtraSlotsPerReel);
-            }
-            rReels[i].transform.position = GeneratePosition(i);
-        }
-	}
-
-    Reel GenerateReel(int ReelNumber)
-    {
-        //Create Reel Game Object
-        Type[] ReelType = new Type[1];
-        ReelType[0] = typeof(Reel);
-        //Debug.Log("Creating Reel Number " + ReelNumber);
-        Reel ReturnValue = new GameObject("Reel_" + ReelNumber, ReelType).GetComponent<Reel>();
-        //Debug.Log("Setting Transform and Parent Reel-" + ReelNumber);
-        //Position object in Game Space based on Reel Number Then set the parent
-        ReturnValue.transform.parent = transform;
-
-        return ReturnValue;
-    }
-
-    Vector3 GeneratePosition(int iReelNumber)
-    {
-
-        float XAxisValue = SlotEngine._instance.matrix_anchor_top_left.x + ((SlotEngine._instance.slot_size.x + SlotEngine._instance.matrix_padding.x ) * iReelNumber); // Take the topleft - add slot size plus padding to include to generate ext slot position 
-
-
-        //Need to have the Y axis Value set when the slots are assigned to the Reel Area.
-        float YAxisValue = 0;//SlotEngine._instance.fStartingSpotReelY;
-        Vector3 ReturnValue = new Vector3(XAxisValue,YAxisValue,0);
-        //Need to calculate height and width of the symbols in the reel and pad according to padding set in place in master slot engine
-        return ReturnValue;
-    }
-
-    List<Symbols[]> GenerateEndReelsSymbols()
-    {
-        List<Symbols[]> ReturnValue= new List<Symbols[]>(rReels.Length);
-        for (int i = 0; i < ReturnValue.Count; i++)
-        {
-            ReturnValue[i] = new Symbols[rReels[i].transform.childCount];
-            Symbols[] temp = ReturnValue[i];
-            for (int j = 0; j < ReturnValue[i].Length; j++)
-            {
-                temp[j] = (Symbols)UnityEngine.Random.Range(1, (int)Symbols.End);
-            }
-            ReturnValue[i] = temp;
-        }
-        return ReturnValue;
-    }
-
-    Symbols[] GenerateEndReelSymbols()
-    {
-        Symbols[] ReturnValue = new Symbols[iSlotsPerReel];
-        for (int i = 0; i < ReturnValue.Length; i++)
-        {
-            ReturnValue[i] = (Symbols)UnityEngine.Random.Range(1, (int)Symbols.End);
-        }
-        return ReturnValue;
-    }
-
-	public void SetMatrixCurrentSpin(Reel[] rReelConfiguration)
-    {
-
-	}
-
-	public void SetMatrixNumberOfSpins(List<Reel[]> rReelConfiguration)
-    {
-
-	}
-
-	public void PopMultiSpinConfiguration()
-    {
-
-	}
-    /// <summary>
-    /// This will animate the Payline. (May need to cache slots into Event and fire event off. Find out in Optimization Phase)
-    /// </summary>
-    /// <param name="iPayline"> Defines the Payline. Length of input should be reel length</param>
-    public void AnimatePayLine(int[] iPayline)
-    {
-        for (int i = 0; i < iPayline.Length; i++)
-        {
-            rReels[i].slots_in_reel[iPayline[i]].PlayAnimation();
-        }
-    }
-
-    internal void UpdatePositionReels()
-    {
-        for(int i = 0; i < rReels.Length;i++)
-            rReels[i].transform.position = GeneratePosition(i);
-    }
-}
 
 #if UNITY_EDITOR
-[CustomEditor(typeof(Matrix))]
-class MatrixEditor : Editor
-{
-    Matrix myTarget;
-
-    public void OnEnable()
+    [CustomEditor(typeof(Matrix))]
+    class MatrixEditor : Editor
     {
-        myTarget = (Matrix)target;
-    }
+        Matrix myTarget;
+        SerializedProperty state;
+        public void OnEnable()
+        {
+            myTarget = (Matrix)target;
+        }
 
-    public override void OnInspectorGUI()
-    {
-        base.OnInspectorGUI();
-        if (GUILayout.Button("Generate Reels"))
+        public override void OnInspectorGUI()
         {
-            myTarget.GenerateMatrix();
-        }
-        if (GUILayout.Button("Set Reel Positions"))
-        {
-            myTarget.UpdatePositionReels();
-        }
-        EditorGUILayout.EnumPopup(StateManager.enCurrentState);
-        if (Application.isPlaying)
-        {
-            if (StateManager.enCurrentState != States.BaseGameSpinLoop && StateManager.enCurrentState != States.BaseGameSpinStart)
-                if (GUILayout.Button("Start Test Spin"))
-                {
-                    myTarget.SpinTest();
-                }
+            base.OnInspectorGUI();
+            if (GUILayout.Button("Generate Reels"))
+            {
+                //myTarget.GenerateMatrix();
+            }
+            if (GUILayout.Button("Set Reel Positions"))
+            {
+                myTarget.UpdatePositionReels();
+            }
+            EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+            if (Application.isPlaying)
+            {
+                if (StateManager.enCurrentState != States.BaseGameSpinLoop && StateManager.enCurrentState != States.BaseGameSpinStart)
+                    if (GUILayout.Button("Start Test Spin"))
+                    {
+                        myTarget.SpinTest();
+                        SceneView.RepaintAll();
+                    }
                 if (StateManager.enCurrentState == States.BaseGameSpinLoop)
                 {
                     if (GUILayout.Button("End Test Spin"))
                     {
                         myTarget.SpinTest();
                     }
-                }    
+                }
+            }
         }
     }
-}
 #endif
+
+    public class Matrix : MonoBehaviour
+    {
+        public SpinManager spin_manager;
+        public Vector3[] matrix; //elements are reels value is slot per reel
+        public Vector3 slot_size;
+        public Vector3 padding;
+        public float spin_speed;
+        public int reel_spin_delay_ms = 0;
+        public Vector2 reel_slot_padding = new Vector2(1,1); // 1 on each side - top bottom left rigth but shouldn't be 0
+        public Reel[] rReels;
+        protected List<Symbols[]> _ReelSymbols;
+
+        private List<Symbols[]> ReelSymbols
+        {
+            get
+            {
+                if (_ReelSymbols == null)
+                    _ReelSymbols = GenerateEndReelsSymbols();
+                if (_ReelSymbols.Count == 0)
+                    _ReelSymbols = GenerateEndReelsSymbols();
+                return _ReelSymbols;
+            }
+            set
+            {
+                _ReelSymbols = value;
+            }
+        }
+        //****Unity Default Functions
+
+
+        //***********
+        //TODO - Enable offset from 0,0,0
+        public Task GenerateMatrix(Vector3[] matrix, Vector3 slot_size, Vector3 padding)
+        {
+            this.matrix = matrix;
+            this.spin_speed = 80; //TODO change hardcoded reference
+            this.slot_size = slot_size;
+            this.padding = padding;
+            if (transform.childCount > 0) // Destroy old matrix if you have one
+            {
+                for (int i = transform.childCount - 1; i >= 0; i--)
+                    DestroyImmediate(transform.GetChild(i).gameObject);
+            }
+            rReels = new Reel[matrix.Length]; // Generates the reel 
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                //TODO refactor to call class and auto create object in class
+                rReels[i] = GenerateReel(i);
+                rReels[i].GenerateSlots(matrix[i], this);
+            }
+            return Task.CompletedTask;
+        }
+
+        Reel GenerateReel(int reel_number)
+        {
+            //Create Reel Game Object
+            Type[] ReelType = new Type[1];
+            ReelType[0] = typeof(Reel);
+            //Debug.Log("Creating Reel Number " + ReelNumber);
+            Reel ReturnValue = new GameObject("Reel_" + reel_number, ReelType).GetComponent<Reel>();
+            //Debug.Log("Setting Transform and Parent Reel-" + ReelNumber);
+            //Position object in Game Space based on Reel Number Then set the parent
+            ReturnValue.transform.parent = transform;
+            ReturnValue.reel_number = reel_number;
+            return ReturnValue;
+        }
+
+        public void SpinTest()
+        {
+            //TODO refactor implement async
+            StopAllCoroutines();
+            if (StateManager.enCurrentState != States.BaseGameSpinStart)
+                SpinReelsTest();
+        }
+
+        async void SpinReelsTest()
+        {
+            //if(StateManager.state
+            StateManager.SwitchState(States.BaseGameSpinStart);
+            foreach (Reel rReel in rReels)
+            {
+                await Task.Delay(reel_spin_delay_ms); //TODO 
+            }
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                rReels[i].SpinReel();
+                //TODO Set ending reel symbols for testing purposes
+                //rReels[i].SetSlotEndConfiguration(GenerateEndReelSymbols());
+            }
+        }
+
+        IEnumerator SpinEnd()
+        {
+            StateManager.SwitchState(States.BaseGameSpinEnd);
+            Debug.Log("ReelSymbols.Count = " + ReelSymbols.Count);
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                rReels[i].StopReel();//Only use for specific reel stop features
+            }
+            yield return 0;
+        }
+
+
+        List<Symbols[]> GenerateEndReelsSymbols()
+        {
+            List<Symbols[]> ReturnValue = new List<Symbols[]>(rReels.Length);
+            for (int i = 0; i < ReturnValue.Count; i++)
+            {
+                ReturnValue[i] = new Symbols[rReels[i].transform.childCount];
+                Symbols[] temp = ReturnValue[i];
+                for (int j = 0; j < ReturnValue[i].Length; j++)
+                {
+                    temp[j] = (Symbols)UnityEngine.Random.Range(1, (int)Symbols.End);
+                }
+                ReturnValue[i] = temp;
+            }
+            return ReturnValue;
+        }
+
+        //Symbols[] GenerateEndReelSymbolsRandom()
+        //{
+        //    Symbols[] ReturnValue = new Symbols[iSlotsPerReel];
+        //    for (int i = 0; i < ReturnValue.Length; i++)
+        //    {
+        //        ReturnValue[i] = (Symbols)UnityEngine.Random.Range(1, (int)Symbols.End);
+        //    }
+        //    return ReturnValue;
+        //}
+
+        public void SetMatrixCurrentSpin(Reel[] rReelConfiguration)
+        {
+
+        }
+
+        public void SetMatrixNumberOfSpins(List<Reel[]> rReelConfiguration)
+        {
+
+        }
+
+        public void PopMultiSpinConfiguration()
+        {
+
+        }
+        /// <summary>
+        /// This will animate the Payline. (May need to cache slots into Event and fire event off. Find out in Optimization Phase)
+        /// </summary>
+        /// <param name="iPayline"> Defines the Payline. Length of input should be reel length</param>
+        public void AnimatePayLine(int[] iPayline)
+        {
+            for (int i = 0; i < iPayline.Length; i++)
+            {
+                rReels[i].slots_in_reel[iPayline[i]].PlayAnimation();
+            }
+        }
+
+        internal void UpdatePositionReels()
+        {
+            //TODO Fill out reel position logic
+            //for (int i = 0; i < rReels.Length; i++)
+            //    rReels[i].transform.position = GeneratePosition(i);
+        }
+    }
+
+
+}

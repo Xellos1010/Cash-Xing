@@ -9,9 +9,8 @@
 //
 //
 
-
 public class PlayerInformation 
 {
-	public string sUsername ;
+	public string username ;
 
 }

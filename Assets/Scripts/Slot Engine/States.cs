@@ -9,6 +9,13 @@
 //
 //
 
+public enum SpinStates
+{
+    SpinStart,
+    SpinLoop,
+    SpinInterrupt,
+    SpinEnd,
+}
 
 public enum States {
 	None,

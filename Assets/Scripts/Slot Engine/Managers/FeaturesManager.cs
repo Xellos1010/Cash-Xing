@@ -12,8 +12,8 @@
 
 public class FeaturesManager {
 	public Features feaActivatedFeatures ;
-	public void AnalyzeWinForFeatureActivation(Reel[] EndingCombination){
-	}
+	//public void AnalyzeWinForFeatureActivation(Reel[] EndingCombination){
+	//}
 	public void ActivateFeature(string Feature){
 	}
 }

@@ -9,244 +9,385 @@
 //
 //
 using UnityEngine;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Collections;
 using System;
 #if UNITY_EDITOR
 using UnityEditor;
 
-[CanEditMultipleObjects]
-[CustomEditor(typeof(Reel))]
-class ReelEditor : Editor
+namespace Slot_Engine.Matrix
 {
-    Reel myTarget;
-    
-    public void OnEnable()
+    [CanEditMultipleObjects]
+    [CustomEditor(typeof(Reel))]
+    class ReelEditor : Editor
     {
-        myTarget = (Reel)target;
-    }
+        Reel myTarget;
+        SerializedProperty reel_spin_time;
+        SerializedProperty reel_spin_speed;
+        /// <summary>
+        /// Animation curves for looping along path
+        /// </summary>
+        SerializedProperty looping_curves_xyz;
+        SerializedProperty positions_in_path_v3;
+        float time_in_path_temp = 0.0f;
+        public void OnEnable()
+        {
+            myTarget = (Reel)target;
+            reel_spin_time = serializedObject.FindProperty("reel_spin_time");
+            reel_spin_speed = serializedObject.FindProperty("reel_spin_speed");
+            looping_curves_xyz = serializedObject.FindProperty("looping_curves_xyz");
+            positions_in_path_v3 = serializedObject.FindProperty("positions_in_path_v3");
+            //looping_curves = new AnimationCurve[3]
+            //{
+            //     AnimationCurve.Linear(0, 0, reel_spin_time.floatValue, 1),
+            //     AnimationCurve.Linear(0, 0, reel_spin_time.floatValue, 1),
+            //     AnimationCurve.Linear(0, 0, reel_spin_time.floatValue, 1)
+            //};
+        }
 
-    public override void OnInspectorGUI()
-    {
-        base.OnInspectorGUI();
-        if (GUILayout.Button("Generate Slots"))
+        public override void OnInspectorGUI()
         {
-            myTarget.ClearReelSlots();            
-            myTarget.GenerateSlots(myTarget.viewable_slots + 2, myTarget.transform);
-        }
-        if (GUILayout.Button("Spin Reel Test"))
-        {
-            myTarget.SpinReel();
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Controls");
+            if (GUILayout.Button("Spin Reel Test"))
+            {
+                myTarget.SpinReel();
+            }
+            if (GUILayout.Button("Update Loop Curve"))
+            {
+                myTarget.UpdateLoopCurve();
+                //serializedObject.ApplyModifiedProperties();
+            }
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Test Properties for value returns");
+            time_in_path_temp = EditorGUILayout.Slider(time_in_path_temp, 0,reel_spin_time.floatValue);
+            EditorGUILayout.Vector3Field("Position along path at percentage", myTarget.GetLoopPositionFromTime(time_in_path_temp));
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Spin Properties");
+            EditorGUI.BeginChangeCheck();
+            //float new_reel_spin_speed = EditorGUILayout.Slider("Spin Speed",reel_spin_speed.floatValue,1,15);
+            float new_reel_spin_time = EditorGUILayout.Slider("Spin Time", reel_spin_time.floatValue,0.01f,4f);
+            if (EditorGUI.EndChangeCheck())
+            {
+                //reel_spin_speed.floatValue = new_reel_spin_speed;
+                reel_spin_time.floatValue = new_reel_spin_time;
+                serializedObject.ApplyModifiedProperties();
+                myTarget.UpdateLoopCurve();
+            }
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Loop Slot Curve Editor");
+            EditorGUI.BeginChangeCheck();
+            AnimationCurve spin_loop_curve_x = EditorGUILayout.CurveField("X Curve", looping_curves_xyz.GetArrayElementAtIndex(0).animationCurveValue);
+            AnimationCurve spin_loop_curve_y = EditorGUILayout.CurveField("Y Curve", looping_curves_xyz.GetArrayElementAtIndex(1).animationCurveValue);
+            AnimationCurve spin_loop_curve_z = EditorGUILayout.CurveField("Z Curve", looping_curves_xyz.GetArrayElementAtIndex(2).animationCurveValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                looping_curves_xyz.GetArrayElementAtIndex(0).animationCurveValue = spin_loop_curve_x;
+                looping_curves_xyz.GetArrayElementAtIndex(1).animationCurveValue = spin_loop_curve_y;
+                looping_curves_xyz.GetArrayElementAtIndex(2).animationCurveValue = spin_loop_curve_z;
+                serializedObject.ApplyModifiedProperties();
+                myTarget.UpdateLoopCurve();
+            }
+
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("To Remove Default inspector");
+            base.OnInspectorGUI();
         }
     }
-}
 #endif
-public class Reel : MonoBehaviour
-{
-    public delegate void SpinDelegate();
-    public delegate void SpinDelegateSwitch(States State);
-    public event SpinDelegate spin_activated_event;
-    public event SpinDelegateSwitch spin_state_changed;
-
-    [Range(1,5)]
-    public int viewable_slots = 3; //Extra 2 neeed to be generated for cushion to spin
-    public Slot[] slots_in_reel;
-    public int iSlotEndingNumber = 0;
-
-    private Symbols[] end_reel_configuration;
-
-    public float spin_speed = 125;
-
-    public void GenerateSlots(int iSlotCount, Transform tParent)
+    public class Reel : MonoBehaviour
     {
-        slots_in_reel = new Slot[iSlotCount];
-        for (int i = 0; i < iSlotCount; i++)
+        public delegate void SpinDelegate();
+        public delegate void SpinStateChangedTo(SpinStates spinState);
+        public event SpinDelegate spin_activated_event;
+        public event SpinStateChangedTo spin_state_changed;
+
+        public Matrix matrix;
+        public int reel_number = 0;
+
+        [Range(1, 5)]
+        public int viewable_slots = 3; //Extra 2 neeed to be generated for cushion to spin
+        public Slot[] slots_in_reel;
+        public int iSlotEndingNumber = 0;
+
+        //**Animation Curve that controls the position of slots along a path given time. Time to complete path is important**//
+        /// <summary>
+        /// How long it takes to go from first position to last position
+        /// </summary>
+        public float reel_spin_time = 4;
+        /// <summary>
+        /// Distance for animation to travel - May be used to change the speed at which you find position along path - Not used atm
+        /// </summary>
+        public float reel_spin_speed = 125; //Pixels per second
+        private bool slot_movement_enabled = false;
+
+        //For Spinning down the yCurve needs to be set for each
+        /// <summary>
+        /// start spin easing
+        /// </summary>
+        //public AnimationCurve[] start_spin_curve_xyz;
+        /// <summary>
+        /// Looping Path - slot 0 - end slot each key is a position in path
+        /// </summary>
+        public AnimationCurve[] looping_curves_xyz;
+        /// <summary>
+        /// end spin easing
+        /// </summary>
+        //public AnimationCurve[] end_spin_curve_xyz;
+
+        /// <summary>
+        /// Holds the reference for the slots position in path.
+        /// </summary>
+        public Vector3[] positions_in_path_v3;
+
+        private Symbols[] end_reel_configuration;
+
+        public async Task GenerateSlots(Vector3 iSlotCount, Matrix matrix_settings)
         {
-            slots_in_reel[i] = CreateSlot(i);
-            slots_in_reel[i].transform.name = "Slot_" + i;
-            //Set transform Before Setting Parent
-            slots_in_reel[i].transform.parent = tParent;
-            slots_in_reel[i].transform.position = GenerateLocalPosition(i);
-            //slSlots[i].transform.localScale = GenerateLocalScale();
-            //slots_in_reel[i].SetRandomSymbol();
-            slots_in_reel[i].rReelParentObject = this;
-            slots_in_reel[i].iPositonInReel = i;
-            slots_in_reel[i].SetEventCalls(this);
+            this.matrix = matrix_settings;
+            List<Slot> slots_in_reel = new List<Slot>();
+            int slot_count = 0;
+            //TODO Refactor to support omni direction reel generation
+            int ending_count = (int)iSlotCount.y + (int)matrix.reel_slot_padding.x + (int)matrix.reel_slot_padding.y;
+            positions_in_path_v3 = new Vector3[ending_count];
+
+            //Padding Slot Before Reel Generated
+            for (slot_count = 0; slot_count < ending_count; slot_count++)
+            {
+                slots_in_reel.Add(GenerateSlot(slot_count));
+            }
+            //Generate Ending Padding Slot
+            this.slots_in_reel = slots_in_reel.ToArray();
+            //Set Path of Loop Curve Keys
+            UpdateLoopCurve();
+            for (int i = 0; i < slots_in_reel.Count; i++) // TODO refactor for OmniDirectional Support
+            {
+                slots_in_reel[i].time_in_path = GenerateTimeInPath(slots_in_reel[i].transform.localPosition.y, positions_in_path_v3[positions_in_path_v3.Length - 1].y);
+            }
         }
-    }
-    public void SpinReel()
-    {
-        for (int i = 0; i < slots_in_reel.Length; i++)
+
+        private Slot GenerateSlot(int i)
         {
-            //TODO Change to move slot in reel to next position;
-            //Last slot needs to ease in and out to the "next position" but 
-            slots_in_reel[i].StartSpin();
+            Vector3 position_slot = GenerateLocalPosition(i);
+            positions_in_path_v3[i] = position_slot;
+            Slot generated_slot = CreateSlot(i, this, position_slot, this.matrix.slot_size);
+            generated_slot.reel_parent = this;
+            positions_in_path_v3[i] = position_slot;
+            return generated_slot;
         }
-    }
 
-    public void StartSpin(Slot slotToSpin)
-    {
-
-    }
-
-    public void StopReel()
-    {
-        Debug.Log("Input Logic for Stop Reel");
-    }
-
-
-    public void SetSlotEndConfiguration()
-    {
-        Debug.Log("Setting Ending Slot Configuration for " + transform.name);
-        end_reel_configuration = GenerateEndSymbols();
-        iSlotEndingNumber = slots_in_reel.Length;
-    }
-
-    public void SetSlotEndConfiguration(Symbols[] Input)
-    {
-        //Debug.Log("Setting Ending Slot Configuration for " + transform.name);
-        end_reel_configuration = Input;
-        iSlotEndingNumber = slots_in_reel.Length;
-    }
-
-    public void SetSlotEndConfiguration(Slot sSlot)
-    {
-        if (iSlotEndingNumber >= 0)
+        public void UpdateLoopCurve()
         {
-            sSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
+            SetCurvesStartEnd(ref looping_curves_xyz);
+            UpdateCurveKeysTimeReference(ref looping_curves_xyz);
+            UpdateSlotsTimeOnPath();
         }
-        else
+
+        private void UpdateSlotsTimeOnPath()
         {
-            Debug.Log(transform.name + " had trouble setting slot " + sSlot.transform.name + " the iSlotEndingNumber is " + iSlotEndingNumber);
+            for (int i = 0; i < slots_in_reel.Length; i++) //TODO Refactor for Omni-Directional Support
+            {
+                slots_in_reel[i].time_in_path = GenerateTimeInPath(slots_in_reel[i].transform.position.y, positions_in_path_v3[positions_in_path_v3.Length - 1].y);
+            }
         }
-    }
 
-    Slot CreateSlot(int iSlotNumber)
-    {
-        GameObject ReturnValue = Instantiate(Resources.Load("Prefabs/Slot")) as GameObject;//new GameObject("Slot_" + iSlotNumber, SlotComponents).GetComponent<Slot>();
-        //ReturnValue.Ran
-        Debug.Log("Creating Slot from prefab");
-        return ReturnValue.GetComponent<Slot>();
-    }
-
-    public void SyncronizePositionAllSlots()
-    {
-        int iLoopPositionSetCount = 0;
-        //Do not start at the last slot. It will always be the correct position
-        for (int i = slots_in_reel.Length - 1; i >= 0; i--)
+        private void SetCurvesStartEnd(ref AnimationCurve[] curves_to_set) //TODO abstract to take in curve to set start end
         {
-            if (slots_in_reel[i].bLoopPositionSet == false)
-                break;
+            //TODO Add ability to keep offsets made on each curve and do relative reconfigure
+            curves_to_set = new AnimationCurve[3]
+            {
+                AnimationCurve.Linear(0,positions_in_path_v3[0].x,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].x),
+                AnimationCurve.Linear(0,positions_in_path_v3[0].y,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].y),
+                AnimationCurve.Linear(0,positions_in_path_v3[0].z,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].z)
+            };
+        }
+
+        private void UpdateCurveKeysTimeReference(ref AnimationCurve[] curves_to_set_keys)
+        {
+            float endposx = positions_in_path_v3[positions_in_path_v3.Length - 1].x;
+            float endposy = positions_in_path_v3[positions_in_path_v3.Length - 1].y;
+            float endposz = positions_in_path_v3[positions_in_path_v3.Length - 1].z;
+
+            for (int i = 1; i < positions_in_path_v3.Length - 1; i++)
+            {
+                //t = (500 * 4)/1770
+                curves_to_set_keys[0].AddKey(GenerateTimeInPath(positions_in_path_v3[i].x, endposx), positions_in_path_v3[i].x);
+                curves_to_set_keys[1].AddKey(GenerateTimeInPath(positions_in_path_v3[i].y, endposy), positions_in_path_v3[i].y);
+                curves_to_set_keys[2].AddKey(GenerateTimeInPath(positions_in_path_v3[i].z, endposz), positions_in_path_v3[i].z);
+            }
+        }
+
+        public float GenerateTimeInPath(float current_value, float end_value )
+        {
+            return (current_value * reel_spin_time) / end_value;
+        }
+
+        Slot CreateSlot(int iSlotNumber, Reel parent_reel, Vector3 startPosition, Vector3 scale)
+        {
+            GameObject ReturnValue = Instantiate(Resources.Load("Prefabs/Slot")) as GameObject; // TODO Refactor to include custom sot container passable argument
+            ReturnValue.gameObject.name = "Slot";
+            ReturnValue.transform.parent = parent_reel.transform;
+            ReturnValue.transform.GetChild(0).localScale = scale;
+            ReturnValue.transform.localPosition = startPosition;
+            return ReturnValue.GetComponent<Slot>();
+        }
+
+        public void SpinReel()
+        {
+            //When reel is generated it's vector3[] path is generated for reference from slots
+            SetSpinStateTo(SpinStates.SpinStart);
+            //TODO hooks for reel state machine
+            for (int i = 0; i < slots_in_reel.Length; i++)
+            {
+                //Last slot needs to ease in and out to the "next position" but 
+                slots_in_reel[i].StartSpin(GenerateSlotPath(i, i)); // Tween to the same position then evaluate
+            }
+        }
+
+        /// <summary>
+        /// Called by each slot to get position from curve
+        /// </summary>
+        /// <param name="time">time to return position for</param>
+        /// <returns>Position for slot</returns>
+        public Vector3 GetLoopPositionFromTime(float time)
+        {
+            return EvaluatePositionForTime(looping_curves_xyz, time);
+        }
+
+        /// <summary>
+        /// Returns the position along a curve based on time
+        /// </summary>
+        /// <param name="curves_to_evaluate_xyz">Curves that affect easing of evaluation</param>
+        /// <param name="time">time along curve</param>
+        /// <returns></returns>
+        public Vector3 EvaluatePositionForTime(AnimationCurve[] curves_to_evaluate_xyz,float time)
+        {
+            return new Vector3
+            (
+                EvaluateAnimationCurve(curves_to_evaluate_xyz[0], time),
+                EvaluateAnimationCurve(curves_to_evaluate_xyz[1], time),
+                EvaluateAnimationCurve(curves_to_evaluate_xyz[2], time)
+            );
+        }
+        /// <summary>
+        /// Used to return the float a position in slot based on time 0-1
+        /// </summary>
+        /// <param name="curve_to_evaluate">Curve to use to return float between start and end of curve</param>
+        /// <param name="time">0-1 time to evaluate 0-100%</param>
+        /// <returns>Evaluated float at time</returns>
+        public float EvaluateAnimationCurve(AnimationCurve curve_to_evaluate, float time)
+        {
+            return curve_to_evaluate.Evaluate(time);
+        }
+        private Vector3[] GenerateSlotPath(int fromSlot, int toSlot)
+        {
+            //TODO Add logic for checking to slot index not out of range
+            return new Vector3[2] { positions_in_path_v3[fromSlot], positions_in_path_v3[toSlot]};
+        }
+
+        private void SetSpinStateTo(SpinStates toState)
+        {
+            if (spin_state_changed != null)
+                spin_state_changed.Invoke(toState);
+        }
+
+        public void StartSpin(Slot slotToSpin)
+        {
+
+        }
+
+        public void StopReel()
+        {
+            Debug.Log("Input Logic for Stop Reel");
+        }
+
+        public void SetSlotEndConfiguration(Slot sSlot)
+        {
+            if (iSlotEndingNumber >= 0)
+            {
+                sSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
+            }
             else
             {
-                ++iLoopPositionSetCount;
-                continue;
+                Debug.Log(transform.name + " had trouble setting slot " + sSlot.transform.name + " the iSlotEndingNumber is " + iSlotEndingNumber);
             }
         }
-        if (iLoopPositionSetCount == slots_in_reel.Length)
+
+        //TODO Implement custom offset and editor interaction
+        public Vector3 offset_from_anchor = Vector3.zero;
+        //**Need to have slots generate their position
+        Vector3 GenerateLocalPosition(int iSlotNumber)
         {
-            //Debug.Log("SyncronizePositionAllSlots()");
-            for (int i = slots_in_reel.Length - 2; i >= 0; i--)
+            //Change later to enter customizes reel starting height (Matrix 3x4x5x4x3)
+            //Need To Determine How many Slots are in the Reel and calculate the iExtraSlotsPerReel (-1 to include the end slot not being active)
+            //of the reel into the starting Y Position
+            //TODO refactor to include which direction building only supports left to right atm
+            Vector3 return_position = new Vector3(
+                offset_from_anchor.x - (reel_number*matrix.slot_size.x+reel_number * matrix.padding.x),
+                offset_from_anchor.y - (iSlotNumber * matrix.slot_size.y + iSlotNumber * matrix.padding.y),
+                0
+                );
+            //if(
+            //yAxis = SlotEngine._instance.v2ReelTopLeft.y  SlotEngine._instance.iExtraSlotsPerReel
+            return return_position;
+        }
+
+        public float GenerateEndPositionAndSymbol(Slot slSlot)
+        {
+            //Debug.Log(transform.name + " Has iSlotEndingNumber at " + iSlotEndingNumber + " While Generating Symbol and positon for slot " + slSlot.transform.name);
+            if (iSlotEndingNumber >= 0)
             {
-                //slSlots[i].SyncronizePositionToNextSlot();
+                slSlot.iEndPositionInReel = iSlotEndingNumber;
+                //Needs to be decreased here due to the count of the array not including 0 of an index value
+                if (iSlotEndingNumber - 1 >= 0)
+                    iSlotEndingNumber -= 1;
+                try
+                {
+                    slSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
+                }
+                catch
+                {
+                    Debug.Log("There is an issue with the iSlotEndingNumber " + iSlotEndingNumber);
+                }
+                return GenerateLocalPosition(iSlotEndingNumber).y;
             }
-        }
-    }
-
-    public Vector3 SyncronizePositionNextSlot(Slot sSlotSyncronize)
-    {
-        int iComparingSlot = sSlotSyncronize.iPositonInReel + 1;
-        if (iComparingSlot >= slots_in_reel.Length)
-            iComparingSlot = 1;
-        Debug.Log("SyncronizePosition(" + sSlotSyncronize.name + ") iComparingSlot = " + iComparingSlot + ". Returning " + slots_in_reel[iComparingSlot].transform.localPosition);
-        foreach (Slot slot in slots_in_reel)
-        {
-            Debug.Log("Comparing " + slot.transform.name + " to " + sSlotSyncronize.name + " slot.iPositionInReel = " + slot.iPositonInReel + " iComparingSlot =" + iComparingSlot);
-            if (slot.iPositonInReel == iComparingSlot)
+            else
             {
-                Debug.Log(transform.name + " is SyncronizePositionNextSlot(" + sSlotSyncronize.transform.name + ") Next slot is " + iComparingSlot + " slot.transform.name = " + slot.transform.name + " slot.transform.localPosition = " + slot.transform.localPosition);
-                return slot.transform.localPosition;
+                Debug.Log(transform.name + " Has iSlotEndingNumber at " + iSlotEndingNumber + " While Generating Symbol and positon for slot " + slSlot.transform.name);
             }
+            return 0;
         }
-        //Debug.Log("Returning 0 for " + transform.name + " iComparingSlot = " + iComparingSlot);
-        return Vector3.zero;
-    }
 
-    //**Need to have slots generate their position
-    Vector3 GenerateLocalPosition(int iSlotNumber)
-    {
-        //Change later to enter customizes reel starting height (Matrix 3x4x5x4x3)
-        //Need To Determine How many Slots are in the Reel and calculate the iExtraSlotsPerReel (-1 to include the end slot not being active)
-        //of the reel into the starting Y Position
-
-        float yAxis = SlotEngine._instance.fStartingSpotSlot() - (SlotEngine._instance.slotPaddingY * iSlotNumber);
-        //if(
-        //yAxis = SlotEngine._instance.v2ReelTopLeft.y  SlotEngine._instance.iExtraSlotsPerReel
-        return new Vector3(0, yAxis, 0);
-    }
-
-    public float GenerateEndPositionAndSymbol(Slot slSlot)
-    {
-        //Debug.Log(transform.name + " Has iSlotEndingNumber at " + iSlotEndingNumber + " While Generating Symbol and positon for slot " + slSlot.transform.name);
-        if (iSlotEndingNumber >= 0)
+        internal void UpdateSlotPositions()
         {
-            slSlot.iEndPositionInReel = iSlotEndingNumber;
-            //Needs to be decreased here due to the count of the array not including 0 of an index value
-            if (iSlotEndingNumber - 1 >= 0)
-                iSlotEndingNumber -= 1;
-            try
+            for (int i = 0; i < slots_in_reel.Length; i++)
             {
-                slSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
+                slots_in_reel[i].transform.position = GenerateLocalPosition(i);
             }
-            catch
+        }
+        public Symbols[] GenerateEndSymbols()
+        {
+            Symbols[] temp = new Symbols[slots_in_reel.Length];
+            for (int i = 0; i < temp.Length; i++)
             {
-                Debug.Log("There is an issue with the iSlotEndingNumber " + iSlotEndingNumber);
+                temp[i] = (Symbols)UnityEngine.Random.RandomRange(0, (int)Symbols.End - 1);
             }
-            return GenerateLocalPosition(iSlotEndingNumber).y;
+            return temp;
         }
-        else
-        {
-            Debug.Log(transform.name + " Has iSlotEndingNumber at " + iSlotEndingNumber + " While Generating Symbol and positon for slot " + slSlot.transform.name);
-        }
-        return 0;
-    }
 
-    internal void UpdateSlotPositions()
-    {
-        for (int i = 0; i < slots_in_reel.Length; i++)
+        public void PlayAnimationSpecificSlot(int iSlotNumber)
         {
-            slots_in_reel[i].transform.position = GenerateLocalPosition(i);
+            slots_in_reel[iSlotNumber].PlayAnimation();
         }
-    }
-    public Symbols[] GenerateEndSymbols()
-    {
-        Symbols[] temp = new Symbols[slots_in_reel.Length];
-        for (int i = 0; i < temp.Length; i++)
+
+        internal void ClearReelSlots()
         {
-            temp[i] = (Symbols)UnityEngine.Random.RandomRange(0, (int)Symbols.End - 1);
+            for (int i = transform.childCount - 1; i >= 0; i--)
+                DestroyImmediate(transform.GetChild(i).gameObject);
         }
-        return temp;
-    }
 
-    public void PlayAnimationSpecificSlot(int iSlotNumber)
-    {
-        slots_in_reel[iSlotNumber].PlayAnimation();
     }
-
-    internal void ClearReelSlots()
-    {
-        for (int i = transform.childCount - 1; i >= 0; i--)
-            DestroyImmediate(transform.GetChild(i).gameObject);
-    }
-
-    /*void Update()
-    {
-        if (StateManager.enCurrentState == States.BaseGameSpinLoop)
-        {
-            for (int i = slSlots.Length-1; i >= 0; i--)
-            {
-                Debug.Log("slSlots["+i+"]");
-                slSlots[i].CheckPosition();
-            }
-        }
-    }*/
 
 }
