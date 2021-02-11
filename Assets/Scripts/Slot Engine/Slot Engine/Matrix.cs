@@ -26,36 +26,37 @@ namespace Slot_Engine.Matrix
     {
         Matrix myTarget;
         SerializedProperty state;
+        SerializedProperty reel_spin_delay_ms;
         public void OnEnable()
         {
             myTarget = (Matrix)target;
+            reel_spin_delay_ms = serializedObject.FindProperty("reel_spin_delay_ms");
         }
 
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
-            if (GUILayout.Button("Generate Reels"))
-            {
-                //myTarget.GenerateMatrix();
-            }
-            if (GUILayout.Button("Set Reel Positions"))
-            {
-                myTarget.UpdatePositionReels();
-            }
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+            EditorGUI.BeginChangeCheck();
+            reel_spin_delay_ms.intValue = EditorGUILayout.IntSlider("Delay between reels star spin ms",reel_spin_delay_ms.intValue,0,2000);
+            if (EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+            }
             if (Application.isPlaying)
             {
-                if (StateManager.enCurrentState != States.BaseGameSpinLoop && StateManager.enCurrentState != States.BaseGameSpinStart)
+                if (StateManager.enCurrentState != States.BaseGameSpinLoop)
+                {
                     if (GUILayout.Button("Start Test Spin"))
                     {
                         myTarget.SpinTest();
-                        SceneView.RepaintAll();
                     }
-                if (StateManager.enCurrentState == States.BaseGameSpinLoop)
+                }
+                else
                 {
                     if (GUILayout.Button("End Test Spin"))
                     {
-                        myTarget.SpinTest();
+                        myTarget.EndSpin();
                     }
                 }
             }
@@ -106,14 +107,28 @@ namespace Slot_Engine.Matrix
                 for (int i = transform.childCount - 1; i >= 0; i--)
                     DestroyImmediate(transform.GetChild(i).gameObject);
             }
-            rReels = new Reel[matrix.Length]; // Generates the reel 
-            for (int i = 0; i < rReels.Length; i++)
-            {
-                //TODO refactor to call class and auto create object in class
-                rReels[i] = GenerateReel(i);
-                rReels[i].GenerateSlots(matrix[i], this);
-            }
+            GenerateReels(matrix);
             return Task.CompletedTask;
+        }
+
+        private void GenerateReels(Vector3[] matrix)
+        {
+            List<Reel> newReelList = new List<Reel>();
+            if (rReels == null)
+                rReels = new Reel[0];
+            newReelList.AddRange(rReels);
+            if(newReelList.Count < matrix.Length)
+            {
+                for (int i = 0; i < matrix.Length; i++)
+                {
+                    if(i == newReelList.Count)
+                    {
+                        newReelList.Add(GenerateReel(i));
+                    }
+                    newReelList[i].UpdateSlotsInReel(matrix[i], this);
+                }
+            }
+            rReels = newReelList.ToArray();
         }
 
         Reel GenerateReel(int reel_number)
@@ -132,26 +147,22 @@ namespace Slot_Engine.Matrix
 
         public void SpinTest()
         {
-            //TODO refactor implement async
+            //TODO refactor implement async and stop all tasks
             StopAllCoroutines();
             if (StateManager.enCurrentState != States.BaseGameSpinStart)
-                SpinReelsTest();
+                SpinReels();
         }
 
-        async void SpinReelsTest()
+        async void SpinReels()
         {
             //if(StateManager.state
             StateManager.SwitchState(States.BaseGameSpinStart);
-            foreach (Reel rReel in rReels)
+            for(int i = 0; i < rReels.Length; i++)
             {
-                await Task.Delay(reel_spin_delay_ms); //TODO 
-            }
-            for (int i = 0; i < rReels.Length; i++)
-            {
+                await Task.Delay(reel_spin_delay_ms);
                 rReels[i].SpinReel();
-                //TODO Set ending reel symbols for testing purposes
-                //rReels[i].SetSlotEndConfiguration(GenerateEndReelSymbols());
             }
+            StateManager.SwitchState(States.BaseGameSpinLoop);
         }
 
         IEnumerator SpinEnd()
@@ -165,7 +176,6 @@ namespace Slot_Engine.Matrix
             yield return 0;
         }
 
-
         List<Symbols[]> GenerateEndReelsSymbols()
         {
             List<Symbols[]> ReturnValue = new List<Symbols[]>(rReels.Length);
@@ -175,7 +185,7 @@ namespace Slot_Engine.Matrix
                 Symbols[] temp = ReturnValue[i];
                 for (int j = 0; j < ReturnValue[i].Length; j++)
                 {
-                    temp[j] = (Symbols)UnityEngine.Random.Range(1, (int)Symbols.End);
+                    temp[j] = (Symbols)UnityEngine.Random.Range(1, (int)Symbols.End); // TODO refactor to use range from supported symbol set
                 }
                 ReturnValue[i] = temp;
             }
@@ -223,6 +233,25 @@ namespace Slot_Engine.Matrix
             //TODO Fill out reel position logic
             //for (int i = 0; i < rReels.Length; i++)
             //    rReels[i].transform.position = GeneratePosition(i);
+        }
+
+        internal void EndSpin()
+        {
+            //TODO refactor to calculate distance till reels present final symbol configuration
+            StateManager.SwitchState(States.BaseGameSpinEnd);
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                rReels[i].StopReel();
+            }
+            StateManager.SwitchState(States.BaseGameIdle);
+        }
+
+        internal void UpdateSlotsInReels()
+        {
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                rReels[i].UpdateSlotsInReel(matrix[i],this);
+            }
         }
     }
 

@@ -42,7 +42,8 @@ public static class StateManager
 	public static void SwitchState(States State)
     {
         enCurrentState = State;
-        ActivateSwitchState(State);
+        if(ActivateSwitchState != null)
+            ActivateSwitchState.Invoke(State);
 	}
 
     public static void SwitchStateSpin(States SlotEngineState)

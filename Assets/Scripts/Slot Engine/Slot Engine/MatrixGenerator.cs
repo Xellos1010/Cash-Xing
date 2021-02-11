@@ -30,12 +30,17 @@ namespace Slot_Engine.Matrix
         SerializedProperty slot_size_xyz;
         SerializedProperty matrix; //Vector3[] slot to generate and which direction 
 
+        SerializedProperty symbols_supported;
+        SerializedProperty skin_graphics;
+
         public void OnEnable()
         {
             myTarget = (MatrixGenerator)target;
             padding_xyz = serializedObject.FindProperty("matrix_padding");
             slot_size_xyz = serializedObject.FindProperty("slot_size");
             matrix = serializedObject.FindProperty("matrix");
+            symbols_supported = serializedObject.FindProperty("symbols_supported");
+            skin_graphics = serializedObject.FindProperty("skin_graphics");
         }
 
         public override void OnInspectorGUI()
@@ -66,7 +71,7 @@ namespace Slot_Engine.Matrix
                 serializedObject.ApplyModifiedProperties();
                 //TODO reduce to 1 call - Update Matrix Position
                 myTarget.UpdateReelSlotPositions();
-                myTarget.UpdateReelPositions();
+                myTarget.UpdateSlotsInReels();
             }
             EditorGUILayout.LabelField("Modify Matrix - Slot Number per reel");
             List<int[]> slots_per_reel = new List<int[]>();
@@ -88,9 +93,10 @@ namespace Slot_Engine.Matrix
                 for (int x = 0; x < reel_size; x++)
                 {
                     matrix.GetArrayElementAtIndex(x).vector3Value = new Vector3(slots_per_reel[x][0], slots_per_reel[x][1], slots_per_reel[x][2]);
-                    serializedObject.ApplyModifiedProperties();
-
                 }
+                serializedObject.ApplyModifiedProperties();
+                myTarget.UpdateSlotsInReels();
+
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Modify Padding");
@@ -104,7 +110,7 @@ namespace Slot_Engine.Matrix
                 serializedObject.ApplyModifiedProperties();
                 //TODO reduce to 1 call - Update Matrix Position
                 myTarget.UpdateReelSlotPositions();
-                myTarget.UpdateReelPositions();
+                myTarget.UpdateSlotsInReels();
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Modify Slot Size");
@@ -117,7 +123,7 @@ namespace Slot_Engine.Matrix
                 slot_size_xyz.vector3Value = new Vector3(slot_size_x, slot_size_y, slot_size_z);
                 serializedObject.ApplyModifiedProperties();
                 myTarget.UpdateReelSlotPositions();
-                myTarget.UpdateReelPositions();
+                myTarget.UpdateSlotsInReels();
             }
             BoomEditorUtilities.DrawUILine(Color.white);
         }
@@ -150,7 +156,15 @@ namespace Slot_Engine.Matrix
 
 
         //Engine Options
-        public eSkins eSkin;
+        /// <summary>
+        /// What folder should I use for loading graphics from. TODO build file explorer folder selection and Resources path parse
+        /// </summary>
+        public string skin_graphics;
+        /// <summary>
+        /// list of supported symbols. TODO Display editor which allows you to add based on enum dropdown select and add. Do not display symbols in dropdown already in list
+        /// </summary>
+        public string[] symbols_supported;
+
         public Vector3 slot_size;
         public Vector3 matrix_padding = new Vector3(10, 10, 0);
         public Vector3 matrix_anchor_top_left;
@@ -189,11 +203,11 @@ namespace Slot_Engine.Matrix
                 }
         }
 
-        internal void UpdateReelPositions()
+        internal void UpdateSlotsInReels()
         {
             Matrix matrixInUse = FindObjectOfType<Matrix>();
             if(matrixInUse != null)
-                matrixInUse.UpdatePositionReels();
+                matrixInUse.UpdateSlotsInReels();
         }
         //******************
     }

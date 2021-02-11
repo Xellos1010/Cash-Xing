@@ -11,7 +11,6 @@
 
 
 public enum Symbols {
-	None = -1,
 	SF01,
 	SF02,
 	SF03,
@@ -32,5 +31,5 @@ public enum Symbols {
 	RO03,
 	RO04,
 	RO05,
-	End
+    End
 }

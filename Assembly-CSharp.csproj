@@ -93,6 +93,7 @@
     <Compile Include="Assets\FPSManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixGenerator.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\eSpinStyle.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

@@ -49,8 +49,8 @@ namespace Slot_Engine.Matrix
             enSymbol = Symbol;
         }
 
-        public Symbols enSymbol = Symbols.None;
-        public States enSlotState = States.None;
+        public Symbols enSymbol;
+        public States enSlotState;
         
         public Reel reel_parent;
         public int iPositonInReel = 0;
@@ -65,27 +65,9 @@ namespace Slot_Engine.Matrix
         public float fSpinTime = 0.006f;
 
         public bool bLoopPositionSet = false;
-
-        /// <summary>
-        /// Test Var to set position along path ensure evaluation happening correct
-        /// </summary>
-        public float percentage_along_path = 0;
         //Unity Default Functions
 
         //*************
-
-        void StateSwitch(States state)
-        {
-            //Debug.log("State switched to " + state.ToString());
-            if (state == States.BaseGameSpinLoop || state == States.BonusGameSpinLoop)
-            {
-                enSlotState = state;
-            }
-            else if (state == States.BaseGameSpinEnd || state == States.BonusGameSpinEnd)
-            {
-                enSlotState = States.BaseGameSpinEnd;
-            }
-        }
 
         public void PlayAnimation()
         {
@@ -109,31 +91,7 @@ namespace Slot_Engine.Matrix
             movement_enabled = true;
             //iTween.EaseType easetype_to_start = iTween.EaseType.easeInBack; //TODO refactor to enable settingparent
         }
-        private void SetReelPosition(int v)
-        {
-            iPositonInReel = v;
-            //Get new pathing
-            Debug.LogWarning("v3 Current Tweenpath is not set");
-            //v3CurrentTweenpath = reel_parent.GetTweenPathForSlot(iPositonInReel);
-        }
-        //TODO update for omni directional
-        void MoveToTop()
-        {
-            //TODO Check if set end symbol is set and pop from reel end symbol to display if not padding slot
-            //transform.localPosition = reel_parent.GeneratePositionOffsetFromTopSlot();
-            //offset to stitch behind the top most slot
-            float timecal = time_in_path - reel_parent.reel_spin_time;
-            SetTimeInPathTo(timecal);
-            if (timecal >= 0)
-            { 
-                transform.localPosition = GeneratePositionUpdate(timecal);
-            }
-            else
-            {
-                transform.localPosition = reel_parent.GeneratePositionOffsetFromTopSlot();
-            }
-        }
-
+        
         //TODO update for omni directional
         private void SetTimeInPathByPosition(Vector3 localPosition)
         {
@@ -169,21 +127,52 @@ namespace Slot_Engine.Matrix
             return (Symbols)iRandom;
         }
 
-        Vector3 GeneratePositionUpdate(float time_on_path) //TODO remove
+        Vector3 GeneratePositionUpdateTime(float time_on_path) //TODO remove
         {
             return reel_parent.GetLoopPositionFromTime(time_on_path);
         }
-
+        Vector3 GeneratePositionUpdateSpeed(float amount_to_add) //Needs to be positive to move forwards and negative to move backwards
+        {
+            return new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
+        }
         void Update()
         {
             if (movement_enabled)
             {
-                if (transform.position.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y || time_in_path > reel_parent.reel_spin_time)
-                    MoveToTop();
-                time_in_path += Time.deltaTime;
-                transform.localPosition = GeneratePositionUpdate(time_in_path);
+                Vector3 toPosition;
+                if (reel_parent.use_time_speed)
+                {
+                    
+                    time_in_path += Time.deltaTime;
+                    if(time_in_path > reel_parent.reel_spin_time)
+                    {
+                        time_in_path = reel_parent.reel_spin_time - time_in_path;
+                    }
+                    toPosition = GeneratePositionUpdateTime(time_in_path);
+                }
+                else
+                {
+                    toPosition = GeneratePositionUpdateSpeed(reel_parent.reel_spin_speed);
+                    if (toPosition.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
+                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], true);
+                    if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
+                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
+                }
+                transform.localPosition = toPosition;
             }
         }
 
+        private void ShiftToPositionBy(ref Vector3 toPosition, Vector3 lastPosition, bool upDown)
+        {
+            if(upDown)
+                toPosition = new Vector3(toPosition.x,toPosition.y - lastPosition.y, toPosition.z);
+            else
+                toPosition = new Vector3(toPosition.x, toPosition.y + lastPosition.y, toPosition.z);
+        }
+
+        internal void StopSpin()
+        {
+            movement_enabled = false;
+        }
     }
 }

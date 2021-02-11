@@ -19,11 +19,14 @@ using UnityEditor;
 
 namespace Slot_Engine.Matrix
 {
+    
     [CanEditMultipleObjects]
     [CustomEditor(typeof(Reel))]
     class ReelEditor : Editor
     {
+        public eSpinStyle spin_options;
         Reel myTarget;
+        SerializedProperty use_time_speed;
         SerializedProperty reel_spin_time;
         SerializedProperty reel_spin_speed;
         /// <summary>
@@ -31,7 +34,9 @@ namespace Slot_Engine.Matrix
         /// </summary>
         SerializedProperty looping_curves_xyz;
         SerializedProperty positions_in_path_v3;
-        float time_in_path_temp = 0.0f;
+        SerializedProperty spin_style;
+        private float time_in_path_temp;
+
         public void OnEnable()
         {
             myTarget = (Reel)target;
@@ -39,12 +44,8 @@ namespace Slot_Engine.Matrix
             reel_spin_speed = serializedObject.FindProperty("reel_spin_speed");
             looping_curves_xyz = serializedObject.FindProperty("looping_curves_xyz");
             positions_in_path_v3 = serializedObject.FindProperty("positions_in_path_v3");
-            //looping_curves = new AnimationCurve[3]
-            //{
-            //     AnimationCurve.Linear(0, 0, reel_spin_time.floatValue, 1),
-            //     AnimationCurve.Linear(0, 0, reel_spin_time.floatValue, 1),
-            //     AnimationCurve.Linear(0, 0, reel_spin_time.floatValue, 1)
-            //};
+            spin_style = serializedObject.FindProperty("spin_style");
+            use_time_speed = serializedObject.FindProperty("use_time_speed");
         }
 
         public override void OnInspectorGUI()
@@ -55,11 +56,6 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.SpinReel();
             }
-            if (GUILayout.Button("Update Loop Curve"))
-            {
-                myTarget.UpdateLoopCurve();
-                //serializedObject.ApplyModifiedProperties();
-            }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Test Properties for value returns");
             time_in_path_temp = EditorGUILayout.Slider(time_in_path_temp, 0,reel_spin_time.floatValue);
@@ -67,14 +63,49 @@ namespace Slot_Engine.Matrix
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Spin Properties");
             EditorGUI.BeginChangeCheck();
-            //float new_reel_spin_speed = EditorGUILayout.Slider("Spin Speed",reel_spin_speed.floatValue,1,15);
-            float new_reel_spin_time = EditorGUILayout.Slider("Spin Time", reel_spin_time.floatValue,0.01f,4f);
+            spin_options = (eSpinStyle)EditorGUILayout.EnumPopup("Spin on Speed or Time", (eSpinStyle)spin_style.enumValueIndex);
             if (EditorGUI.EndChangeCheck())
             {
-                //reel_spin_speed.floatValue = new_reel_spin_speed;
-                reel_spin_time.floatValue = new_reel_spin_time;
+                switch (spin_options)
+                {
+                    case eSpinStyle.time:
+                        use_time_speed.boolValue = true;
+                        break;
+                    case eSpinStyle.speed:
+                        use_time_speed.boolValue = false;
+                        break;
+                }
+                spin_style.enumValueIndex = (int)spin_options;
                 serializedObject.ApplyModifiedProperties();
-                myTarget.UpdateLoopCurve();
+            }
+            EditorGUI.BeginChangeCheck();
+            switch (spin_options)
+            {
+                case eSpinStyle.time:
+                    float new_reel_spin_time = EditorGUILayout.Slider("Spin Time", reel_spin_time.floatValue, 0.01f, 4f);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        reel_spin_time.floatValue = new_reel_spin_time;
+                        serializedObject.ApplyModifiedProperties();
+                        myTarget.UpdateLoopCurve();
+                    }
+
+                    if (GUILayout.Button("Update Loop Curve"))
+                    {
+                        myTarget.UpdateLoopCurve();
+                    }
+                    break;
+                case eSpinStyle.speed:
+                    float new_reel_spin_speed = EditorGUILayout.Slider("Spin Speed", reel_spin_speed.floatValue, -500, 500);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        reel_spin_speed.floatValue = new_reel_spin_speed;
+                        serializedObject.ApplyModifiedProperties();
+                        //myTarget.UpdateSpeed();
+                    }
+                    break;
+                default:
+                    break;
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Loop Slot Curve Editor");
@@ -107,12 +138,11 @@ namespace Slot_Engine.Matrix
         public Matrix matrix;
         public int reel_number = 0;
 
-        [Range(1, 5)]
-        public int viewable_slots = 3; //Extra 2 neeed to be generated for cushion to spin
+        public int viewable_slots = 3; //atleast 1 extra slot needed to for slots to spin onto the bezel
         public Slot[] slots_in_reel;
-        public int iSlotEndingNumber = 0;
 
         //**Animation Curve that controls the position of slots along a path given time. Time to complete path is important**//
+        public bool use_time_speed = true;
         /// <summary>
         /// How long it takes to go from first position to last position
         /// </summary>
@@ -121,7 +151,8 @@ namespace Slot_Engine.Matrix
         /// Distance for animation to travel - May be used to change the speed at which you find position along path - Not used atm
         /// </summary>
         public float reel_spin_speed = 125; //Pixels per second
-        private bool slot_movement_enabled = false;
+
+        public eSpinStyle spin_style;
 
         //For Spinning down the yCurve needs to be set for each
         /// <summary>
@@ -144,20 +175,33 @@ namespace Slot_Engine.Matrix
 
         private Symbols[] end_reel_configuration;
 
-        public async Task GenerateSlots(Vector3 iSlotCount, Matrix matrix_settings)
+        public async Task UpdateSlotsInReel(Vector3 new_slot_count, Matrix matrix_settings)
         {
             this.matrix = matrix_settings;
             List<Slot> slots_in_reel = new List<Slot>();
+            if (this.slots_in_reel != null)
+                slots_in_reel.AddRange(this.slots_in_reel);
             int slot_count = 0;
-            //TODO Refactor to support omni direction reel generation
-            int ending_count = (int)iSlotCount.y + (int)matrix.reel_slot_padding.x + (int)matrix.reel_slot_padding.y;
-            positions_in_path_v3 = new Vector3[ending_count+1];//Spin into empty slot then move to top
 
-            //Padding Slot Before Reel Generated
-            for (slot_count = 0; slot_count < ending_count; slot_count++)
+            //TODO Refactor to support omni direction reel generation
+            int ending_count = (int)new_slot_count.y + (int)matrix.reel_slot_padding.y;
+            positions_in_path_v3 = new Vector3[ending_count+1];//Spin into empty slot then move to top
+            if (slots_in_reel.Count < ending_count)
             {
-                slots_in_reel.Add(GenerateSlot(slot_count));
+                //Padding Slot Before Reel Generated
+                for (slot_count = 0; slot_count < ending_count; slot_count++)
+                {
+                    if (slots_in_reel.Count == slot_count)
+                        slots_in_reel.Add(GenerateSlot(slot_count));
+                }
             }
+            else
+            {
+                for (slot_count = ending_count; slot_count > ending_count; slot_count--)
+                {
+                    Destroy(slots_in_reel[slot_count].gameObject);
+                }
+            } 
             //Generate Ending Padding Slot
             this.slots_in_reel = slots_in_reel.ToArray();
             Vector3 emptyPosition = GenerateLocalPosition(positions_in_path_v3.Length - 1);
@@ -168,13 +212,28 @@ namespace Slot_Engine.Matrix
             {
                 slots_in_reel[i].time_in_path = GenerateTimeInPath(slots_in_reel[i].transform.localPosition.y, positions_in_path_v3[positions_in_path_v3.Length - 1].y);
             }
+            UpdateSpinStyle(eSpinStyle.speed);
+        }
+
+        private void UpdateSpinStyle(eSpinStyle to_spin_style)
+        {
+            switch (to_spin_style)
+            {
+                case eSpinStyle.time:
+                    use_time_speed = true;
+                    break;
+                case eSpinStyle.speed:
+                    use_time_speed = false;
+                    break;
+            }
+            Debug.Log("Spin Style updated to " + to_spin_style.ToString());
         }
 
         private Slot GenerateSlot(int i)
         {
             Vector3 position_slot = GenerateLocalPosition(i);
             positions_in_path_v3[i] = position_slot;
-            Slot generated_slot = CreateSlot(i, this, position_slot, this.matrix.slot_size);
+            Slot generated_slot = CreateSlot(i, this, position_slot, Vector3.one);
             generated_slot.reel_parent = this;
             positions_in_path_v3[i] = position_slot;
             return generated_slot;
@@ -236,7 +295,7 @@ namespace Slot_Engine.Matrix
             return ReturnValue.GetComponent<Slot>();
         }
 
-        public void SpinReel()
+        public async Task SpinReel()
         {
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSpinStateTo(SpinStates.SpinStart);
@@ -246,6 +305,9 @@ namespace Slot_Engine.Matrix
                 //Last slot needs to ease in and out to the "next position" but 
                 slots_in_reel[i].StartSpin(GenerateSlotPath(i, i)); // Tween to the same position then evaluate
             }
+            //Task.Delay(time_to_enter_loop);
+            //TODO refactor check for interupt state
+            SetSpinStateTo(SpinStates.SpinLoop);
         }
 
         /// <summary>
@@ -302,20 +364,17 @@ namespace Slot_Engine.Matrix
 
         public void StopReel()
         {
-            Debug.Log("Input Logic for Stop Reel");
+            //When reel is generated it's vector3[] path is generated for reference from slots
+            SetSpinStateTo(SpinStates.SpinEnd);
+            //TODO hooks for reel state machine
+            for (int i = 0; i < slots_in_reel.Length; i++)
+            {
+                //Last slot needs to ease in and out to the "next position" but 
+                slots_in_reel[i].StopSpin(); // Tween to the same position then evaluate
+            }
+            //TODO await stop spin then resolve spin
         }
 
-        public void SetSlotEndConfiguration(Slot sSlot)
-        {
-            if (iSlotEndingNumber >= 0)
-            {
-                sSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
-            }
-            else
-            {
-                Debug.Log(transform.name + " had trouble setting slot " + sSlot.transform.name + " the iSlotEndingNumber is " + iSlotEndingNumber);
-            }
-        }
 
         //TODO Implement custom offset and editor interaction
         public Vector3 offset_from_anchor = Vector3.zero;
@@ -337,32 +396,6 @@ namespace Slot_Engine.Matrix
             //if(
             //yAxis = SlotEngine._instance.v2ReelTopLeft.y  SlotEngine._instance.iExtraSlotsPerReel
             return return_position;
-        }
-
-        public float GenerateEndPositionAndSymbol(Slot slSlot)
-        {
-            //Debug.Log(transform.name + " Has iSlotEndingNumber at " + iSlotEndingNumber + " While Generating Symbol and positon for slot " + slSlot.transform.name);
-            if (iSlotEndingNumber >= 0)
-            {
-                slSlot.iEndPositionInReel = iSlotEndingNumber;
-                //Needs to be decreased here due to the count of the array not including 0 of an index value
-                if (iSlotEndingNumber - 1 >= 0)
-                    iSlotEndingNumber -= 1;
-                try
-                {
-                    slSlot.SwitchSymbol(end_reel_configuration[iSlotEndingNumber]);
-                }
-                catch
-                {
-                    Debug.Log("There is an issue with the iSlotEndingNumber " + iSlotEndingNumber);
-                }
-                return GenerateLocalPosition(iSlotEndingNumber).y;
-            }
-            else
-            {
-                Debug.Log(transform.name + " Has iSlotEndingNumber at " + iSlotEndingNumber + " While Generating Symbol and positon for slot " + slSlot.transform.name);
-            }
-            return 0;
         }
 
         internal void UpdateSlotPositions()
