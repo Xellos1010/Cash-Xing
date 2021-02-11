@@ -23,7 +23,7 @@ public enum States {
 	DemoAttract,
 	CoinIn,
 	CoinOut,
-	BaseGame,
+	BaseGameIdle,
     BaseGameSpinStart,
     BaseGameSpinLoop,
     BaseGameSpinEnd,

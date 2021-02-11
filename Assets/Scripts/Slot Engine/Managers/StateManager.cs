@@ -22,7 +22,7 @@ public static class StateManager
                 enCurrentState == States.BaseGameSpinStart ||
                 enCurrentState == States.BaseGameWinPresentation
                 )
-                return States.BaseGame;
+                return States.BaseGameIdle;
             else
                 return States.BonusGame;
         }
