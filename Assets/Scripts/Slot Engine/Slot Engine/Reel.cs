@@ -9,6 +9,7 @@
 //
 //
 using UnityEngine;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -17,6 +18,12 @@ using System;
 #if UNITY_EDITOR
 using UnityEditor;
 
+public enum eEaseType
+{
+    constant,
+    ease,
+}
+
 namespace Slot_Engine.Matrix
 {
     
@@ -24,28 +31,38 @@ namespace Slot_Engine.Matrix
     [CustomEditor(typeof(Reel))]
     class ReelEditor : Editor
     {
-        public eSpinStyle spin_options;
+        public eSpinTimeSpeed spin_options;
         Reel myTarget;
         SerializedProperty use_time_speed;
         SerializedProperty reel_spin_time;
-        SerializedProperty reel_spin_speed;
+        SerializedProperty reel_spin_speed_current;
+        SerializedProperty reel_spin_speed_loop_constant;
+
         /// <summary>
         /// Animation curves for looping along path
         /// </summary>
-        SerializedProperty looping_curves_xyz;
+        //SerializedProperty looping_curves_xyz;
+        SerializedProperty reel_start_spin_ease_time;
+        SerializedProperty start_spin_curve_xyz;
+        SerializedProperty ending_curves_xyz; // This is going to require a little work
         SerializedProperty positions_in_path_v3;
         SerializedProperty spin_style;
+        SerializedProperty use_ease_inOut_spin;
         private float time_in_path_temp;
 
         public void OnEnable()
         {
             myTarget = (Reel)target;
             reel_spin_time = serializedObject.FindProperty("reel_spin_time");
-            reel_spin_speed = serializedObject.FindProperty("reel_spin_speed");
-            looping_curves_xyz = serializedObject.FindProperty("looping_curves_xyz");
+            reel_spin_speed_current = serializedObject.FindProperty("reel_spin_speed_current");
+            reel_spin_speed_loop_constant = serializedObject.FindProperty("reel_spin_speed_loop_constant");
+            //looping_curves_xyz = serializedObject.FindProperty("looping_curves_xyz");
+            start_spin_curve_xyz = serializedObject.FindProperty("_start_spin_curve_xyz");
             positions_in_path_v3 = serializedObject.FindProperty("positions_in_path_v3");
             spin_style = serializedObject.FindProperty("spin_style");
             use_time_speed = serializedObject.FindProperty("use_time_speed");
+            use_ease_inOut_spin = serializedObject.FindProperty("use_ease_inOut_spin");
+            reel_start_spin_ease_time = serializedObject.FindProperty("reel_start_spin_ease_time");
         }
 
         public override void OnInspectorGUI()
@@ -54,24 +71,34 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("Controls");
             if (GUILayout.Button("Spin Reel Test"))
             {
-                myTarget.SpinReel();
+                //TODO have reel unable to start until reel is ending
+                myTarget.StartReel();
+            }
+            if (GUILayout.Button("Stop Reel Test"))
+            {
+                myTarget.StopReel();
+            }
+            if (GUILayout.Button("Test Get Top 3 Slots Return"))
+            {
+                myTarget.TestStopReel();
+            }
+            if (GUILayout.Button("Enable Movement"))
+            {
+                myTarget.EnableMovement();
             }
             BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Test Properties for value returns");
-            time_in_path_temp = EditorGUILayout.Slider(time_in_path_temp, 0,reel_spin_time.floatValue);
-            EditorGUILayout.Vector3Field("Position along path at percentage", myTarget.GetLoopPositionFromTime(time_in_path_temp));
-            BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Spin Properties");
+            EditorGUILayout.LabelField("Current Slot speed = " + reel_spin_speed_current.vector3Value.ToString());
             EditorGUI.BeginChangeCheck();
-            spin_options = (eSpinStyle)EditorGUILayout.EnumPopup("Spin on Speed or Time", (eSpinStyle)spin_style.enumValueIndex);
+            spin_options = (eSpinTimeSpeed)EditorGUILayout.EnumPopup("Spin on Speed or Time(Doesn't work)", (eSpinTimeSpeed)spin_style.enumValueIndex);
             if (EditorGUI.EndChangeCheck())
             {
                 switch (spin_options)
                 {
-                    case eSpinStyle.time:
-                        use_time_speed.boolValue = true;
-                        break;
-                    case eSpinStyle.speed:
+                    //case eSpinTimeSpeed.time:
+                    //    use_time_speed.boolValue = true;
+                    //    break;
+                    case eSpinTimeSpeed.speed:
                         use_time_speed.boolValue = false;
                         break;
                 }
@@ -81,46 +108,102 @@ namespace Slot_Engine.Matrix
             EditorGUI.BeginChangeCheck();
             switch (spin_options)
             {
-                case eSpinStyle.time:
-                    float new_reel_spin_time = EditorGUILayout.Slider("Spin Time", reel_spin_time.floatValue, 0.01f, 4f);
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        reel_spin_time.floatValue = new_reel_spin_time;
-                        serializedObject.ApplyModifiedProperties();
-                        myTarget.UpdateLoopCurve();
-                    }
+                //case eSpinTimeSpeed.time:
 
-                    if (GUILayout.Button("Update Loop Curve"))
-                    {
-                        myTarget.UpdateLoopCurve();
-                    }
-                    break;
-                case eSpinStyle.speed:
-                    float new_reel_spin_speed = EditorGUILayout.Slider("Spin Speed", reel_spin_speed.floatValue, -500, 500);
+                //    BoomEditorUtilities.DrawUILine(Color.white);
+                //    EditorGUILayout.LabelField("Test Properties for value returns");
+                //    time_in_path_temp = EditorGUILayout.Slider(time_in_path_temp, 0, reel_spin_time.floatValue);
+                //    EditorGUILayout.Vector3Field("Position along path at percentage", myTarget.GetLoopPositionFromTime(time_in_path_temp));
+
+                //    BoomEditorUtilities.DrawUILine(Color.white);
+                //    EditorGUILayout.LabelField("Set Spin Properties");
+                //    float new_reel_spin_time = EditorGUILayout.Slider("Spin Time", reel_spin_time.floatValue, 0.01f, 20f);
+                //    if (EditorGUI.EndChangeCheck())
+                //    {
+                //        reel_spin_time.floatValue = new_reel_spin_time;
+                //        serializedObject.ApplyModifiedProperties();
+                //        myTarget.UpdateLoopCurve();
+                //    }
+                //    break;
+                case eSpinTimeSpeed.speed:
+                    BoomEditorUtilities.DrawUILine(Color.white);
+                    EditorGUILayout.LabelField("Set Spin Properties");
+                    float new_reel_spin_speed_x = EditorGUILayout.Slider("Speed X", reel_spin_speed_loop_constant.vector3Value.x, -500, 500);
+                    float new_reel_spin_speed_y = EditorGUILayout.Slider("Speed Y", reel_spin_speed_loop_constant.vector3Value.y, -500, 500);
+                    float new_reel_spin_speed_z = EditorGUILayout.Slider("Speed Z", reel_spin_speed_loop_constant.vector3Value.z, -500, 500);
+
                     if (EditorGUI.EndChangeCheck())
                     {
-                        reel_spin_speed.floatValue = new_reel_spin_speed;
+                        reel_spin_speed_loop_constant.vector3Value = new Vector3(new_reel_spin_speed_x, new_reel_spin_speed_y, new_reel_spin_speed_z);
                         serializedObject.ApplyModifiedProperties();
-                        //myTarget.UpdateSpeed();
+                        myTarget.UpdateStartCurve(); //TODO refactor to update all curves - ease out and loop
                     }
                     break;
                 default:
                     break;
             }
             BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Loop Slot Curve Editor");
+            EditorGUILayout.LabelField("Spin Ease Settings");
             EditorGUI.BeginChangeCheck();
-            AnimationCurve spin_loop_curve_x = EditorGUILayout.CurveField("X Curve", looping_curves_xyz.GetArrayElementAtIndex(0).animationCurveValue);
-            AnimationCurve spin_loop_curve_y = EditorGUILayout.CurveField("Y Curve", looping_curves_xyz.GetArrayElementAtIndex(1).animationCurveValue);
-            AnimationCurve spin_loop_curve_z = EditorGUILayout.CurveField("Z Curve", looping_curves_xyz.GetArrayElementAtIndex(2).animationCurveValue);
+            use_ease_inOut_spin.boolValue = EditorGUILayout.Toggle("Use Ease In Out or Constant Start Stop", use_ease_inOut_spin.boolValue);
             if (EditorGUI.EndChangeCheck())
             {
-                looping_curves_xyz.GetArrayElementAtIndex(0).animationCurveValue = spin_loop_curve_x;
-                looping_curves_xyz.GetArrayElementAtIndex(1).animationCurveValue = spin_loop_curve_y;
-                looping_curves_xyz.GetArrayElementAtIndex(2).animationCurveValue = spin_loop_curve_z;
                 serializedObject.ApplyModifiedProperties();
                 myTarget.UpdateLoopCurve();
+                myTarget.UpdateStartCurve();
             }
+            //True is use ease in out so display curve editors
+            //if(use_ease_inOut_spin.boolValue)
+            //{
+            //    myTarget.UpdateStartCurve();
+            //    //Test Purpose Only - Loop through one or all states. **can make run preview in editor mode - OnDisable stop all tasks and reset position to origin.**
+            //    //Display Curve Editor for speed - direction and a slider for how fast to travel
+            //    EditorGUILayout.LabelField("Start Spin Speed Curve Editor");
+            //    EditorGUI.BeginChangeCheck();
+            //    if(start_spin_curve_xyz.arraySize == 0)
+            //    {
+            //        if(GUILayout.Button("Initialize Ease Curves to edit"))
+            //        {
+            //            AnimationCurve[] startEaseCurves = myTarget.InitializeStartCurves();
+            //            start_spin_curve_xyz.ClearArray();
+            //            for (int i = 0; i < startEaseCurves.Length; i++)
+            //            {
+            //                start_spin_curve_xyz.InsertArrayElementAtIndex(i);
+            //                start_spin_curve_xyz.GetArrayElementAtIndex(i).animationCurveValue = startEaseCurves[i];
+            //            }
+            //            serializedObject.ApplyModifiedProperties();
+            //        }
+            //    }
+            //    reel_start_spin_ease_time.floatValue = EditorGUILayout.Slider("Seconds until Loop State", reel_start_spin_ease_time.floatValue,0f,20f);
+            //    //Controls the speed the object will take over time until loop speed is met;
+            //    AnimationCurve start_spin_curve_x = EditorGUILayout.CurveField("X Curve", myTarget.start_spin_curve_xyz[0]); //TODO refactor to access serialized property and check for value
+            //    AnimationCurve start_spin_curve_y = EditorGUILayout.CurveField("Y Curve", myTarget.start_spin_curve_xyz[1]);
+            //    AnimationCurve start_spin_curve_z = EditorGUILayout.CurveField("Z Curve", myTarget.start_spin_curve_xyz[2]);
+            //    if (EditorGUI.EndChangeCheck())
+            //    {
+            //        //Calculate end speed and time key based on loop speed and time to ease
+            //        myTarget.start_spin_curve_xyz[0] = start_spin_curve_x;
+            //        myTarget.start_spin_curve_xyz[1] = start_spin_curve_y;
+            //        myTarget.start_spin_curve_xyz[2] = start_spin_curve_z;
+            //        serializedObject.ApplyModifiedProperties(); // If new speed 
+            //        myTarget.UpdateStartCurve(); //TODO modify for 
+            //    }
+            //}
+            //Display slider to start and stop speed at. in spin end state auto calculate distance to travel to have slots end on reels exactly -set speed on last frame if position is over end slot to travel and land on spot and disable movement - send state change from matrix when all reels have stopped to switch to win_resolve - credit rack state (interruptable) - win_presentation until player slams 
+            //BoomEditorUtilities.DrawUILine(Color.white);
+            //EditorGUILayout.LabelField("Loop Slot Curve Editor");
+            //EditorGUI.BeginChangeCheck();
+            //AnimationCurve spin_loop_curve_x = EditorGUILayout.CurveField("X Curve", myTarget.looping_curves_xyz[0]);
+            //AnimationCurve spin_loop_curve_y = EditorGUILayout.CurveField("Y Curve", myTarget.looping_curves_xyz[1]);
+            //AnimationCurve spin_loop_curve_z = EditorGUILayout.CurveField("Z Curve", myTarget.looping_curves_xyz[2]);
+            //if (EditorGUI.EndChangeCheck())
+            //{
+            //    looping_curves_xyz.GetArrayElementAtIndex(0).animationCurveValue = spin_loop_curve_x;
+            //    looping_curves_xyz.GetArrayElementAtIndex(1).animationCurveValue = spin_loop_curve_y;
+            //    looping_curves_xyz.GetArrayElementAtIndex(2).animationCurveValue = spin_loop_curve_z;
+            //    serializedObject.ApplyModifiedProperties();
+            //    myTarget.UpdateLoopCurve();
+            //} Enable if you want to have a curve editor to control how you ease through your speed through looping state
 
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("To Remove Default inspector");
@@ -130,15 +213,14 @@ namespace Slot_Engine.Matrix
 #endif
     public class Reel : MonoBehaviour
     {
-        public delegate void SpinDelegate();
-        public delegate void SpinStateChangedTo(SpinStates spinState);
-        public event SpinDelegate spin_activated_event;
-        public event SpinStateChangedTo spin_state_changed;
-
         public Matrix matrix;
         public int reel_number = 0;
 
-        public int viewable_slots = 3; //atleast 1 extra slot needed to for slots to spin onto the bezel
+        /// <summary>
+        /// returns viewable slots - static number right now
+        /// </summary>
+        /// //TODO refactor and figure out logic of how to get viewable slots
+        public int viewable_slots = 3;//atleast 1 extra slot needed to for slots to spin onto the bezel
         public Slot[] slots_in_reel;
 
         //**Animation Curve that controls the position of slots along a path given time. Time to complete path is important**//
@@ -147,26 +229,67 @@ namespace Slot_Engine.Matrix
         /// How long it takes to go from first position to last position
         /// </summary>
         public float reel_spin_time = 4;
+
+        public float reel_start_spin_ease_time = 1.65f;
         /// <summary>
         /// Distance for animation to travel - May be used to change the speed at which you find position along path - Not used atm
         /// </summary>
-        public float reel_spin_speed = 125; //Pixels per second
+        public Vector3 reel_spin_speed_current; //Pixels per second in x,y,z direction
+        public Vector3 reel_spin_speed_loop_constant;
+        public eSpinTimeSpeed spin_style;
 
-        public eSpinStyle spin_style;
+        public bool use_ease_inOut_spin = true;
 
         //For Spinning down the yCurve needs to be set for each
         /// <summary>
         /// start spin easing
         /// </summary>
-        //public AnimationCurve[] start_spin_curve_xyz;
+        public AnimationCurve[] start_spin_curve_xyz
+        {
+            get
+            {
+                if(_start_spin_curve_xyz == null || _start_spin_curve_xyz.Length < 3)
+                {
+                    _start_spin_curve_xyz = new AnimationCurve[3] {
+                    AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_loop_constant.magnitude),
+                    AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_loop_constant.magnitude),
+                    AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_loop_constant.magnitude)
+                    };
+                }
+                return _start_spin_curve_xyz;
+            }
+            set
+            {
+                _start_spin_curve_xyz = value;
+            }
+        }
+        //Eases the speed over seconds
         /// <summary>
-        /// Looping Path - slot 0 - end slot each key is a position in path
+        /// Looping Path Time - slot 0 -> end slot - each key is a position in path. Speed - Speed -> pixels to move per Time.deltatime / seconds
         /// </summary>
-        public AnimationCurve[] looping_curves_xyz;
+        public AnimationCurve[] looping_curves_xyz
+        {
+            get
+            {
+                if(_looping_curves_xyz == null || _looping_curves_xyz.Length < 3)
+                {
+                    _looping_curves_xyz = new AnimationCurve[3] {
+                    AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_loop_constant.magnitude), //todo calculate time to move over position in path v#
+                    AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_loop_constant.magnitude),
+                    AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_loop_constant.magnitude)
+                    };
+                }
+                return _looping_curves_xyz;
+            }
+            set
+            {
+                _looping_curves_xyz = value;
+            }
+        }
         /// <summary>
         /// end spin easing
         /// </summary>
-        //public AnimationCurve[] end_spin_curve_xyz;
+        public AnimationCurve[] end_spin_curve_xyz;
 
         /// <summary>
         /// Holds the reference for the slots position in path.
@@ -174,7 +297,8 @@ namespace Slot_Engine.Matrix
         public Vector3[] positions_in_path_v3;
 
         private Symbols[] end_reel_configuration;
-
+        public Slot[] endingSlots;
+        public string[] ending_symbols;
         public async Task UpdateSlotsInReel(Vector3 new_slot_count, Matrix matrix_settings)
         {
             this.matrix = matrix_settings;
@@ -182,7 +306,7 @@ namespace Slot_Engine.Matrix
             if (this.slots_in_reel != null)
                 slots_in_reel.AddRange(this.slots_in_reel);
             int slot_count = 0;
-
+            viewable_slots = (int)new_slot_count.y;
             //TODO Refactor to support omni direction reel generation
             int ending_count = (int)new_slot_count.y + (int)matrix.reel_slot_padding.y;
             positions_in_path_v3 = new Vector3[ending_count+1];//Spin into empty slot then move to top
@@ -212,17 +336,17 @@ namespace Slot_Engine.Matrix
             {
                 slots_in_reel[i].time_in_path = GenerateTimeInPath(slots_in_reel[i].transform.localPosition.y, positions_in_path_v3[positions_in_path_v3.Length - 1].y);
             }
-            UpdateSpinStyle(eSpinStyle.speed);
+            UpdateSpinStyle(eSpinTimeSpeed.speed);
         }
 
-        private void UpdateSpinStyle(eSpinStyle to_spin_style)
+        private void UpdateSpinStyle(eSpinTimeSpeed to_spin_style)
         {
             switch (to_spin_style)
             {
-                case eSpinStyle.time:
-                    use_time_speed = true;
-                    break;
-                case eSpinStyle.speed:
+                //case eSpinTimeSpeed.time:
+                //    use_time_speed = true;
+                //    break;
+                case eSpinTimeSpeed.speed:
                     use_time_speed = false;
                     break;
             }
@@ -238,11 +362,15 @@ namespace Slot_Engine.Matrix
             positions_in_path_v3[i] = position_slot;
             return generated_slot;
         }
+        public void UpdateStartCurve()
+        {
+            SetCurvesStartEnd(ref _start_spin_curve_xyz);
+        }
 
         public void UpdateLoopCurve()
         {
-            SetCurvesStartEnd(ref looping_curves_xyz);
-            UpdateCurveKeysTimeReference(ref looping_curves_xyz);
+            SetCurvesStartEnd(ref _looping_curves_xyz);
+            UpdateCurveKeysTimeReference(ref _looping_curves_xyz);
             UpdateSlotsTimeOnPath();
         }
 
@@ -256,13 +384,56 @@ namespace Slot_Engine.Matrix
 
         private void SetCurvesStartEnd(ref AnimationCurve[] curves_to_set) //TODO abstract to take in curve to set start end
         {
-            //TODO Add ability to keep offsets made on each curve and do relative reconfigure
-            curves_to_set = new AnimationCurve[3]
-            {
-                AnimationCurve.Linear(0,positions_in_path_v3[0].x,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].x),
-                AnimationCurve.Linear(0,positions_in_path_v3[0].y,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].y),
-                AnimationCurve.Linear(0,positions_in_path_v3[0].z,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].z)
-            };
+            //if (spin_style == eSpinTimeSpeed.time)
+            //{
+            //    //curves_to_set = new AnimationCurve[3]
+            //    //{
+            //    //AnimationCurve.Linear(0,positions_in_path_v3[0].x,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].x),
+            //    //AnimationCurve.Linear(0,positions_in_path_v3[0].y,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].y),
+            //    //AnimationCurve.Linear(0,positions_in_path_v3[0].z,reel_spin_time,positions_in_path_v3[positions_in_path_v3.Length-1].z)
+            //    //};
+            //}
+            //else
+            //{
+                if (curves_to_set == null)
+                {
+                    curves_to_set = new AnimationCurve[3]
+                  {
+                        AnimationCurve.Linear(0,0,reel_start_spin_ease_time,reel_spin_speed_loop_constant.magnitude),
+                        AnimationCurve.Linear(0,0,reel_start_spin_ease_time,reel_spin_speed_loop_constant.magnitude),
+                        AnimationCurve.Linear(0,0,reel_start_spin_ease_time,reel_spin_speed_loop_constant.magnitude)
+                  };
+                }
+                else
+                {
+                    for (int curve = 0; curve < curves_to_set.Length; curve++)
+                    {
+                        Keyframe[] keys;
+                        if (curves_to_set[curve].keys.Length > 1)
+                        {
+                            keys = curves_to_set[curve].keys;
+                        }
+                        else
+                        {
+                            keys = new Keyframe[2]
+                            {
+                                curves_to_set[curve].keys[0],
+                                new Keyframe()
+                            };
+                        }
+                        float current_end_time = keys[keys.Length-1].time;
+                        float new_end_time = reel_start_spin_ease_time;
+                        //Start @ key 1 - key 0 the value should be 0,0 -TODO determine whether to enforce rule
+                        for (int key = 1; key <= keys.Length-1; key++)
+                        {
+                            float percentage_on_path = keys[key].time / current_end_time;
+                            keys[key].time = new_end_time * keys[key].time;
+                        }
+                        keys[keys.Length - 1].time = new_end_time;
+                        curves_to_set[curve].keys = keys;
+                    }
+                }
+            //}
         }
 
         private void UpdateCurveKeysTimeReference(ref AnimationCurve[] curves_to_set_keys)
@@ -295,19 +466,30 @@ namespace Slot_Engine.Matrix
             return ReturnValue.GetComponent<Slot>();
         }
 
-        public async Task SpinReel()
+        public async Task StartReel()
         {
+            ResetAllVars();
             //When reel is generated it's vector3[] path is generated for reference from slots
-            SetSpinStateTo(SpinStates.SpinStart);
+            SetSpinStateTo(SpinStates.start);
             //TODO hooks for reel state machine
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
                 //Last slot needs to ease in and out to the "next position" but 
-                slots_in_reel[i].StartSpin(GenerateSlotPath(i, i)); // Tween to the same position then evaluate
+                slots_in_reel[i].StartSpin(); // Tween to the same position then evaluate
             }
             //Task.Delay(time_to_enter_loop);
             //TODO refactor check for interupt state
-            SetSpinStateTo(SpinStates.SpinLoop);
+            SetSpinStateTo(SpinStates.loop);
+        }
+
+        private void ResetAllVars()
+        {
+            ending_symbols = null;
+        }
+
+        private void SetSpinStateTo(SpinStates to_state)
+        {
+            spin_state = to_state;
         }
 
         /// <summary>
@@ -345,39 +527,100 @@ namespace Slot_Engine.Matrix
         {
             return curve_to_evaluate.Evaluate(time);
         }
-        private Vector3[] GenerateSlotPath(int fromSlot, int toSlot)
+        /// <summary>
+        /// Test function that pauses the reels after you set the spin to end to see if everything was set correct. enable movement per slot to continue
+        /// </summary>
+        public void TestStopReel()
         {
-            //TODO Add logic for checking to slot index not out of range
-            return new Vector3[2] { positions_in_path_v3[fromSlot], positions_in_path_v3[toSlot]};
-        }
-
-        private void SetSpinStateTo(SpinStates toState)
-        {
-            if (spin_state_changed != null)
-                spin_state_changed.Invoke(toState);
-        }
-
-        public void StartSpin(Slot slotToSpin)
-        {
-
-        }
-
-        public void StopReel()
-        {
-            //When reel is generated it's vector3[] path is generated for reference from slots
-            SetSpinStateTo(SpinStates.SpinEnd);
+            SetSpinStateTo(SpinStates.outro);
+            Slot[] slotsToBeSet = new Slot[viewable_slots];
+            //TODO refactor to enable more slots to view
+            List<Vector3> bottom_three_positions = GetEndingReelPositions();
+            //Calculate slots in reel to be set to final position (bottom 3 slots)
+            SetSlotsToEndOnMatrix();
             //TODO hooks for reel state machine
+            SetSlotsToStopSpinning();
+            SetSlotsmovementEnabled(false);
+        }
+        private void SetSlotsmovementEnabled(bool toValue)
+        {
+            for (int i = 0; i < slots_in_reel.Length; i++)
+            {
+                slots_in_reel[i].movement_enabled = toValue;
+            }
+        }
+        private void SetSlotsToStopSpinning()
+        {
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
                 //Last slot needs to ease in and out to the "next position" but 
-                slots_in_reel[i].StopSpin(); // Tween to the same position then evaluate
+                slots_in_reel[i].StopSpin(); // Tween to the same position then evaluate\
             }
-            //TODO await stop spin then resolve spin
+        }
+
+        /// <summary>
+        /// Sets the slots to end state and generate symbols for reel to present
+        /// </summary>
+        public void StopReel()
+        {
+            StopReel(GenerateRandomSymbols());
+        }
+        /// <summary>
+        /// Generates Random symbol set based on supported symbol string and viewable slots length
+        /// </summary>
+        /// <returns>List symbols to display first in first out</returns>
+        private string[] GenerateRandomSymbols()
+        {
+            return new string[3] { "MA01", "MI01", "MI02" };
+        }
+
+        public void StopReel(string[] ending_symbols)
+        {
+            this.ending_symbols = ending_symbols;
+            //When reel is generated it's vector3[] path is generated for reference from slots
+            SetSpinStateTo(SpinStates.outro);
+            SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
+        }
+
+        private void SetSlotsToEndOnMatrix()
+        {
+            List<Slot> ending_slots = new List<Slot>();
+            List<Vector3> temp_v3_positions = positions_in_path_v3.ToList();
+            for (int i = 0; i < slots_in_reel.Length; i++)
+            {
+                for (int j = temp_v3_positions.Count-2; j >= 0; j--)
+                {
+                    if (slots_in_reel[i].transform.localPosition.y <= (temp_v3_positions[j].y + matrix.slot_size.y+matrix.reel_slot_padding.y))
+                    {
+                        Debug.Log("TODO Set End Symbol graphic to present");
+                        if (ending_slots.Count < viewable_slots)
+                        {
+                            ending_slots.Add(slots_in_reel[i]); //Last Item is Bottom slot to be displayed
+                        }
+                        //Set end position in reel
+                        slots_in_reel[i].end_position = temp_v3_positions[j];
+                        temp_v3_positions.RemoveAt(j);
+                        break;
+                    }
+                }
+            }
+            endingSlots = ending_slots.ToArray();
+        }
+
+        private List<Vector3> GetEndingReelPositions()
+        {
+            List <Vector3> ending_positions_in_path = positions_in_path_v3.ToList();
+            return ending_positions_in_path.GetRange(positions_in_path_v3.Length - (viewable_slots + 1), viewable_slots);
+            //viewable slots + 1 to account for length to count from 1 and index counts from 0
         }
 
 
         //TODO Implement custom offset and editor interaction
         public Vector3 offset_from_anchor = Vector3.zero;
+        internal SpinStates spin_state;
+        internal AnimationCurve[] _start_spin_curve_xyz;
+        internal AnimationCurve[] _looping_curves_xyz;
+
         //**Need to have slots generate their position
         Vector3 GenerateLocalPosition(int position_in_reel)
         {
@@ -444,6 +687,16 @@ namespace Slot_Engine.Matrix
                     output = slots_in_reel[0].transform.position;
             }
             return output;
+        }
+
+        internal AnimationCurve[] InitializeStartCurves()
+        {
+            return start_spin_curve_xyz;
+        }
+
+        internal void EnableMovement()
+        {
+            SetSlotsmovementEnabled(true);
         }
     }
 

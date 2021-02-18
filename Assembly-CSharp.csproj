@@ -75,6 +75,9 @@
     <Compile Include="Assets\Scripts\Slot Engine\Managers\GenericMeter.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\CycleBannerManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\PlayerInformationManager.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\eSpinTimeSpeed.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\eSpinTransform.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\eReelGroupType.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\interfaces\IDispatcher.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\PlayerInformation.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\MatrixPositionManager.cs" />
@@ -93,7 +96,8 @@
     <Compile Include="Assets\FPSManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixGenerator.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\eSpinStyle.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\StaticUtilities.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

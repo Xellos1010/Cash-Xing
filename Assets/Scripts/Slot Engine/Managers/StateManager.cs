@@ -12,26 +12,17 @@
 public static class StateManager
 {
     public static States enCurrentState;
-    public static States enCurrentMode
-    {
-        get
-        {
-            if (enCurrentState == States.BaseGameRacking ||
-                enCurrentState == States.BaseGameSpinEnd ||
-                enCurrentState == States.BaseGameSpinLoop ||
-                enCurrentState == States.BaseGameSpinStart ||
-                enCurrentState == States.BaseGameWinPresentation
-                )
-                return States.BaseGameIdle;
-            else
-                return States.BonusGame;
-        }
-    }
+    public static States enCurrentMode;
 
     //State Switching Variables
     public delegate void StateDelegate(States State);
     public static event StateDelegate ActivateSwitchState;
     public static event StateDelegate StateSwitched;
+    
+    public delegate void SpinDelegate();
+    public delegate void SpinStateChangedTo(SpinStates spinState);
+    public static event SpinDelegate spin_activated_event;
+    public static event SpinStateChangedTo spin_state_changed;
     //*************
 
     //Unity Functions
@@ -39,7 +30,7 @@ public static class StateManager
     //*********
 
     //State Manager Functions
-	public static void SwitchState(States State)
+    public static void SwitchState(States State)
     {
         enCurrentState = State;
         if(ActivateSwitchState != null)
@@ -48,9 +39,6 @@ public static class StateManager
 
     public static void SwitchStateSpin(States SlotEngineState)
     {
-        if (SlotEngineState == States.BaseGameSpinStart)
-            SwitchState(States.BaseGameSpinStart);
-        else if (SlotEngineState == States.BonusGameSpinStart)
-            SwitchState(States.BonusGameSpinStart);
+        SwitchState(SlotEngineState);
     }
 }

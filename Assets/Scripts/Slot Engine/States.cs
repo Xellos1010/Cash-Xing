@@ -11,32 +11,38 @@
 
 public enum SpinStates
 {
-    SpinStart,
-    SpinLoop,
-    SpinInterrupt,
-    SpinEnd,
+    idle,
+    start,
+    intro,
+    loop,
+    interrupt,
+    outro,
+    end
+}
+
+public enum GameStates
+{
+    preload,
+    demoattract,
+    baseGame,
+    bonusgame,
+    freespin,
 }
 
 public enum States {
-	None,
-    PreLoading,
-	DemoAttract,
-	CoinIn,
-	CoinOut,
-	BaseGameIdle,
-    BaseGameSpinStart,
-    BaseGameSpinLoop,
-    BaseGameSpinEnd,
-    BaseGameWinPresentation,
-    BaseGameRacking,
-	BonusTransitionIntro,
-	BonusTransitionLoop,
-	BonusTransitionOutro,
-	BonusGame,
-    BonusGameSpinStart,
-    BonusGameSpinLoop,
-    BonusGameSpinEnd,
-    BonusGameWinPresentation,
-    BonusGameRacking,
-	TotalWinPresentation
+	None = -1,
+    preloading,
+	coinin,
+	coinout,
+	idle,
+    spin_start,
+    spin_idle,
+    spin_end,
+    win_presentation,
+    racking_start,
+    racking_loop,
+    racking_end,
+	feature_transition_out,
+	feature_transition_in,
+	total_win_presentation
 }

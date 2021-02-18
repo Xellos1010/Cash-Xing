@@ -44,27 +44,21 @@ namespace Slot_Engine.Matrix
 #endif
         public class Slot : MonoBehaviour
         {
-        Slot(Symbols Symbol)
-        {
-            enSymbol = Symbol;
-        }
-
-        public Symbols enSymbol;
-        public States enSlotState;
-        
+        /// <summary>
+        /// The symbol presenting after the reel stops
+        /// </summary>
+        public string presentation_symbol;
         public Reel reel_parent;
-        public int iPositonInReel = 0;
         public float time_in_path = 0.0f;
-        public int iEndPositionInReel = 0;
-
-        public Vector3[] v3CurrentTweenpath;
-        private float fEndingPos;
-        public Rect[] rects;
 
         public bool movement_enabled = false;
-        public float fSpinTime = 0.006f;
+        /// <summary>
+        /// the end position for the reels to calculate and land on
+        /// </summary>
+        public Vector3 end_position;
+        public bool set_to_end_position = false;
+        public bool graphics_set_to_end = false;
 
-        public bool bLoopPositionSet = false;
         //Unity Default Functions
 
         //*************
@@ -83,13 +77,12 @@ namespace Slot_Engine.Matrix
             //TODO Insert Stop Animation Logic
         }
 
-        public void StartSpin(Vector3[] start_end_position)
+        public void StartSpin()
         {
             Debug.Log(gameObject.name + " starting Spin");
-            StopAnimation();
-            v3CurrentTweenpath = start_end_position;
+            ResetAllVars();
+            StopAnimation();    
             movement_enabled = true;
-            //iTween.EaseType easetype_to_start = iTween.EaseType.easeInBack; //TODO refactor to enable settingparent
         }
         
         //TODO update for omni directional
@@ -103,37 +96,13 @@ namespace Slot_Engine.Matrix
             time_in_path = new_time_in_path;
         }
 
-        public void SwitchSymbol()
-        {
-            ResetSpinSymbolTexture();
-        }
-
-        public void SwitchSymbol(Symbols Symbol)
-        {
-            enSymbol = Symbol;
-            ResetSpinSymbolTexture();
-        }
-
-        private void ResetSpinSymbolTexture()
-        {
-            
-            //TODO Fill in set symbol to static image logic
-        }
-
-        Symbols GenerateSymbol()
-        {
-            //TODO Set Symbol based on supported symbol set passed in
-            int iRandom = UnityEngine.Random.Range(1, (int)Symbols.End - 1);
-            return (Symbols)iRandom;
-        }
-
         Vector3 GeneratePositionUpdateTime(float time_on_path) //TODO remove
         {
             return reel_parent.GetLoopPositionFromTime(time_on_path);
         }
-        Vector3 GeneratePositionUpdateSpeed(float amount_to_add) //Needs to be positive to move forwards and negative to move backwards
+        Vector3 GeneratePositionUpdateSpeed(Vector3 amount_to_add) //Needs to be positive to move forwards and negative to move backwards
         {
-            return new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
+            return transform.localPosition + amount_to_add; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
         }
         void Update()
         {
@@ -142,9 +111,8 @@ namespace Slot_Engine.Matrix
                 Vector3 toPosition;
                 if (reel_parent.use_time_speed)
                 {
-                    
                     time_in_path += Time.deltaTime;
-                    if(time_in_path > reel_parent.reel_spin_time)
+                    if (time_in_path >= reel_parent.reel_spin_time)
                     {
                         time_in_path = reel_parent.reel_spin_time - time_in_path;
                     }
@@ -152,15 +120,42 @@ namespace Slot_Engine.Matrix
                 }
                 else
                 {
-                    toPosition = GeneratePositionUpdateSpeed(reel_parent.reel_spin_speed);
-                    if (toPosition.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
-                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], true);
-                    if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
-                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
+                    toPosition = GeneratePositionUpdateSpeed(reel_parent.reel_spin_speed_loop_constant);
+                    //Check X Y and Z and move slot to opposite
+
+                    //Check if to far left or right and move
+
+                    //Check if to far down or up and move
+                    if (reel_parent.reel_spin_speed_loop_constant.y < 0)
+                    {
+                        if (toPosition.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
+                            ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], true);
+                    }
+                    else if (reel_parent.reel_spin_speed_loop_constant.y > 0)
+                    {
+                        if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
+                            ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
+                    }
                 }
+                //TODO Refactor to support omni directional #potentially with magnitude
+                if(set_to_end_position && graphics_set_to_end)
+                    if (toPosition.y <= end_position.y)
+                    {
+                        toPosition = end_position;
+                        ResetAllVars();
+                    }
                 transform.localPosition = toPosition;
             }
         }
+
+        private void ResetAllVars()
+        {
+            movement_enabled = false;
+            set_to_end_position = false;
+            graphics_set_to_end = false;
+            //SetPresentationSymbolTo("");
+        }
+
 
         private void ShiftToPositionBy(ref Vector3 toPosition, Vector3 lastPosition, bool upDown)
         {
@@ -168,11 +163,34 @@ namespace Slot_Engine.Matrix
                 toPosition = new Vector3(toPosition.x,toPosition.y - lastPosition.y, toPosition.z);
             else
                 toPosition = new Vector3(toPosition.x, toPosition.y + lastPosition.y, toPosition.z);
+            if(set_to_end_position)
+            {
+                //Set Graphics and end position
+                graphics_set_to_end = true;
+                end_position = reel_parent.positions_in_path_v3[reel_parent.ending_symbols.Length];
+
+                if (reel_parent.ending_symbols.Length > 0)
+                {
+                    SetPresentationSymbolTo(reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1]);
+                    reel_parent.ending_symbols = StaticUtilities.RemoveAt<string>(reel_parent.ending_symbols, reel_parent.ending_symbols.Length - 1);
+                }
+                else
+                {
+                    SetPresentationSymbolTo("Not on Matrix");
+                }
+                Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
+            }
+        }
+
+        private void SetPresentationSymbolTo(string to_symbol)
+        {
+            presentation_symbol = to_symbol;
         }
 
         internal void StopSpin()
         {
-            movement_enabled = false;
+            //TODO setup state machine
+            set_to_end_position = true;
         }
     }
 }

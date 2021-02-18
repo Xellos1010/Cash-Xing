@@ -141,12 +141,12 @@ using UnityEngine;
         //State Manager Hook
         void SwitchState(States State)
         {
-            if (State == States.BaseGameWinPresentation || State == States.BonusGameWinPresentation)
-            {
-                //Get LinePay Wins from Slot Engine
-                CycleThroughLinePays();
-                //Cycle through those wins
-            }
+            //if (State == States.win_presentation || State == States.BonusGameWinPresentation)
+            //{
+            //    //Get LinePay Wins from Slot Engine
+            //    CycleThroughLinePays();
+            //    //Cycle through those wins
+            //}
         }
 
         //Unity Default Function

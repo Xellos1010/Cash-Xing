@@ -45,19 +45,13 @@ namespace Slot_Engine.Matrix
             }
             if (Application.isPlaying)
             {
-                if (StateManager.enCurrentState != States.BaseGameSpinLoop)
+                if (GUILayout.Button("Start Test Spin"))
                 {
-                    if (GUILayout.Button("Start Test Spin"))
-                    {
-                        myTarget.SpinTest();
-                    }
+                    myTarget.SpinTest();
                 }
-                else
+                if (GUILayout.Button("End Test Spin"))
                 {
-                    if (GUILayout.Button("End Test Spin"))
-                    {
-                        myTarget.EndSpin();
-                    }
+                    myTarget.EndSpin();
                 }
             }
         }
@@ -99,7 +93,6 @@ namespace Slot_Engine.Matrix
         public Task GenerateMatrix(Vector3[] matrix, Vector3 slot_size, Vector3 padding)
         {
             this.matrix = matrix;
-            this.spin_speed = 80; //TODO change hardcoded reference
             this.slot_size = slot_size;
             this.padding = padding;
             if (transform.childCount > 0) // Destroy old matrix if you have one
@@ -149,25 +142,25 @@ namespace Slot_Engine.Matrix
         {
             //TODO refactor implement async and stop all tasks
             StopAllCoroutines();
-            if (StateManager.enCurrentState != States.BaseGameSpinStart)
+            if (StateManager.enCurrentState != States.spin_start)
                 SpinReels();
         }
 
         async void SpinReels()
         {
             //if(StateManager.state
-            StateManager.SwitchState(States.BaseGameSpinStart);
+            StateManager.SwitchState(States.spin_start);
             for(int i = 0; i < rReels.Length; i++)
             {
                 await Task.Delay(reel_spin_delay_ms);
-                rReels[i].SpinReel();
+                rReels[i].StartReel();
             }
-            StateManager.SwitchState(States.BaseGameSpinLoop);
+            StateManager.SwitchState(States.spin_idle);
         }
 
         IEnumerator SpinEnd()
         {
-            StateManager.SwitchState(States.BaseGameSpinEnd);
+            StateManager.SwitchState(States.spin_end);
             Debug.Log("ReelSymbols.Count = " + ReelSymbols.Count);
             for (int i = 0; i < rReels.Length; i++)
             {
@@ -238,12 +231,12 @@ namespace Slot_Engine.Matrix
         internal void EndSpin()
         {
             //TODO refactor to calculate distance till reels present final symbol configuration
-            StateManager.SwitchState(States.BaseGameSpinEnd);
+            StateManager.SwitchState(States.spin_end);
             for (int i = 0; i < rReels.Length; i++)
             {
                 rReels[i].StopReel();
             }
-            StateManager.SwitchState(States.BaseGameIdle);
+            StateManager.SwitchState(States.idle);
         }
 
         internal void UpdateSlotsInReels()
