@@ -62,9 +62,12 @@
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\PayLines.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Matrix.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Templates\CEvent.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\StaticUtilities.cs" />
+    <Compile Include="Assets\Scripts\StateMachine\BoomSportsStateMachine.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\TransitionsManager.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Core\Events\EventDispatcherBase.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixTypes.cs" />
+    <Compile Include="Assets\Scripts\StateMachine\IStateBehaviour.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\PanelInformation.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eEvaluationDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Features.cs" />
@@ -78,12 +81,16 @@
     <Compile Include="Assets\Scripts\Slot Engine\eSpinTimeSpeed.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinTransform.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eReelGroupType.cs" />
+    <Compile Include="Assets\Scripts\StateMachine\StateMachineExtensions.cs" />
+    <Compile Include="Assets\Scripts\StateMachine\AudioStateEvent.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\interfaces\IDispatcher.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\PlayerInformation.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\WeightedRandom.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\MatrixPositionManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\AudioManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\LinePaysManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\MatrixEvaluation.cs" />
+    <Compile Include="Assets\Scripts\StateMachine\DTStateMachineBehaviour.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eMeters.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\BoomEditorUtilities.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Symbols.cs" />
@@ -97,7 +104,8 @@
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixGenerator.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\StaticUtilities.cs" />
+    <Compile Include="Assets\WeightedDistribution\Scripts\Examples\IntDistribution.cs" />
+    <Compile Include="Assets\WeightedDistribution\Scripts\Distribution.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

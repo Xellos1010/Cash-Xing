@@ -58,10 +58,41 @@ namespace Slot_Engine.Matrix
         public Vector3 end_position;
         public bool set_to_end_position = false;
         public bool graphics_set_to_end = false;
+        public MeshRenderer _meshRenderer;
+
+
+        public MeshRenderer meshRenderer
+        {
+            get
+            {
+                if (_meshRenderer == null)
+                    _meshRenderer = GetComponentInChildren<MeshRenderer>();
+                return _meshRenderer;
+            }
+        }
 
         //Unity Default Functions
 
         //*************
+        /// <summary>
+        /// Sets the material for the mesh renderer to new material
+        /// </summary>
+        /// <param name="to_material">material to set mesh renderer</param>
+        public void SetMeshRendererMaterialTo(Material to_material)
+        {
+            meshRenderer.material = to_material;
+        }
+        /// <summary>
+        /// Loads from Resources the symbol material
+        /// </summary>
+        /// <param name="to_symbol">the symbol name to look for</param>
+        public void SetSlotGraphicTo(string to_symbol)
+        {
+            //TODO add test cases for if to_graphic is present in directory
+            //TODO Add State Dependant Graphics Loading
+            Material to_material = reel_parent.matrix.ReturnSymbolMaterial(to_symbol);
+            SetMeshRendererMaterialTo(to_material);
+        }
 
         public void PlayAnimation()
         {
@@ -163,6 +194,7 @@ namespace Slot_Engine.Matrix
                 toPosition = new Vector3(toPosition.x,toPosition.y - lastPosition.y, toPosition.z);
             else
                 toPosition = new Vector3(toPosition.x, toPosition.y + lastPosition.y, toPosition.z);
+
             if(set_to_end_position)
             {
                 //Set Graphics and end position
@@ -172,14 +204,23 @@ namespace Slot_Engine.Matrix
                 if (reel_parent.ending_symbols.Length > 0)
                 {
                     SetPresentationSymbolTo(reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1]);
+                    SetSlotGraphicTo(presentation_symbol);
                     reel_parent.ending_symbols = StaticUtilities.RemoveAt<string>(reel_parent.ending_symbols, reel_parent.ending_symbols.Length - 1);
                 }
                 else
                 {
-                    SetPresentationSymbolTo("Not on Matrix");
+                    SetPresentationSymbolTo("Not on Matrix"); //TODO Define whether to set the top slot graphic
                 }
                 Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
             }
+            else
+            {
+                if (reel_parent.change_symbol_on_matrix_exit)
+                {
+                    SetSlotGraphicTo(reel_parent.matrix.supported_symbols[reel_parent.matrix.GetRandomSymbol()]);
+                }
+            }
+
         }
 
         private void SetPresentationSymbolTo(string to_symbol)
@@ -187,7 +228,7 @@ namespace Slot_Engine.Matrix
             presentation_symbol = to_symbol;
         }
 
-        internal void StopSpin()
+        internal void SetToStopSpin()
         {
             //TODO setup state machine
             set_to_end_position = true;

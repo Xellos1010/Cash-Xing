@@ -286,6 +286,7 @@ namespace Slot_Engine.Matrix
                 _looping_curves_xyz = value;
             }
         }
+
         /// <summary>
         /// end spin easing
         /// </summary>
@@ -296,9 +297,9 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public Vector3[] positions_in_path_v3;
 
-        private Symbols[] end_reel_configuration;
         public Slot[] endingSlots;
         public string[] ending_symbols;
+        public bool change_symbol_on_matrix_exit = false;
         public async Task UpdateSlotsInReel(Vector3 new_slot_count, Matrix matrix_settings)
         {
             this.matrix = matrix_settings;
@@ -478,6 +479,7 @@ namespace Slot_Engine.Matrix
                 slots_in_reel[i].StartSpin(); // Tween to the same position then evaluate
             }
             //Task.Delay(time_to_enter_loop);
+            //TODO Implement Ease In for Starting spin
             //TODO refactor check for interupt state
             SetSpinStateTo(SpinStates.loop);
         }
@@ -554,7 +556,7 @@ namespace Slot_Engine.Matrix
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
                 //Last slot needs to ease in and out to the "next position" but 
-                slots_in_reel[i].StopSpin(); // Tween to the same position then evaluate\
+                slots_in_reel[i].SetToStopSpin(); // Tween to the same position then evaluate\
             }
         }
 

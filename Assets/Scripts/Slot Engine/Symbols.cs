@@ -11,25 +11,15 @@
 
 
 public enum Symbols {
-	SF01,
-	SF02,
-	SF03,
-	SF04,
-	SF05,
+	BW01,
 	MA01,
-	MA02,
-	MA03,
-	MA04,
-	MA05,
 	MI01,
 	MI02,
 	MI03,
-	MI04,
-	MI05,
 	RO01,
 	RO02,
 	RO03,
-	RO04,
-	RO05,
-    End
+	SA_01,
+	SA_02,
+	End
 }

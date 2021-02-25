@@ -27,15 +27,21 @@ namespace Slot_Engine.Matrix
         Matrix myTarget;
         SerializedProperty state;
         SerializedProperty reel_spin_delay_ms;
+        SerializedProperty supported_symbols;
+        SerializedProperty supported_symbols_materials;
         public void OnEnable()
         {
             myTarget = (Matrix)target;
             reel_spin_delay_ms = serializedObject.FindProperty("reel_spin_delay_ms");
+            supported_symbols = serializedObject.FindProperty("supported_symbols");
+            supported_symbols_materials = serializedObject.FindProperty("_supported_symbols_materials");
         }
 
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI();
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Matrix Properties");
+
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
             EditorGUI.BeginChangeCheck();
             reel_spin_delay_ms.intValue = EditorGUILayout.IntSlider("Delay between reels star spin ms",reel_spin_delay_ms.intValue,0,2000);
@@ -43,23 +49,105 @@ namespace Slot_Engine.Matrix
             {
                 serializedObject.ApplyModifiedProperties();
             }
+            EditorGUILayout.PropertyField(supported_symbols);
+            if(supported_symbols_materials.arraySize < supported_symbols.arraySize && !ElementsInArrayAreEmpty(supported_symbols_materials))
+            {
+                SetMaterialsReference();
+            }
+            EditorGUILayout.PropertyField(supported_symbols_materials);
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Matrix Controls");
             if (Application.isPlaying)
             {
                 if (GUILayout.Button("Start Test Spin"))
                 {
-                    myTarget.SpinTest();
+                    myTarget.StartSpin();
                 }
                 if (GUILayout.Button("End Test Spin"))
                 {
                     myTarget.EndSpin();
                 }
             }
+            else
+            {
+                if (GUILayout.Button("Find Symbol Materials"))
+                {
+                    SetMaterialsReference();
+                }
+            }
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("To Be Removed - Default inspector");
+            base.OnInspectorGUI();
+        }
+
+        private void SetMaterialsReference()
+        {
+            myTarget.GenerateSupportedSymbolsMaterials();
+            serializedObject.ApplyModifiedProperties();
+            supported_symbols_materials = serializedObject.FindProperty("_supported_symbols_materials");
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private bool ElementsInArrayAreEmpty(SerializedProperty supported_symbols_materials)
+        {
+            for (int i = 0; i < myTarget.supported_symbols_materials.Length; i++)
+            {
+                if (supported_symbols_materials.GetArrayElementAtIndex(supported_symbols_materials.arraySize - 1).objectReferenceValue == null)
+                    return true;
+            }
+            return false;
         }
     }
 #endif
 
     public class Matrix : MonoBehaviour
     {
+        public string[] supported_symbols = new string[10] { "MA01", "MI01", "MI02", "MI03", "RO01", "RO02", "RO03", "SA01", "SA02", "BW01" }; //TODO Make available in matrix generator to define symbols supported
+        public Material[] supported_symbols_materials
+        {
+            get
+            {
+                if (_supported_symbols_materials == null || _supported_symbols_materials.Length < supported_symbols.Length)
+                {
+                    GenerateSupportedSymbolsMaterials();
+                }
+                return _supported_symbols_materials;
+            }
+        }
+        /// <summary>
+        /// Controls the wegihted probability of symbols appearing on the reel
+        /// </summary>
+        private WeightedDistribution.IntDistribution intWeightedDistributionSymbols
+        {
+            get
+            {
+                if(_intWeightedDistributionSymbols == null)
+                {
+                    _intWeightedDistributionSymbols = GetComponent<WeightedDistribution.IntDistribution>();
+                }
+                return _intWeightedDistributionSymbols;
+            }
+        }
+        private WeightedDistribution.IntDistribution _intWeightedDistributionSymbols;
+
+        public int GetRandomSymbol()
+        {
+            return intWeightedDistributionSymbols.Draw();
+        }
+
+        internal void GenerateSupportedSymbolsMaterials()
+        {
+            _supported_symbols_materials = new Material[supported_symbols.Length];
+            supported_symbols_map_materials = new Dictionary<string, Material>();
+            for (int i = 0; i < supported_symbols.Length; i++)
+            {
+                _supported_symbols_materials[i] = Resources.Load<Material>("Materials/BaseGame/Symbols/" + supported_symbols[i]);
+                supported_symbols_map_materials[supported_symbols[i]] = _supported_symbols_materials[i];
+            }
+        }
+
+        public Material[] _supported_symbols_materials;
+        public Dictionary<string, Material> supported_symbols_map_materials;
         public SpinManager spin_manager;
         public Vector3[] matrix; //elements are reels value is slot per reel
         public Vector3 slot_size;
@@ -67,6 +155,21 @@ namespace Slot_Engine.Matrix
         public float spin_speed;
         public int reel_spin_delay_ms = 0;
         public Vector2 reel_slot_padding = new Vector2(0,1); //TODO set from Matrix Generator
+
+        void Start()
+        {
+            if (supported_symbols_map_materials == null)
+            {
+                GenerateSupportedSymbolsMaterials();
+            }
+        }
+
+        internal Material ReturnSymbolMaterial(string to_symbol)
+        {
+            
+            return supported_symbols_map_materials[to_symbol];
+        }
+
         public Reel[] rReels;
         protected List<Symbols[]> _ReelSymbols;
 
@@ -138,12 +241,13 @@ namespace Slot_Engine.Matrix
             return ReturnValue;
         }
 
-        public void SpinTest()
+        public void StartSpin()
         {
             //TODO refactor implement async and stop all tasks
             StopAllCoroutines();
-            if (StateManager.enCurrentState != States.spin_start)
-                SpinReels();
+            //TODO setup State machine
+            //if (StateManager.enCurrentState == States.spin_idle)
+            SpinReels();
         }
 
         async void SpinReels()
@@ -245,6 +349,11 @@ namespace Slot_Engine.Matrix
             {
                 rReels[i].UpdateSlotsInReel(matrix[i],this);
             }
+        }
+
+        void Update()
+        {
+
         }
     }
 

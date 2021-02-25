@@ -1,6 +1,7 @@
 ﻿
 using System;
-
+using System.Collections;
+using UnityEngine;
 public static class StaticUtilities
 {
 
@@ -14,5 +15,9 @@ public static class StaticUtilities
             Array.Copy(source, index + 1, dest, index, source.Length - index - 1);
 
         return dest;
+    }
+    public static int findIndex<T>(this T[] array, T item)
+    {
+        return Array.IndexOf(array, item);
     }
 }
