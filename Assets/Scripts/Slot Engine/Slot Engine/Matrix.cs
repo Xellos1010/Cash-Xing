@@ -29,14 +29,15 @@ namespace Slot_Engine.Matrix
         SerializedProperty reel_spin_delay_ms;
         SerializedProperty supported_symbols;
         SerializedProperty supported_symbols_materials;
+        SerializedProperty ending_symbols;
         public void OnEnable()
         {
             myTarget = (Matrix)target;
             reel_spin_delay_ms = serializedObject.FindProperty("reel_spin_delay_ms");
             supported_symbols = serializedObject.FindProperty("supported_symbols");
             supported_symbols_materials = serializedObject.FindProperty("_supported_symbols_materials");
+            ending_symbols = serializedObject.FindProperty("ending_symbols");
         }
-
         public override void OnInspectorGUI()
         {
             BoomEditorUtilities.DrawUILine(Color.white);
@@ -70,6 +71,22 @@ namespace Slot_Engine.Matrix
             }
             else
             {
+                if (GUILayout.Button("Set Paylines"))
+                {
+                    myTarget.SetPaylines();
+                }
+                if (GUILayout.Button("Generate Ending Symbols"))
+                {
+                    myTarget.GenerateEndReelStripsConfiguration();
+                }
+                if (GUILayout.Button("Set Symbols to End Symbols"))
+                {
+                    myTarget.SetReelStripsEndConfiguration();
+                }
+                if (GUILayout.Button("Display End Reels and Reset"))
+                {
+                    myTarget.DisplayEndingReelStrips();
+                }
                 if (GUILayout.Button("Find Symbol Materials"))
                 {
                     SetMaterialsReference();
@@ -102,7 +119,7 @@ namespace Slot_Engine.Matrix
 
     public class Matrix : MonoBehaviour
     {
-        public string[] supported_symbols = new string[10] { "MA01", "MI01", "MI02", "MI03", "RO01", "RO02", "RO03", "SA01", "SA02", "BW01" }; //TODO Make available in matrix generator to define symbols supported
+        public string[] supported_symbols = new string[10] { "MA01", "MI01", "MI02", "MI03", "RO01", "RO02", "RO03", "SA_01", "SA_02", "BW01" }; //TODO Make available in matrix generator to define symbols supported
         public Material[] supported_symbols_materials
         {
             get
@@ -138,16 +155,17 @@ namespace Slot_Engine.Matrix
         internal void GenerateSupportedSymbolsMaterials()
         {
             _supported_symbols_materials = new Material[supported_symbols.Length];
-            supported_symbols_map_materials = new Dictionary<string, Material>();
+            supported_symbols_map_materials = new SerializableDictionary<string, Material>();
             for (int i = 0; i < supported_symbols.Length; i++)
             {
+                Debug.Log(string.Format("Getting symbol {0}", supported_symbols[i]));
                 _supported_symbols_materials[i] = Resources.Load<Material>("Materials/BaseGame/Symbols/" + supported_symbols[i]);
                 supported_symbols_map_materials[supported_symbols[i]] = _supported_symbols_materials[i];
             }
         }
 
         public Material[] _supported_symbols_materials;
-        public Dictionary<string, Material> supported_symbols_map_materials;
+        public SerializableDictionary<string, Material> supported_symbols_map_materials;
         public SpinManager spin_manager;
         public Vector3[] matrix; //elements are reels value is slot per reel
         public Vector3 slot_size;
@@ -166,11 +184,20 @@ namespace Slot_Engine.Matrix
 
         internal Material ReturnSymbolMaterial(string to_symbol)
         {
-            
-            return supported_symbols_map_materials[to_symbol];
+            try
+            {
+                return supported_symbols_map_materials[to_symbol];
+            }
+            catch(Exception e)
+            {
+                Debug.Log(e.Message);
+                Debug.Log(string.Format("key given = {0}",to_symbol));
+                return null;
+            }
         }
 
         public Reel[] rReels;
+        public ReelStrip[] endingSymbols;
         protected List<Symbols[]> _ReelSymbols;
 
         private List<Symbols[]> ReelSymbols
@@ -241,13 +268,46 @@ namespace Slot_Engine.Matrix
             return ReturnValue;
         }
 
+        Task GenerateEndReelConfigurationTask;
+
         public void StartSpin()
         {
             //TODO refactor implement async and stop all tasks
             StopAllCoroutines();
             //TODO setup State machine
-            //if (StateManager.enCurrentState == States.spin_idle)
+            GenerateEndReelConfigurationTask = GenerateEndReelStripsConfiguration();
+            GenerateEndReelConfigurationTask.Start();
             SpinReels();
+            //TODO setup async task 
+
+        }
+        /// <summary>
+        /// Generates the Display matrix then runs payline evaluation
+        /// </summary>
+        /// <returns>Task.Completed</returns>
+        internal async Task GenerateEndReelStripsConfiguration()
+        {
+            GenerateSymbolsPerReel();
+        }
+        
+        internal void GenerateSymbolsPerReel()
+        {
+            List<ReelStrip> output = new List<ReelStrip>();
+            for (int reel = 0; reel < rReels.Length; reel++)
+            {
+                output.Add(new ReelStrip(GenerateEndingReelStrip(3))); // TODO change to scale slot size
+            }
+            endingSymbols = output.ToArray();
+        }
+
+        private int[] GenerateEndingReelStrip(int v)
+        {
+            List<int> output = new List<int>();
+            for (int i = 0; i < v; i++)
+            {
+                output.Add(GetRandomSymbol());
+            }
+            return output.ToArray();
         }
 
         async void SpinReels()
@@ -351,11 +411,110 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        void Update()
+        public Payline[] paylinesSupported;
+        internal void SetPaylines()
         {
+            //Find File - Parse File - Fill Array of int[]
+            TextAsset paylines = Resources.Load<TextAsset>("Data/99paylines_m3x5");
+            Debug.Log(paylines.text);
+            List<int> paylineListRaw = new List<int>();
+            List<Payline> paylineListOutput = new List<Payline>();
 
+            for (int i = 0; i < paylines.text.Length; i++)
+            {
+                if (Char.IsDigit(paylines.text[i]))
+                {
+                    Debug.Log(string.Format("Char {0} is {1}",i, Char.GetNumericValue(paylines.text[i])));
+                    paylineListRaw.Add((int)Char.GetNumericValue(paylines.text[i]));
+                    if (paylineListRaw.Count == 5)
+                    {
+
+                        paylineListOutput.Add(new Payline(paylineListRaw.ToArray()));
+                        Debug.Log(paylineListRaw.ToArray().ToString());
+                        paylineListRaw.Clear();
+                    }
+                }
+            }
+            Debug.Log(paylineListOutput.ToArray().ToString());
+            paylinesSupported = paylineListOutput.ToArray();
+        }
+
+        internal void SetReelStripsEndConfiguration()
+        {
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                rReels[i].SetEndingDisplaySymbolsTo(endingSymbols[i]);
+            }
+        }
+
+        internal void TestDisplayPresentationSymbols()
+        {
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                rReels[i].TestDisplayEndSymbols();
+            }
+        }
+
+        internal void DisplayEndingReelStrips()
+        {
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                rReels[i].TestDisplayEndSymbols();
+            }
+        }
+    }
+}
+
+[System.Serializable]
+public class ReelStrip
+{
+    public int[] display_symbols;
+    public ReelStrip(int[] vs)
+    {
+        display_symbols = vs;
+    }
+}
+
+[Serializable]
+public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
+{
+    [SerializeField]
+    private List<TKey> keys = new List<TKey>();
+
+    [SerializeField]
+    private List<TValue> values = new List<TValue>();
+
+    // save the dictionary to lists
+    public void OnBeforeSerialize()
+    {
+        keys.Clear();
+        values.Clear();
+        foreach (KeyValuePair<TKey, TValue> pair in this)
+        {
+            keys.Add(pair.Key);
+            values.Add(pair.Value);
         }
     }
 
+    // load dictionary from lists
+    public void OnAfterDeserialize()
+    {
+        this.Clear();
 
+        if (keys.Count != values.Count)
+            throw new System.Exception(string.Format("there are {0} keys and {1} values after deserialization. Make sure that both key and value types are serializable."));
+
+        for (int i = 0; i < keys.Count; i++)
+            this.Add(keys[i], values[i]);
+    }
+}
+[System.Serializable]
+public class Payline
+{
+    public int[] payline;
+
+    public Payline(int[] vs)
+    {
+        payline = vs;
+    }
 }

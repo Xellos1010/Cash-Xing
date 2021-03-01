@@ -203,9 +203,8 @@ namespace Slot_Engine.Matrix
 
                 if (reel_parent.ending_symbols.Length > 0)
                 {
-                    SetPresentationSymbolTo(reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1]);
-                    SetSlotGraphicTo(presentation_symbol);
-                    reel_parent.ending_symbols = StaticUtilities.RemoveAt<string>(reel_parent.ending_symbols, reel_parent.ending_symbols.Length - 1);
+                    SetDisplaySymbolTo(reel_parent.ending_symbols.Length - 1);
+                    
                 }
                 else
                 {
@@ -221,6 +220,14 @@ namespace Slot_Engine.Matrix
                 }
             }
 
+        }
+
+        internal void SetDisplaySymbolTo(int v)
+        {
+            Debug.Log(string.Format("Set Display symbol to {0}", v));
+            SetPresentationSymbolTo(reel_parent.ending_symbols[v]);
+            SetSlotGraphicTo(presentation_symbol);
+            reel_parent.ending_symbols = StaticUtilities.RemoveAt<string>(reel_parent.ending_symbols, v);
         }
 
         private void SetPresentationSymbolTo(string to_symbol)

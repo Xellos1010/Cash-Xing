@@ -44,7 +44,7 @@ public class PayLines
             {
                 iPayInfo[i] = int.Parse(payInfo[i]);
             }
-            iPayLines[iPaylineNumber].PopulatePayline(iPayInfo);
+            //iPayLines[iPaylineNumber].PopulatePayline(iPayInfo);
         }
         return null;
     }
@@ -56,14 +56,4 @@ public class PayLines
         return i;
     }
 
-}
-
-public class Payline
-{
-    int[] iPaylineDefine;
-
-    public void PopulatePayline(int[] Information)
-    {
-        iPaylineDefine = Information;
-    }
 }

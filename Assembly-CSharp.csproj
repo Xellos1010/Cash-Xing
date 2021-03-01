@@ -74,6 +74,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\Managers\CreditRackManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\StateManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\WinConditions.cs" />
+    <Compile Include="Assets\WeightedDistribution\Scripts\Examples\IntDistribution.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\GaffManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\GenericMeter.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\CycleBannerManager.cs" />
@@ -82,6 +83,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\eSpinTransform.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eReelGroupType.cs" />
     <Compile Include="Assets\Scripts\StateMachine\StateMachineExtensions.cs" />
+    <Compile Include="Assets\WeightedDistribution\Scripts\Distribution.cs" />
     <Compile Include="Assets\Scripts\StateMachine\AudioStateEvent.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\interfaces\IDispatcher.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\PlayerInformation.cs" />
@@ -102,15 +104,15 @@
     <Compile Include="Assets\Scripts\Slot Engine\eSkins.cs" />
     <Compile Include="Assets\FPSManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixGenerator.cs" />
+    <Compile Include="Assets\SetLineRendererPositions.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
-    <Compile Include="Assets\WeightedDistribution\Scripts\Examples\IntDistribution.cs" />
-    <Compile Include="Assets\WeightedDistribution\Scripts\Distribution.cs" />
+    <Compile Include="Assets\Scripts\CustomLinerenderer.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
-     <None Include="Assets\Data\99paylines_m3x5.txt" />
+     <None Include="Assets\Resources\Data\99paylines_m3x5.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
      <None Include="Assets\Resources\Skins\Template3x5\BaseGame\Symbols\MA02.txt" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />

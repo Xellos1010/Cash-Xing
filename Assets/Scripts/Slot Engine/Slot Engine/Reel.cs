@@ -340,6 +340,30 @@ namespace Slot_Engine.Matrix
             UpdateSpinStyle(eSpinTimeSpeed.speed);
         }
 
+        internal void TestDisplayEndSymbols()
+        {
+            for (int i = slots_in_reel.Length-1; i > 0; i--)
+            {
+                if (ending_symbols.Length > 0)
+                {
+                    slots_in_reel[i].SetDisplaySymbolTo(i-1);
+                }
+                else
+                {
+                    break;
+                }
+            } 
+        }
+
+        internal void SetEndingDisplaySymbolsTo(ReelStrip reelStrip)
+        {
+            ending_symbols = new string[reelStrip.display_symbols.Length];
+            for (int i = 0; i < reelStrip.display_symbols.Length; i++)
+            {
+                ending_symbols[i] = ((Symbols)reelStrip.display_symbols[i]).ToString();
+            }
+        }
+
         private void UpdateSpinStyle(eSpinTimeSpeed to_spin_style)
         {
             switch (to_spin_style)
