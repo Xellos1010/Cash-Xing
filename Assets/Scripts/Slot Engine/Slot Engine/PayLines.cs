@@ -232,4 +232,26 @@ public class PayLines : MonoBehaviour
     {
         winning_paylines = new int[0];
     }
+
+    void OnEnable()
+    {
+        StateManager.StateChangedTo += StateManager_StateChangedTo;
+    }
+
+    private void StateManager_StateChangedTo(States State)
+    {
+        if(State == States.racking_start)
+        {
+            payline_renderer.EnableRenderer();
+        }
+        else if(State == States.spin_start)
+        {
+            payline_renderer.DisableRenderer();
+        }
+    }
+
+    void OnDisable()
+    {
+        StateManager.StateChangedTo -= StateManager_StateChangedTo;
+    }
 }

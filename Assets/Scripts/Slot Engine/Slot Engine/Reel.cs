@@ -604,7 +604,7 @@ namespace Slot_Engine.Matrix
         {
             this.ending_symbols = ending_symbols;
             //When reel is generated it's vector3[] path is generated for reference from slots
-            SetSpinStateTo(SpinStates.outro);
+            
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
         }
 

@@ -77,4 +77,14 @@ public class PaylineRenderer : MonoBehaviour
         }
         lineRenderer.SetPositions(linePositions.ToArray());
     }
+
+    internal void EnableRenderer()
+    {
+        lineRenderer.enabled = true;
+    }
+
+    internal void DisableRenderer()
+    {
+        lineRenderer.enabled = false;
+    }
 }

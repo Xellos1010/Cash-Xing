@@ -287,15 +287,19 @@ namespace Slot_Engine.Matrix
             return ReturnValue;
         }
 
-        Task GenerateEndReelConfigurationTask;
-
-        public void StartSpin()
+        Task<ReelStrip[]> GenerateEndReelConfigurationTask;
+        Task continuation;
+        public async void StartSpin()
         {
             //TODO refactor implement async and stop all tasks
-            StopAllCoroutines();
+            //StopAllCoroutines();
             //TODO setup State machine
-            GenerateEndReelConfigurationTask = GenerateEndReelStripsConfiguration();
-            GenerateEndReelConfigurationTask.Start();
+            endingSymbols = GenerateEndReelStripsConfiguration().Result;
+            //continuation = GenerateEndReelConfigurationTask.ContinueWith(t =>
+            //{
+            //    Console.WriteLine("Result: " + t.Result);
+            //    endingSymbols = t.Result;
+            //});
             SpinReels();
             //TODO setup async task 
 
@@ -304,19 +308,19 @@ namespace Slot_Engine.Matrix
         /// Generates the Display matrix then runs payline evaluation
         /// </summary>
         /// <returns>Task.Completed</returns>
-        internal async Task GenerateEndReelStripsConfiguration()
+        internal async Task<ReelStrip[]> GenerateEndReelStripsConfiguration()
         {
-            GenerateSymbolsPerReel();
+            return GenerateSymbolsPerReel().Result;
         }
         
-        internal void GenerateSymbolsPerReel()
+        internal Task<ReelStrip[]> GenerateSymbolsPerReel()
         {
             List<ReelStrip> output = new List<ReelStrip>();
             for (int reel = 0; reel < rReels.Length; reel++)
             {
                 output.Add(new ReelStrip(GenerateEndingReelStrip(3))); // TODO change to scale slot size
             }
-            endingSymbols = output.ToArray();
+            return Task.FromResult<ReelStrip[]>(output.ToArray());
         }
 
         private int[] GenerateEndingReelStrip(int v)
@@ -331,19 +335,15 @@ namespace Slot_Engine.Matrix
 
         async void SpinReels()
         {
-            //if(StateManager.state
-            StateManager.SwitchState(States.spin_start);
             for(int i = 0; i < rReels.Length; i++)
             {
                 await Task.Delay(reel_spin_delay_ms);
                 rReels[i].StartReel();
             }
-            StateManager.SwitchState(States.spin_idle);
         }
 
         IEnumerator SpinEnd()
         {
-            StateManager.SwitchState(States.spin_end);
             Debug.Log("ReelSymbols.Count = " + ReelSymbols.Count);
             for (int i = 0; i < rReels.Length; i++)
             {
@@ -413,13 +413,10 @@ namespace Slot_Engine.Matrix
 
         internal void EndSpin()
         {
-            //TODO refactor to calculate distance till reels present final symbol configuration
-            StateManager.SwitchState(States.spin_end);
             for (int i = 0; i < rReels.Length; i++)
             {
                 rReels[i].StopReel();
             }
-            StateManager.SwitchState(States.idle);
         }
 
         internal void UpdateSlotsInReels()
@@ -429,8 +426,6 @@ namespace Slot_Engine.Matrix
                 rReels[i].UpdateSlotsInReel(matrix[i],this);
             }
         }
-
-        
 
         internal void SetReelStripsEndConfiguration()
         {

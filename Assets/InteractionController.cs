@@ -22,7 +22,7 @@ public class InteractionController : MonoBehaviour
     void Start()
     {
         //TODO Change to include pre-loader
-        StateManager.SwitchState(States.idle);
+        StateManager.SetStateTo(States.idle);
     }
 
     // Update is called once per frame
@@ -34,8 +34,7 @@ public class InteractionController : MonoBehaviour
             {
                 if (StateManager.enCurrentState == States.idle)
                 {
-                    SetStateTo(States.spin_start);
-                    StateMachineController.SetTrigger("Spin Start");
+                    StateMachineController.SetTrigger("SpinStart");
                 }
                 else if (StateManager.enCurrentState == States.spin_start || StateManager.enCurrentState == States.spin_idle)
                 {
@@ -49,6 +48,6 @@ public class InteractionController : MonoBehaviour
     private void SetStateTo(States to_state)
     {
         canTriggerSet = false;
-        StateManager.SwitchState(to_state);
+        StateManager.SetStateTo(to_state);
     }
 }

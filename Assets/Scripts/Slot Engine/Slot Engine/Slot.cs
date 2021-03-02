@@ -110,7 +110,7 @@ namespace Slot_Engine.Matrix
 
         public void StartSpin()
         {
-            Debug.Log(gameObject.name + " starting Spin");
+            //Debug.Log(gameObject.name + " starting Spin");
             ResetAllVars();
             StopAnimation();    
             movement_enabled = true;

@@ -30,15 +30,11 @@ public static class StateManager
     //*********
 
     //State Manager Functions
-    public static void SwitchState(States State)
+    public static void SetStateTo(States State)
     {
+        UnityEngine.Debug.Log(string.Format("State switched to {0}",State.ToString()));
         enCurrentState = State;
         if(StateChangedTo != null)
             StateChangedTo.Invoke(State);
 	}
-
-    public static void SwitchStateSpin(States SlotEngineState)
-    {
-        SwitchState(SlotEngineState);
-    }
 }
