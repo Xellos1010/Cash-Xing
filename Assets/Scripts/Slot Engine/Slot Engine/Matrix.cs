@@ -71,10 +71,6 @@ namespace Slot_Engine.Matrix
             }
             else
             {
-                if (GUILayout.Button("Set Paylines"))
-                {
-                    myTarget.SetPaylines();
-                }
                 if (GUILayout.Button("Generate Ending Symbols"))
                 {
                     myTarget.GenerateEndReelStripsConfiguration();
@@ -147,6 +143,7 @@ namespace Slot_Engine.Matrix
         }
         private WeightedDistribution.IntDistribution _intWeightedDistributionSymbols;
 
+
         public int GetRandomSymbol()
         {
             return intWeightedDistributionSymbols.Draw();
@@ -180,6 +177,28 @@ namespace Slot_Engine.Matrix
             {
                 GenerateSupportedSymbolsMaterials();
             }
+        }
+
+        void OnEnable()
+        {
+            StateManager.StateChangedTo += StateManager_StateChangedTo;
+        }
+
+        private void StateManager_StateChangedTo(States State)
+        {
+            if(State == States.spin_start)
+            {
+                StartSpin();
+            }
+            else if (State == States.spin_end)
+            {
+                EndSpin();
+            }
+        }
+
+        void OnDisable()
+        {
+            StateManager.StateChangedTo -= StateManager_StateChangedTo;
         }
 
         internal Material ReturnSymbolMaterial(string to_symbol)
@@ -411,33 +430,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        public Payline[] paylinesSupported;
-        internal void SetPaylines()
-        {
-            //Find File - Parse File - Fill Array of int[]
-            TextAsset paylines = Resources.Load<TextAsset>("Data/99paylines_m3x5");
-            Debug.Log(paylines.text);
-            List<int> paylineListRaw = new List<int>();
-            List<Payline> paylineListOutput = new List<Payline>();
-
-            for (int i = 0; i < paylines.text.Length; i++)
-            {
-                if (Char.IsDigit(paylines.text[i]))
-                {
-                    Debug.Log(string.Format("Char {0} is {1}",i, Char.GetNumericValue(paylines.text[i])));
-                    paylineListRaw.Add((int)Char.GetNumericValue(paylines.text[i]));
-                    if (paylineListRaw.Count == 5)
-                    {
-
-                        paylineListOutput.Add(new Payline(paylineListRaw.ToArray()));
-                        Debug.Log(paylineListRaw.ToArray().ToString());
-                        paylineListRaw.Clear();
-                    }
-                }
-            }
-            Debug.Log(paylineListOutput.ToArray().ToString());
-            paylinesSupported = paylineListOutput.ToArray();
-        }
+        
 
         internal void SetReelStripsEndConfiguration()
         {

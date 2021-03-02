@@ -95,6 +95,7 @@
     <Compile Include="Assets\Scripts\StateMachine\DTStateMachineBehaviour.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eMeters.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\BoomEditorUtilities.cs" />
+    <Compile Include="Assets\Scripts\CustomLinerenderer.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Symbols.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SpinManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Slot.cs" />
@@ -104,10 +105,11 @@
     <Compile Include="Assets\Scripts\Slot Engine\eSkins.cs" />
     <Compile Include="Assets\FPSManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixGenerator.cs" />
-    <Compile Include="Assets\SetLineRendererPositions.cs" />
+    <Compile Include="Assets\PaylineRenderer.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
-    <Compile Include="Assets\Scripts\CustomLinerenderer.cs" />
+    <Compile Include="Assets\InteractionController.cs" />
+    <Compile Include="Assets\Scripts\StateMachine\InvokeStateEvent.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

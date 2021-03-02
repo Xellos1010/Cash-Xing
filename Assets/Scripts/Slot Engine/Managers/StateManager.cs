@@ -16,7 +16,7 @@ public static class StateManager
 
     //State Switching Variables
     public delegate void StateDelegate(States State);
-    public static event StateDelegate ActivateSwitchState;
+    public static event StateDelegate StateChangedTo;
     public static event StateDelegate StateSwitched;
     
     public delegate void SpinDelegate();
@@ -33,8 +33,8 @@ public static class StateManager
     public static void SwitchState(States State)
     {
         enCurrentState = State;
-        if(ActivateSwitchState != null)
-            ActivateSwitchState.Invoke(State);
+        if(StateChangedTo != null)
+            StateChangedTo.Invoke(State);
 	}
 
     public static void SwitchStateSpin(States SlotEngineState)

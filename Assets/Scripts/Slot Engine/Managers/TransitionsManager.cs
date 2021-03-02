@@ -16,12 +16,12 @@ public class TransitionsManager
     //Unity Functions
     void OnEnable()
     {
-        StateManager.ActivateSwitchState += SwitchState;
+        StateManager.StateChangedTo += SwitchState;
     }
 
     void ZeroValues()
     {
-        StateManager.ActivateSwitchState -= SwitchState;
+        StateManager.StateChangedTo -= SwitchState;
     }
 
     //Transition Functions
