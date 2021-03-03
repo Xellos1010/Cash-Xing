@@ -6,7 +6,7 @@ using System;
 using UnityEditor;
 
 [CustomEditor(typeof(PaylineRenderer))]
-[RequireComponent(typeof(Slot_Engine.Matrix.Matrix))]
+[RequireComponent(typeof(LineRenderer))]
 class PaylineRendererEditor : Editor
 {
     PaylineRenderer myTarget;
@@ -21,10 +21,13 @@ class PaylineRendererEditor : Editor
         //base.OnInspectorGUI();
         BoomEditorUtilities.DrawUILine(Color.white);
         EditorGUILayout.LabelField("Commands");
-
+        if (GUILayout.Button("Initialize Line Renderer"))
+        {
+            myTarget.InitializeLineRendererComponents();
+        }
         if (GUILayout.Button("Set Width To 100"))
         {
-            myTarget.SetWidth(100f);
+            myTarget.SetWidth(100,100);
         }
         BoomEditorUtilities.DrawUILine(Color.white);
         EditorGUILayout.LabelField("Editable Properties");
@@ -37,54 +40,41 @@ class PaylineRendererEditor : Editor
 [RequireComponent(typeof(LineRenderer))]
 public class PaylineRenderer : MonoBehaviour
 {
-    private LineRenderer _lineRenderer;
-    private Slot_Engine.Matrix.Matrix matrix
-        {
-            get
-            {
-                if (_matrix == null)
-                    _matrix = GetComponent<Slot_Engine.Matrix.Matrix>();
-                return _matrix;
-            }
-        }
-    private Slot_Engine.Matrix.Matrix _matrix;
-    private LineRenderer lineRenderer
+    public float standard_payline_width = 50;
+    public float highlight_win_width = 100;
+    [SerializeField]
+    private LineRenderer _line_renderer;
+    internal LineRenderer line_renderer
     {
         get
         {
-            if (_lineRenderer == null)
-                _lineRenderer = GetComponent<LineRenderer>();
-            return _lineRenderer;
+            if (_line_renderer == null)
+            {
+                _line_renderer = GetComponent<LineRenderer>();
+            }
+            return _line_renderer;
         }
     }
 
-    internal void SetWidth(float v)
+    internal void SetWidth(float start, float end)
     {
-        lineRenderer.startWidth = v;
-        lineRenderer.endWidth = v;
+        line_renderer.startWidth = start;
+        line_renderer.endWidth = end;
     }
 
-    internal void ShowPayline(Payline paylines_supported)
+    internal void SetLineRendererPositions(List<Vector3> position_list)
     {
-        List<Vector3> linePositions = new List<Vector3>();
-        //TODO add validation payline is same length as reels
-        for (int i = 0; i < matrix.rReels.Length; i++)
-        {
-            Vector3 position_cache = matrix.rReels[i].slots_in_reel[paylines_supported.payline[i] + 1].transform.position;
-            position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
-            //TOOD change to get slot at position at path to return x and y
-            linePositions.Add(matrix.rReels[i].slots_in_reel[paylines_supported.payline[i] + 1].transform.position);
-        }
-        lineRenderer.SetPositions(linePositions.ToArray());
+        line_renderer.positionCount = position_list.Count;
+        line_renderer.SetPositions(position_list.ToArray());
     }
 
-    internal void EnableRenderer()
+    internal void ToggleRenderer(bool on_off)
     {
-        lineRenderer.enabled = true;
+        line_renderer.enabled = on_off;
     }
 
-    internal void DisableRenderer()
+    internal void InitializeLineRendererComponents()
     {
-        lineRenderer.enabled = false;
+        Debug.Log(string.Format("lineRenderer Initialized with {0} components",line_renderer.ToString()));
     }
 }

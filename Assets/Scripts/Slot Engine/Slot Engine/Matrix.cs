@@ -115,7 +115,60 @@ namespace Slot_Engine.Matrix
 
     public class Matrix : MonoBehaviour
     {
+        private PayLines paylines
+        {
+            get
+            {
+                if (_paylines == null)
+                    _paylines = GetComponent<PayLines>();
+                return _paylines;
+            }
+        }
+        private PayLines _paylines;
+
         public string[] supported_symbols = new string[10] { "MA01", "MI01", "MI02", "MI03", "RO01", "RO02", "RO03", "SA_01", "SA_02", "BW01" }; //TODO Make available in matrix generator to define symbols supported
+
+        public Material[] _supported_symbols_materials;
+        public SerializableDictionary<string, Material> supported_symbols_map_materials;
+        public SpinManager spin_manager;
+        public Vector3[] matrix; //elements are reels value is slot per reel
+        public Vector3 slot_size;
+        public Vector3 padding;
+        public float spin_speed;
+        public int reel_spin_delay_ms = 0;
+        public Vector2 reel_slot_padding = new Vector2(0, 1); //TODO set from Matrix Generator
+
+        public Reel[] rReels;
+        public ReelStrip[] endingSymbols;
+        protected List<Symbols[]> _ReelSymbols;
+
+        private List<Symbols[]> ReelSymbols
+        {
+            get
+            {
+                if (_ReelSymbols == null)
+                    _ReelSymbols = GenerateEndReelsSymbols();
+                if (_ReelSymbols.Count == 0)
+                    _ReelSymbols = GenerateEndReelsSymbols();
+                return _ReelSymbols;
+            }
+            set
+            {
+                _ReelSymbols = value;
+            }
+        }
+        internal void ReturnSymbolPositionsOnPayline(ref Payline payline, out List<Vector3> linePositions)
+        {
+            linePositions = new List<Vector3>();
+            for (int i = 0; i < rReels.Length; i++)
+            {
+                Vector3 position_cache = rReels[i].slots_in_reel[payline.payline[i] + 1].transform.position; //Top slot cushion slot - use 1 as first element - If more than 1 cushion slot change logic to pull display slots from -2 end of array. Slots move off screen
+                position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
+                                                                                       //TOOD change to get slot at position at path to return x and y
+                linePositions.Add(position_cache);
+            }
+        }
+
         public Material[] supported_symbols_materials
         {
             get
@@ -161,46 +214,6 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        public Material[] _supported_symbols_materials;
-        public SerializableDictionary<string, Material> supported_symbols_map_materials;
-        public SpinManager spin_manager;
-        public Vector3[] matrix; //elements are reels value is slot per reel
-        public Vector3 slot_size;
-        public Vector3 padding;
-        public float spin_speed;
-        public int reel_spin_delay_ms = 0;
-        public Vector2 reel_slot_padding = new Vector2(0,1); //TODO set from Matrix Generator
-
-        void Start()
-        {
-            if (supported_symbols_map_materials == null)
-            {
-                GenerateSupportedSymbolsMaterials();
-            }
-        }
-
-        void OnEnable()
-        {
-            StateManager.StateChangedTo += StateManager_StateChangedTo;
-        }
-
-        private void StateManager_StateChangedTo(States State)
-        {
-            if(State == States.spin_start)
-            {
-                StartSpin();
-            }
-            else if (State == States.spin_end)
-            {
-                EndSpin();
-            }
-        }
-
-        void OnDisable()
-        {
-            StateManager.StateChangedTo -= StateManager_StateChangedTo;
-        }
-
         internal Material ReturnSymbolMaterial(string to_symbol)
         {
             try
@@ -215,29 +228,40 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        public Reel[] rReels;
-        public ReelStrip[] endingSymbols;
-        protected List<Symbols[]> _ReelSymbols;
+        //****Unity Default Functions
 
-        private List<Symbols[]> ReelSymbols
+        void Start()
         {
-            get
+            if (supported_symbols_map_materials == null)
             {
-                if (_ReelSymbols == null)
-                    _ReelSymbols = GenerateEndReelsSymbols();
-                if (_ReelSymbols.Count == 0)
-                    _ReelSymbols = GenerateEndReelsSymbols();
-                return _ReelSymbols;
-            }
-            set
-            {
-                _ReelSymbols = value;
+                GenerateSupportedSymbolsMaterials();
             }
         }
-        //****Unity Default Functions
+
+        void OnEnable()
+        {
+            StateManager.StateChangedTo += StateManager_StateChangedTo;
+        }
+
+        void OnDisable()
+        {
+            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+        }
 
 
         //***********
+
+        private void StateManager_StateChangedTo(States State)
+        {
+            if (State == States.spin_start)
+            {
+                StartSpin();
+            }
+            else if (State == States.spin_end)
+            {
+                EndSpin();
+            }
+        }
         //TODO - Enable offset from 0,0,0
         public Task GenerateMatrix(Vector3[] matrix, Vector3 slot_size, Vector3 padding)
         {
@@ -286,15 +310,14 @@ namespace Slot_Engine.Matrix
             ReturnValue.reel_number = reel_number;
             return ReturnValue;
         }
-
-        Task<ReelStrip[]> GenerateEndReelConfigurationTask;
-        Task continuation;
+            
         public async void StartSpin()
         {
             //TODO refactor implement async and stop all tasks
             //StopAllCoroutines();
             //TODO setup State machine
             endingSymbols = GenerateEndReelStripsConfiguration().Result;
+            paylines.EvaluateWinningSymbols(endingSymbols);
             //continuation = GenerateEndReelConfigurationTask.ContinueWith(t =>
             //{
             //    Console.WriteLine("Result: " + t.Result);
@@ -415,7 +438,7 @@ namespace Slot_Engine.Matrix
         {
             for (int i = 0; i < rReels.Length; i++)
             {
-                rReels[i].StopReel();
+                rReels[i].StopReel(endingSymbols[i]);
             }
         }
 

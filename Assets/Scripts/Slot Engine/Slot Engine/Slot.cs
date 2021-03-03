@@ -210,7 +210,7 @@ namespace Slot_Engine.Matrix
                 {
                     SetPresentationSymbolTo("Not on Matrix"); //TODO Define whether to set the top slot graphic
                 }
-                Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
+                //Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
             }
             else
             {
@@ -224,17 +224,20 @@ namespace Slot_Engine.Matrix
 
         internal void SetDisplaySymbolTo(int v)
         {
-            Debug.Log(string.Format("Set Display symbol to {0}", v));
+            //Debug.Log(string.Format("Set Display symbol to {0}", v));
             SetPresentationSymbolTo(reel_parent.ending_symbols[v]);
             SetSlotGraphicTo(presentation_symbol);
-            reel_parent.ending_symbols = StaticUtilities.RemoveAt<string>(reel_parent.ending_symbols, v);
+            reel_parent.ending_symbols = StaticUtilities.RemoveAt<int>(reel_parent.ending_symbols, v);
         }
 
+        private void SetPresentationSymbolTo(int to_symbol)
+        {
+            SetPresentationSymbolTo(((Symbols)to_symbol).ToString());
+        }
         private void SetPresentationSymbolTo(string to_symbol)
         {
             presentation_symbol = to_symbol;
         }
-
         internal void SetToStopSpin()
         {
             //TODO setup state machine

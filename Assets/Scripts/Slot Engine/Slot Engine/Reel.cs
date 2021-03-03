@@ -298,7 +298,7 @@ namespace Slot_Engine.Matrix
         public Vector3[] positions_in_path_v3;
 
         public Slot[] endingSlots;
-        public string[] ending_symbols;
+        public int[] ending_symbols;
         public bool change_symbol_on_matrix_exit = false;
         public async Task UpdateSlotsInReel(Vector3 new_slot_count, Matrix matrix_settings)
         {
@@ -357,10 +357,10 @@ namespace Slot_Engine.Matrix
 
         internal void SetEndingDisplaySymbolsTo(ReelStrip reelStrip)
         {
-            ending_symbols = new string[reelStrip.display_symbols.Length];
+            ending_symbols = new int[reelStrip.display_symbols.Length];
             for (int i = 0; i < reelStrip.display_symbols.Length; i++)
             {
-                ending_symbols[i] = ((Symbols)reelStrip.display_symbols[i]).ToString();
+                ending_symbols[i] = reelStrip.display_symbols[i];
             }
         }
 
@@ -584,23 +584,20 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        public void StopReel()
+        {
+            StopReel(new ReelStrip(new int[3] { 0,1,2}));
+        }
+
         /// <summary>
         /// Sets the slots to end state and generate symbols for reel to present
         /// </summary>
-        public void StopReel()
+        public void StopReel(ReelStrip reelStrip)
         {
-            StopReel(GenerateRandomSymbols());
-        }
-        /// <summary>
-        /// Generates Random symbol set based on supported symbol string and viewable slots length
-        /// </summary>
-        /// <returns>List symbols to display first in first out</returns>
-        private string[] GenerateRandomSymbols()
-        {
-            return new string[3] { "MA01", "MI01", "MI02" };
+            StopReel(reelStrip.display_symbols);
         }
 
-        public void StopReel(string[] ending_symbols)
+        public void StopReel(int[] ending_symbols)
         {
             this.ending_symbols = ending_symbols;
             //When reel is generated it's vector3[] path is generated for reference from slots

@@ -18,13 +18,6 @@ public class InteractionController : MonoBehaviour
     public Animator _StateMachineController;
 
     public bool canTriggerSet = false;
-    
-    void Start()
-    {
-        //TODO Change to include pre-loader
-        StateManager.SetStateTo(States.idle);
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -41,6 +34,16 @@ public class InteractionController : MonoBehaviour
                     StateMachineController.ResetTrigger("SpinStart");
                     StateMachineController.SetTrigger("SpinSlam");
                 }
+            }
+        }
+        else
+        {
+            if(StateManager.enCurrentState == States.idle)
+            {
+                canTriggerSet = true;
+                StateMachineController.ResetTrigger("SpinStart");
+                StateMachineController.ResetTrigger("SpinSlam");
+                StateMachineController.ResetTrigger("SpinResolve");
             }
         }
     }
