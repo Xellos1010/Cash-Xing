@@ -69,8 +69,6 @@ namespace Slot_Engine.Matrix
     }
 #endif
 
-    [RequireComponent(typeof(SpinManager))]
-    [RequireComponent(typeof(PaylinesManager))]
     public class Matrix : MonoBehaviour
     {
         /**Managers needed by matrix**/
@@ -79,7 +77,7 @@ namespace Slot_Engine.Matrix
             get
             {
                 if (_end_configuration_manager == null)
-                    _end_configuration_manager = GetComponent<EndConfigurationManager>();
+                    _end_configuration_manager = GameObject.FindObjectOfType<EndConfigurationManager>();
                 return _end_configuration_manager;
             }
         }
@@ -111,7 +109,7 @@ namespace Slot_Engine.Matrix
             get
             {
                 if (_paylines_manager == null)
-                    _paylines_manager = GetComponent<PaylinesManager>();
+                    _paylines_manager = GameObject.FindObjectOfType<PaylinesManager>();
                 return _paylines_manager;
             }
         }

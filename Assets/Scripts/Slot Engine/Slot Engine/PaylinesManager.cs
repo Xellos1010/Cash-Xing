@@ -16,8 +16,6 @@ namespace Slot_Engine.Matrix
     using UnityEditor;
 
     [CustomEditor(typeof(PaylinesManager))]
-    [RequireComponent(typeof(Slot_Engine.Matrix.Matrix))]
-    [RequireComponent(typeof(PaylineRendererManager))]
     class PayLinesEditor : BoomSportsEditor
     {
         PaylinesManager myTarget;
@@ -84,7 +82,6 @@ namespace Slot_Engine.Matrix
 #endif
 
 
-    [RequireComponent(typeof(Slot_Engine.Matrix.Matrix))]
     public class PaylinesManager : MonoBehaviour
     {
         public Payline[] paylines_supported;

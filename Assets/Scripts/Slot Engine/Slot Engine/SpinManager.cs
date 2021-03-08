@@ -116,24 +116,29 @@ namespace Slot_Engine.Matrix
         public Vector3 spin_direction = Vector3.down; // Initial state is down
         public float spin_loop_until_seconds_pass = 5;
         public bool use_timer = false;
-        public float time_counter = 0.0f; 
+        public float time_counter = 0.0f;
+        /// <summary>
+        /// For reference only to what state our spin manager is in
+        /// </summary>
+        public SpinStates current_state;
+
         void Update()
         {
-#if UNITY_ANDROID || UNITY_IPHONE
-            if (Input.touchCount > 0)
-            {
-                Touch temp = Input.touches[0];
-                if (temp.phase == TouchPhase.Began)
-                {
-                    CheckSpinEnabled();
-                }
-            }
-#else
-            if (Input.GetKeyDown(KeyCode.Space))
-            {
-                CheckSpinEnabled();
-            }
-#endif
+//#if UNITY_ANDROID || UNITY_IPHONE
+//            if (Input.touchCount > 0)
+//            {
+//                Touch temp = Input.touches[0];
+//                if (temp.phase == TouchPhase.Began)
+//                {
+//                    CheckSpinEnabled();
+//                }
+//            }
+//#else
+//            if (Input.GetKeyDown(KeyCode.Space))
+//            {
+//                CheckSpinEnabled();
+//            }
+//#endif
 
             if (use_timer)
             {
@@ -164,18 +169,19 @@ namespace Slot_Engine.Matrix
         {
             if (spin_enabled)
             {
-                Debug.Log("Handle Start Spin");
-                SetSpinStateTo(SpinStates.start);
+                Debug.Log("Spin is enabled and ready to go to start state");
+                //StateManager.SetStateTo(States);
             }
             else if (spin_slam_enabled && StateManager.enCurrentState == States.spin_loop)
             {
                 Debug.Log("Handle Spin Slam");
-                SetSpinStateTo(SpinStates.interrupt);
+                //SetSpinStateTo(SpinStates.interrupt);
             }
         }
 
         internal void SetSpinStateTo(SpinStates state)
         {
+            Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
             {
                 case SpinStates.idle:
@@ -201,6 +207,7 @@ namespace Slot_Engine.Matrix
                 default:
                     break;
             }
+            current_state = state;
         }
 
         private void InterruptSpin()
@@ -220,6 +227,8 @@ namespace Slot_Engine.Matrix
         }
         async void SpinReels()
         {
+            //Generate reelstrip (this is temporary)
+            //await matrix.end_configuration_manager.GenerateEndReelStripsConfiguration();
             //Evaluate winning paysymbols before spin starts
             matrix.paylines_manager.EvaluateWinningSymbols(matrix.end_configuration_manager.end_reelstrips_to_display);
             //Generate ReelStrips to cycle through if there is no reelstrip present
@@ -235,15 +244,15 @@ namespace Slot_Engine.Matrix
                 //Delay the reelstrip if toggled
                 if(reel_spin_delay_start_enabled)
                     await Task.Delay(reel_spin_delay_ms);
-                matrix.reel_strip_managers[i].SpinReel();
+                await matrix.reel_strip_managers[i].SpinReel();
             }
-            SetSpinStateTo(SpinStates.loop);
-            StateManager.SetStateTo(States.spin_loop);
+            //SetSpinStateTo(SpinStates.loop);
+            //StateManager.SetStateTo(States.spin_loop);
         }
 
         async void StopReels()
         {
-            StateManager.SetStateTo(States.spin_end);
+            //StateManager.SetStateTo(States.spin_end);
             //This handles spinning forward or back with ? operator
             for (int i = spin_reels_starting_forward_back ? 0 : matrix.reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
@@ -284,13 +293,14 @@ namespace Slot_Engine.Matrix
 
         private void StateManager_StateChangedTo(States State)
         {
+            Debug.Log(String.Format("Checking for state dependant logic for SpinManager via state {0}",State.ToString()));
             if (State == States.spin_start)
             {
                 SetSpinStateTo(SpinStates.start);
             }
-            else if (State == States.spin_end)
+            else if (State == States.spin_outro)
             {
-                SetSpinStateTo(SpinStates.end);
+                SetSpinStateTo(SpinStates.outro);
             }
             else if (State == States.idle_idle)
             {

@@ -60,6 +60,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\MeterInformationManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\PaylinesManager.cs" />
     <Compile Include="Assets\InteractionController.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Payline.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Matrix.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SlotManager.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Templates\CEvent.cs" />
@@ -71,15 +72,18 @@
     <Compile Include="Assets\Scripts\StateMachine\IStateBehaviour.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\PanelInformation.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eEvaluationDirection.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\EndConfigurationManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Features.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\CreditRackManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SymbolMaterialsManager.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\WinningPayline.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\StateManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\WinConditions.cs" />
     <Compile Include="Assets\WeightedDistribution\Scripts\Examples\IntDistribution.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\BoomSportsEditor.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\GaffManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\GenericMeter.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStrip.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\CycleBannerManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\PlayerInformationManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinTimeSpeed.cs" />
@@ -113,10 +117,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripManager.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\EndConfigurationManager.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Payline.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStrip.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\WinningPayline.cs" />
+    <Compile Include="Assets\StateMachineManager.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

@@ -26,6 +26,10 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("End Configuration Manager Controls");
+            if(GUILayout.Button("Generate Reelstrips"))
+            {
+                myTarget.GenerateMultipleEndReelStripsConfiguration(5);
+            }    
             base.OnInspectorGUI();
         }
 
@@ -59,7 +63,10 @@ namespace Slot_Engine.Matrix
                 return end_reelstrips_to_display_sequence[0];
             }
         }
+        [SerializeField]
         public ReelStrip[][] end_reelstrips_to_display_sequence;
+        [SerializeField]
+        public ReelStrip[] current_end_reelstrips_to_display;
         /// <summary>
         /// Generates the Display matrix then runs payline evaluation
         /// </summary>
@@ -88,6 +95,7 @@ namespace Slot_Engine.Matrix
             {
                 end_reelstrips_to_display_sequence[i] = GenerateReelStrips(matrix.reel_strip_managers).Result;
             }
+            current_end_reelstrips_to_display = end_reelstrips_to_display_sequence[0];
         }
         internal Task<ReelStrip[]> GenerateReelStrips(ReelStripManager[] reel_strip_managers)
         {
