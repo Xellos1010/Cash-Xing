@@ -37,6 +37,7 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("SpinManager Properties");
 
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+
             EditorGUI.BeginChangeCheck();
             spin_reels_starting_forward_back.boolValue = EditorGUILayout.Toggle("Toggle Spin Forward Or Back- On Forward off Backward", spin_reels_starting_forward_back.boolValue);
             reel_spin_delay_start_enabled.boolValue = EditorGUILayout.Toggle("Toggle Reel Spin Delay On Start", reel_spin_delay_start_enabled.boolValue);
@@ -184,7 +185,6 @@ namespace Slot_Engine.Matrix
                     {
                         ResetUseTimer();
                         controller.SlamSpin();
-                        //StateManager.SetStateTo(States.spin_outro);
                     }
                 }
                 else
@@ -199,20 +199,6 @@ namespace Slot_Engine.Matrix
         {
             time_counter = 0;
             use_timer = false;
-        }
-
-        internal void CheckSpinEnabled()
-        {
-            if (spin_enabled)
-            {
-                Debug.Log("Spin is enabled and ready to go to start state");
-                //StateManager.SetStateTo(States);
-            }
-            else if (spin_slam_enabled && StateManager.enCurrentState == States.Spin_Idle)
-            {
-                Debug.Log("Handle Spin Slam");
-                //SetSpinStateTo(SpinStates.interrupt);
-            }
         }
 
         internal void SetSpinStateTo(SpinStates state)
@@ -341,16 +327,16 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.preloading:
                     break;
-                case States.coinin:
+                case States.Coin_In:
                     break;
-                case States.coinout:
+                case States.Coin_Out:
                     break;
-                case States.idle_intro:
+                case States.Idle_Intro:
                     break;
-                case States.idle_idle:
+                case States.Idle_Idle:
                     SetSpinStateTo(SpinStates.idle_idle);
                     break;
-                case States.idle_outro:
+                case States.Idle_Outro:
                     break;
                 case States.Spin_Intro:
                     SetSpinStateTo(SpinStates.spin_start);
@@ -361,7 +347,7 @@ namespace Slot_Engine.Matrix
                 case States.Spin_Outro:
                     SetSpinStateTo(SpinStates.spin_outro);
                     break;
-                case States.spin_end:
+                case States.Spin_End:
                     break;
                 case States.win_presentation:
                     break;

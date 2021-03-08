@@ -211,7 +211,7 @@ namespace Slot_Engine.Matrix
             {
                 winning_paylines = payline_won.ToArray();
                 matrix.animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
-                matrix.animator_state_machine.SetBool(supported_bools.SpinResolveEnsure, true);
+                matrix.animator_state_machine.SetBool(supported_bools.WinRacking,true);
             }
             paylines_evaluated = true;
         }
@@ -336,22 +336,22 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.preloading:
                     break;
-                case States.coinin:
+                case States.Coin_In:
                     break;
-                case States.coinout:
+                case States.Coin_Out:
                     break;
-                case States.idle_intro:
+                case States.Idle_Intro:
                     break;
-                case States.idle_idle:
+                case States.Idle_Idle:
                     payline_renderer_manager.ToggleRenderer(false);
                     break;
-                case States.idle_outro:
+                case States.Idle_Outro:
                     break;
                 case States.Spin_Intro:
                     break;
                 case States.Spin_Idle:
                     break;
-                case States.spin_end:
+                case States.Spin_End:
                     break;
                 case States.win_presentation:
                     payline_renderer_manager.ToggleRenderer(true);

@@ -73,7 +73,7 @@ namespace Slot_Engine.Matrix
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
                     Debug.Log("Trigger for spin/slam pressed");
-                    if (StateManager.enCurrentState == States.idle_idle)
+                    if (StateManager.enCurrentState == States.Idle_Idle)
                     {
                         SetTriggerTo(supported_triggers.SpinStart);
                     }
@@ -85,7 +85,7 @@ namespace Slot_Engine.Matrix
             }
             else
             {
-                if (StateManager.enCurrentState == States.idle_intro)
+                if (StateManager.enCurrentState == States.Idle_Intro)
                 {
                     canTriggerSet = true;
                     SetTriggerTo(supported_triggers.End);

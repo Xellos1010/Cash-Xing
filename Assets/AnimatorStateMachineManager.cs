@@ -12,7 +12,11 @@ public enum supported_triggers
 }
 public enum supported_bools
 {
-    SpinResolveEnsure,
+    WinRacking,
+    BonusActive,
+    FeatureTrigger,
+    SymbolResolve,
+    LoopPaylinesWin,
     End
 }
 
@@ -40,7 +44,7 @@ public class AnimatorStateMachineManager : MonoBehaviour
     public int idle_idle_hash = Animator.StringToHash("Idle_Idle");
     public void SetStateToIdle_Idle()
     {
-        SetStateTo(States.idle_idle);
+        SetStateTo(States.Idle_Idle);
     }
     public void SetStateTo(States to_state)
     {
