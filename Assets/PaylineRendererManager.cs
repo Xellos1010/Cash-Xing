@@ -10,7 +10,7 @@ namespace Slot_Engine.Matrix
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(PaylineRendererManager))]
-    class PaylineRendererManagerEditor : Editor
+    class PaylineRendererManagerEditor : BoomSportsEditor
     {
         PaylineRendererManager myTarget;
 
@@ -33,8 +33,6 @@ namespace Slot_Engine.Matrix
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
-            BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("To be Removed");
             base.OnInspectorGUI();
         }
     }
@@ -53,11 +51,11 @@ namespace Slot_Engine.Matrix
                 {
                     _payline_renderers = GetComponentsInChildren<PaylineRenderer>();
                 }
-                if (_payline_renderers.Length != matrix.rReels.Length - 1)
+                if (_payline_renderers.Length != matrix.reel_strip_managers.Length - 1)
                 {
                     List<PaylineRenderer> renderers = new List<PaylineRenderer>();
                     renderers.AddRange(_payline_renderers);
-                    for (int i = 0; i < matrix.rReels.Length - 1; i++)
+                    for (int i = 0; i < matrix.reel_strip_managers.Length - 1; i++)
                     {
                         renderers.Add(GenerateNewPaylineObject());
                     }
@@ -103,9 +101,9 @@ namespace Slot_Engine.Matrix
         {
             List<Vector3> linePositions = new List<Vector3>();
             //TODO add validation payline is same length as reels
-            for (int i = 0; i < matrix.rReels.Length; i++)
+            for (int i = 0; i < matrix.reel_strip_managers.Length; i++)
             {
-                Vector3 position_cache = matrix.rReels[i].slots_in_reel[paylines_supported.payline[i] + 1].transform.position;
+                Vector3 position_cache = matrix.reel_strip_managers[i].slots_in_reel[paylines_supported.payline[i] + 1].transform.position;
                 position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
                                                                                        //TOOD change to get slot at position at path to return x and y
                 linePositions.Add(position_cache);
@@ -150,9 +148,10 @@ namespace Slot_Engine.Matrix
 
         internal void ToggleRenderer(bool on_off)
         {
+            Debug.Log(String.Format("Toggle Renderer {0}",on_off));
             for (int i = 0; i < payline_renderers.Length; i++)
             {
-                payline_renderers[i].enabled = on_off;
+                payline_renderers[i].line_renderer.enabled = on_off;
             }
         }
 

@@ -4,7 +4,6 @@
 using System.IO;
 using System.Collections.Generic;
 using System;
-
 //************
 
 /// <summary>
@@ -16,12 +15,12 @@ namespace Slot_Engine.Matrix
 #if UNITY_EDITOR
     using UnityEditor;
 
-    [CustomEditor(typeof(PayLines))]
+    [CustomEditor(typeof(PaylinesManager))]
     [RequireComponent(typeof(Slot_Engine.Matrix.Matrix))]
     [RequireComponent(typeof(PaylineRendererManager))]
-    class PayLinesEditor : Editor
+    class PayLinesEditor : BoomSportsEditor
     {
-        PayLines myTarget;
+        PaylinesManager myTarget;
         SerializedProperty paylines_supported;
         SerializedProperty winning_paylines;
         SerializedProperty paylines_evaluated;
@@ -29,7 +28,7 @@ namespace Slot_Engine.Matrix
         private int winning_payline_to_show;
         public void OnEnable()
         {
-            myTarget = (PayLines)target;
+            myTarget = (PaylinesManager)target;
             paylines_supported = serializedObject.FindProperty("paylines_supported");
             winning_paylines = serializedObject.FindProperty("winning_paylines");
             paylines_evaluated = serializedObject.FindProperty("paylines_evaluated");
@@ -79,8 +78,6 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("Editable Properties");
             EditorGUILayout.PropertyField(paylines_supported);
             EditorGUILayout.PropertyField(winning_paylines);
-            BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("To be Removed");
             base.OnInspectorGUI();
         }
     }
@@ -88,7 +85,7 @@ namespace Slot_Engine.Matrix
 
 
     [RequireComponent(typeof(Slot_Engine.Matrix.Matrix))]
-    public class PayLines : MonoBehaviour
+    public class PaylinesManager : MonoBehaviour
     {
         public Payline[] paylines_supported;
         public WinningPayline[] winning_paylines;
@@ -104,22 +101,23 @@ namespace Slot_Engine.Matrix
             {
                 if (_payline_renderer_manager == null)
                 {
-                    _payline_renderer_manager = GetComponent<PaylineRendererManager>();
+                    _payline_renderer_manager = GameObject.FindObjectOfType<PaylineRendererManager>();
                 }
                 return _payline_renderer_manager;
             }
         }
         public PaylineRendererManager _payline_renderer_manager;
-        private Slot_Engine.Matrix.Matrix matrix
+        private Matrix matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = GetComponent<Slot_Engine.Matrix.Matrix>();
+                    _matrix = GameObject.FindObjectOfType<Matrix>();
                 return _matrix;
             }
         }
-        private Slot_Engine.Matrix.Matrix _matrix;
+        [SerializeField]
+        private Matrix _matrix;
         internal void SetPaylines()
         {
             //Find File - Parse File - Fill Array of int[]
@@ -229,7 +227,7 @@ namespace Slot_Engine.Matrix
                     else
                     {
                         //If the primary symbol is a wild then auto match with next symbol. if next symbol regular symbol that becomes primary symbol
-                        if (matching_symbols_list[primary_symbol_index] == (int)Symbols.BW01)
+                        if (matching_symbols_list[primary_symbol_index] == (int)Symbol.BW01)
                             if (CheckNextSymbolWild(matching_symbols_list[primary_symbol_index], symbols_in_row[symbol]))
                             {
                                 primary_symbol_index = symbol;
@@ -264,7 +262,7 @@ namespace Slot_Engine.Matrix
             List<string> symbol_names = new List<string>();
             for (int i = 0; i < matching_symbols_list.Count; i++)
             {
-                symbol_names.Add(((Symbols)matching_symbols_list[i]).ToString());
+                symbol_names.Add(((Symbol)matching_symbols_list[i]).ToString());
             }
             Debug.Log(String.Format("a match was found on payline {0}, {1} symbols match {2}", payline, left_right ? "left":"right", String.Join(" ", symbol_names)));
 
@@ -273,7 +271,7 @@ namespace Slot_Engine.Matrix
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
         {
             //Now see if the next symbol is a wild or the same as the primary symbol. check false condition first
-            if (symbol_to_check != (int)Symbols.BW01 || symbol_to_check != primary_symbol) // Wild symbol - look to match next symbol to wild or set symbol 
+            if (symbol_to_check != (int)Symbol.BW01 || symbol_to_check != primary_symbol) // Wild symbol - look to match next symbol to wild or set symbol 
             {
 
                 return false;
@@ -286,9 +284,9 @@ namespace Slot_Engine.Matrix
 
         private bool CheckNextSymbolWild(int v1, int v2)
         {
-            if (v1 == (int)Symbols.BW01)
+            if (v1 == (int)Symbol.BW01)
             {
-                if (v2 != (int)Symbols.BW01)
+                if (v2 != (int)Symbol.BW01)
                 {
                     return true;
                 }
@@ -309,20 +307,65 @@ namespace Slot_Engine.Matrix
             paylines_evaluated = false;
         }
 
+        /// <summary>
+        /// This will animate the Payline. (May need to cache slots into Event and fire event off. Find out in Optimization Phase)
+        /// </summary>
+        /// <param name="iPayline"> Defines the Payline. Length of input should be reel length</param>
+        public void AnimateSymboldOnPayLine(int[] iPayline)
+        {
+            for (int i = 0; i < iPayline.Length; i++)
+            {
+                matrix.reel_strip_managers[i].slots_in_reel[iPayline[i]].PlayAnimation();
+            }
+        }
+
         void OnEnable()
         {
             StateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
-        private void StateManager_StateChangedTo(States State)
+        private void StateManager_StateChangedTo(States state)
         {
-            if (State == States.racking_start)
+            switch (state)
             {
-                payline_renderer_manager.ToggleRenderer(true);
-            }
-            else if (State == States.spin_start)
-            {
-                payline_renderer_manager.ToggleRenderer(false);
+                case States.None:
+                    break;
+                case States.preloading:
+                    break;
+                case States.coinin:
+                    break;
+                case States.coinout:
+                    break;
+                case States.idle_intro:
+                    break;
+                case States.idle_idle:
+                    payline_renderer_manager.ToggleRenderer(false);
+                    break;
+                case States.idle_outro:
+                    break;
+                case States.spin_start:
+                    break;
+                case States.spin_loop:
+                    break;
+                case States.spin_end:
+                    break;
+                case States.win_presentation:
+                    payline_renderer_manager.ToggleRenderer(true);
+                    break;
+                case States.racking_start:
+                    break;
+                case States.racking_loop:
+                    break;
+                case States.racking_end:
+                    break;
+                case States.feature_transition_out:
+                    break;
+                case States.feature_transition_in:
+                    break;
+                case States.total_win_presentation:
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -336,19 +379,5 @@ namespace Slot_Engine.Matrix
             return winning_paylines[winning_payline_to_show];
         }
 
-    }
-}
-[System.Serializable]
-public class WinningPayline
-{
-    public Payline payline;
-    public int[] winning_symbols;
-    public bool left_right; //true for left to right false for right to left
-
-    public WinningPayline(Payline payline, int[] winning_symbols, bool left_right)
-    {
-        this.payline = payline;
-        this.winning_symbols = winning_symbols;
-        this.left_right = left_right;
     }
 }

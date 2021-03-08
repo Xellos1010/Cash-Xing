@@ -10,7 +10,7 @@
 //
 
 
-public enum Symbols {
+public enum Symbol {
 	BW01,
 	MA01,
 	MI01,

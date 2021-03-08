@@ -199,7 +199,7 @@ namespace Slot_Engine.Matrix
             if(matrixInUse != null)
                 for (int i = 0; i < matrixInUse.transform.childCount; i++)
                 {
-                    matrixInUse.transform.GetChild(i).GetComponent<Reel>().UpdateSlotPositions();
+                    matrixInUse.transform.GetChild(i).GetComponent<ReelStripManager>().SetSlotPositionToStart();
                 }
         }
 
@@ -207,7 +207,7 @@ namespace Slot_Engine.Matrix
         {
             Matrix matrixInUse = FindObjectOfType<Matrix>();
             if(matrixInUse != null)
-                matrixInUse.UpdateSlotsInReels();
+                matrixInUse.UpdateNumberOfSlotsInReel();
         }
         //******************
     }
