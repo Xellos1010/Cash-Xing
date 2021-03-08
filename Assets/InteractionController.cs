@@ -24,10 +24,6 @@ namespace Slot_Engine.Matrix
 
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
 
-            if (GUILayout.Button("Display Current Animator Layer Name"))
-            {
-                myTarget.DisplayAnimatorInfo();
-            }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Interaction Controller Controls");
             base.OnInspectorGUI();
@@ -38,25 +34,17 @@ namespace Slot_Engine.Matrix
 #endif
     
     public class InteractionController : MonoBehaviour
-    {
-        public enum supported_triggers
-        {
-            SpinStart,
-            SpinSlam,
-            SpinResolve,
-            End
-        }
-        public int idle_idle_hash = Animator.StringToHash("Idle_Idle");
-        public Animator StateMachineController
+    { 
+        public AnimatorStateMachineManager StateMachineController
         {
             get
             {
                 if (_StateMachineController == null)
-                    _StateMachineController = GameObject.FindGameObjectWithTag("StateMachine").GetComponent<Animator>();
+                    _StateMachineController = GameObject.FindGameObjectWithTag("StateMachine").GetComponent<AnimatorStateMachineManager>();
                 return _StateMachineController;
             }
         }
-        public Animator _StateMachineController;
+        public AnimatorStateMachineManager _StateMachineController;
 
         public bool canTriggerSet = false;
         // Update is called once per frame
@@ -87,9 +75,9 @@ namespace Slot_Engine.Matrix
                     Debug.Log("Trigger for spin/slam pressed");
                     if (StateManager.enCurrentState == States.idle_idle)
                     {
-                        SetTrigger(supported_triggers.SpinStart);
+                        SetTriggerTo(supported_triggers.SpinStart);
                     }
-                    else if (StateManager.enCurrentState == States.Spin_Start || StateManager.enCurrentState == States.Spin_Idle)
+                    else if (StateManager.enCurrentState == States.Spin_Intro || StateManager.enCurrentState == States.Spin_Idle)
                     {
                         SlamSpin();
                     }
@@ -100,32 +88,21 @@ namespace Slot_Engine.Matrix
                 if (StateManager.enCurrentState == States.idle_intro)
                 {
                     canTriggerSet = true;
-                    SetTrigger(supported_triggers.End);
+                    SetTriggerTo(supported_triggers.End);
                 }
             }
+        }
+
+        private void SetTriggerTo(supported_triggers to_trigger)
+        {
+            StateMachineController.SetTrigger(to_trigger);
         }
 
         public void SlamSpin()
         {
-            SetTrigger(supported_triggers.SpinSlam);
+            SetTriggerTo(supported_triggers.SpinSlam);
         }
 
-        private void SetTrigger(supported_triggers trigger_to_set)
-        {
-            for (int trigger_to_check = 0; trigger_to_check < (int)supported_triggers.End; trigger_to_check++)
-            {
-                if((supported_triggers)trigger_to_check != trigger_to_set)
-                {
-                    Debug.Log(String.Format("Resetting trigger {0}", ((supported_triggers)trigger_to_check).ToString()));
-                    StateMachineController.ResetTrigger(((supported_triggers)trigger_to_check).ToString());
-                }
-                else
-                {
-                    Debug.Log(String.Format("Setting trigger to {0}", ((supported_triggers)trigger_to_check).ToString()));
-                    StateMachineController.SetTrigger(((supported_triggers)trigger_to_check).ToString());
-                }
-            }
-        }
 
         private void SetStateTo(States to_state)
         {
@@ -133,11 +110,5 @@ namespace Slot_Engine.Matrix
             StateManager.SetStateTo(to_state);
         }
 
-        internal void DisplayAnimatorInfo()
-        {
-            idle_idle_hash = Animator.StringToHash("Idle_Idle");
-            AnimatorStateInfo animatorStateInfo = StateMachineController.GetCurrentAnimatorStateInfo(0);
-            print(String.Format("Animator Hash Pre is {0} Animator Hask Get {1}", idle_idle_hash,animatorStateInfo.fullPathHash));
-        }
     }
 }

@@ -94,7 +94,7 @@ namespace Slot_Engine.Matrix
             get
             {
                 if (_matrix == null)
-                    _matrix = GetComponent<Matrix>();
+                    _matrix = FindObjectOfType<Matrix>();
                 return _matrix;
             }
         }
@@ -106,24 +106,57 @@ namespace Slot_Engine.Matrix
         //Hit spin - spin for 2 seconds - after lapse then land on symbol you need
         //Instead of stiching in reelstrips - see numbers flying by on the reelstrip
         public bool spin_enabled;
+        /// <summary>
+        /// Can we slam
+        /// </summary>
         public bool spin_slam_enabled;
+        /// <summary>
+        /// Cascading starting reels
+        /// </summary>
         public bool reel_spin_delay_start_enabled = false;
+        /// <summary>
+        /// Cascading ending reels
+        /// </summary>
         public bool reel_spin_delay_end_enabled = false;
+        /// <summary>
+        /// Set the delay between reels starting
+        /// </summary>
         public int reel_spin_delay_ms = 0;
         /// <summary>
         /// This allows you to set the reels spin either forward or back (Left to right - right to left - top to bottom - bottom to top)
         /// </summary>
         public bool spin_reels_starting_forward_back = true;
+        /// <summary>
+        /// The constant rate the slots should spin at
+        /// </summary>
         public float spin_speed = 50;
+        /// <summary>
+        /// What direction should the slots spin? will reposition slots based on direction - please use -1, 0 or 1
+        /// </summary>
         public Vector3 spin_direction = Vector3.down; // Initial state is down
+        /// <summary>
+        /// Spin the slot machine until seconds pass
+        /// </summary>
         public float spin_loop_until_seconds_pass = 5;
-        public bool use_timer = false;
-        public float time_counter = 0.0f;
+        /// <summary>
+        /// Use a timer to stop the reels
+        /// </summary>
+        [SerializeField]
+        private bool use_timer = false;
+        /// <summary>
+        /// Counter used to measure time passed in loop state
+        /// </summary>
+        [SerializeField]
+        private float time_counter = 0.0f;
         /// <summary>
         /// For reference only to what state our spin manager is in
         /// </summary>
         public SpinStates current_state;
-
+        /// <summary>
+        /// uses predefeined reelstrips to loop thru on spin loop
+        /// </summary>
+        [SerializeField]
+        internal bool use_reelstrips_for_spin_loop;
         void Update()
         {
 //#if UNITY_ANDROID || UNITY_IPHONE
@@ -189,6 +222,8 @@ namespace Slot_Engine.Matrix
             {
                 case SpinStates.idle_idle:
                     spin_enabled = true;
+                    matrix.animator_state_machine.ResetAllTriggers();
+                    matrix.animator_state_machine.ResetAllBools();
                     break;
                 case SpinStates.spin_start:
                     StartSpin();
@@ -233,11 +268,14 @@ namespace Slot_Engine.Matrix
             //Generate reelstrip (this is temporary)
             //await matrix.end_configuration_manager.GenerateEndReelStripsConfiguration();
             //Evaluate winning paysymbols before spin starts
-            matrix.paylines_manager.EvaluateWinningSymbols(matrix.end_configuration_manager.end_reelstrips_to_display);
+            ReelStrip[] end_reel_configuration = matrix.end_configuration_manager.GetConfigurationToDisplay();
+            matrix.paylines_manager.EvaluateWinningSymbols(end_reel_configuration);
             //Generate ReelStrips to cycle through if there is no reelstrip present
-            if (matrix.use_reelstrips_for_spin_loop)
+            if (use_reelstrips_for_spin_loop)
             {
-                matrix.GenerateReelStripsToSpinThru();
+                //Generate Reel strips if none are present
+                matrix.GenerateReelStripsToSpinThru(ref end_reel_configuration);
+                //Set each reelstripmanager to spin thru the strip
             }
             //Insert end_reelstrips_to_display into generated reelstrips
             for (int i = spin_reels_starting_forward_back ? 0: matrix.reel_strip_managers.Length-1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
@@ -314,13 +352,13 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.idle_outro:
                     break;
-                case States.Spin_Start:
+                case States.Spin_Intro:
                     SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.Spin_Idle:
                     SetSpinStateTo(SpinStates.spin_idle);
                     break;
-                case States.spin_outro:
+                case States.Spin_Outro:
                     SetSpinStateTo(SpinStates.spin_outro);
                     break;
                 case States.spin_end:
@@ -342,10 +380,10 @@ namespace Slot_Engine.Matrix
                 default:
                     break;
             }
-            if (State == States.Spin_Start)
+            if (State == States.Spin_Intro)
             {
             }
-            else if (State == States.spin_outro)
+            else if (State == States.Spin_Outro)
             {
             }
         }

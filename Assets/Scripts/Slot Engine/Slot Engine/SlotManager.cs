@@ -55,10 +55,11 @@ namespace Slot_Engine.Matrix
         /// the end position for the reels to calculate and land on
         /// </summary>
         public Vector3 end_position;
-        public bool set_to_end_position = false;
+        public bool set_to_display_end_symbol = false;
         public bool graphics_set_to_end = false;
         public MeshRenderer _meshRenderer;
 
+        public Animator state_machine;
 
         public MeshRenderer meshRenderer
         {
@@ -87,6 +88,7 @@ namespace Slot_Engine.Matrix
         /// <param name="to_symbol">the symbol name to look for</param>
         public void SetSlotGraphicTo(string to_symbol)
         {
+            //Debug.Log(String.Format("Settings {0} slot symbol to {1}",transform.name,to_symbol));
             //TODO add test cases for if to_graphic is present in directory
             //TODO Add State Dependant Graphics Loading
             Material to_material = reel_parent.matrix.symbols_material_manager.ReturnSymbolMaterial(to_symbol);
@@ -141,7 +143,7 @@ namespace Slot_Engine.Matrix
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
                 }
                 //TODO setup to set end position based on number of slots - slot width + padding and direction of spin
-                if(set_to_end_position && graphics_set_to_end)
+                if(set_to_display_end_symbol && graphics_set_to_end)
                     if (toPosition.y <= end_position.y)
                     {
                         toPosition = end_position;
@@ -154,7 +156,7 @@ namespace Slot_Engine.Matrix
         private void ResetAllVars()
         {
             movement_enabled = false;
-            set_to_end_position = false;
+            set_to_display_end_symbol = false;
             graphics_set_to_end = false;
 
             //Set state of reel to end
@@ -168,7 +170,7 @@ namespace Slot_Engine.Matrix
             else
                 toPosition = new Vector3(toPosition.x, toPosition.y + lastPosition.y, toPosition.z);
 
-            if(set_to_end_position)
+            if(set_to_display_end_symbol)
             {
                 //Set Graphics and end position
                 graphics_set_to_end = true;
@@ -186,9 +188,27 @@ namespace Slot_Engine.Matrix
             }
             else
             {
-                if (reel_parent.change_symbol_on_matrix_exit)
+                bool symbol_set = false;
+                if (reel_parent.change_symbol_graphic_on_spin_idle)
                 {
-                    SetSlotGraphicTo(reel_parent.matrix.supported_symbols[reel_parent.matrix.end_configuration_manager.GetRandomWeightedSymbol()]);
+                    if (reel_parent.reel_strip_to_use_for_spin != null)
+                    {
+                        if (reel_parent.reel_strip_to_use_for_spin.reel_spin_symbols.Length > 0)
+                        {
+                            string symbol_name = reel_parent.ReturnNextSymbolInStrip();
+                            SetSlotGraphicTo(symbol_name);
+                            SetPresentationSymbolTo(symbol_name);
+
+                            symbol_set = true;
+                        }
+                    }
+                    if (!symbol_set)
+                    {
+                        string symbol_name = reel_parent.matrix.supported_symbols[reel_parent.matrix.end_configuration_manager.GetRandomWeightedSymbol()];
+                        SetSlotGraphicTo(symbol_name);
+                        SetPresentationSymbolTo(symbol_name);
+
+                    }
                 }
             }
 
@@ -213,7 +233,7 @@ namespace Slot_Engine.Matrix
         internal void SetToStopSpin()
         {
             //TODO setup state machine
-            set_to_end_position = true;
+            set_to_display_end_symbol = true;
         }
     }
 }

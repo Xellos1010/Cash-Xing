@@ -152,10 +152,19 @@ namespace Slot_Engine.Matrix
         public string[] supported_symbols = new string[10] { "MA01", "MI01", "MI02", "MI03", "RO01", "RO02", "RO03", "SA_01", "SA_02", "BW01" }; //when a matrix is generated - only 1 configuration can be loaded at a time
 
         public Vector3[] matrix; //elements are reels value is slot per reel
+        /// <summary>
+        /// What is the size of the slot in pixels
+        /// </summary>
         public Vector3 slot_size;
+        /// <summary>
+        /// The padding between each slot
+        /// </summary>
         public Vector3 padding;
+        /// <summary>
+        /// The padding between each reel
+        /// </summary>
         public Vector2 reel_slot_padding = new Vector2(0, 1); //TODO set from Matrix Generator
-
+        public AnimatorStateMachineManager animator_state_machine;
         internal void ReturnSymbolPositionsOnPayline(ref Payline payline, out List<Vector3> linePositions)
         {
             linePositions = new List<Vector3>();
@@ -185,11 +194,10 @@ namespace Slot_Engine.Matrix
         }
         [SerializeField]
         private WeightedDistribution.IntDistribution _intWeightedDistributionSymbols;
+
         /// <summary>
-        /// uses predefeined reelstrips to loop thru on spin loop
+        /// Controls how many slots to include in reel strip
         /// </summary>
-        [SerializeField]
-        internal bool use_reelstrips_for_spin_loop;
         [SerializeField]
         internal int slots_per_strip_onSpinLoop = 50;
 
@@ -228,27 +236,25 @@ namespace Slot_Engine.Matrix
             reel_strip_managers = newReelList.ToArray();
         }
 
-        internal void GenerateReelStripsToSpinThru()
+        internal void GenerateReelStripsToSpinThru(ref ReelStrip[] reel_configuration)
         {
             //Generate reel strips based on number of reels and symbols per reel - Insert ending symbol configuration and hold reference for array range
-            GenerateReelStripsFor(ref reel_strip_managers,end_configuration_manager.end_reelstrips_to_display, slots_per_strip_onSpinLoop);
+            GenerateReelStripsFor(ref reel_strip_managers, ref reel_configuration, slots_per_strip_onSpinLoop);
         }
 
-        private void GenerateReelStripsFor(ref ReelStripManager[] reel_strip_managers, ReelStrip[] spin_configuration_reelstrip, int slots_per_strip_onSpinLoop)
+        private void GenerateReelStripsFor(ref ReelStripManager[] reel_strip_managers, ref ReelStrip[] spin_configuration_reelstrip, int slots_per_strip_onSpinLoop)
         {
             //Loop over each reelstrip and assign reel strip
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                //Generates reelstrip based on weights
-                spin_configuration_reelstrip[i].GenerateReelStrip(slots_per_strip_onSpinLoop, intWeightedDistributionSymbols);
+                if (spin_configuration_reelstrip[i].reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
+                {
+                    //Generates reelstrip based on weights
+                    spin_configuration_reelstrip[i].GenerateReelStrip(slots_per_strip_onSpinLoop, intWeightedDistributionSymbols);
+                }
                 //Assign reelstrip to reel
                 reel_strip_managers[i].reel_strip_to_use_for_spin = spin_configuration_reelstrip[i];
             }
-        }
-
-        private void GenerateReelStripsFor(ref ReelStripManager[] reel_strip_managers)
-        {
-            throw new NotImplementedException();
         }
 
         ReelStripManager GenerateReel(int reel_number)

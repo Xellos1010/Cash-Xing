@@ -60,13 +60,12 @@ namespace Slot_Engine.Matrix
                     GenerateMultipleEndReelStripsConfiguration(5);
                 if(end_reelstrips_to_display_sequence.Length == 0)
                     GenerateMultipleEndReelStripsConfiguration(5);
+                //TODO Validate Data in Reel Strip then Generate if no valid data found
                 return end_reelstrips_to_display_sequence[0];
             }
         }
         [SerializeField]
         public ReelStrip[][] end_reelstrips_to_display_sequence;
-        [SerializeField]
-        public ReelStrip[] current_end_reelstrips_to_display;
         /// <summary>
         /// Generates the Display matrix then runs payline evaluation
         /// </summary>
@@ -95,7 +94,6 @@ namespace Slot_Engine.Matrix
             {
                 end_reelstrips_to_display_sequence[i] = GenerateReelStrips(matrix.reel_strip_managers).Result;
             }
-            current_end_reelstrips_to_display = end_reelstrips_to_display_sequence[0];
         }
         internal Task<ReelStrip[]> GenerateReelStrips(ReelStripManager[] reel_strip_managers)
         {
@@ -128,6 +126,11 @@ namespace Slot_Engine.Matrix
         internal void RemoveCurrentDisplayReelConfiguration()
         {
             end_reelstrips_to_display_sequence.RemoveAt<ReelStrip[]>(0);
+        }
+
+        internal ReelStrip[] GetConfigurationToDisplay()
+        {
+            return end_reelstrips_to_display;
         }
     }
 }

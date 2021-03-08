@@ -160,7 +160,7 @@ public enum eEaseType
         /// <summary>
         /// Enable you to change the symbol when slot exits matrix to weighted distribution symbol set
         /// </summary>
-        public bool change_symbol_on_matrix_exit = false;
+        public bool change_symbol_graphic_on_spin_idle = true;
         internal int end_symbols_set = 0;
         
         /// <summary>
@@ -181,59 +181,74 @@ public enum eEaseType
                 }
             }
         }
-        /*
-        ////For Spinning down the yCurve needs to be set for each
-        ///// <summary>
-        ///// start spin easing
-        ///// </summary>
-        //public AnimationCurve[] start_spin_curve_xyz
-        //{
-        //    get
-        //    {
-        //        if (_start_spin_curve_xyz == null || _start_spin_curve_xyz.Length < 3)
-        //        {
-        //            _start_spin_curve_xyz = new AnimationCurve[3] {
-        //            AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_direction.magnitude),
-        //            AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_direction.magnitude),
-        //            AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_direction.magnitude)
-        //            };
-        //        }
-        //        return _start_spin_curve_xyz;
-        //    }
-        //    set
-        //    {
-        //        _start_spin_curve_xyz = value;
-        //    }
-        //}
-        ////Eases the speed over seconds
-        ///// <summary>
-        ///// Looping Path Time - slot 0 -> end slot - each key is a position in path. Speed - Speed -> pixels to move per Time.deltatime / seconds
-        ///// </summary>
-        //public AnimationCurve[] looping_curves_xyz
-        //{
-        //    get
-        //    {
-        //        if (_looping_curves_xyz == null || _looping_curves_xyz.Length < 3)
-        //        {
-        //            _looping_curves_xyz = new AnimationCurve[3] {
-        //            AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_direction.magnitude), //todo calculate time to move over position in path v#
-        //            AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_direction.magnitude),
-        //            AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_direction.magnitude)
-        //            };
-        //        }
-        //        return _looping_curves_xyz;
-        //    }
-        //    set
-        //    {
-        //        _looping_curves_xyz = value;
-        //    }
-        //}
+        public int reel_strip_counter = 0;
+        internal string ReturnNextSymbolInStrip()
+        {
+            string output = ((Symbol)reel_strip_to_use_for_spin.reel_spin_symbols[reel_strip_counter]).ToString();
+            if(reel_strip_counter+1 >= reel_strip_to_use_for_spin.reel_spin_symbols.Length)
+            {
+                reel_strip_counter = 0;
+            }
+            else
+            {
+                reel_strip_counter += 1;
+            }
+            return output;
+        }
 
-        /// <summary>
-        /// end spin easing
-        /// </summary>
-        //public AnimationCurve[] end_spin_curve_xyz;
-        */
+        /*
+////For Spinning down the yCurve needs to be set for each
+///// <summary>
+///// start spin easing
+///// </summary>
+//public AnimationCurve[] start_spin_curve_xyz
+//{
+//    get
+//    {
+//        if (_start_spin_curve_xyz == null || _start_spin_curve_xyz.Length < 3)
+//        {
+//            _start_spin_curve_xyz = new AnimationCurve[3] {
+//            AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_direction.magnitude),
+//            AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_direction.magnitude),
+//            AnimationCurve.Linear(0.0f,0,1,reel_spin_speed_direction.magnitude)
+//            };
+//        }
+//        return _start_spin_curve_xyz;
+//    }
+//    set
+//    {
+//        _start_spin_curve_xyz = value;
+//    }
+//}
+////Eases the speed over seconds
+///// <summary>
+///// Looping Path Time - slot 0 -> end slot - each key is a position in path. Speed - Speed -> pixels to move per Time.deltatime / seconds
+///// </summary>
+//public AnimationCurve[] looping_curves_xyz
+//{
+//    get
+//    {
+//        if (_looping_curves_xyz == null || _looping_curves_xyz.Length < 3)
+//        {
+//            _looping_curves_xyz = new AnimationCurve[3] {
+//            AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_direction.magnitude), //todo calculate time to move over position in path v#
+//            AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_direction.magnitude),
+//            AnimationCurve.Constant(0.0f,0.0f,reel_spin_speed_direction.magnitude)
+//            };
+//        }
+//        return _looping_curves_xyz;
+//    }
+//    set
+//    {
+//        _looping_curves_xyz = value;
+//    }
+//}
+
+/// <summary>
+/// end spin easing
+/// </summary>
+//public AnimationCurve[] end_spin_curve_xyz;
+*/
         /// <summary>
         /// Draws debug GUI for User to see data in action
         /// </summary>

@@ -85,7 +85,8 @@ namespace Slot_Engine.Matrix
     public class PaylinesManager : MonoBehaviour
     {
         public Payline[] paylines_supported;
-        public WinningPayline[] winning_paylines;
+        [SerializeField]
+        internal WinningPayline[] winning_paylines;
         //The range for active paylines to use when evaluating paylines
         public int active_payline_range_lower = 0;
         public int active_payline_range_upper = 98;
@@ -173,7 +174,7 @@ namespace Slot_Engine.Matrix
             new int[3] {0,1,2},
             new int[3] {0,1,2},
             new int[3] {0,1,2}}; //TODO pull reel configuration from matrix
-            EvaluateWinningSymbols(symbols_configuration);
+            EvaluateWinningSymbols(symbols_configuration);//matrix.end_configuration_manager.GetConfigurationToDisplay());
         }
 
         internal void EvaluateWinningSymbols(ReelStrip[] ending_reelstrips)
@@ -196,8 +197,9 @@ namespace Slot_Engine.Matrix
             //Iterate through each payline and check for a win 
             for (int payline = active_payline_range_lower; payline < active_payline_range_upper; payline++)
             {
-                //Gather arbitrary symbols in row
+                //Gather raw symbols in row
                 GetSymbolsOnPayline(payline, ref symbols_configuration, out symbols_in_row);
+                
                 //Initialize variabled needed for checking symbol matches and direction
                 InitializeMachingSymbolsVars(0, symbols_in_row[0],out matching_symbols_list,out primary_symbol_index);
                 CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index,ref payline, ref payline_won);
@@ -205,7 +207,12 @@ namespace Slot_Engine.Matrix
                 InitializeMachingSymbolsVars(0, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
                 CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
             }
-            winning_paylines = payline_won.ToArray();
+            if (payline_won.Count > 0)
+            {
+                winning_paylines = payline_won.ToArray();
+                matrix.animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+                matrix.animator_state_machine.SetBool(supported_bools.SpinResolveEnsure, true);
+            }
             paylines_evaluated = true;
         }
 
@@ -268,14 +275,14 @@ namespace Slot_Engine.Matrix
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
         {
             //Now see if the next symbol is a wild or the same as the primary symbol. check false condition first
-            if (symbol_to_check != (int)Symbol.BW01 || symbol_to_check != primary_symbol) // Wild symbol - look to match next symbol to wild or set symbol 
+            if (symbol_to_check == (int)Symbol.BW01 || symbol_to_check == primary_symbol) // Wild symbol - look to match next symbol to wild or set symbol 
             {
 
-                return false;
+                return true;
             }
             else
             {
-                return true;
+                return false;
             }
         }
 
@@ -340,7 +347,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.idle_outro:
                     break;
-                case States.Spin_Start:
+                case States.Spin_Intro:
                     break;
                 case States.Spin_Idle:
                     break;
