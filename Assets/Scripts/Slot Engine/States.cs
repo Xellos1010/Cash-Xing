@@ -11,12 +11,12 @@
 
 public enum SpinStates
 {
-    idle,
-    start,
-    intro,
-    loop,
-    interrupt,
-    outro,
+    idle_idle,
+    spin_start,
+    spin_intro,
+    spin_idle,
+    spin_interrupt,
+    spin_outro,
     end
 }
 
@@ -37,8 +37,8 @@ public enum States {
     idle_intro,
     idle_idle,
     idle_outro,
-    spin_start,
-    spin_loop,
+    Spin_Start,
+    Spin_Idle,
     spin_outro,
     spin_end,
     win_presentation,

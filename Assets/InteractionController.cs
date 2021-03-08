@@ -89,9 +89,9 @@ namespace Slot_Engine.Matrix
                     {
                         SetTrigger(supported_triggers.SpinStart);
                     }
-                    else if (StateManager.enCurrentState == States.spin_start || StateManager.enCurrentState == States.spin_loop)
+                    else if (StateManager.enCurrentState == States.Spin_Start || StateManager.enCurrentState == States.Spin_Idle)
                     {
-                        SetTrigger(supported_triggers.SpinSlam);
+                        SlamSpin();
                     }
                 }
             }
@@ -103,6 +103,11 @@ namespace Slot_Engine.Matrix
                     SetTrigger(supported_triggers.End);
                 }
             }
+        }
+
+        public void SlamSpin()
+        {
+            SetTrigger(supported_triggers.SpinSlam);
         }
 
         private void SetTrigger(supported_triggers trigger_to_set)
@@ -133,7 +138,6 @@ namespace Slot_Engine.Matrix
             idle_idle_hash = Animator.StringToHash("Idle_Idle");
             AnimatorStateInfo animatorStateInfo = StateMachineController.GetCurrentAnimatorStateInfo(0);
             print(String.Format("Animator Hash Pre is {0} Animator Hask Get {1}", idle_idle_hash,animatorStateInfo.fullPathHash));
-
         }
     }
 }

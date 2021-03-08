@@ -74,11 +74,11 @@ namespace Slot_Engine.Matrix
             {
                 if (GUILayout.Button("Start Test Spin"))
                 {
-                    myTarget.SetSpinStateTo(SpinStates.start);
+                    myTarget.SetSpinStateTo(SpinStates.spin_start);
                 }
                 if (GUILayout.Button("End Test Spin"))
                 {
-                    myTarget.SetSpinStateTo(SpinStates.outro);
+                    myTarget.SetSpinStateTo(SpinStates.spin_outro);
                 }
             }
             base.OnInspectorGUI();
@@ -100,6 +100,8 @@ namespace Slot_Engine.Matrix
         }
         [SerializeField]
         private Matrix _matrix;
+        [SerializeField]
+        private InteractionController controller;
         //TODO - Define reel strip length per reel - 50 - define time to traverse reel strip - speed is calculated based on traverse time - On Outro set speed to outro traverse time - 50% 
         //Hit spin - spin for 2 seconds - after lapse then land on symbol you need
         //Instead of stiching in reelstrips - see numbers flying by on the reelstrip
@@ -142,13 +144,14 @@ namespace Slot_Engine.Matrix
 
             if (use_timer)
             {
-                if (StateManager.enCurrentState == States.spin_loop)
+                if (StateManager.enCurrentState == States.Spin_Idle)
                 {
                     time_counter += Time.deltaTime;
                     if (time_counter > spin_loop_until_seconds_pass)
                     {
                         ResetUseTimer();
-                        SetSpinStateTo(SpinStates.outro);
+                        controller.SlamSpin();
+                        //StateManager.SetStateTo(States.spin_outro);
                     }
                 }
                 else
@@ -172,7 +175,7 @@ namespace Slot_Engine.Matrix
                 Debug.Log("Spin is enabled and ready to go to start state");
                 //StateManager.SetStateTo(States);
             }
-            else if (spin_slam_enabled && StateManager.enCurrentState == States.spin_loop)
+            else if (spin_slam_enabled && StateManager.enCurrentState == States.Spin_Idle)
             {
                 Debug.Log("Handle Spin Slam");
                 //SetSpinStateTo(SpinStates.interrupt);
@@ -184,21 +187,21 @@ namespace Slot_Engine.Matrix
             Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
             {
-                case SpinStates.idle:
+                case SpinStates.idle_idle:
                     spin_enabled = true;
                     break;
-                case SpinStates.start:
+                case SpinStates.spin_start:
                     StartSpin();
                     break;
-                case SpinStates.intro:
+                case SpinStates.spin_intro:
                     break;
-                case SpinStates.loop:
+                case SpinStates.spin_idle:
                     use_timer = true;
                     break;
-                case SpinStates.interrupt:
+                case SpinStates.spin_interrupt:
                     InterruptSpin();
                     break;
-                case SpinStates.outro:
+                case SpinStates.spin_outro:
                     ResetUseTimer();
                     StopReels();
                     break;
@@ -294,17 +297,56 @@ namespace Slot_Engine.Matrix
         private void StateManager_StateChangedTo(States State)
         {
             Debug.Log(String.Format("Checking for state dependant logic for SpinManager via state {0}",State.ToString()));
-            if (State == States.spin_start)
+            switch (State)
             {
-                SetSpinStateTo(SpinStates.start);
+                case States.None:
+                    break;
+                case States.preloading:
+                    break;
+                case States.coinin:
+                    break;
+                case States.coinout:
+                    break;
+                case States.idle_intro:
+                    break;
+                case States.idle_idle:
+                    SetSpinStateTo(SpinStates.idle_idle);
+                    break;
+                case States.idle_outro:
+                    break;
+                case States.Spin_Start:
+                    SetSpinStateTo(SpinStates.spin_start);
+                    break;
+                case States.Spin_Idle:
+                    SetSpinStateTo(SpinStates.spin_idle);
+                    break;
+                case States.spin_outro:
+                    SetSpinStateTo(SpinStates.spin_outro);
+                    break;
+                case States.spin_end:
+                    break;
+                case States.win_presentation:
+                    break;
+                case States.racking_start:
+                    break;
+                case States.racking_loop:
+                    break;
+                case States.racking_end:
+                    break;
+                case States.feature_transition_out:
+                    break;
+                case States.feature_transition_in:
+                    break;
+                case States.total_win_presentation:
+                    break;
+                default:
+                    break;
+            }
+            if (State == States.Spin_Start)
+            {
             }
             else if (State == States.spin_outro)
             {
-                SetSpinStateTo(SpinStates.outro);
-            }
-            else if (State == States.idle_idle)
-            {
-                SetSpinStateTo(SpinStates.idle);
             }
         }
 

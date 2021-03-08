@@ -340,9 +340,9 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.idle_outro:
                     break;
-                case States.spin_start:
+                case States.Spin_Start:
                     break;
-                case States.spin_loop:
+                case States.Spin_Idle:
                     break;
                 case States.spin_end:
                     break;

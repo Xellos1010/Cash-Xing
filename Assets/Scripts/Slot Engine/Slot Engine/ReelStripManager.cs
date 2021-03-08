@@ -172,7 +172,7 @@ public enum eEaseType
             {
                 switch (current_state)
                 {
-                    case SpinStates.idle:
+                    case SpinStates.idle_idle:
                         return false;
                     case SpinStates.end:
                         return false;
@@ -395,7 +395,7 @@ public enum eEaseType
             {
                 InitializeVarsForNewSpin();
                 //When reel is generated it's vector3[] path is generated for reference from slots
-                SetSpinStateTo(SpinStates.start);
+                SetSpinStateTo(SpinStates.spin_start);
                 //TODO hooks for reel state machine
                 for (int i = 0; i < slots_in_reel.Length; i++)
                 {
@@ -405,7 +405,7 @@ public enum eEaseType
                 //Task.Delay(time_to_enter_loop);
                 //TODO Implement Ease In for Starting spin
                 //TODO refactor check for interupt state
-                SetSpinStateTo(SpinStates.loop);
+                SetSpinStateTo(SpinStates.spin_idle);
             }
         }
         /// <summary>
@@ -458,7 +458,7 @@ public enum eEaseType
         public void StopReel(ReelStrip reelStrip)
         {
             end_symbols_set = 0;
-            SetSpinStateTo(SpinStates.outro);
+            SetSpinStateTo(SpinStates.spin_outro);
             StopReel(reelStrip.display_symbols);
             SetSpinStateTo(SpinStates.end);
         }
