@@ -11,7 +11,7 @@
 
 
 public enum Symbol {
-	BW01,
+	SA01,
 	MA01,
 	MI01,
 	MI02,
@@ -19,7 +19,6 @@ public enum Symbol {
 	RO01,
 	RO02,
 	RO03,
-	SA_01,
-	SA_02,
+	SA02,
 	End
 }

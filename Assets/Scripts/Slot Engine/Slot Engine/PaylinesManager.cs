@@ -95,7 +95,7 @@ namespace Slot_Engine.Matrix
             int output = 0;
             for (int i = 0; i < winning_paylines.Length; i++)
             {
-                output += winning_paylines[i].GetTotalWin(matrix.intWeightedDistributionSymbols);
+                output += winning_paylines[i].GetTotalWin(matrix.weighted_distribution_symbols);
             }
             return output;
         }
@@ -244,7 +244,7 @@ namespace Slot_Engine.Matrix
                     else
                     {
                         //If the primary symbol is a wild then auto match with next symbol. if next symbol regular symbol that becomes primary symbol
-                        if (matching_symbols_list[primary_symbol_index] == (int)Symbol.BW01)
+                        if (matching_symbols_list[primary_symbol_index] == (int)Symbol.SA01)
                             if (CheckNextSymbolWild(matching_symbols_list[primary_symbol_index], symbols_in_row[symbol]))
                             {
                                 primary_symbol_index = symbol;
@@ -288,7 +288,7 @@ namespace Slot_Engine.Matrix
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
         {
             //Now see if the next symbol is a wild or the same as the primary symbol. check false condition first
-            if (symbol_to_check == (int)Symbol.BW01 || symbol_to_check == primary_symbol) // Wild symbol - look to match next symbol to wild or set symbol 
+            if (symbol_to_check == (int)Symbol.SA01 || symbol_to_check == primary_symbol) // Wild symbol - look to match next symbol to wild or set symbol 
             {
 
                 return true;
@@ -301,9 +301,9 @@ namespace Slot_Engine.Matrix
 
         private bool CheckNextSymbolWild(int v1, int v2)
         {
-            if (v1 == (int)Symbol.BW01)
+            if (v1 == (int)Symbol.SA01)
             {
-                if (v2 != (int)Symbol.BW01)
+                if (v2 != (int)Symbol.SA01)
                 {
                     return true;
                 }

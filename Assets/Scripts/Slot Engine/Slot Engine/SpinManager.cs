@@ -338,7 +338,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Idle_Outro:
                     //Decrease Bank Roll
-                    matrix.racking_manager.ReduceBankRollBy(1);
+                    matrix.racking_manager.Reduceplayer_walletBy(1);
                     break;
                 case States.Spin_Intro:
                     SetSpinStateTo(SpinStates.spin_start);

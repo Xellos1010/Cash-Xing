@@ -120,7 +120,7 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         public int GetRandomWeightedSymbol()
         {
-            return matrix.intWeightedDistributionSymbols.Draw();
+            return matrix.weighted_distribution_symbols.Draw();
         }
 
         internal void RemoveCurrentDisplayReelConfiguration()

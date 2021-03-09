@@ -120,6 +120,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripManager.cs" />
     <Compile Include="Assets\RackingManager.cs" />
     <Compile Include="Assets\UITextManager.cs" />
+    <Compile Include="Assets\MachineInfoManager.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

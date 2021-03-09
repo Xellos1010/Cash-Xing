@@ -71,7 +71,15 @@ namespace Slot_Engine.Matrix
 
     public class Matrix : MonoBehaviour
     {
-        /**Managers needed by matrix**/
+        /**Managers needed by Slot Engine**/
+        /// <summary>
+        /// Manages the reference for the machine information manager
+        /// </summary>
+        [SerializeField]
+        internal MachineInfoManager machine_information_manager;
+        /// <summary>
+        /// handles setting the reference to end configuration manager if one is not set.
+        /// </summary>
         internal EndConfigurationManager end_configuration_manager
         {
             get
@@ -81,6 +89,9 @@ namespace Slot_Engine.Matrix
                 return _end_configuration_manager;
             }
         }
+        /// <summary>
+        /// Manages Reference to End Configuration Manager
+        /// </summary>
         [SerializeField]
         private EndConfigurationManager _end_configuration_manager;
 
@@ -148,9 +159,19 @@ namespace Slot_Engine.Matrix
         }
         [SerializeField]
         private SpinManager _spin_manager;
-        
-        public string[] supported_symbols = new string[10] { "MA01", "MI01", "MI02", "MI03", "RO01", "RO02", "RO03", "SA_01", "SA_02", "BW01" }; //when a matrix is generated - only 1 configuration can be loaded at a time
-
+        public string[] supported_symbols
+        {
+            get
+            {
+                List<string> output = new List<string>();
+                List<WeightedDistribution.IntDistributionItem> distributionList = weighted_distribution_symbols.Items;
+                for (int i = 0; i < distributionList.Count; i++)
+                {
+                    output.Add(distributionList[i].name);
+                }
+                return output.ToArray();
+            }
+        }
         public Vector3[] matrix; //elements are reels value is slot per reel
         /// <summary>
         /// What is the size of the slot in pixels
@@ -181,19 +202,19 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Controls the wegihted probability of symbols appearing on the reel
         /// </summary>
-        internal WeightedDistribution.IntDistribution intWeightedDistributionSymbols
+        internal WeightedDistribution.IntDistribution weighted_distribution_symbols
         {
             get
             {
-                if(_intWeightedDistributionSymbols == null)
+                if(_weighted_distribution_symbols == null)
                 {
-                    _intWeightedDistributionSymbols = GetComponent<WeightedDistribution.IntDistribution>();
+                    _weighted_distribution_symbols = FindObjectOfType<WeightedDistribution.IntDistribution>();
                 }
-                return _intWeightedDistributionSymbols;
+                return _weighted_distribution_symbols;
             }
         }
         [SerializeField]
-        private WeightedDistribution.IntDistribution _intWeightedDistributionSymbols;
+        private WeightedDistribution.IntDistribution _weighted_distribution_symbols;
 
         /// <summary>
         /// Controls how many slots to include in reel strip
@@ -252,7 +273,7 @@ namespace Slot_Engine.Matrix
                 if (spin_configuration_reelstrip[i].reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
                 {
                     //Generates reelstrip based on weights
-                    spin_configuration_reelstrip[i].GenerateReelStrip(slots_per_strip_onSpinLoop, intWeightedDistributionSymbols);
+                    spin_configuration_reelstrip[i].GenerateReelStrip(slots_per_strip_onSpinLoop, weighted_distribution_symbols);
                 }
                 //Assign reelstrip to reel
                 reel_strip_managers[i].reel_strip_to_use_for_spin = spin_configuration_reelstrip[i];
@@ -296,6 +317,10 @@ namespace Slot_Engine.Matrix
                 reel_strip_managers[i].TestDisplayEndSymbols();
             }
         }
-
+        void OnEnable()
+        {
+            //Initialize Machine and Player  Information
+            machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, 1.0f, 1, 0);
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace WeightedDistribution
     [System.Serializable]
     public class DistributionItem<T>
     {
-        public Symbol name;
+        public string name;
         public int win_value;
         [SerializeField]
         float weight;
