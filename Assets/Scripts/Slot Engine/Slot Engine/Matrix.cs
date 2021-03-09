@@ -316,10 +316,10 @@ namespace Slot_Engine.Matrix
                 reel_strip_managers[i].TestDisplayEndSymbols();
             }
         }
-        void OnEnable()
+        void Start()
         {
             //Initialize Machine and Player  Information
-            machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, 1.0f, 1, 0);
+            machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, machine_information_manager.supported_bet_amounts.Length - 1, 1, 0);
         }
         internal void PlayerHasBet(float amount)
         {

@@ -59,8 +59,10 @@
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Data\BaseEvent.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\MeterInformationManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\PaylinesManager.cs" />
+    <Compile Include="Assets\RackingManager.cs" />
     <Compile Include="Assets\InteractionController.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Payline.cs" />
+    <Compile Include="Assets\UITextManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Matrix.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SlotManager.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Templates\CEvent.cs" />
@@ -78,6 +80,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\Managers\CreditRackManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SymbolMaterialsManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\WinningPayline.cs" />
+    <Compile Include="Assets\MachineInfoManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\StateManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\WinConditions.cs" />
     <Compile Include="Assets\WeightedDistribution\Scripts\Examples\IntDistribution.cs" />
@@ -118,9 +121,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripManager.cs" />
-    <Compile Include="Assets\RackingManager.cs" />
-    <Compile Include="Assets\UITextManager.cs" />
-    <Compile Include="Assets\MachineInfoManager.cs" />
+    <Compile Include="Assets\BetAmountAdjuster.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -354,6 +355,9 @@
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Editor.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Searcher.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
     </Reference>
@@ -380,9 +384,6 @@
     </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.Universal.Editor">
-      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Editor.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.Purchasing">
       <HintPath>Library\PackageCache\com.unity.purchasing@2.0.6\UnityEngine.Purchasing.dll</HintPath>
@@ -732,14 +733,23 @@
     <Reference Include="System.Xml.Serialization">
       <HintPath>D:\Program Files\Unity\2020.1.4f1\Editor\Data\NetStandard\compat\2.0.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.RenderPipeline.Universal.ShaderLibrary">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipeline.Universal.ShaderLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.Monetization">
       <HintPath>Library\ScriptAssemblies\UnityEngine.Monetization.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Shaders">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Shaders.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.Advertisements">
       <HintPath>Library\ScriptAssemblies\UnityEngine.Advertisements.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Runtime">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
+      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
@@ -764,15 +774,6 @@
     </Reference>
     <Reference Include="Unity.Analytics.DataPrivacy">
       <HintPath>Library\ScriptAssemblies\Unity.Analytics.DataPrivacy.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipeline.Universal.ShaderLibrary">
-      <HintPath>Library\ScriptAssemblies\Unity.RenderPipeline.Universal.ShaderLibrary.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.Universal.Shaders">
-      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Shaders.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
-      <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

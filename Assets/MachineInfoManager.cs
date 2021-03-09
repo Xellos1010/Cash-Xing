@@ -29,7 +29,7 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("MachineInfoManager Controls");
             if (GUILayout.Button("Initialize Machine with test values"))
             {
-                myTarget.InitializeTestMachineValues(10000.0f, 0.0f, 1.0f, 1, 0);
+                myTarget.InitializeTestMachineValues(10000.0f, 0.0f, myTarget.supported_bet_amounts.Length-1, 1, 0);
             }
             if (GUILayout.Button("Use Stock Player Information"))
             {
@@ -53,11 +53,31 @@ namespace Slot_Engine.Matrix
         public event FloatValueSet new_bet_amount;
         public event FloatValueSet new_bank_amount;
         public event FloatValueSet new_player_wallet_amount;
+
+        internal void DecreaseBetAmount()
+        {
+            if(current_bet_amount != 0)
+            {
+                SetBetAmountIndexTo(current_bet_amount - 1);
+            }
+        }
+
         public event IntValueSet new_freespin_amount;
+
+        internal void IncreaseBetAmount()
+        {
+            if (current_bet_amount < supported_bet_amounts.Length-1)
+            {
+                SetBetAmountIndexTo(current_bet_amount + 1);
+            }
+        }
+
         /// <summary>
         /// What bet amounts are supported for this game - Multiply bet amount by symbol value to get amount won - 100 credits are $1.00
         /// </summary>
-        public float[] supported_bet_amounts = new float[5] { .01f, .05f, .25f, .50f, 1.0f };
+        [SerializeField]
+        internal float[] supported_bet_amounts = new float[10] { .01f, .05f, .25f, .50f, 1.0f, 5.0f, 10.0f, 25.0f, 50.0f, 100.0f};
+        public int current_bet_amount = 4;
         /// <summary>
         /// Machine stored values to coin_in/coin_out
         /// </summary>
@@ -65,7 +85,13 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// bet_amount starts at 1.0f
         /// </summary>
-        public float bet_amount = 1.0f;
+        public float bet_amount
+        {
+            get
+            {
+                return supported_bet_amounts[current_bet_amount];
+            }
+        }
         /// <summary>
         /// Multiplier to apply to the win evaluation. (bet_amount * symbol_value) * multiplier = win total
         /// </summary>
@@ -109,11 +135,11 @@ namespace Slot_Engine.Matrix
             new_player_wallet_amount?.Invoke(new_player_wallet);
         }
 
-        private void SetBetAmount(float new_bet_amount)
+        private void SetBetAmountIndexTo(int new_bet_amount)
         {
             Debug.Log(String.Format("Bet Amount is being set to {0}", new_bet_amount));
-            bet_amount = new_bet_amount;
-            this.new_bet_amount?.Invoke(new_bet_amount);
+            current_bet_amount = new_bet_amount;
+            this.new_bet_amount?.Invoke(supported_bet_amounts[new_bet_amount]);
         }
 
         /// <summary>
@@ -143,11 +169,12 @@ namespace Slot_Engine.Matrix
         }
 
 
-        internal void InitializeTestMachineValues(float player_wallet, float bank, float bet_amount, int multiplier, int freespins)
+        internal void InitializeTestMachineValues(float player_wallet, float bank, int bet_amount_index, int multiplier, int freespins)
         {
             SetPlayerInformationTo(player_wallet);
             SetBankTo(bank);
-            SetBetAmount(bet_amount);
+            //Has to be an index within range of supported_bet_amount
+            SetBetAmountIndexTo(bet_amount_index);
             SetMultiplierTo(multiplier);
             SetFreeSpinsTo(freespins);
         }
