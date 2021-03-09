@@ -20,13 +20,11 @@ namespace Slot_Engine.Matrix
         Matrix myTarget;
         SerializedProperty state;
         SerializedProperty reel_spin_delay_ms;
-        SerializedProperty supported_symbols;
         SerializedProperty ending_symbols;
         public void OnEnable()
         {
             myTarget = (Matrix)target;
             reel_spin_delay_ms = serializedObject.FindProperty("reel_spin_delay_ms");
-            supported_symbols = serializedObject.FindProperty("supported_symbols");
             ending_symbols = serializedObject.FindProperty("ending_symbols");
         }
         public override void OnInspectorGUI()
@@ -35,7 +33,6 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("Matrix Properties");
 
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
-            EditorGUILayout.PropertyField(supported_symbols);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
             if (Application.isPlaying)
@@ -124,6 +121,7 @@ namespace Slot_Engine.Matrix
                 return _paylines_manager;
             }
         }
+
         /// <summary>
         /// paylines_manager reference
         /// </summary>
@@ -163,6 +161,7 @@ namespace Slot_Engine.Matrix
         {
             get
             {
+                Debug.Log("Getting supported symbols");
                 List<string> output = new List<string>();
                 List<WeightedDistribution.IntDistributionItem> distributionList = weighted_distribution_symbols.Items;
                 for (int i = 0; i < distributionList.Count; i++)
@@ -306,7 +305,7 @@ namespace Slot_Engine.Matrix
         {
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                reel_strip_managers[i].SetEndingDisplaySymbolsTo(_end_configuration_manager.end_reelstrips_to_display[i]);
+                reel_strip_managers[i].SetEndingDisplaySymbolsTo(_end_configuration_manager.pop_end_reelstrips_to_display_sequence[i]);
             }
         }
 
@@ -321,6 +320,16 @@ namespace Slot_Engine.Matrix
         {
             //Initialize Machine and Player  Information
             machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, 1.0f, 1, 0);
+        }
+        internal void PlayerHasBet(float amount)
+        {
+            //Set the UI to remove player wallet amount and update the player information to remove amount
+            OffetPlayerWalletBy(-amount);
+        }
+
+        internal void OffetPlayerWalletBy(float amount)
+        {
+            machine_information_manager.OffsetPlayerAmountBy(amount);
         }
     }
 }

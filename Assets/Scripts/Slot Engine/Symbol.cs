@@ -19,6 +19,6 @@ public enum Symbol {
 	RO01,
 	RO02,
 	RO03,
-	SA02,
+	//SA02, This will be overlay feature - Can add as material ontop of mesh
 	End
 }

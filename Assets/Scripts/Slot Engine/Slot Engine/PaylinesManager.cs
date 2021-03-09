@@ -90,12 +90,12 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Gets the total amount from wininng paylines
         /// </summary>
-        internal int GetTotalWinAmount()
+        internal float GetTotalWinAmount()
         {
-            int output = 0;
+            float output = 0;
             for (int i = 0; i < winning_paylines.Length; i++)
             {
-                output += winning_paylines[i].GetTotalWin(matrix.weighted_distribution_symbols);
+                output += winning_paylines[i].GetTotalWin(matrix.weighted_distribution_symbols, matrix);
             }
             return output;
         }

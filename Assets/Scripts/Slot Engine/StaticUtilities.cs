@@ -49,6 +49,7 @@ public static class StaticUtilities
 
         return dest;
     }
+
     public static T[] AddAt<T>(this T[] source, int index)
     {
         T[] dest = new T[source.Length + 1];
@@ -62,5 +63,21 @@ public static class StaticUtilities
     public static int findIndex<T>(this T[] array, T item)
     {
         return Array.IndexOf(array, item);
+    }
+    public static void DebugLog(string message)
+    {
+#if DebugLogOn
+        Debug.Log(message);
+#endif
+    }
+
+    internal static void DebugLogWarning(string message)
+    {
+        Debug.LogWarning(message);
+    }
+
+    internal static void DebugLogError(string message)
+    {
+        Debug.LogError(message);
     }
 }

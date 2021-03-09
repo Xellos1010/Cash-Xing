@@ -18,13 +18,19 @@ public class WinningPayline
     /// Calculates total win of payline then returns final value
     /// </summary>
     /// <returns></returns>
-    internal int GetTotalWin(WeightedDistribution.IntDistribution intWeightedDistributionSymbols)
+    internal float GetTotalWin(WeightedDistribution.IntDistribution intWeightedDistributionSymbols, Slot_Engine.Matrix.Matrix matrix)
     {
-        int output = 0;
+        float output = 0;
         for (int i = 0; i < winning_symbols.Length; i++)
         {
-            output += intWeightedDistributionSymbols.Items[winning_symbols[i]].win_value;
+            output += CalculateTotalWin(intWeightedDistributionSymbols.Items[winning_symbols[i]].win_value,ref matrix);
         }
         return output;
+    }
+
+    private float CalculateTotalWin(int win_value, ref Slot_Engine.Matrix.Matrix matrix)
+    {
+        //Total win = (Bet Amount * win_value) * multiplier
+        return (win_value * matrix.machine_information_manager.bet_amount) * matrix.machine_information_manager.multiplier;
     }
 }

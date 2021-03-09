@@ -35,13 +35,18 @@ namespace Slot_Engine.Matrix
         private Matrix matrix;
         public bool is_racking = false;
 
-        public int bank_rack_remaining;
-        public int bank_rack_total;
+        public float bank_rack_remaining;
+        public float bank_rack_total_to_rack;
 
-        public int credit_rack_speed;
+        
+        public float current_player_wallet = 0;
+        /// <summary>
+        /// Sets the racking to be instant or a rollup
+        /// </summary>
+        [SerializeField]
+        private bool set_instantly = true;
+        public float credit_rack_speed;
 
-        public int player_start_roll = 5000;
-        public int current_player_wallet = 0;
         //Store amount to increase credits
         //Credit Rack Speed
         //Slam - 
@@ -50,11 +55,10 @@ namespace Slot_Engine.Matrix
         // Start is called before the first frame update
         void OnEnable()
         {
-            Setplayer_walletTo(player_start_roll);
             StateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
-        private void Setplayer_walletTo(int to_value)
+        private void Setplayer_walletTo(float to_value)
         {
             current_player_wallet = to_value;
             ui_text_manager.Set_Player_Wallet_To(to_value);
@@ -119,20 +123,24 @@ namespace Slot_Engine.Matrix
             SetCreditAmountToRack(matrix.paylines_manager.GetTotalWinAmount());
         }
 
-        private void SetCreditAmountToRack(int v)
+        private void SetCreditAmountToRack(float win_amount)
         {
-            bank_rack_total = v;
-            ui_text_manager.Set_Player_Wallet_To(current_player_wallet+v);
+            if(set_instantly)
+            {
+                matrix.OffetPlayerWalletBy(win_amount);
+            }
+            else
+            {
+
+                bank_rack_total_to_rack = win_amount;
+                //TODO Enable racking overtime and throw bool event when finished racking
+                throw new NotImplementedException();
+            }
         }
 
         void OnDisable()
         {
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
-        }
-
-        internal void Reduceplayer_walletBy(int v)
-        {
-            Setplayer_walletTo(current_player_wallet-1);
         }
     }
 }

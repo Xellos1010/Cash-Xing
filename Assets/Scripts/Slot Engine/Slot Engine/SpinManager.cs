@@ -251,10 +251,7 @@ namespace Slot_Engine.Matrix
         }
         async void SpinReels()
         {
-            //Generate reelstrip (this is temporary)
-            //await matrix.end_configuration_manager.GenerateEndReelStripsConfiguration();
-            //Evaluate winning paysymbols before spin starts
-            ReelStrip[] end_reel_configuration = matrix.end_configuration_manager.GetConfigurationToDisplay();
+            ReelStrip[] end_reel_configuration = matrix.end_configuration_manager.UseNextConfigurationInList();
             matrix.paylines_manager.EvaluateWinningSymbols(end_reel_configuration);
             //Generate ReelStrips to cycle through if there is no reelstrip present
             if (use_reelstrips_for_spin_loop)
@@ -287,7 +284,7 @@ namespace Slot_Engine.Matrix
             {
                 if (reel_spin_delay_end_enabled)
                     await Task.Delay(reel_spin_delay_ms);
-                matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.end_reelstrips_to_display[i]);//Only use for specific reel stop features
+                matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.current_reelstrip_configuration[i]);//Only use for specific reel stop features
             }
             matrix.end_configuration_manager.RemoveCurrentDisplayReelConfiguration();
         }
@@ -338,7 +335,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Idle_Outro:
                     //Decrease Bank Roll
-                    matrix.racking_manager.Reduceplayer_walletBy(1);
+                    matrix.PlayerHasBet(matrix.machine_information_manager.bet_amount);
                     break;
                 case States.Spin_Intro:
                     SetSpinStateTo(SpinStates.spin_start);

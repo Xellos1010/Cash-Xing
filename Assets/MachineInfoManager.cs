@@ -152,5 +152,16 @@ namespace Slot_Engine.Matrix
             SetFreeSpinsTo(freespins);
         }
 
+        internal void OffsetPlayerAmountBy(float amount)
+        {
+            //Decrease Wallet Amount and Update Text on machine
+            OffsetPlayerAmountBy(ref current_player_information ,amount);
+            SetPlayerWalletTo(current_player_information.player_wallet);
+        }
+
+        private void OffsetPlayerAmountBy(ref PlayerInformation information, float offset_amount)
+        {
+            information.player_wallet += offset_amount;
+        }
     }
 }

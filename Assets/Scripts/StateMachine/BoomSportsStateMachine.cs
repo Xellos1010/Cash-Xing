@@ -15,6 +15,7 @@ class BoomSportsStateMachine : DTStateMachineBehaviour<StateMachineBehaviour>
         base.OnStateEnter(animator, stateInfo, layerIndex);
         if (set_state_enter)
         {
+            //Debug.Log(String.Format("Is name Idle_Idle for animator? {0}",animator.GetCurrentAnimatorStateInfo(0).IsName("Idle_Idle")));
             StateManager.SetStateTo(state_to_invoke_on_enter);
         }
         if(set_trigger_on_enter)

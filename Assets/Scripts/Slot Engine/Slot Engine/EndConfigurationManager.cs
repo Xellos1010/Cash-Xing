@@ -29,7 +29,11 @@ namespace Slot_Engine.Matrix
             if(GUILayout.Button("Generate Reelstrips"))
             {
                 myTarget.GenerateMultipleEndReelStripsConfiguration(5);
-            }    
+            }
+            if(GUILayout.Button("Clear Reels Display"))
+            {
+                myTarget.end_reelstrips_to_display_sequence = null;
+            }
             base.OnInspectorGUI();
         }
 
@@ -51,19 +55,31 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private Matrix _matrix;
 
+        public ReelStrip[] current_reelstrip_configuration;
         //Ending Reelstrips current
-        public ReelStrip[] end_reelstrips_to_display
+        public ReelStrip[] pop_end_reelstrips_to_display_sequence
         {
             get
             {
-                if (end_reelstrips_to_display_sequence == null)
+                if (end_reelstrips_to_display_sequence?.Length > 0)
+                {
+                }
+                else
+                {
                     GenerateMultipleEndReelStripsConfiguration(5);
-                if(end_reelstrips_to_display_sequence.Length == 0)
-                    GenerateMultipleEndReelStripsConfiguration(5);
+                }
                 //TODO Validate Data in Reel Strip then Generate if no valid data found
-                return end_reelstrips_to_display_sequence[0];
+                SetCurrentConfigurationTo(end_reelstrips_to_display_sequence[0]);
+                end_reelstrips_to_display_sequence = end_reelstrips_to_display_sequence.RemoveAt<ReelStrip[]>(0);
+                return current_reelstrip_configuration;
             }
         }
+
+        private void SetCurrentConfigurationTo(ReelStrip[] reelstrips)
+        {
+            current_reelstrip_configuration = reelstrips;
+        }
+
         [SerializeField]
         public ReelStrip[][] end_reelstrips_to_display_sequence;
         /// <summary>
@@ -128,9 +144,9 @@ namespace Slot_Engine.Matrix
             end_reelstrips_to_display_sequence.RemoveAt<ReelStrip[]>(0);
         }
 
-        internal ReelStrip[] GetConfigurationToDisplay()
+        internal ReelStrip[] UseNextConfigurationInList()
         {
-            return end_reelstrips_to_display;
+            return pop_end_reelstrips_to_display_sequence;
         }
     }
 }
