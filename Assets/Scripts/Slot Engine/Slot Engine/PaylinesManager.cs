@@ -87,6 +87,19 @@ namespace Slot_Engine.Matrix
         public Payline[] paylines_supported;
         [SerializeField]
         internal WinningPayline[] winning_paylines;
+        /// <summary>
+        /// Gets the total amount from wininng paylines
+        /// </summary>
+        internal int GetTotalWinAmount()
+        {
+            int output = 0;
+            for (int i = 0; i < winning_paylines.Length; i++)
+            {
+                output += winning_paylines[i].GetTotalWin(matrix.intWeightedDistributionSymbols);
+            }
+            return output;
+        }
+
         //The range for active paylines to use when evaluating paylines
         public int active_payline_range_lower = 0;
         public int active_payline_range_upper = 98;

@@ -200,6 +200,8 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         internal int slots_per_strip_onSpinLoop = 50;
+        [SerializeField]
+        internal RackingManager racking_manager;
 
         //TODO - Enable offset from 0,0,0
         public Task GenerateMatrix(Vector3[] matrix, Vector3 slot_size, Vector3 padding)

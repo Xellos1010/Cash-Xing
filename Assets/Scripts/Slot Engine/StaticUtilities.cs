@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using UnityEngine;
 public static class StaticUtilities
 {
+    //TODO change to Config Reference
+    public static float[] supported_bet_amounts = new float[1] { 1.0f };
+
     [Serializable]
     public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
