@@ -33,4 +33,17 @@ public class WinningPayline
         //Total win = (Bet Amount * win_value) * multiplier
         return (win_value * matrix.machine_information_manager.bet_amount) * matrix.machine_information_manager.multiplier;
     }
+
+    internal bool IsSymbolOnWinningPayline(int reel, int slot)
+    {
+        //Check Winning slot at reel 
+        if (payline.payline[reel]==slot)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }

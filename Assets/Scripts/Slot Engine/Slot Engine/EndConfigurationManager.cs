@@ -34,6 +34,10 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.end_reelstrips_to_display_sequence = null;
             }
+            if(GUILayout.Button("Pop Reel Configuration Test"))
+            {
+                Debug.Log(myTarget.pop_end_reelstrips_to_display_sequence.Length);
+            }
             base.OnInspectorGUI();
         }
 

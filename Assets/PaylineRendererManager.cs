@@ -41,6 +41,7 @@ namespace Slot_Engine.Matrix
     {
         public float standard_payline_width = 50;
         public float highlight_win_width = 100;
+        public bool render_paylines = false;
         public PaylineRenderer[] _payline_renderers; //TODO make private - testing mode only
         private PaylineRenderer[] payline_renderers
         {
@@ -103,7 +104,7 @@ namespace Slot_Engine.Matrix
             //TODO add validation payline is same length as reels
             for (int i = 0; i < matrix.reel_strip_managers.Length; i++)
             {
-                Vector3 position_cache = matrix.reel_strip_managers[i].slots_in_reel[paylines_supported.payline[i] + 1].transform.position;
+                Vector3 position_cache = matrix.reel_strip_managers[i].slots_in_reel[paylines_supported.payline[i]].transform.position;
                 position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
                                                                                        //TOOD change to get slot at position at path to return x and y
                 linePositions.Add(position_cache);
@@ -125,11 +126,12 @@ namespace Slot_Engine.Matrix
         /// Show the winning payline and highlight symbols that won with...a bigger line!
         /// </summary>
         /// <param name="payline_to_show">The Winning payline to show</param>
-        internal void ShowWinningPayline(WinningPayline payline_to_show)
+        internal void RenderWinningPayline(WinningPayline payline_to_show)
         {
-
+            ToggleRenderer(render_paylines);
             //initialize the line positions list and 
             List<Vector3> linePositions;
+            //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
             matrix.ReturnSymbolPositionsOnPayline(ref payline_to_show.payline, out linePositions);
             //linePosiitons - 1  should be same length as line renderers
             for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end...

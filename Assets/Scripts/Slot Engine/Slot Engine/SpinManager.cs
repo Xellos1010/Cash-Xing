@@ -158,6 +158,8 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         internal bool use_reelstrips_for_spin_loop;
+        
+
         void Update()
         {
 //#if UNITY_ANDROID || UNITY_IPHONE
@@ -227,6 +229,7 @@ namespace Slot_Engine.Matrix
                     StopReels();
                     break;
                 case SpinStates.end:
+                    StateManager.SetStateTo(States.Spin_End);
                     break;
                 default:
                     break;
@@ -286,8 +289,35 @@ namespace Slot_Engine.Matrix
                     await Task.Delay(reel_spin_delay_ms);
                 matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.current_reelstrip_configuration[i]);//Only use for specific reel stop features
             }
-            matrix.end_configuration_manager.RemoveCurrentDisplayReelConfiguration();
+            await WaitForAllReelsToStop(matrix.reel_strip_managers);
+            SetSpinStateTo(SpinStates.end);
+            //point to winning symbols and change all symbols except winning symbols animation controller to the override
         }
+
+        private async Task WaitForAllReelsToStop(ReelStripManager[] reel_strip_managers)
+        {
+            bool lock_task = true;
+            while (lock_task)
+            {
+                for (int i = 0; i < reel_strip_managers.Length; i++)
+                {
+                    if (reel_strip_managers[i].current_state == SpinStates.spin_end)
+                    {
+                        if (i == reel_strip_managers.Length - 1)
+                        {
+                            lock_task = false;
+                            continue;
+                        }
+                    }
+                    else 
+                    {
+                        await Task.Delay(50);
+                        break;
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Set the spin speed for all the reels
         /// </summary>

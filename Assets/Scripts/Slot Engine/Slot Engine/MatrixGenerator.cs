@@ -177,20 +177,25 @@ namespace Slot_Engine.Matrix
         public int slot_spin_paddingSlots = 1;
         //********
 
+
         public async void CreateMatrix() //Main matric Create Function
         {
-            if(transform.childCount > 0)
-            {
-                for (int i = transform.childCount - 1; i >= 0; i--)
-                    DestroyImmediate(transform.GetChild(i).gameObject);
-            }
-            Type[] MatrixComponents = new Type[1];
-            MatrixComponents[0] = typeof(Matrix);
-            Matrix generated_matrix = new GameObject("MatrixObject", MatrixComponents).GetComponent<Matrix>();
-            generated_matrix.transform.tag = "Matrix";
-            generated_matrix.transform.parent = transform;
+            Matrix generated_matrix = transform.childCount > 0 ?
+                GetComponentInChildren<Matrix>() :
+                GenerateMatrixObject();
             await generated_matrix.GenerateMatrix(matrix,slot_size,matrix_padding); // TODO add ability to insert offset from anchor
         }
+
+        private Matrix GenerateMatrixObject()
+        {
+            Type[] MatrixComponents = new Type[1];
+            MatrixComponents[0] = typeof(Matrix);
+            GameObject gameObject_to_return = new GameObject("MatrixObject", MatrixComponents);
+            gameObject_to_return.transform.tag = "Matrix";
+            gameObject_to_return.transform.parent = transform;
+            return gameObject_to_return.GetComponent<Matrix>();
+        }
+
         //**************************
 
         internal void UpdateReelSlotPositions()

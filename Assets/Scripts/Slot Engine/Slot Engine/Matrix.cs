@@ -184,19 +184,13 @@ namespace Slot_Engine.Matrix
         /// The padding between each reel
         /// </summary>
         public Vector2 reel_slot_padding = new Vector2(0, 1); //TODO set from Matrix Generator
+        [SerializeField]
+        private int reel_start_padding = 1;
+        private int reel_ending_padding = 1;
         public AnimatorStateMachineManager animator_state_machine;
-        internal void ReturnSymbolPositionsOnPayline(ref Payline payline, out List<Vector3> linePositions)
-        {
-            linePositions = new List<Vector3>();
-            for (int i = 0; i < reel_strip_managers.Length; i++)
-            {
-                //Top slot cushion slot - use 1 as first element - If more than 1 cushion slot change logic to pull display slots from -2 end of array. Slots move off screen
-                Vector3 position_cache = reel_strip_managers[i].slots_in_reel[payline.payline[i] + 1].transform.position;                 
-                position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
-                                                                                       //TOOD change to get slot at position at path to return x and y
-                linePositions.Add(position_cache);
-            }
-        }
+        
+        public AnimatorOverrideController symbol_win_resolve;
+        public AnimatorOverrideController symbol_lose_resolve;
 
         /// <summary>
         /// Controls the wegihted probability of symbols appearing on the reel
@@ -212,6 +206,20 @@ namespace Slot_Engine.Matrix
                 return _weighted_distribution_symbols;
             }
         }
+
+        internal void SetSymbolsForWinConfigurationDisplay(WinningPayline payline_to_show)
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                {
+                    AnimatorOverrideController to_controller = payline_to_show.IsSymbolOnWinningPayline(reel, slot) ? symbol_win_resolve : symbol_lose_resolve;
+                    Debug.Log(String.Format("In Reel {0} Setting Symbol {1} with symbol of {2} Animation controller to {3}", reel_strip_managers[reel].name, reel_strip_managers[reel].slots_in_reel[slot].transform.name, reel_strip_managers[reel].slots_in_reel[slot].presentation_symbol, to_controller.name));
+                    reel_strip_managers[reel].slots_in_reel[slot].SetOverrideControllerTo(to_controller);
+                }
+            }
+        }
+
         [SerializeField]
         private WeightedDistribution.IntDistribution _weighted_distribution_symbols;
 
@@ -229,33 +237,41 @@ namespace Slot_Engine.Matrix
             this.matrix = matrix;
             this.slot_size = slot_size;
             this.padding = padding;
-            if (transform.childCount > 0) // Destroy old matrix if you have one
-            {
-                for (int i = transform.childCount - 1; i >= 0; i--)
-                    DestroyImmediate(transform.GetChild(i).gameObject);
-            }
             GenerateReels(matrix);
             return Task.CompletedTask;
         }
 
         private void GenerateReels(Vector3[] matrix)
         {
-            List<ReelStripManager> newReelList = new List<ReelStripManager>();
+            List<ReelStripManager> reels_generated = new List<ReelStripManager>();
             if (reel_strip_managers == null)
                 reel_strip_managers = new ReelStripManager[0];
-            newReelList.AddRange(reel_strip_managers);
-            if(newReelList.Count < matrix.Length)
+            reels_generated.AddRange(reel_strip_managers);
+            bool add_subtract_reels = reels_generated.Count < matrix.Length ? true:false;
+            //If current reels generated are > or < matrix.length then need to adjust accordingly
+            //Ensure enough reels are on the board then ensure all reels have slots
+            for (int i = add_subtract_reels ? reels_generated.Count : reels_generated.Count - 1;
+                add_subtract_reels ? i < matrix.Length : i >= matrix.Length;
+                i = add_subtract_reels ? i++: i--)
             {
-                for (int i = 0; i < matrix.Length; i++)
+                if(add_subtract_reels)
                 {
-                    if(i == newReelList.Count)
-                    {
-                        newReelList.Add(GenerateReel(i));
-                    }
-                    newReelList[i].InitializeSlotsInReel(matrix[i], this);
+                    reels_generated.Add(GenerateReel(i));
+                    reels_generated[i].InitializeSlotsInReel(matrix[i], this, reel_ending_padding);
+                }
+                else
+                {
+                    if(reels_generated[i] != null)
+                        Destroy(reels_generated[i].gameObject);
+                    reels_generated.RemoveAt(i);
                 }
             }
-            reel_strip_managers = newReelList.ToArray();
+            //Ensure reels have slots
+            for (int i = 0; i < reels_generated.Count; i++)
+            {
+                reels_generated[i].InitializeSlotsInReel(matrix[i], this, reel_ending_padding);
+            }
+            reel_strip_managers = reels_generated.ToArray();
         }
 
         internal void GenerateReelStripsToSpinThru(ref ReelStrip[] reel_configuration)
@@ -297,7 +313,7 @@ namespace Slot_Engine.Matrix
         {
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                reel_strip_managers[i].InitializeSlotsInReel(matrix[i],this);
+                reel_strip_managers[i].InitializeSlotsInReel(matrix[i],this, reel_ending_padding);
             }
         }
 
@@ -316,11 +332,20 @@ namespace Slot_Engine.Matrix
                 reel_strip_managers[i].TestDisplayEndSymbols();
             }
         }
-        void Start()
+
+        internal void ReturnSymbolPositionsOnPayline(ref Payline payline, out List<Vector3> linePositions)
         {
-            //Initialize Machine and Player  Information
-            machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, machine_information_manager.supported_bet_amounts.Length - 1, 1, 0);
+            linePositions = new List<Vector3>();
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                //Top slot cushion slot - use 1 as first element - If more than 1 cushion slot change logic to pull display slots from -2 end of array. Slots move off screen
+                Vector3 position_cache = reel_strip_managers[reel].slots_in_reel[payline.ReturnSlotNumberFromReel(reel, reel_strip_managers.Length, reel_start_padding)].transform.position;
+                position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
+                                                                                       //TOOD change to get slot at position at path to return x and y
+                linePositions.Add(position_cache);
+            }
         }
+
         internal void PlayerHasBet(float amount)
         {
             //Set the UI to remove player wallet amount and update the player information to remove amount
@@ -330,6 +355,12 @@ namespace Slot_Engine.Matrix
         internal void OffetPlayerWalletBy(float amount)
         {
             machine_information_manager.OffsetPlayerAmountBy(amount);
+        }
+
+        void Start()
+        {
+            //Initialize Machine and Player  Information
+            machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, machine_information_manager.supported_bet_amounts.Length - 1, 1, 0);
         }
     }
 }

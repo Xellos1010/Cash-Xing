@@ -61,6 +61,7 @@
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\PaylinesManager.cs" />
     <Compile Include="Assets\RackingManager.cs" />
     <Compile Include="Assets\InteractionController.cs" />
+    <Compile Include="Assets\BetAmountAdjuster.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Payline.cs" />
     <Compile Include="Assets\UITextManager.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\Matrix.cs" />
@@ -121,7 +122,6 @@
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripManager.cs" />
-    <Compile Include="Assets\BetAmountAdjuster.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

@@ -56,10 +56,20 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public Vector3 end_position;
         public bool set_to_display_end_symbol = false;
+        public bool slot_in_end_position = false;
         public bool graphics_set_to_end = false;
         public MeshRenderer _meshRenderer;
 
-        public Animator state_machine;
+        public Animator state_machine
+        {
+            get
+            {
+                if (_state_machine == null)
+                    _state_machine = GetComponent<Animator>();
+                return _state_machine;
+            }
+        }
+        public Animator _state_machine;
 
         public MeshRenderer meshRenderer
         {
@@ -148,6 +158,7 @@ namespace Slot_Engine.Matrix
                     {
                         toPosition = end_position;
                         ResetAllVars();
+                        slot_in_end_position = true;
                     }
                 transform.localPosition = toPosition;
             }
@@ -158,7 +169,6 @@ namespace Slot_Engine.Matrix
             movement_enabled = false;
             set_to_display_end_symbol = false;
             graphics_set_to_end = false;
-
             //Set state of reel to end
         }
 
@@ -207,11 +217,15 @@ namespace Slot_Engine.Matrix
                         string symbol_name = reel_parent.matrix.supported_symbols[reel_parent.matrix.end_configuration_manager.GetRandomWeightedSymbol()];
                         SetSlotGraphicTo(symbol_name);
                         SetPresentationSymbolTo(symbol_name);
-
                     }
                 }
             }
 
+        }
+
+        internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)
+        {
+            state_machine.runtimeAnimatorController = animatorOverrideController;
         }
 
         internal void SetDisplaySymbolTo(int symbol_to_display)
@@ -234,6 +248,13 @@ namespace Slot_Engine.Matrix
         {
             //TODO setup state machine
             set_to_display_end_symbol = true;
+        }
+
+        internal void SetSlotMovementEnabledTo(bool enable_disable)
+        {
+            movement_enabled = enable_disable;
+            if (enable_disable)
+                slot_in_end_position = false;
         }
     }
 }

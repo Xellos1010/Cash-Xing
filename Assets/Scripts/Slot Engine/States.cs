@@ -17,6 +17,7 @@ public enum SpinStates
     spin_idle,
     spin_interrupt,
     spin_outro,
+    spin_end,
     end
 }
 

@@ -283,7 +283,7 @@ public enum eEaseType
         /// <param name="number_of_slots">Determine direction of slots</param>
         /// <param name="matrix_settings">Slot size and matrix settings</param>
         /// <returns>task that can be awaited</returns>
-        public async Task InitializeSlotsInReel(Vector3 number_of_slots, Matrix matrix_settings)
+        public async Task InitializeSlotsInReel(Vector3 number_of_slots, Matrix matrix_settings, int ending_slot_padding)
         {
             //Set the matrix parent to get settings from
             this._matrix = matrix_settings;
@@ -291,7 +291,7 @@ public enum eEaseType
             display_slots = (int)number_of_slots.y;
             int ending_count = (int)number_of_slots.y + (int)matrix.reel_slot_padding.y;
             //Setup the positions the slot will hit along path. Based on size and padding
-            positions_in_path_v3 = new Vector3[ending_count + 1];//Spin into empty slot then move to top
+            positions_in_path_v3 = new Vector3[ending_count + ending_slot_padding];//Spin into empty slot then move to top
             //get slots_in_reel: destroy slots if to many - add slots if to few
             SetSlotObjectsInReelTo(ending_count);
             Vector3 reel_spin_off_position = GetSlotPositionBasedOnReelPosition(positions_in_path_v3.Length - 1);
@@ -313,24 +313,39 @@ public enum eEaseType
             List<SlotManager> slots_in_reel = new List<SlotManager>();
             if (this.slots_in_reel != null)
                 slots_in_reel.AddRange(this.slots_in_reel);
-            if (slots_in_reel.Count < to_slots)
+            bool add_substract = slots_in_reel.Count < to_slots ? true : false;
+            for (int position_in_reel = add_substract ? slots_in_reel.Count : slots_in_reel.Count-1;
+                add_substract ? position_in_reel < to_slots : position_in_reel >= to_slots;
+                position_in_reel = add_substract ? position_in_reel++: position_in_reel--)
             {
-                //Padding Slot Before Reel Generated
-                for (int slot_count = 0; slot_count < to_slots; slot_count++)
+                if(add_substract)
                 {
-                    if (slots_in_reel.Count == slot_count)
-                        slots_in_reel.Add(GenerateSlotObject(slot_count));
+                    slots_in_reel.Add(GenerateSlotObject(position_in_reel));
                 }
-            }
-            else if(slots_in_reel.Count > to_slots)
-            {
-                for (int slot_count = to_slots; slot_count > to_slots; slot_count--)
+                else
                 {
-                    Destroy(slots_in_reel[slot_count].gameObject);
+                    Destroy(slots_in_reel[position_in_reel].gameObject);
+                    slots_in_reel.RemoveAt(position_in_reel);
                 }
             }
             this.slots_in_reel = slots_in_reel.ToArray();
         }
+
+        internal bool AreSlotsInEndPosition()
+        {
+            bool output = false;
+            for (int i = 0; i < slots_in_reel.Length; i++)
+            {
+                if(!slots_in_reel[i].slot_in_end_position)
+                {
+                    break;
+                }
+                if (i == slots_in_reel.Length - 1)
+                    output = true;
+            }
+            return output;
+        }
+
         /// <summary>
         /// Assumes the reels haven't spun - once the reels spin you need to re-order slots_in_reel to decend based on position of slots
         /// </summary>
@@ -394,7 +409,7 @@ public enum eEaseType
         internal SlotManager InstantiateSlotGameobject(int slot_number, ReelStripManager parent_reel, Vector3 start_position, Vector3 scale)
         {
             GameObject ReturnValue = Instantiate(Resources.Load("Prefabs/Slot")) as GameObject; // TODO Refactor to include custom sot container passable argument
-            ReturnValue.gameObject.name = "Slot";
+            ReturnValue.gameObject.name = String.Format("Slot_{0}",slot_number);
             ReturnValue.transform.parent = parent_reel.transform;
             ReturnValue.transform.GetChild(0).localScale = scale;
             ReturnValue.transform.localPosition = start_position;
@@ -446,7 +461,7 @@ public enum eEaseType
         {
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
-                slots_in_reel[i].movement_enabled = enable_disable;
+                slots_in_reel[i].SetSlotMovementEnabledTo(enable_disable);
             }
         }
         /// <summary>
@@ -470,13 +485,31 @@ public enum eEaseType
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public void StopReel(ReelStrip reelStrip)
+        public async void StopReel(ReelStrip reelStrip)
         {
             end_symbols_set = 0;
             SetSpinStateTo(SpinStates.spin_outro);
             StopReel(reelStrip.display_symbols);
-            SetSpinStateTo(SpinStates.end);
+            await WaitForReelToStop();
+            SetSpinStateTo(SpinStates.spin_end);
         }
+
+        private async Task WaitForReelToStop()
+        {
+            bool lock_task = true;
+            while (lock_task)
+            {
+                if (AreSlotsInEndPosition())
+                {
+                    lock_task = false;
+                }
+                else
+                {
+                    await Task.Delay(50);
+                }
+            }
+        }
+
         /// <summary>
         /// Stop the reel and set ending symbols
         /// </summary>

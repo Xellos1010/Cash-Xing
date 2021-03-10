@@ -49,7 +49,8 @@ namespace Slot_Engine.Matrix
         private Matrix matrix;
         public bool canTriggerSet = false;
 
-        public float distance_to_invoke_event = 50.0f;
+        public float distance_to_invoke_swipe_event = 50.0f;
+        public float distance_to_invoke_tap_event = 5.0f;
         public Vector2 position_on_began;
         private bool draw_line_gizmo;
         private Ray camera_ray_out;
@@ -75,34 +76,34 @@ namespace Slot_Engine.Matrix
                 if (Input.touchCount > 0)
                 {
                     Touch temp = Input.touches[0];
-                    //if (temp.phase == TouchPhase.Began)
-                    //{
-                    //    position_on_began = temp.position;
-                    //}
+                    if (temp.phase == TouchPhase.Began)
+                    {
+                        position_on_began = temp.position;
+                    }
 
-                    //Swipe Event
-                    //if (position_on_began.magnitude - temp.position.magnitude > distance_to_invoke_event)
-                    //{
-                    //    if (temp.position.magnitude > position_on_began.magnitude)
-                    //    {
-
-                    //    }
-                    //}
-                    //else
-                    //{
-                    //    Debug.Log("Trigger for spin/slam pressed");
-                    //    if (StateManager.enCurrentState == States.Idle_Idle)
-                    //    {
-                    //        SetTrigger(supported_triggers.SpinStart);
-                    //    }
-                    //    else if (StateManager.enCurrentState == States.spin_start || StateManager.enCurrentState == States.spin_loop)
-                    //    {
-                    //        SetTrigger(supported_triggers.SpinSlam);
-                    //    }
-                    //}
                     if (temp.phase == TouchPhase.Ended)
                     {
-                        RaycastForUIFromPosition(temp.position);
+                        if (!CheckPositionBeginEndDistance(temp.position.x - position_on_began.x, distance_to_invoke_swipe_event,true))
+                        {
+                            if (CheckPositionBeginEndDistance(temp.position.x - position_on_began.x, distance_to_invoke_tap_event,false))
+                                RaycastForUIFromPosition(temp.position);
+                            else
+                            {
+                                Debug.Log("No tap or swipe event");
+                            }
+                        }
+                        else
+                        {
+                            if(temp.position.x > position_on_began.x)
+                            {
+                                IncreaseBetAmount();
+                            }
+                            else
+                            {
+                                DecreaseBetAmount();
+                            }
+                        }
+
                     }
                 }
 
@@ -160,6 +161,26 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        private bool CheckForTapEvent(Vector2 position)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool CheckPositionBeginEndDistance(float distance_traveled, float distance_to_invoke_event, bool greater_less)
+        {
+            if (greater_less ? 
+                Mathf.Abs(distance_traveled)  >= distance_to_invoke_swipe_event :
+                Mathf.Abs(distance_traveled)  <= distance_to_invoke_swipe_event
+                )
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         private void RaycastForUIFromPosition(Vector3 position)
         {
             Debug.Log(String.Format("testing position = {0} for raycast hit", position));
@@ -167,7 +188,7 @@ namespace Slot_Engine.Matrix
             Ray ray_to_use = Camera.main.ScreenPointToRay(position);
             Physics.Raycast(ray_to_use, out hit_info, 1000f);
             EnableDrawLineGizmo(ray_to_use);
-            Debug.Log(hit_info.transform.gameObject.name);
+            Debug.Log(hit_info.transform?.gameObject.name);
             if (hit_info.collider != null)
             {
                 if (hit_info.collider.gameObject.tag == "BetUp")
