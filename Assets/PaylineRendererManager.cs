@@ -41,7 +41,7 @@ namespace Slot_Engine.Matrix
     {
         public float standard_payline_width = 50;
         public float highlight_win_width = 100;
-        public bool render_paylines = false;
+        public bool render_paylines = true;
         public PaylineRenderer[] _payline_renderers; //TODO make private - testing mode only
         private PaylineRenderer[] payline_renderers
         {
@@ -100,17 +100,9 @@ namespace Slot_Engine.Matrix
 
         internal void ShowPayline(Payline paylines_supported)
         {
-            List<Vector3> linePositions = new List<Vector3>();
-            //TODO add validation payline is same length as reels
-            for (int i = 0; i < matrix.reel_strip_managers.Length; i++)
-            {
-                Vector3 position_cache = matrix.reel_strip_managers[i].slots_in_reel[paylines_supported.payline[i]].transform.position;
-                position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
-                                                                                       //TOOD change to get slot at position at path to return x and y
-                linePositions.Add(position_cache);
-            }
-            //linePosiitons - 1  should be same length as line renderers
-            for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end...
+            List<Vector3> linePositions;
+            matrix.ReturnPositionsBasedOnPayline(ref paylines_supported.payline, out linePositions);
+            for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end linePositions since your get 2 out for array range
             {
                 //Throws arguments out of range if line positions out of range
                 SetLineRendererPositions(linePositions.GetRange(i, 2), ref payline_renderers[i]);
@@ -133,12 +125,15 @@ namespace Slot_Engine.Matrix
             List<Vector3> linePositions;
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
             matrix.ReturnSymbolPositionsOnPayline(ref payline_to_show.payline, out linePositions);
-            //linePosiitons - 1  should be same length as line renderers
-            for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end...
+            int winning_symbols_set = 0;
+            for (int i = payline_to_show.left_right? 0: linePositions.Count-1;
+                payline_to_show.left_right ? i < linePositions.Count : i >= 0;
+                i = payline_to_show.left_right ? i++ : i--)
             {
-                SetLineRendererPositions(linePositions.GetRange(i, 2), ref payline_renderers[i]);
-                if (i < payline_to_show.winning_symbols.Length)
+                SetLineRendererPositions(linePositions.GetRange(i, payline_to_show.left_right ? 2:-2), ref payline_renderers[i]);
+                if (winning_symbols_set < payline_to_show.winning_symbols.Length)
                 {
+                    winning_symbols_set++;
                     SetWidth(highlight_win_width, highlight_win_width, ref payline_renderers[i]);
                 }
                 else

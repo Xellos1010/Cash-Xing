@@ -12,7 +12,6 @@ using System.Linq;
 
 namespace Slot_Engine.Matrix
 {
-
 #if UNITY_EDITOR
     [CustomEditor(typeof(Matrix))]
     class MatrixEditor : BoomSportsEditor
@@ -43,7 +42,7 @@ namespace Slot_Engine.Matrix
                 }
                 if (GUILayout.Button("End Test Spin"))
                 {
-                    myTarget.spin_manager.EndSpin();
+                    myTarget.spin_manager.InterruptSpin();
                 }
             }
             else
@@ -104,6 +103,17 @@ namespace Slot_Engine.Matrix
                 return _symbols_material_manager;
             }
         }
+
+        internal void ReturnPositionsBasedOnPayline(ref int[] payline, out List<Vector3> out_positions)
+        {
+            out_positions = new List<Vector3>();
+            for (int i = 0; i < reel_strip_managers.Length; i++)
+            {
+                Vector3 position_cache = reel_strip_managers[i].positions_in_path_v3[payline[i] + reel_strip_managers[i].padding_slots_top];
+                out_positions.Add(position_cache);
+            }
+        }
+
         /// <summary>
         /// symbols_material_manager reference
         /// </summary>
@@ -185,8 +195,8 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public Vector2 reel_slot_padding = new Vector2(0, 1); //TODO set from Matrix Generator
         [SerializeField]
-        private int reel_start_padding = 1;
-        private int reel_ending_padding = 1;
+        internal int reel_start_padding = 1;
+        internal int reel_ending_padding = 1;
         public AnimatorStateMachineManager animator_state_machine;
         
         public AnimatorOverrideController symbol_win_resolve;
@@ -207,15 +217,34 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void SetSymbolsForWinConfigurationDisplay(WinningPayline payline_to_show)
+        internal void SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
+            Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}", winning_payline.payline.payline.ToString(), winning_payline.winning_symbols.ToString()));
+            //Get Winning Slots and loosing slots
+            List<SlotManager> winning_slots,losing_slots;
+            ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots);
+            
+        }
+
+        private void ReturnWinLoseSlots(WinningPayline winning_payline, out List<SlotManager> winning_slots, out List<SlotManager> losing_slots)
+        {
+            winning_slots = new List<SlotManager>();
+            losing_slots = new List<SlotManager>();
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
-                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                List<SlotManager> slots_decending_in_reel = reel_strip_managers[reel].GetSlotsDecending();
+                for (int slot = 0; slot < slots_decending_in_reel.Count; slot++)
                 {
-                    AnimatorOverrideController to_controller = payline_to_show.IsSymbolOnWinningPayline(reel, slot) ? symbol_win_resolve : symbol_lose_resolve;
-                    Debug.Log(String.Format("In Reel {0} Setting Symbol {1} with symbol of {2} Animation controller to {3}", reel_strip_managers[reel].name, reel_strip_managers[reel].slots_in_reel[slot].transform.name, reel_strip_managers[reel].slots_in_reel[slot].presentation_symbol, to_controller.name));
-                    reel_strip_managers[reel].slots_in_reel[slot].SetOverrideControllerTo(to_controller);
+                    if (reel >= winning_payline.winning_symbols.Length)
+                    {
+                        //to_controller = symbol_lose_resolve;
+                        slots_decending_in_reel[slot].state_machine.SetBool(supported_bools.SymbolResolve, false);
+                    }
+                    else
+                    {
+
+                        slots_decending_in_reel[slot].state_machine.SetBool(supported_bools.SymbolResolve, winning_payline.IsSymbolOnWinningPayline(reel, slot, reel_start_padding) ? true : false);
+                    }
                 }
             }
         }
@@ -317,6 +346,18 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void ResetAnimatorsSlots()
+        {
+            animator_state_machine.InitializeAnimator();
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                {
+                    reel_strip_managers[reel].slots_in_reel[slot].ResetAnimator();
+                }
+            }
+        }
+
         internal void SetReelStripsEndConfiguration()
         {
             for (int i = 0; i < reel_strip_managers.Length; i++)
@@ -336,14 +377,26 @@ namespace Slot_Engine.Matrix
         internal void ReturnSymbolPositionsOnPayline(ref Payline payline, out List<Vector3> linePositions)
         {
             linePositions = new List<Vector3>();
+            //Return List Slots In Order 0 -> -
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
-                //Top slot cushion slot - use 1 as first element - If more than 1 cushion slot change logic to pull display slots from -2 end of array. Slots move off screen
-                Vector3 position_cache = reel_strip_managers[reel].slots_in_reel[payline.ReturnSlotNumberFromReel(reel, reel_strip_managers.Length, reel_start_padding)].transform.position;
-                position_cache = new Vector3(position_cache.x, position_cache.y, -10); //TODO Change Hardcoded Value
-                                                                                       //TOOD change to get slot at position at path to return x and y
-                linePositions.Add(position_cache);
+                //Get current slot order based on slot transform compared to positions in path.
+                List<SlotManager> slots_decending_in_reel = reel_strip_managers[reel].GetSlotsDecending();
+                //Cache the position of the slot that we need from this reel
+                linePositions.Add(ReturnSlotPositionOnPayline(payline.payline[reel], ref slots_decending_in_reel, ref reel_strip_managers[reel]));
             }
+        }
+
+        private Vector3 ReturnSlotPositionOnPayline(int payline_slot, ref List<SlotManager> slots_decending_in_reel, ref ReelStripManager reelStripManager)
+        {
+            //Calculate the reel display area - Take Display Slots and start is
+            SlotManager[] display_slots = ReturnDisplaySlots(ref slots_decending_in_reel, ref reelStripManager);
+            return display_slots[payline_slot].transform.position;
+        }
+
+        private SlotManager[] ReturnDisplaySlots(ref List<SlotManager> slots_decending_in_reel, ref ReelStripManager reelStripManager)
+        {
+            return slots_decending_in_reel.GetRange(reelStripManager.padding_slots_top, reelStripManager.display_slots).ToArray();
         }
 
         internal void PlayerHasBet(float amount)
@@ -361,6 +414,123 @@ namespace Slot_Engine.Matrix
         {
             //Initialize Machine and Player  Information
             machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, machine_information_manager.supported_bet_amounts.Length - 1, 1, 0);
+            //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
+            StateManager.SetStateTo(States.Idle_Intro);
+        }
+
+        void OnEnable()
+        {
+            StateManager.StateChangedTo += StateManager_StateChangedTo;
+        }
+        void OnDisable()
+        {
+            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+        }
+        /// <summary>
+        /// Matrix State Machine
+        /// </summary>
+        /// <param name="State"></param>
+        private async void StateManager_StateChangedTo(States State)
+        {
+            switch (State)
+            {
+                case States.None:
+                    break;
+                case States.preloading:
+                    break;
+                case States.Coin_In:
+                    break;
+                case States.Coin_Out:
+                    break;
+                case States.Idle_Intro:
+                    //Reset the state of all slots to 
+                    ResetAnimatorsSlots();
+                    //Fall thru to Idle_Idle State - ATM the animator falls thru Idle_Intro
+                    StateManager.SetStateTo(States.Idle_Idle);
+                    break;
+                case States.Idle_Idle:
+                    break;
+                case States.Idle_Outro:
+                    //Decrease Bet Amount
+                    PlayerHasBet(machine_information_manager.bet_amount);
+                    animator_state_machine.SetTrigger(supported_triggers.SpinStart);
+                    break;
+                case States.Spin_Intro:
+                    break;
+                case States.Spin_Idle:
+                    break;
+                case States.Spin_Interrupt:
+                    //Set the matrix and slots to spin interrupt
+                    animator_state_machine.SetTrigger(supported_triggers.SpinSlam);
+                    SetSlotsAnimatorTrigger(supported_triggers.SpinSlam);
+                    StateManager.SetStateTo(States.Spin_Outro);
+                    break;
+                case States.Spin_Outro:
+                    break;
+                case States.Spin_End:
+                    break;
+                case States.Resolve_Intro:
+                    break;
+                case States.Resolve_Win_Idle:
+                    break;
+                case States.Resolve_Lose_Idle:
+                    break;
+                case States.Resolve_Lose_Outro:
+                    break;
+                case States.Resolve_Win_Outro:
+                    break;
+                case States.win_presentation:
+                    break;
+                case States.racking_start:
+                    break;
+                case States.racking_loop:
+                    break;
+                case States.racking_end:
+                    break;
+                case States.feature_transition_out:
+                    break;
+                case States.feature_transition_in:
+                    break;
+                case States.total_win_presentation:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private async Task WaitAllReelsStopSpinning()
+        {
+            bool task_lock = true;
+            while (task_lock)
+            {
+                for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+                {
+                    if(reel_strip_managers[reel].are_slots_spinning)
+                    {
+                        await Task.Delay(100);
+                    }
+                    else
+                    {
+                        task_lock = false;
+                    }
+                }
+            }
+        }
+
+        private void SetSlotsAnimatorTrigger(supported_triggers spinSlam)
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                {
+                    reel_strip_managers[reel].slots_in_reel[slot].SetTriggerTo(supported_triggers.SpinSlam);
+                }
+            }
+        }
+
+        void OnApplicationQuit()
+        {
+            StateManager.SetStateTo(States.None);
         }
     }
 }

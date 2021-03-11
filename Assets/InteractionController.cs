@@ -32,9 +32,9 @@ namespace Slot_Engine.Matrix
 
     }
 #endif
-    
+
     public class InteractionController : MonoBehaviour
-    { 
+    {
         public AnimatorStateMachineManager StateMachineController
         {
             get
@@ -47,7 +47,7 @@ namespace Slot_Engine.Matrix
         public AnimatorStateMachineManager _StateMachineController;
         [SerializeField]
         private Matrix matrix;
-        public bool canTriggerSet = false;
+        public bool can_spin_slam = false;
 
         public float distance_to_invoke_swipe_event = 50.0f;
         public float distance_to_invoke_tap_event = 5.0f;
@@ -58,7 +58,7 @@ namespace Slot_Engine.Matrix
         void OnDrawGizmos()
         {
             if (draw_line_gizmo)
-                Gizmos.DrawLine(camera_ray_out.origin, camera_ray_out.direction*1000);
+                Gizmos.DrawLine(camera_ray_out.origin, camera_ray_out.direction * 1000);
         }
 
         // Update is called once per frame
@@ -67,11 +67,12 @@ namespace Slot_Engine.Matrix
             //Modify Bet Amount
             if (StateManager.enCurrentState == States.Idle_Idle)
             {
-                if(Input.GetMouseButtonDown(0))
+                if (Input.GetMouseButtonDown(0))
                 {
                     Debug.Log(String.Format("Mouse position = {0}", Input.mousePosition));
                     RaycastForUIFromPosition(Input.mousePosition);
                 }
+#if UNITY_ANDROID
                 //#if UNITY_ANDROID
                 if (Input.touchCount > 0)
                 {
@@ -103,10 +104,8 @@ namespace Slot_Engine.Matrix
                                 DecreaseBetAmount();
                             }
                         }
-
                     }
-                }
-
+#endif
                 //#endif
                 if (Input.GetKeyDown(KeyCode.LeftArrow))
                 {
@@ -117,9 +116,29 @@ namespace Slot_Engine.Matrix
                     IncreaseBetAmount();
                 }
             }
-
-            if (canTriggerSet)
+            if (can_spin_slam)
             {
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    Debug.Log("Trigger for spin/slam pressed");
+                    if (StateManager.enCurrentState == States.Idle_Idle)
+                    {
+                        StartSpin();
+                    }
+                    else if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro  || StateManager.enCurrentState == States.Spin_Idle)
+                    {
+                        SlamSpin();
+                    }
+                }
+                if (StateManager.enCurrentState == States.Resolve_Intro)
+                {
+                    if (Input.GetKeyDown(KeyCode.Space))
+                    {
+                        //TODO Set State to resolve outro
+                    }
+                }
+
+
 #if UNITY_ANDROID
             if (Input.touchCount > 0)
             {
@@ -129,36 +148,28 @@ namespace Slot_Engine.Matrix
                     Debug.Log("Trigger for spin/slam pressed");
                     if (StateManager.enCurrentState == States.idle_idle)
                     {
-                        SetTrigger(supported_triggers.SpinStart);
+                        StartSpin()
                     }
                     else if (StateManager.enCurrentState == States.spin_start || StateManager.enCurrentState == States.spin_loop)
-                    {
-                        SetTrigger(supported_triggers.SpinSlam);
-                    }
-                }
-            }
-#endif
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    Debug.Log("Trigger for spin/slam pressed");
-                    if (StateManager.enCurrentState == States.Idle_Idle)
-                    {
-                        SetTriggerTo(supported_triggers.SpinStart);
-                    }
-                    else if (StateManager.enCurrentState == States.Spin_Intro || StateManager.enCurrentState == States.Spin_Idle)
                     {
                         SlamSpin();
                     }
                 }
             }
-            else
-            {
-                if (StateManager.enCurrentState == States.Idle_Intro)
-                {
-                    canTriggerSet = true;
-                    SetTriggerTo(supported_triggers.End);
-                }
+#endif
             }
+        }
+
+        private void StartSpin()
+        {
+            SetStateDisableInteraction(States.Idle_Outro);
+        }
+
+        private void SetStateDisableInteraction(States to_state)
+        {
+            can_spin_slam = false;
+            //Set state to idle outro then in idle outro set trigger for StartSpin
+            StateManager.SetStateTo(to_state);
         }
 
         private bool CheckForTapEvent(Vector2 position)
@@ -225,14 +236,83 @@ namespace Slot_Engine.Matrix
 
         public void SlamSpin()
         {
-            SetTriggerTo(supported_triggers.SpinSlam);
+            SetStateDisableInteraction(States.Spin_Interrupt);
         }
 
 
         private void SetStateTo(States to_state)
         {
-            canTriggerSet = false;
+            can_spin_slam = false;
             StateManager.SetStateTo(to_state);
+        }
+
+        void OnEnable()
+        {
+            StateManager.StateChangedTo += StateManager_StateChangedTo;
+        }
+
+        void OnDisable()
+        {
+            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+        }
+
+        private void StateManager_StateChangedTo(States State)
+        {
+            switch (State)
+            {
+                case States.None:
+                    break;
+                case States.preloading:
+                    break;
+                case States.Coin_In:
+                    break;
+                case States.Coin_Out:
+                    break;
+                case States.Idle_Intro:
+                    break;
+                case States.Idle_Idle:
+                    can_spin_slam = true;
+                    break;
+                case States.Idle_Outro:
+                    can_spin_slam = true;
+                    break;
+                case States.Spin_Intro:
+                    break;
+                case States.Spin_Idle:
+                    break;
+                case States.Spin_Interrupt:
+                    break;
+                case States.Spin_Outro:
+                    break;
+                case States.Spin_End:
+                    break;
+                case States.Resolve_Intro:
+                    break;
+                case States.Resolve_Win_Idle:
+                    break;
+                case States.Resolve_Lose_Idle:
+                    break;
+                case States.Resolve_Lose_Outro:
+                    break;
+                case States.Resolve_Win_Outro:
+                    break;
+                case States.win_presentation:
+                    break;
+                case States.racking_start:
+                    break;
+                case States.racking_loop:
+                    break;
+                case States.racking_end:
+                    break;
+                case States.feature_transition_out:
+                    break;
+                case States.feature_transition_in:
+                    break;
+                case States.total_win_presentation:
+                    break;
+                default:
+                    break;
+            }
         }
 
     }

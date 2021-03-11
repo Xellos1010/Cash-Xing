@@ -46,15 +46,15 @@ namespace Slot_Engine.Matrix
             {
                 serializedObject.ApplyModifiedProperties();
             }
-            EditorGUI.BeginChangeCheck();
-            if (reel_spin_delay_start_enabled.boolValue || reel_spin_delay_end_enabled.boolValue)
-            {
-                reel_spin_delay_ms.intValue = EditorGUILayout.IntSlider("Delay between reels star spin ms", reel_spin_delay_ms.intValue, 0, 2000);
-            }
-            if (EditorGUI.EndChangeCheck())
-            {
-                serializedObject.ApplyModifiedProperties();
-            }
+            //EditorGUI.BeginChangeCheck();
+            //if (reel_spin_delay_start_enabled.boolValue || reel_spin_delay_end_enabled.boolValue)
+            //{
+            //    reel_spin_delay_ms.intValue = EditorGUILayout.IntSlider("Delay between reels star spin ms", reel_spin_delay_ms.intValue, 0, 2000);
+            //}
+            //if (EditorGUI.EndChangeCheck())
+            //{
+            //    serializedObject.ApplyModifiedProperties();
+            //}
             EditorGUI.BeginChangeCheck();
             spin_speed.floatValue = EditorGUILayout.Slider("Set Spin Speed", spin_speed.floatValue,-1000,1000);
             if (EditorGUI.EndChangeCheck())
@@ -119,10 +119,6 @@ namespace Slot_Engine.Matrix
         /// Cascading ending reels
         /// </summary>
         public bool reel_spin_delay_end_enabled = false;
-        /// <summary>
-        /// Set the delay between reels starting
-        /// </summary>
-        public int reel_spin_delay_ms = 0;
         /// <summary>
         /// This allows you to set the reels spin either forward or back (Left to right - right to left - top to bottom - bottom to top)
         /// </summary>
@@ -203,7 +199,7 @@ namespace Slot_Engine.Matrix
             use_timer = false;
         }
 
-        internal void SetSpinStateTo(SpinStates state)
+        internal async void SetSpinStateTo(SpinStates state)
         {
             Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
@@ -214,7 +210,9 @@ namespace Slot_Engine.Matrix
                     matrix.animator_state_machine.ResetAllBools();
                     break;
                 case SpinStates.spin_start:
-                    StartSpin();
+                    StateManager.SetStateTo(States.Spin_Intro);
+                    await StartSpin();
+                    StateManager.SetStateTo(States.Spin_Idle);
                     break;
                 case SpinStates.spin_intro:
                     break;
@@ -226,10 +224,11 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_outro:
                     ResetUseTimer();
-                    StopReels();
+                    await StopReels();
+                    StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
-                    StateManager.SetStateTo(States.Spin_End);
+
                     break;
                 default:
                     break;
@@ -237,22 +236,18 @@ namespace Slot_Engine.Matrix
             current_state = state;
         }
 
-        private void InterruptSpin()
+        internal void InterruptSpin()
         {
-            EndSpin();
+            StateManager.SetStateTo(States.Spin_Outro);
         }
 
         //Engine Functions
-        public void StartSpin()
+        public async Task StartSpin()
         {
-            SpinReels();
+            await SpinReels();
         }
 
-        public void EndSpin()
-        {
-            StopReels();
-        }
-        async void SpinReels()
+        internal async Task SpinReels()
         {
             ReelStrip[] end_reel_configuration = matrix.end_configuration_manager.UseNextConfigurationInList();
             matrix.paylines_manager.EvaluateWinningSymbols(end_reel_configuration);
@@ -268,30 +263,26 @@ namespace Slot_Engine.Matrix
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
                 i = spin_reels_starting_forward_back ? i+1:i-1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
-                //Delay the reelstrip if toggled
-                if(reel_spin_delay_start_enabled)
-                    await Task.Delay(reel_spin_delay_ms);
                 await matrix.reel_strip_managers[i].SpinReel();
             }
-            //SetSpinStateTo(SpinStates.loop);
-            //StateManager.SetStateTo(States.spin_loop);
         }
 
-        async void StopReels()
+        async Task StopReels()
         {
-            //StateManager.SetStateTo(States.spin_end);
-            //This handles spinning forward or back with ? operator
             for (int i = spin_reels_starting_forward_back ? 0 : matrix.reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
                 i = spin_reels_starting_forward_back ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
                 if (reel_spin_delay_end_enabled)
-                    await Task.Delay(reel_spin_delay_ms);
-                matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.current_reelstrip_configuration[i]);//Only use for specific reel stop features
+                {
+                    await matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.current_reelstrip_configuration[i]);//Only use for specific reel stop features
+                }
+                else
+                {
+                    matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.current_reelstrip_configuration[i]);//Only use for specific reel stop features
+                }
             }
             await WaitForAllReelsToStop(matrix.reel_strip_managers);
-            SetSpinStateTo(SpinStates.end);
-            //point to winning symbols and change all symbols except winning symbols animation controller to the override
         }
 
         private async Task WaitForAllReelsToStop(ReelStripManager[] reel_strip_managers)
@@ -301,17 +292,17 @@ namespace Slot_Engine.Matrix
             {
                 for (int i = 0; i < reel_strip_managers.Length; i++)
                 {
-                    if (reel_strip_managers[i].current_state == SpinStates.spin_end)
+                    if (reel_strip_managers[i].current_spin_state == SpinStates.spin_end)
                     {
                         if (i == reel_strip_managers.Length - 1)
                         {
                             lock_task = false;
-                            continue;
+                            break;
                         }
                     }
                     else 
                     {
-                        await Task.Delay(50);
+                        await Task.Delay(100);
                         break;
                     }
                 }
@@ -364,11 +355,9 @@ namespace Slot_Engine.Matrix
                     SetSpinStateTo(SpinStates.idle_idle);
                     break;
                 case States.Idle_Outro:
-                    //Decrease Bank Roll
-                    matrix.PlayerHasBet(matrix.machine_information_manager.bet_amount);
+                    SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.Spin_Intro:
-                    SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.Spin_Idle:
                     SetSpinStateTo(SpinStates.spin_idle);
@@ -377,6 +366,7 @@ namespace Slot_Engine.Matrix
                     SetSpinStateTo(SpinStates.spin_outro);
                     break;
                 case States.Spin_End:
+                    SetSpinStateTo(SpinStates.end);
                     break;
                 case States.win_presentation:
                     break;

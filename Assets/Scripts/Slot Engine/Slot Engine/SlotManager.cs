@@ -60,16 +60,17 @@ namespace Slot_Engine.Matrix
         public bool graphics_set_to_end = false;
         public MeshRenderer _meshRenderer;
 
-        public Animator state_machine
+        public AnimatorStateMachineManager state_machine
         {
             get
             {
                 if (_state_machine == null)
-                    _state_machine = GetComponent<Animator>();
+                    _state_machine = GetComponent<AnimatorStateMachineManager>();
                 return _state_machine;
             }
         }
-        public Animator _state_machine;
+        [SerializeField]
+        internal AnimatorStateMachineManager _state_machine;
 
         public MeshRenderer meshRenderer
         {
@@ -122,8 +123,14 @@ namespace Slot_Engine.Matrix
         public void StartSpin()
         {
             ResetAllVars();
-            StopAnimation();    
+            StopAnimation();
+            SetAnimatorTrigger(supported_triggers.SpinStart);
             movement_enabled = true;
+        }
+
+        private void SetAnimatorTrigger(supported_triggers v)
+        {
+            state_machine.SetTrigger(v);
         }
 
         Vector3 GeneratePositionUpdateSpeed(Vector3 amount_to_add) //Needs to be positive to move forwards and negative to move backwards
@@ -157,8 +164,8 @@ namespace Slot_Engine.Matrix
                     if (toPosition.y <= end_position.y)
                     {
                         toPosition = end_position;
-                        ResetAllVars();
                         slot_in_end_position = true;
+                        ResetAllVars();
                     }
                 transform.localPosition = toPosition;
             }
@@ -166,7 +173,7 @@ namespace Slot_Engine.Matrix
 
         private void ResetAllVars()
         {
-            movement_enabled = false;
+            SetSlotMovementEnabledTo(false);
             set_to_display_end_symbol = false;
             graphics_set_to_end = false;
             //Set state of reel to end
@@ -184,11 +191,11 @@ namespace Slot_Engine.Matrix
             {
                 //Set Graphics and end position
                 graphics_set_to_end = true;
-                end_position = reel_parent.positions_in_path_v3[(reel_parent.positions_in_path_v3.Length - 2) - reel_parent.end_symbols_set];
+                end_position = reel_parent.positions_in_path_v3[(reel_parent.positions_in_path_v3.Length - 2) - reel_parent.end_symbols_set_from_config];
 
-                if (reel_parent.end_symbols_set < reel_parent.ending_symbols.Length)
+                if (reel_parent.end_symbols_set_from_config < reel_parent.ending_symbols.Length)
                 {
-                    SetDisplaySymbolTo(reel_parent.ending_symbols.Length - 1 - reel_parent.end_symbols_set);
+                    SetDisplaySymbolTo(reel_parent.ending_symbols.Length - 1 - reel_parent.end_symbols_set_from_config);
                 }
                 else
                 {
@@ -201,6 +208,7 @@ namespace Slot_Engine.Matrix
                 bool symbol_set = false;
                 if (reel_parent.change_symbol_graphic_on_spin_idle)
                 {
+                    //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
                     if (reel_parent.reel_strip_to_use_for_spin != null)
                     {
                         if (reel_parent.reel_strip_to_use_for_spin.reel_spin_symbols.Length > 0)
@@ -208,7 +216,6 @@ namespace Slot_Engine.Matrix
                             string symbol_name = reel_parent.ReturnNextSymbolInStrip();
                             SetSlotGraphicTo(symbol_name);
                             SetPresentationSymbolTo(symbol_name);
-
                             symbol_set = true;
                         }
                     }
@@ -220,12 +227,11 @@ namespace Slot_Engine.Matrix
                     }
                 }
             }
-
         }
 
         internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)
         {
-            state_machine.runtimeAnimatorController = animatorOverrideController;
+            state_machine.SetRuntimeControllerTo(animatorOverrideController);
         }
 
         internal void SetDisplaySymbolTo(int symbol_to_display)
@@ -233,7 +239,7 @@ namespace Slot_Engine.Matrix
             //Debug.Log(string.Format("Set Display symbol to {0}", v));
             SetPresentationSymbolTo(reel_parent.ending_symbols[symbol_to_display]);
             SetSlotGraphicTo(presentation_symbol);
-            reel_parent.end_symbols_set += 1;
+            reel_parent.end_symbols_set_from_config += 1;
         }
 
         private void SetPresentationSymbolTo(Symbol to_symbol)
@@ -255,6 +261,25 @@ namespace Slot_Engine.Matrix
             movement_enabled = enable_disable;
             if (enable_disable)
                 slot_in_end_position = false;
+        }
+
+        internal void ResetAnimator()
+        {
+            state_machine.InitializeAnimator();
+        }
+
+        internal void InitializeAnimatorToPresentWin()
+        {
+            state_machine.InitializeAnimator();
+            state_machine.SetBool(supported_bools.LoopPaylinesWin, true);
+            state_machine.SetBool(supported_bools.WinRacking, true);
+            state_machine.SetBool(supported_bools.ResolveSpin, true);
+            
+        }
+
+        internal void SetTriggerTo(supported_triggers to_trigger)
+        {
+            state_machine.SetTrigger(to_trigger);
         }
     }
 }

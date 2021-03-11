@@ -1,10 +1,9 @@
-﻿using UnityEngine;
-
+﻿using System;
+using System.Collections.Generic;
 //For Parsing Purposes
 using System.IO;
-using System.Collections.Generic;
-using System;
 using System.Threading.Tasks;
+using UnityEngine;
 //************
 #if UNITY_EDITOR
 using UnityEditor;
@@ -254,6 +253,7 @@ namespace Slot_Engine.Matrix
         private async Task ShowWinningPayline(int v)
         {
             current_winning_payline_shown = v;
+            Debug.Log(String.Format("Current wining payline shown = {0}",v));
             ShowWinningPayline(winning_paylines[current_winning_payline_shown]);
         }
 
@@ -406,7 +406,9 @@ namespace Slot_Engine.Matrix
                 case States.Spin_Idle:
                     break;
                 case States.Spin_End:
-                    if(winning_paylines.Length > 0)
+                    break;
+                case States.Resolve_Intro:
+                    if (winning_paylines.Length > 0)
                         PlayCycleWins();
                     break;
                 case States.win_presentation:

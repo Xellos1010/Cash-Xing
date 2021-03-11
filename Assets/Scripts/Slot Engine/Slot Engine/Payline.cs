@@ -9,6 +9,7 @@ public class Payline
 
     public int ReturnSlotNumberFromReel(int reel, int reelstrip_length, int reel_start_padding)
     {
+        ///Reel strip - length 
         if (payline[reel] + reel_start_padding < reelstrip_length)
         {
             return payline[reel] + reel_start_padding;

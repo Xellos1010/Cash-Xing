@@ -102,7 +102,7 @@ public enum eEaseType
     public class ReelStripManager : MonoBehaviour
     {
         [SerializeField]
-        internal SpinStates current_state;
+        internal SpinStates current_spin_state;
         internal Matrix matrix
         {
             get
@@ -122,6 +122,9 @@ public enum eEaseType
         /// //TODO refactor and figure out logic of how to get viewable slots
         [SerializeField]
         internal int display_slots = 3;
+        //Controls amount of slots showing on reel
+        internal int padding_slots_top = 1;
+        internal int padding_slots_bottom = 1;
         /// <summary>
         /// Slot managers in the reel strip
         /// </summary>
@@ -161,7 +164,7 @@ public enum eEaseType
         /// Enable you to change the symbol when slot exits matrix to weighted distribution symbol set
         /// </summary>
         public bool change_symbol_graphic_on_spin_idle = true;
-        internal int end_symbols_set = 0;
+        internal int end_symbols_set_from_config = 0;
         
         /// <summary>
         /// is the reel in a spin state
@@ -170,7 +173,7 @@ public enum eEaseType
         {
             get
             {
-                switch (current_state)
+                switch (current_spin_state)
                 {
                     case SpinStates.idle_idle:
                         return false;
@@ -182,6 +185,8 @@ public enum eEaseType
             }
         }
         public int reel_strip_counter = 0;
+        
+
         internal string ReturnNextSymbolInStrip()
         {
             string output = ((Symbol)reel_strip_to_use_for_spin.reel_spin_symbols[reel_strip_counter]).ToString();
@@ -336,12 +341,11 @@ public enum eEaseType
             bool output = false;
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
-                if(!slots_in_reel[i].slot_in_end_position)
+                if(slots_in_reel[i].slot_in_end_position)
                 {
-                    break;
+                    if (i == slots_in_reel.Length - 1)
+                        output = true;
                 }
-                if (i == slots_in_reel.Length - 1)
-                    output = true;
             }
             return output;
         }
@@ -364,6 +368,21 @@ public enum eEaseType
         {
             SetEndingSymbolsTo(reelstrip.display_symbols);
         }
+
+        internal List<SlotManager> GetSlotsDecending()
+        {
+            List<SlotManager> output = new List<SlotManager>();
+            for (int position_to_check = 0; position_to_check < positions_in_path_v3.Length; position_to_check++)
+            {
+                for (int slot = 0; slot < slots_in_reel.Length; slot++)
+                {
+                    if(slots_in_reel[slot].transform.localPosition == positions_in_path_v3[position_to_check])
+                        output.Add(slots_in_reel[slot]);
+                }
+            }
+            return output;
+        }
+
         /// <summary>
         /// Generates a Slot Gameobject
         /// </summary>
@@ -444,7 +463,7 @@ public enum eEaseType
         /// <param name="state">SpinStates state to set reel to</param>
         private void SetSpinStateTo(SpinStates state)
         {
-            current_state = state;
+            current_spin_state = state;
         }
         /// <summary>
         /// Initializes variables requires for a new spin
@@ -485,40 +504,58 @@ public enum eEaseType
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public async void StopReel(ReelStrip reelStrip)
+        public async Task StopReel(ReelStrip reelStrip)
         {
-            end_symbols_set = 0;
+            end_symbols_set_from_config = 0;
             SetSpinStateTo(SpinStates.spin_outro);
-            StopReel(reelStrip.display_symbols);
-            await WaitForReelToStop();
+            await StopReel(reelStrip.display_symbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
-        }
-
-        private async Task WaitForReelToStop()
-        {
-            bool lock_task = true;
-            while (lock_task)
-            {
-                if (AreSlotsInEndPosition())
-                {
-                    lock_task = false;
-                }
-                else
-                {
-                    await Task.Delay(50);
-                }
-            }
         }
 
         /// <summary>
         /// Stop the reel and set ending symbols
         /// </summary>
         /// <param name="ending_symbols">the symbols to land on</param>
-        public void StopReel(int[] ending_symbols)
+        public async Task StopReel(int[] ending_symbols)
         {
             SetEndingSymbolsTo(ending_symbols);
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
+            await AllSlotsStoppedSpinning();
+        }
+        internal async Task AllSlotsStoppedSpinning()
+        {
+            bool task_lock = true;
+            while (task_lock)
+            {
+                if (are_slots_spinning)
+                    await Task.Delay(100);
+                else
+                {
+                    task_lock = false;
+                }
+            }
+                
+        }
+
+        internal bool are_slots_spinning
+        {
+            get
+            {
+                bool output = true;
+                for (int i = 0; i < slots_in_reel.Length; i++)
+                {
+                    if (!slots_in_reel[i].slot_in_end_position)
+                    {
+                        break;
+                    }
+                    if (i == slots_in_reel.Length - 1)
+                    {
+                        output = false;
+                    }
+                }
+                return output;
+            }
         }
         /// <summary>
         /// Set Ending Symbols variable

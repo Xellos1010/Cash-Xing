@@ -40,6 +40,7 @@ public enum States {
     Idle_Outro,
     Spin_Intro,
     Spin_Idle,
+    Spin_Interrupt,
     Spin_Outro,
     Spin_End,
     Resolve_Intro,
