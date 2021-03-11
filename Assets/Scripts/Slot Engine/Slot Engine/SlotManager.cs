@@ -47,7 +47,9 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// The symbol presenting after the reel stops
         /// </summary>
-        public string presentation_symbol;
+        public string presentation_symbol_name;
+        public int presentation_symbol;
+        
         public ReelStripManager reel_parent;
 
         public bool movement_enabled = false;
@@ -124,13 +126,8 @@ namespace Slot_Engine.Matrix
         {
             ResetAllVars();
             StopAnimation();
-            SetAnimatorTrigger(supported_triggers.SpinStart);
+            SetTriggerTo(supported_triggers.SpinStart);
             movement_enabled = true;
-        }
-
-        private void SetAnimatorTrigger(supported_triggers v)
-        {
-            state_machine.SetTrigger(v);
         }
 
         Vector3 GeneratePositionUpdateSpeed(Vector3 amount_to_add) //Needs to be positive to move forwards and negative to move backwards
@@ -199,7 +196,7 @@ namespace Slot_Engine.Matrix
                 }
                 else
                 {
-                    SetPresentationSymbolTo("Not on Matrix"); //TODO Define whether to set the top slot graphic
+                    SetPresentationSymbolTo(-1); //TODO Define whether to set the top slot graphic
                 }
                 //Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
             }
@@ -213,20 +210,40 @@ namespace Slot_Engine.Matrix
                     {
                         if (reel_parent.reel_strip_to_use_for_spin.reel_spin_symbols.Length > 0)
                         {
-                            string symbol_name = reel_parent.ReturnNextSymbolInStrip();
-                            SetSlotGraphicTo(symbol_name);
-                            SetPresentationSymbolTo(symbol_name);
+                            int symbol = reel_parent.ReturnNextSymbolInStrip();
+                            SetSlotGraphicTo(ReturnSymbolNameFromInt(symbol));
+                            SetPresentationSymbolTo(symbol);
                             symbol_set = true;
                         }
                     }
                     if (!symbol_set)
                     {
-                        string symbol_name = reel_parent.matrix.supported_symbols[reel_parent.matrix.end_configuration_manager.GetRandomWeightedSymbol()];
-                        SetSlotGraphicTo(symbol_name);
-                        SetPresentationSymbolTo(symbol_name);
+                        int symbol = reel_parent.matrix.end_configuration_manager.GetRandomWeightedSymbol();
+                        SetSlotGraphicTo(ReturnSymbolNameFromInt(symbol));
+                        SetPresentationSymbolTo(symbol);
                     }
                 }
             }
+        }
+
+        private string ReturnSymbolNameFromInt(int symbol)
+        {
+            return ((Symbol)symbol).ToString();
+        }
+
+        internal void SetSymbolResolveWin()
+        {
+            SetBoolTo(supported_bools.SymbolResolve, true);
+        }
+
+        private void SetBoolTo(supported_bools bool_name, bool v)
+        {
+            state_machine.SetBool(bool_name,v);
+        }
+
+        internal void SetSymbolResolveToLose()
+        {
+            SetBoolTo(supported_bools.SymbolResolve, false);
         }
 
         internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)
@@ -238,16 +255,20 @@ namespace Slot_Engine.Matrix
         {
             //Debug.Log(string.Format("Set Display symbol to {0}", v));
             SetPresentationSymbolTo(reel_parent.ending_symbols[symbol_to_display]);
-            SetSlotGraphicTo(presentation_symbol);
+            SetSlotGraphicTo(presentation_symbol_name);
             reel_parent.end_symbols_set_from_config += 1;
         }
 
         private void SetPresentationSymbolTo(Symbol to_symbol)
         {
-            SetPresentationSymbolTo(to_symbol.ToString());
+            SetPresentationSymbolTo((int)to_symbol);
         }
-        private void SetPresentationSymbolTo(string to_symbol)
+        private void SetPresentationSymbolTo(int to_symbol)
         {
+            if (to_symbol < 0)
+                presentation_symbol_name = "Not on Matrix";
+            else
+                presentation_symbol_name = ReturnSymbolNameFromInt(to_symbol);
             presentation_symbol = to_symbol;
         }
         internal void SetToStopSpin()
@@ -271,7 +292,7 @@ namespace Slot_Engine.Matrix
         internal void InitializeAnimatorToPresentWin()
         {
             state_machine.InitializeAnimator();
-            state_machine.SetBool(supported_bools.LoopPaylinesWin, true);
+            state_machine.SetBool(supported_bools.LoopPaylineWins, true);
             state_machine.SetBool(supported_bools.WinRacking, true);
             state_machine.SetBool(supported_bools.ResolveSpin, true);
             

@@ -192,9 +192,9 @@ public enum eEaseType
         public int reel_strip_counter = 0;
         
 
-        internal string ReturnNextSymbolInStrip()
+        internal int ReturnNextSymbolInStrip()
         {
-            string output = ((Symbol)reel_strip_to_use_for_spin.reel_spin_symbols[reel_strip_counter]).ToString();
+            int output = (int)(Symbol)reel_strip_to_use_for_spin.reel_spin_symbols[reel_strip_counter];
             if(reel_strip_counter+1 >= reel_strip_to_use_for_spin.reel_spin_symbols.Length)
             {
                 reel_strip_counter = 0;

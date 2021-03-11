@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System;
 
@@ -125,22 +124,54 @@ namespace Slot_Engine.Matrix
             List<Vector3> linePositions;
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
             matrix.ReturnSymbolPositionsOnPayline(ref payline_to_show.payline, out linePositions);
+            int renderers_widths_set = 0;
+            int payline_renderer_index_to_set = 0;
+            int line_position_index = 0;
             int winning_symbols_set = 0;
-            for (int i = payline_to_show.left_right? 0: linePositions.Count-1;
-                payline_to_show.left_right ? i < linePositions.Count : i >= 0;
-                i = payline_to_show.left_right ? i++ : i--)
+            List<Vector3> linePositionsToUse;
+            for (int i = 0;i < linePositions.Count -1;i++)
             {
-                SetLineRendererPositions(linePositions.GetRange(i, payline_to_show.left_right ? 2:-2), ref payline_renderers[i]);
+                try
+
+                {
+                    linePositionsToUse = new List<Vector3>();
+                    line_position_index = ReturnIndexFirstLastFromList(payline_to_show.left_right, i, linePositions.Count);
+                    linePositionsToUse.Add(linePositions[line_position_index]);
+                    linePositionsToUse.Add(linePositions[payline_to_show.left_right ? line_position_index + 1 : line_position_index - 1]);
+                    //Set line renderer either highlighting left to right or right to left
+                    SetLineRendererPositions(payline_to_show.left_right ?
+                        linePositions.GetRange(i, 2) : linePositions.GetRange(i - 1, 2), ref payline_renderers[i]);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError(String.Format("Setting LineRenderer Positions failed to get range of linePositions[{0}] error message is outside of range. linePositions.Length = {1}. exception message = {2}",i,linePositions.Count.ToString(),e.Message));
+                }
+                payline_renderer_index_to_set = i;
+                if (i >= payline_renderers.Length)
+                {
+                    if (i >= payline_renderers.Length)
+                    {
+                        payline_renderer_index_to_set = (payline_renderers.Length - 1) - renderers_widths_set;
+                    }
+                }
                 if (winning_symbols_set < payline_to_show.winning_symbols.Length)
                 {
-                    winning_symbols_set++;
-                    SetWidth(highlight_win_width, highlight_win_width, ref payline_renderers[i]);
+                    winning_symbols_set += 1;
+                        //Need to refactor in the future - there will be an issue regarding getting the correct payline_renderer when going right to left payline evaluation
+                    SetWidth(highlight_win_width, highlight_win_width, ref payline_renderers[payline_renderer_index_to_set]);
+                    renderers_widths_set += 1;
                 }
                 else
                 {
-                    SetWidth(standard_payline_width, standard_payline_width, ref payline_renderers[i]);
+                    SetWidth(standard_payline_width, standard_payline_width, ref payline_renderers[payline_renderer_index_to_set]);
+                    renderers_widths_set += 1;
                 }
             }
+        }
+
+        private int ReturnIndexFirstLastFromList(bool left_right, int i, int count)
+        {
+            return left_right ? i : (count - 1) - i;
         }
 
         internal void ToggleRenderer(bool on_off)

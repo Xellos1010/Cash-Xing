@@ -44,6 +44,10 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.spin_manager.InterruptSpin();
                 }
+                if (GUILayout.Button("SetLoopingCycle Payline"))
+                {
+                    myTarget.StartLoopingPaylines();
+                }
             }
             else
             {
@@ -219,34 +223,72 @@ namespace Slot_Engine.Matrix
 
         internal void SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
-            Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}", winning_payline.payline.payline.ToString(), winning_payline.winning_symbols.ToString()));
+            Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",
+                String.Join(" ", winning_payline.payline.payline.ToString()), String.Join(" ",winning_payline.winning_symbols)));
             //Get Winning Slots and loosing slots
             List<SlotManager> winning_slots,losing_slots;
-            ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots);
-            
+            ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots, ref reel_strip_managers);
+            SetWinningSlotsToResolveWinLose(ref winning_slots,true);
+            SetWinningSlotsToResolveWinLose(ref losing_slots,false);
         }
 
-        private void ReturnWinLoseSlots(WinningPayline winning_payline, out List<SlotManager> winning_slots, out List<SlotManager> losing_slots)
+        private void SetWinningSlotsToResolveWinLose(ref List<SlotManager> winning_slots, bool v)
+        {
+            for (int slot = 0; slot < winning_slots.Count; slot++)
+            {
+                if (v)
+                    winning_slots[slot].SetSymbolResolveWin();
+                else
+                    winning_slots[slot].SetSymbolResolveToLose();
+            }
+        }
+
+        private void ReturnWinLoseSlots(WinningPayline winning_payline, out List<SlotManager> winning_slots, out List<SlotManager> losing_slots, ref ReelStripManager[] reel_managers)
         {
             winning_slots = new List<SlotManager>();
             losing_slots = new List<SlotManager>();
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 List<SlotManager> slots_decending_in_reel = reel_strip_managers[reel].GetSlotsDecending();
-                for (int slot = 0; slot < slots_decending_in_reel.Count; slot++)
+                if (reel >= winning_payline.winning_symbols.Length)
                 {
-                    if (reel >= winning_payline.winning_symbols.Length)
+                    //to_controller = symbol_lose_resolve;
+                    losing_slots.AddRange(slots_decending_in_reel);
+                }
+                else
+                {
+                    for (int slot = reel_managers[reel].padding_slots_top; slot < slots_decending_in_reel.Count; slot++)
                     {
-                        //to_controller = symbol_lose_resolve;
-                        slots_decending_in_reel[slot].state_machine.SetBool(supported_bools.SymbolResolve, false);
-                    }
+                        if(slot == (winning_payline.payline.payline[reel] + reel_managers[reel].padding_slots_top))
+                            winning_slots.Add(slots_decending_in_reel[slot]);
                     else
                     {
-
-                        slots_decending_in_reel[slot].state_machine.SetBool(supported_bools.SymbolResolve, winning_payline.IsSymbolOnWinningPayline(reel, slot, reel_start_padding) ? true : false);
+                            losing_slots.Add(slots_decending_in_reel[slot]);
                     }
                 }
             }
+            }
+        }
+
+        internal void SetSystemToPresentWin()
+        {
+
+            animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+            animator_state_machine.SetBool(supported_bools.WinRacking, true);
+            SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
+            SetSlotsAnimatorBoolTo(supported_bools.WinRacking, true);
+        }
+
+        internal void CycleWinningPaylinesMode()
+        {
+            //paylines_manager.PlayCycleWins();
+        }
+
+        internal void StartLoopingPaylines()
+        {
+            Debug.Log("Starting looping Paylines");
+            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins, true);
+            animator_state_machine.SetBool(supported_bools.LoopPaylineWins, true);
         }
 
         internal void SetTriggersByState(States state)
@@ -263,7 +305,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Idle_Intro:
                     //Reset all Triggers and bools and set state for slots to idle idle
-                    SetReelsTrigger(supported_triggers.SpinResolve);
+                    SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
                     animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
                     break;
                 case States.Idle_Idle:
@@ -283,10 +325,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Resolve_Intro:
                     //Set Loop Payline wines to True and set SpinResolve trigger
-                    SetReelsBoolTo(supported_bools.LoopPaylinesWin, true);
-                    animator_state_machine.SetBool(supported_bools.LoopPaylinesWin,true);
-                    SetReelsTrigger(supported_triggers.SpinResolve);
-                    animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+                    StartLoopingPaylines();
                     break;
                 case States.Resolve_Win_Idle:
                     break;
@@ -326,18 +365,7 @@ namespace Slot_Engine.Matrix
             //}
         }
 
-        private void SetReelsTrigger(supported_triggers trigger_to_set)
-        {
-            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
-            {
-                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
-                {
-                    reel_strip_managers[reel].slots_in_reel[slot].state_machine.SetTrigger(trigger_to_set);
-                }
-            }
-        }
-
-        private void SetReelsBoolTo(supported_bools bool_name, bool v)
+        private void SetSlotsAnimatorBoolTo(supported_bools bool_name, bool v)
         {
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
@@ -380,7 +408,7 @@ namespace Slot_Engine.Matrix
             //Ensure enough reels are on the board then ensure all reels have slots
             for (int i = add_subtract_reels ? reels_generated.Count : reels_generated.Count - 1;
                 add_subtract_reels ? i < matrix.Length : i >= matrix.Length;
-                i = add_subtract_reels ? i++: i--)
+                i = add_subtract_reels ? i+1: i-1)
             {
                 if(add_subtract_reels)
                 {
@@ -569,6 +597,8 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
+                    racking_manager.GetRackingInformation();
+                    CycleWinningPaylinesMode();
                     break;
                 case States.Resolve_Win_Idle:
                     break;
@@ -616,13 +646,13 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void SetSlotsAnimatorTrigger(supported_triggers spinSlam)
+        private void SetSlotsAnimatorTrigger(supported_triggers slot_to_trigger)
         {
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
                 {
-                    reel_strip_managers[reel].slots_in_reel[slot].SetTriggerTo(supported_triggers.SpinSlam);
+                    reel_strip_managers[reel].slots_in_reel[slot].SetTriggerTo(slot_to_trigger);
                 }
             }
         }

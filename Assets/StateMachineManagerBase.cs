@@ -13,7 +13,7 @@ public enum supported_bools
     FeatureTrigger,
     SymbolResolve,
     ResolveSpin,
-    LoopPaylinesWin,
+    LoopPaylineWins,
     End
 }
 

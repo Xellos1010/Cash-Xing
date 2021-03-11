@@ -34,10 +34,10 @@ public class WinningPayline
         return (win_value * matrix.machine_information_manager.bet_amount) * matrix.machine_information_manager.multiplier;
     }
 
-    internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding)
+    internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, int symbol_to_check)
     {
         //Check Winning slot at reel 
-        if (payline.payline[reel]+reel_start_padding==slot)
+        if (payline.payline[reel]+reel_start_padding==slot && IsSymbolWinningSymbol(symbol_to_check))
         {
             return true;
         }
@@ -45,5 +45,19 @@ public class WinningPayline
         {
             return false;
         }
+    }
+
+    private bool IsSymbolWinningSymbol(int symbol_to_check)
+    {
+        bool output = false;
+        for (int i = 0; i < winning_symbols.Length; i++)
+        {
+            if(winning_symbols[i] == symbol_to_check)
+            {
+                output = true;
+                break;
+            }
+        }
+        return output;
     }
 }

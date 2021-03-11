@@ -61,6 +61,7 @@ namespace Slot_Engine.Matrix
                         winning_payline_to_show = EditorGUILayout.IntSlider(winning_payline_to_show, 0, winning_paylines.arraySize - 1);
                         if (GUILayout.Button("Show Winning Payline"))
                         {
+                            myTarget.matrix.StartLoopingPaylines();
                             myTarget.ShowWinningPayline(myTarget.GetWinningPayline(winning_payline_to_show));
                         }
                         if (GUILayout.Button("Clear Winning Paylines"))
@@ -124,7 +125,7 @@ namespace Slot_Engine.Matrix
             }
         }
         public PaylineRendererManager _payline_renderer_manager;
-        private Matrix matrix
+        internal Matrix matrix
         {
             get
             {
@@ -179,7 +180,7 @@ namespace Slot_Engine.Matrix
         public void ShowWinningPayline(WinningPayline payline_to_show)
         {
             //Show Payline on payline render mananger
-            payline_renderer_manager.RenderWinningPayline(payline_to_show);
+            //payline_renderer_manager.RenderWinningPayline(payline_to_show);
             //Assign every slot in payline the animation override controller
             matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
         }
@@ -190,9 +191,7 @@ namespace Slot_Engine.Matrix
         }
         public void EvaluateWinningSymbols()
         {
-            EvaluateWinningSymbols(matrix.end_configuration_manager.current_reelstrip_configuration == null?
-                matrix.end_configuration_manager.current_reelstrip_configuration:
-                matrix.end_configuration_manager.end_reelstrips_to_display_sequence[0]);//matrix.end_configuration_manager.GetConfigurationToDisplay());
+            EvaluateWinningSymbols(matrix.end_configuration_manager.current_reelstrip_configuration);
         }
 
         internal void EvaluateWinningSymbols(ReelStrip[] ending_reelstrips)
@@ -222,14 +221,13 @@ namespace Slot_Engine.Matrix
                 InitializeMachingSymbolsVars(0, symbols_in_row[0],out matching_symbols_list,out primary_symbol_index);
                 CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index,ref payline, ref payline_won);
                 //Time to check right to left
-                InitializeMachingSymbolsVars(0, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
-                CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
+                //InitializeMachingSymbolsVars(0, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
+                //CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
             }
             if (payline_won.Count > 0)
             {
                 winning_paylines = payline_won.ToArray();
-                matrix.animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
-                matrix.animator_state_machine.SetBool(supported_bools.WinRacking,true);
+                matrix.SetSystemToPresentWin();
             }
             paylines_evaluated = true;
         }
@@ -243,10 +241,12 @@ namespace Slot_Engine.Matrix
 
         private async Task ShowWinningPaylineTask()
         {
+            await ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
+            matrix.StartLoopingPaylines();
             while (cycle_paylines)
             {
-                await ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
                 await Task.Delay(delay_between_wininng_payline);
+                await ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
             }
         }
 

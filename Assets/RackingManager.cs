@@ -91,7 +91,6 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
-                    GetRackingInformation();
                     break;
                 case States.Resolve_Win_Idle:
                     break;
@@ -118,7 +117,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void GetRackingInformation()
+        internal void GetRackingInformation()
         {
             SetCreditAmountToRack(matrix.paylines_manager.GetTotalWinAmount());
         }
