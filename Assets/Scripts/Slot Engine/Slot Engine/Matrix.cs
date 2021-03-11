@@ -249,6 +249,105 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void SetTriggersByState(States state)
+        {
+            switch (state)
+            {
+                case States.None:
+                    break;
+                case States.preloading:
+                    break;
+                case States.Coin_In:
+                    break;
+                case States.Coin_Out:
+                    break;
+                case States.Idle_Intro:
+                    //Reset all Triggers and bools and set state for slots to idle idle
+                    SetReelsTrigger(supported_triggers.SpinResolve);
+                    animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+                    break;
+                case States.Idle_Idle:
+                    PrepareSlotMachineToSpin();
+                    break;
+                case States.Idle_Outro:
+                    break;
+                case States.Spin_Intro:
+                    break;
+                case States.Spin_Idle:
+                    break;
+                case States.Spin_Interrupt:
+                    break;
+                case States.Spin_Outro:
+                    break;
+                case States.Spin_End:
+                    break;
+                case States.Resolve_Intro:
+                    //Set Loop Payline wines to True and set SpinResolve trigger
+                    SetReelsBoolTo(supported_bools.LoopPaylinesWin, true);
+                    animator_state_machine.SetBool(supported_bools.LoopPaylinesWin,true);
+                    SetReelsTrigger(supported_triggers.SpinResolve);
+                    animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+                    break;
+                case States.Resolve_Win_Idle:
+                    break;
+                case States.Resolve_Lose_Idle:
+                    break;
+                case States.Resolve_Lose_Outro:
+                    break;
+                case States.Resolve_Win_Outro:
+                    break;
+                case States.win_presentation:
+                    break;
+                case States.racking_start:
+                    break;
+                case States.racking_loop:
+                    break;
+                case States.racking_end:
+                    break;
+                case States.feature_transition_out:
+                    break;
+                case States.feature_transition_in:
+                    break;
+                case States.total_win_presentation:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void PrepareSlotMachineToSpin()
+        {
+            //for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            //{
+            //    for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+            //    {
+
+            //    }
+            //}
+        }
+
+        private void SetReelsTrigger(supported_triggers trigger_to_set)
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                {
+                    reel_strip_managers[reel].slots_in_reel[slot].state_machine.SetTrigger(trigger_to_set);
+                }
+            }
+        }
+
+        private void SetReelsBoolTo(supported_bools bool_name, bool v)
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                {
+                    reel_strip_managers[reel].slots_in_reel[slot].state_machine.SetBool(bool_name,v);
+                }
+            }
+        }
+
         [SerializeField]
         private WeightedDistribution.IntDistribution _weighted_distribution_symbols;
 

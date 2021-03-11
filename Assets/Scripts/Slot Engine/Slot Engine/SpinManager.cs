@@ -228,12 +228,35 @@ namespace Slot_Engine.Matrix
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
-
+                    if (CheckForWin())
+                    {
+                        //matrix.SetTriggersByState(States.Resolve_Intro);
+                        // Set Trigger for state machine to SymbolResolve and WinRacking to false
+                        await ResetMachine();
+                    }
+                    else
+                    {
+                        // Set Trigger for state machine to SymbolResolve and WinRacking to false
+                        await ResetMachine();
+                    }
                     break;
                 default:
                     break;
             }
             current_state = state;
+        }
+
+        private async Task ResetMachine()
+        {
+            matrix.SetTriggersByState(States.Idle_Intro);
+
+            await Task.Delay(1000);//Need a delay for the triggers to take effect
+            StateManager.SetStateTo(States.Idle_Intro);
+        }
+
+        private bool CheckForWin()
+        {
+            return matrix.paylines_manager.winning_paylines.Length > 0 ? true : false;
         }
 
         internal void InterruptSpin()

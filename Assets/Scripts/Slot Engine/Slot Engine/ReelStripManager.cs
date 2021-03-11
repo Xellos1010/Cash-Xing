@@ -173,15 +173,20 @@ public enum eEaseType
         {
             get
             {
-                switch (current_spin_state)
+                bool is_spinning = true;
+                for (int slot = 0; slot <= slots_in_reel.Length; slot++)
                 {
-                    case SpinStates.idle_idle:
-                        return false;
-                    case SpinStates.end:
-                        return false;
-                    default:
-                        return true;
+                    if (slot == slots_in_reel.Length)
+                    {
+                        is_spinning = false;
+                        break;
+                    }
+                    if (slots_in_reel[slot].movement_enabled)
+                    {
+                        break;
+                    }
                 }
+                return is_spinning;
             }
         }
         public int reel_strip_counter = 0;
