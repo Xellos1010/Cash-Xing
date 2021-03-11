@@ -202,6 +202,12 @@ namespace Slot_Engine.Matrix
         public AnimatorOverrideController symbol_win_resolve;
         public AnimatorOverrideController symbol_lose_resolve;
 
+        internal Task InitializeSymbolsForWinConfigurationDisplay()
+        {
+            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
+            return Task.CompletedTask;
+        }
+
         /// <summary>
         /// Controls the wegihted probability of symbols appearing on the reel
         /// </summary>
@@ -217,7 +223,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
+        internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
             Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",
                 String.Join(" ", winning_payline.payline.payline.ToString()), String.Join(" ",winning_payline.winning_symbols)));
@@ -226,6 +232,8 @@ namespace Slot_Engine.Matrix
             ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots, ref reel_strip_managers);
             SetWinningSlotsToResolveWinLose(ref winning_slots,true);
             SetWinningSlotsToResolveWinLose(ref losing_slots,false);
+            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,true);
+            return Task.CompletedTask;
         }
 
         private void SetWinningSlotsToResolveWinLose(ref List<SlotManager> winning_slots, bool v)
@@ -282,6 +290,7 @@ namespace Slot_Engine.Matrix
         {
 
             animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+            animator_state_machine.SetBool(supported_bools.ResolveSpin,true);
             animator_state_machine.SetBool(supported_bools.WinRacking, true);
             SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
             SetSlotsAnimatorBoolTo(supported_bools.WinRacking, true);

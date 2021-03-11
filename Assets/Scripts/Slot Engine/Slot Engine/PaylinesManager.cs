@@ -183,12 +183,14 @@ namespace Slot_Engine.Matrix
             cycle_paylines = false;
         }
 
-        public void ShowWinningPayline(WinningPayline payline_to_show)
+        public async Task ShowWinningPayline(WinningPayline payline_to_show)
         {
             //Show Payline on payline render mananger
             //payline_renderer_manager.RenderWinningPayline(payline_to_show);
             //Assign every slot in payline the animation override controller
-            matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
+            await matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
+            await Task.Delay(delay_between_wininng_payline / 2);
+            await matrix.InitializeSymbolsForWinConfigurationDisplay();
         }
 
         public void SetReelConfiguration()
@@ -209,6 +211,7 @@ namespace Slot_Engine.Matrix
             }
             EvaluateWinningSymbols(symbols_configuration); //TODO Determine if Bonus or Special symbols were triggered
         }
+
         public void EvaluateWinningSymbols(int[][] symbols_configuration)
         {
             //Initialize variabled needed for caching
@@ -247,11 +250,12 @@ namespace Slot_Engine.Matrix
 
         private async Task ShowWinningPaylineTask()
         {
-            await ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
+            //Start showing the first paryline
+            ShowWinningPayline(0);
             while (cycle_paylines)
             {
                 await Task.Delay(delay_between_wininng_payline);
-                await ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
+                ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
             }
         }
 
@@ -259,7 +263,7 @@ namespace Slot_Engine.Matrix
         {
             current_winning_payline_shown = v;
             Debug.Log(String.Format("Current wining payline shown = {0}",v));
-            ShowWinningPayline(winning_paylines[current_winning_payline_shown]);
+            await ShowWinningPayline(winning_paylines[current_winning_payline_shown]);
         }
 
         private void CheckSymbolsMatchLeftRight(bool left_right, ref List<int> symbols_in_row, ref List<int> symbols_list, ref int primary_symbol_index, ref int payline, ref List<WinningPayline> payline_won)

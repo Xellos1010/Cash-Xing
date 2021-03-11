@@ -150,13 +150,14 @@ namespace Slot_Engine.Matrix
                 if (temp.phase == TouchPhase.Began)
                 {
                     Debug.Log("Trigger for spin/slam pressed");
-                    if (StateManager.enCurrentState == States.idle_idle)
-                    {
-                        StartSpin()
-                    }
-                    else if (StateManager.enCurrentState == States.spin_start || StateManager.enCurrentState == States.spin_loop)
+                    Debug.Log("Trigger for spin/slam pressed");
+                    if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro  || StateManager.enCurrentState == States.Spin_Idle)
                     {
                         SlamSpin();
+                    }
+                    else if(StateManager.enCurrentState == States.Resolve_Intro)
+                    {
+                        SlamLoopingPaylines();
                     }
                 }
             }
@@ -219,6 +220,10 @@ namespace Slot_Engine.Matrix
                     IncreaseBetAmount();
                 }
                 else if (hit_info.collider.gameObject.tag == "BetDown")
+                {
+                    DecreaseBetAmount();
+                }
+                else if (hit_info.collider.gameObject.tag == "Spin")
                 {
                     DecreaseBetAmount();
                 }
