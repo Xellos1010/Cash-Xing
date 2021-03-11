@@ -61,7 +61,6 @@ namespace Slot_Engine.Matrix
                         winning_payline_to_show = EditorGUILayout.IntSlider(winning_payline_to_show, 0, winning_paylines.arraySize - 1);
                         if (GUILayout.Button("Show Winning Payline"))
                         {
-                            myTarget.matrix.StartLoopingPaylines();
                             myTarget.ShowWinningPayline(myTarget.GetWinningPayline(winning_payline_to_show));
                         }
                         if (GUILayout.Button("Clear Winning Paylines"))
@@ -216,13 +215,13 @@ namespace Slot_Engine.Matrix
             {
                 //Gather raw symbols in row
                 GetSymbolsOnPayline(payline, ref symbols_configuration, out symbols_in_row);
-                
+
                 //Initialize variabled needed for checking symbol matches and direction
-                InitializeMachingSymbolsVars(0, symbols_in_row[0],out matching_symbols_list,out primary_symbol_index);
-                CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index,ref payline, ref payline_won);
+                InitializeMachingSymbolsVars(0, symbols_in_row[0], out matching_symbols_list, out primary_symbol_index);
+                CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
                 //Time to check right to left
-                //InitializeMachingSymbolsVars(0, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
-                //CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
+                InitializeMachingSymbolsVars(0, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
+                CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
             }
             if (payline_won.Count > 0)
             {
@@ -242,7 +241,6 @@ namespace Slot_Engine.Matrix
         private async Task ShowWinningPaylineTask()
         {
             await ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
-            matrix.StartLoopingPaylines();
             while (cycle_paylines)
             {
                 await Task.Delay(delay_between_wininng_payline);
@@ -408,8 +406,6 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
-                    if (winning_paylines.Length > 0)
-                        PlayCycleWins();
                     break;
                 case States.win_presentation:
                     break;

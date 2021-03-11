@@ -44,10 +44,6 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.spin_manager.InterruptSpin();
                 }
-                if (GUILayout.Button("SetLoopingCycle Payline"))
-                {
-                    myTarget.StartLoopingPaylines();
-                }
             }
             else
             {
@@ -247,10 +243,14 @@ namespace Slot_Engine.Matrix
         {
             winning_slots = new List<SlotManager>();
             losing_slots = new List<SlotManager>();
-            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            //Implement check left right
+            int winning_symbols_added = 0;
+            for (int reel = winning_payline.left_right ? 0 : reel_managers.Length-1;
+                winning_payline.left_right ? reel < reel_managers.Length: reel >= 0; 
+                reel += winning_payline.left_right ? 1 : -1)
             {
-                List<SlotManager> slots_decending_in_reel = reel_strip_managers[reel].GetSlotsDecending();
-                if (reel >= winning_payline.winning_symbols.Length)
+                List<SlotManager> slots_decending_in_reel = reel_managers[reel].GetSlotsDecending();
+                if (winning_symbols_added >= winning_payline.winning_symbols.Length)
                 {
                     //to_controller = symbol_lose_resolve;
                     losing_slots.AddRange(slots_decending_in_reel);
@@ -259,12 +259,15 @@ namespace Slot_Engine.Matrix
                 {
                     for (int slot = reel_managers[reel].padding_slots_top; slot < slots_decending_in_reel.Count; slot++)
                     {
-                        if(slot == (winning_payline.payline.payline[reel] + reel_managers[reel].padding_slots_top))
+                        if (slot == (winning_payline.payline.payline[reel] + reel_managers[reel].padding_slots_top))
+                        {
                             winning_slots.Add(slots_decending_in_reel[slot]);
-                    else
-                    {
+                            winning_symbols_added += 1;
+                        }
+                        else
+                        {
                             losing_slots.Add(slots_decending_in_reel[slot]);
-                    }
+                        }
                 }
             }
             }
@@ -281,14 +284,8 @@ namespace Slot_Engine.Matrix
 
         internal void CycleWinningPaylinesMode()
         {
-            //paylines_manager.PlayCycleWins();
-        }
-
-        internal void StartLoopingPaylines()
-        {
-            Debug.Log("Starting looping Paylines");
-            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins, true);
-            animator_state_machine.SetBool(supported_bools.LoopPaylineWins, true);
+            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,true);
+            paylines_manager.PlayCycleWins();
         }
 
         internal void SetTriggersByState(States state)
@@ -324,8 +321,6 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
-                    //Set Loop Payline wines to True and set SpinResolve trigger
-                    StartLoopingPaylines();
                     break;
                 case States.Resolve_Win_Idle:
                     break;

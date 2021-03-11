@@ -230,7 +230,7 @@ namespace Slot_Engine.Matrix
                 case SpinStates.end:
                     if (CheckForWin())
                     {
-                        matrix.SetTriggersByState(States.Resolve_Intro);
+                        StateManager.SetStateTo(States.Resolve_Intro);
                         // Set Trigger for state machine to SymbolResolve and WinRacking to false
                         //await ResetMachine();
                     }
