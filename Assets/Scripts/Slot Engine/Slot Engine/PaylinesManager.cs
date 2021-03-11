@@ -176,6 +176,13 @@ namespace Slot_Engine.Matrix
             if (payline_to_show >= 0 && payline_to_show < paylines_supported.Length)
                 payline_renderer_manager.ShowPayline(paylines_supported[payline_to_show]);
         }
+
+        internal void CancelCycleWins()
+        {
+            Debug.Log("Canceling Cycle Wins");
+            cycle_paylines = false;
+        }
+
         public void ShowWinningPayline(WinningPayline payline_to_show)
         {
             //Show Payline on payline render mananger
@@ -220,7 +227,7 @@ namespace Slot_Engine.Matrix
                 InitializeMachingSymbolsVars(0, symbols_in_row[0], out matching_symbols_list, out primary_symbol_index);
                 CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
                 //Time to check right to left
-                InitializeMachingSymbolsVars(0, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
+                InitializeMachingSymbolsVars(symbols_in_row.Count - 1, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
                 CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
             }
             if (payline_won.Count > 0)
@@ -255,7 +262,7 @@ namespace Slot_Engine.Matrix
             ShowWinningPayline(winning_paylines[current_winning_payline_shown]);
         }
 
-        private void CheckSymbolsMatchLeftRight(bool left_right, ref List<int> symbols_in_row, ref List<int> matching_symbols_list, ref int primary_symbol_index, ref int payline, ref List<WinningPayline> payline_won)
+        private void CheckSymbolsMatchLeftRight(bool left_right, ref List<int> symbols_in_row, ref List<int> symbols_list, ref int primary_symbol_index, ref int payline, ref List<WinningPayline> payline_won)
         {
             for (int symbol = left_right ? 1 : symbols_in_row.Count - 2;
                 left_right ? symbol < symbols_in_row.Count : symbol >= 0;
@@ -263,30 +270,30 @@ namespace Slot_Engine.Matrix
             {
                 try
                 {
-                    if (!CheckSymbolsMatch(matching_symbols_list[primary_symbol_index], symbols_in_row[symbol]))
+                    if (!CheckSymbolsMatch(symbols_in_row[primary_symbol_index], symbols_in_row[symbol]))
                     {
                         break;
                     }
                     else
                     {
                         //If the primary symbol is a wild then auto match with next symbol. if next symbol regular symbol that becomes primary symbol
-                        if (matching_symbols_list[primary_symbol_index] == (int)Symbol.SA01)
-                            if (CheckNextSymbolWild(matching_symbols_list[primary_symbol_index], symbols_in_row[symbol]))
+                        if (symbols_in_row[primary_symbol_index] == (int)Symbol.SA01)
+                            if (CheckNextSymbolWild(symbols_list[primary_symbol_index], symbols_in_row[symbol]))
                             {
                                 primary_symbol_index = symbol;
                             }
-                        matching_symbols_list.Add(symbols_in_row[symbol]);
+                        symbols_list.Add(symbols_in_row[symbol]);
                     }
                 }
                 catch (Exception e)
                 {
-                    Debug.Log(string.Format("Payline {0} on symbol count {1} failed.", payline, symbol));
+                    Debug.Log(string.Format("Payline {0} on symbol {1} failed. Primary Symbol index = {2}, symbols_list.Count = {3}", payline, symbol, primary_symbol_index, symbols_list.Count));
                     Debug.LogError(e.Message);
                 }
             }
-            if (matching_symbols_list.Count > 2)
+            if (symbols_list.Count > 2)
             {
-                AddWinningPayline(payline, matching_symbols_list, left_right, ref payline_won);
+                AddWinningPayline(payline, symbols_list, left_right, ref payline_won);
             }
         }
 

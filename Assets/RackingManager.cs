@@ -124,6 +124,7 @@ namespace Slot_Engine.Matrix
 
         private void SetCreditAmountToRack(float win_amount)
         {
+            Debug.Log(String.Format("Setting Credit amount to rack to {0}",win_amount));
             if(set_instantly)
             {
                 matrix.OffetPlayerWalletBy(win_amount);

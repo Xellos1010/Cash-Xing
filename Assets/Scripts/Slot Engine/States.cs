@@ -47,6 +47,7 @@ public enum States {
     Resolve_Win_Idle,
     Resolve_Lose_Idle,
     Resolve_Lose_Outro,
+    Resolve_Outro,
     Resolve_Win_Outro,
     win_presentation,
     racking_start,

@@ -272,6 +272,11 @@ namespace Slot_Engine.Matrix
             }
             }
         }
+        internal void SlamLoopingPaylines()
+        {
+            StateManager.SetStateTo(States.Resolve_Outro);
+
+        }
 
         internal void SetSystemToPresentWin()
         {
@@ -288,7 +293,7 @@ namespace Slot_Engine.Matrix
             paylines_manager.PlayCycleWins();
         }
 
-        internal void SetTriggersByState(States state)
+        internal async void SetTriggersByState(States state)
         {
             switch (state)
             {
@@ -322,6 +327,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Resolve_Intro:
                     break;
+                
                 case States.Resolve_Win_Idle:
                     break;
                 case States.Resolve_Lose_Idle:
@@ -594,6 +600,13 @@ namespace Slot_Engine.Matrix
                 case States.Resolve_Intro:
                     racking_manager.GetRackingInformation();
                     CycleWinningPaylinesMode();
+                    break;
+                case States.Resolve_Outro:
+                    paylines_manager.CancelCycleWins();
+                    SetSlotsAnimatorBoolTo(supported_bools.WinRacking, false);
+                    animator_state_machine.SetBool(supported_bools.WinRacking, false);
+                    await Task.Delay(1000);
+                    StateManager.SetStateTo(States.Idle_Intro);
                     break;
                 case States.Resolve_Win_Idle:
                     break;

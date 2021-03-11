@@ -129,6 +129,10 @@ namespace Slot_Engine.Matrix
                     {
                         SlamSpin();
                     }
+                    else if(StateManager.enCurrentState == States.Resolve_Intro)
+                    {
+                        SlamLoopingPaylines();
+                    }
                 }
                 if (StateManager.enCurrentState == States.Resolve_Intro)
                 {
@@ -158,6 +162,14 @@ namespace Slot_Engine.Matrix
             }
 #endif
             }
+        }
+
+        private void SlamLoopingPaylines()
+        {
+            Debug.Log("Slamming Paylines Cycling");
+            can_spin_slam = false;
+            //Matrix needs to reset animators for slots and state machine needs to be set to Resolve_Outro
+            matrix.SlamLoopingPaylines();
         }
 
         private void StartSpin()
@@ -287,6 +299,7 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
+                    can_spin_slam = true;
                     break;
                 case States.Resolve_Win_Idle:
                     break;
