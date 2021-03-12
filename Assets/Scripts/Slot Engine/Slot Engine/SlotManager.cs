@@ -234,6 +234,12 @@ namespace Slot_Engine.Matrix
         internal void SetSymbolResolveWin()
         {
             SetBoolTo(supported_bools.SymbolResolve, true);
+            SetBoolTo(supported_bools.LoopPaylineWins, true);
+            //SetFloatMotionTimeTo(0.0f);
+        }
+        private void SetFloatMotionTimeTo(float v)
+        {
+            state_machine.SetFloatTo(supported_floats.MotionTime,0.0f);
         }
 
         private void SetBoolTo(supported_bools bool_name, bool v)
@@ -292,7 +298,6 @@ namespace Slot_Engine.Matrix
         internal void InitializeAnimatorToPresentWin()
         {
             state_machine.InitializeAnimator();
-            state_machine.SetBool(supported_bools.LoopPaylineWins, true);
             state_machine.SetBool(supported_bools.WinRacking, true);
             state_machine.SetBool(supported_bools.ResolveSpin, true);
             

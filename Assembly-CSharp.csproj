@@ -73,6 +73,7 @@
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Core\Events\EventDispatcherBase.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixTypes.cs" />
     <Compile Include="Assets\Scripts\StateMachine\IStateBehaviour.cs" />
+    <Compile Include="Assets\StateMachineManagerBase.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\PanelInformation.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eEvaluationDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\EndConfigurationManager.cs" />
@@ -122,7 +123,6 @@
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripManager.cs" />
-    <Compile Include="Assets\StateMachineManagerBase.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

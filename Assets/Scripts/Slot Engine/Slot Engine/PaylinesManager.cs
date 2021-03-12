@@ -109,8 +109,8 @@ namespace Slot_Engine.Matrix
         public bool paylines_evaluated = false;
         public bool cycle_paylines = true;
         //TODO Change this to access animator length of state
-        public float delay_between_wininng_payline = 4 ;
-        
+        public float delay_between_wininng_payline = .5f;
+        public float wininng_payline_highlight_time = 2;
         [SerializeField]
         private int padding_end_reel = 1;
         public PaylineRendererManager payline_renderer_manager
@@ -250,14 +250,23 @@ namespace Slot_Engine.Matrix
             current_winning_payline_shown = -1;
             while (cycle_paylines)
             {
-                //matrix.InitializeSymbolsForWinConfigurationDisplay();
-                //yield return new WaitForSeconds(delay_between_wininng_payline/2);
-                yield return ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
-                yield return new WaitForSeconds(delay_between_wininng_payline / 2);
-                yield return HideWinningPayline();
-                yield return new WaitForSeconds(delay_between_wininng_payline / 2);
+                yield return CyclePaylines();
                 current_winning_payline_shown += 1;
             }
+        }
+
+        private IEnumerator CyclePaylines()
+        {
+            //matrix.InitializeSymbolsForWinConfigurationDisplay();
+            //yield return new WaitForSeconds(delay_between_wininng_payline/2);
+            Debug.Log("Showing Payline");
+            yield return ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
+            Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
+            yield return new WaitForSeconds(wininng_payline_highlight_time);
+            Debug.Log("Hiding Payline");
+            yield return HideWinningPayline();
+            Debug.Log(String.Format("Delaying for {0} seconds", delay_between_wininng_payline));
+            yield return new WaitForSeconds(delay_between_wininng_payline);
         }
 
         private IEnumerator HideWinningPayline()
@@ -284,14 +293,13 @@ namespace Slot_Engine.Matrix
                 }
                 else
                 {
-                    //If the primary symbol is a wild then auto match with next symbol. if next symbol regular symbol that becomes primary symbol
-                    if (symbol < symbols_in_row.Count && primary_symbol_index < symbols_list.Count && primary_symbol_index >= 0 && symbol >= 0)
+
+                    if((Symbol)symbols_in_row[primary_symbol_index] == Symbol.SA01)
                     {
-                        if (symbols_in_row[primary_symbol_index] == (int)Symbol.SA01)
-                            if (CheckNextSymbolWild(symbols_list[primary_symbol_index], symbols_in_row[symbol]))
-                            {
-                                primary_symbol_index = symbol;
-                            }
+                        if((Symbol)symbols_in_row[symbol] != Symbol.SA01)
+                        {
+                            primary_symbol_index = symbol;
+                        }
                     }
                     symbols_list.Add(symbols_in_row[symbol]);
                 }
@@ -338,9 +346,8 @@ namespace Slot_Engine.Matrix
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
         {
             //Now see if the next symbol is a wild or the same as the primary symbol. check false condition first
-            if (symbol_to_check == (int)Symbol.SA01 || symbol_to_check == primary_symbol || primary_symbol == (int)Symbol.SA01) // Wild symbol - look to match next symbol to wild or set symbol 
+            if (symbol_to_check == (int)Symbol.SA01 || primary_symbol == (int)Symbol.SA01 || primary_symbol == symbol_to_check) // Wild symbol - look to match next symbol to wild or set symbol 
             {
-
                 return true;
             }
             else

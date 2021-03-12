@@ -232,7 +232,6 @@ namespace Slot_Engine.Matrix
             ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots, ref reel_strip_managers);
             SetWinningSlotsToResolveWinLose(ref winning_slots,true);
             SetWinningSlotsToResolveWinLose(ref losing_slots,false);
-            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,true);
             yield return 0;
         }
 
@@ -316,8 +315,8 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Idle_Intro:
                     //Reset all Triggers and bools and set state for slots to idle idle
-                    SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
-                    animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+                    //SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
+                    //animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
                     break;
                 case States.Idle_Idle:
                     PrepareSlotMachineToSpin();

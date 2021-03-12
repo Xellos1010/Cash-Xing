@@ -152,5 +152,20 @@ namespace Slot_Engine.Matrix
         {
             return pop_end_reelstrips_to_display_sequence;
         }
+
+        internal ReelStrip[] GetCurrentConfiguration()
+        {
+            //if(current_reelstrip_configuration.Length < 1)
+            //{
+            //    if (end_reelstrips_to_display_sequence.Length < 1)
+            //        GenerateMultipleEndReelStripsConfiguration(5);
+            //    return pop_end_reelstrips_to_display_sequence;
+            //}
+            //else
+            //{
+            //    return current_reelstrip_configuration;
+            //}
+            return current_reelstrip_configuration;
+        }
     }
 }

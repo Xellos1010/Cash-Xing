@@ -292,17 +292,18 @@ namespace Slot_Engine.Matrix
 
         async Task StopReels()
         {
+            ReelStrip[] configuration_to_use = matrix.end_configuration_manager.GetCurrentConfiguration();
             for (int i = spin_reels_starting_forward_back ? 0 : matrix.reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
                 i = spin_reels_starting_forward_back ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
                 if (reel_spin_delay_end_enabled)
                 {
-                    await matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.current_reelstrip_configuration[i]);//Only use for specific reel stop features
+                    await matrix.reel_strip_managers[i].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
                 }
                 else
                 {
-                    matrix.reel_strip_managers[i].StopReel(matrix.end_configuration_manager.current_reelstrip_configuration[i]);//Only use for specific reel stop features
+                    matrix.reel_strip_managers[i].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
                 }
             }
             await WaitForAllReelsToStop(matrix.reel_strip_managers);
@@ -381,7 +382,6 @@ namespace Slot_Engine.Matrix
                     SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.Spin_Intro:
-
                     break;
                 case States.Spin_Idle:
                     SetSpinStateTo(SpinStates.spin_idle);

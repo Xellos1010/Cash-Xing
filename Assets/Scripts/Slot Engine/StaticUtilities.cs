@@ -123,4 +123,9 @@ public static class AnimatorStaticUtilites
     {
         animator.SetBool(bool_name.ToString(), value);
     }
+
+    internal static void SetFloatTo(ref Animator animator, supported_floats float_to_set, float value)
+    {
+        animator.SetFloat(float_to_set.ToString(),value);
+    }
 }

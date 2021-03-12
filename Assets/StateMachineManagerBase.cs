@@ -17,6 +17,12 @@ public enum supported_bools
     End
 }
 
+public enum supported_floats
+{
+    MotionTime,
+    End
+}
+
 [RequireComponent(typeof(Animator))]
 public class StateMachineManagerBase : MonoBehaviour
 {
@@ -73,5 +79,10 @@ public class StateMachineManagerBase : MonoBehaviour
     {
         Animator animator = state_machine;
         AnimatorStaticUtilites.SetTriggerTo(ref animator, trigger_to_set);
+    }
+    internal void SetFloatTo(supported_floats float_to_set, float value)
+    {
+        Animator animator = state_machine;
+        AnimatorStaticUtilites.SetFloatTo(ref animator, float_to_set, value);
     }
 }
