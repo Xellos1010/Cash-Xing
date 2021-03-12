@@ -202,10 +202,10 @@ namespace Slot_Engine.Matrix
         public AnimatorOverrideController symbol_win_resolve;
         public AnimatorOverrideController symbol_lose_resolve;
 
-        internal Task InitializeSymbolsForWinConfigurationDisplay()
+        internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
             SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
-            return Task.CompletedTask;
+            yield return 0;
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
+        internal IEnumerator SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
             Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",
                 String.Join(" ", winning_payline.payline.payline.ToString()), String.Join(" ",winning_payline.winning_symbols)));
@@ -233,7 +233,7 @@ namespace Slot_Engine.Matrix
             SetWinningSlotsToResolveWinLose(ref winning_slots,true);
             SetWinningSlotsToResolveWinLose(ref losing_slots,false);
             SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,true);
-            return Task.CompletedTask;
+            yield return 0;
         }
 
         private void SetWinningSlotsToResolveWinLose(ref List<SlotManager> winning_slots, bool v)
@@ -298,8 +298,8 @@ namespace Slot_Engine.Matrix
 
         internal void CycleWinningPaylinesMode()
         {
-            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,true);
             paylines_manager.PlayCycleWins();
+            animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
         }
 
         internal async void SetTriggersByState(States state)
@@ -377,6 +377,7 @@ namespace Slot_Engine.Matrix
 
         private void SetSlotsAnimatorBoolTo(supported_bools bool_name, bool v)
         {
+            Debug.Log(String.Format("Setting Slot Animator {0} to {1}",bool_name.ToString(),v));
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)

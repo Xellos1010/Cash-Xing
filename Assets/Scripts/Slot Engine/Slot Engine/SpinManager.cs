@@ -206,8 +206,8 @@ namespace Slot_Engine.Matrix
             {
                 case SpinStates.idle_idle:
                     spin_enabled = true;
-                    matrix.animator_state_machine.ResetAllTriggers();
-                    matrix.animator_state_machine.ResetAllBools();
+                    //matrix.animator_state_machine.ResetAllTriggers();
+                    //matrix.animator_state_machine.ResetAllBools();
                     break;
                 case SpinStates.spin_start:
                     StateManager.SetStateTo(States.Spin_Intro);
@@ -381,6 +381,7 @@ namespace Slot_Engine.Matrix
                     SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.Spin_Intro:
+
                     break;
                 case States.Spin_Idle:
                     SetSpinStateTo(SpinStates.spin_idle);

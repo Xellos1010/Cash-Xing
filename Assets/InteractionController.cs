@@ -64,14 +64,15 @@ namespace Slot_Engine.Matrix
         // Update is called once per frame
         void Update()
         {
+            if (Input.GetMouseButtonDown(0))
+            {
+                Debug.Log(String.Format("Mouse position = {0}", Input.mousePosition));
+                RaycastForUIFromPosition(Input.mousePosition);
+            }
             //Modify Bet Amount
             if (StateManager.enCurrentState == States.Idle_Idle)
             {
-                if (Input.GetMouseButtonDown(0))
-                {
-                    Debug.Log(String.Format("Mouse position = {0}", Input.mousePosition));
-                    RaycastForUIFromPosition(Input.mousePosition);
-                }
+                
 #if UNITY_ANDROID
                 //#if UNITY_ANDROID
                 if (Input.touchCount > 0)
@@ -121,25 +122,7 @@ namespace Slot_Engine.Matrix
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
                     Debug.Log("Trigger for spin/slam pressed");
-                    if (StateManager.enCurrentState == States.Idle_Idle)
-                    {
-                        StartSpin();
-                    }
-                    else if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro  || StateManager.enCurrentState == States.Spin_Idle)
-                    {
-                        SlamSpin();
-                    }
-                    else if(StateManager.enCurrentState == States.Resolve_Intro)
-                    {
-                        SlamLoopingPaylines();
-                    }
-                }
-                if (StateManager.enCurrentState == States.Resolve_Intro)
-                {
-                    if (Input.GetKeyDown(KeyCode.Space))
-                    {
-                        //TODO Set State to resolve outro
-                    }
+                    CheckForSpinSlam();
                 }
 
 
@@ -149,19 +132,26 @@ namespace Slot_Engine.Matrix
                 Touch temp = Input.touches[0];
                 if (temp.phase == TouchPhase.Began)
                 {
-                    Debug.Log("Trigger for spin/slam pressed");
-                    Debug.Log("Trigger for spin/slam pressed");
-                    if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro  || StateManager.enCurrentState == States.Spin_Idle)
-                    {
-                        SlamSpin();
-                    }
-                    else if(StateManager.enCurrentState == States.Resolve_Intro)
-                    {
-                        SlamLoopingPaylines();
-                    }
+                    //CheckForSpinSlam();
                 }
             }
 #endif
+            }
+        }
+
+        private void CheckForSpinSlam()
+        {
+            if (StateManager.enCurrentState == States.Idle_Idle)
+            {
+                StartSpin();
+            }
+            else if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro || StateManager.enCurrentState == States.Spin_Idle)
+            {
+                SlamSpin();
+            }
+            else if (StateManager.enCurrentState == States.Resolve_Intro)
+            {
+                SlamLoopingPaylines();
             }
         }
 
@@ -225,7 +215,7 @@ namespace Slot_Engine.Matrix
                 }
                 else if (hit_info.collider.gameObject.tag == "Spin")
                 {
-                    DecreaseBetAmount();
+                    CheckForSpinSlam();
                 }
             }
         }

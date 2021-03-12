@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 //For Parsing Purposes
 using System.IO;
@@ -108,7 +109,7 @@ namespace Slot_Engine.Matrix
         public bool paylines_evaluated = false;
         public bool cycle_paylines = true;
         //TODO Change this to access animator length of state
-        public int delay_between_wininng_payline = 1377;
+        public float delay_between_wininng_payline = 4 ;
         
         [SerializeField]
         private int padding_end_reel = 1;
@@ -181,16 +182,12 @@ namespace Slot_Engine.Matrix
         {
             Debug.Log("Canceling Cycle Wins");
             cycle_paylines = false;
+            StopAllCoroutines();
         }
 
-        public async Task ShowWinningPayline(WinningPayline payline_to_show)
+        public IEnumerator ShowWinningPayline(WinningPayline payline_to_show)
         {
-            //Show Payline on payline render mananger
-            //payline_renderer_manager.RenderWinningPayline(payline_to_show);
-            //Assign every slot in payline the animation override controller
-            await matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
-            await Task.Delay(delay_between_wininng_payline / 2);
-            await matrix.InitializeSymbolsForWinConfigurationDisplay();
+            yield return matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
         }
 
         public void SetReelConfiguration()
@@ -240,30 +237,39 @@ namespace Slot_Engine.Matrix
             }
             paylines_evaluated = true;
         }
-        internal async void PlayCycleWins()
+        internal void PlayCycleWins()
         {
             cycle_paylines = true;
             current_winning_payline_shown = -1;
-            await ShowWinningPaylineTask();
+            StartCoroutine(ShowWinningPayline());
 
         }
 
-        private async Task ShowWinningPaylineTask()
+        private IEnumerator ShowWinningPayline()
         {
-            //Start showing the first paryline
-            ShowWinningPayline(0);
+            current_winning_payline_shown = -1;
             while (cycle_paylines)
             {
-                await Task.Delay(delay_between_wininng_payline);
-                ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
+                //matrix.InitializeSymbolsForWinConfigurationDisplay();
+                //yield return new WaitForSeconds(delay_between_wininng_payline/2);
+                yield return ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
+                yield return new WaitForSeconds(delay_between_wininng_payline / 2);
+                yield return HideWinningPayline();
+                yield return new WaitForSeconds(delay_between_wininng_payline / 2);
+                current_winning_payline_shown += 1;
             }
         }
 
-        private async Task ShowWinningPayline(int v)
+        private IEnumerator HideWinningPayline()
+        {
+            yield return matrix.InitializeSymbolsForWinConfigurationDisplay();
+        }
+
+        private IEnumerator ShowWinningPayline(int v)
         {
             current_winning_payline_shown = v;
             Debug.Log(String.Format("Current wining payline shown = {0}",v));
-            await ShowWinningPayline(winning_paylines[current_winning_payline_shown]);
+            yield return ShowWinningPayline(winning_paylines[current_winning_payline_shown]);
         }
 
         private void CheckSymbolsMatchLeftRight(bool left_right, ref List<int> symbols_in_row, ref List<int> symbols_list, ref int primary_symbol_index, ref int payline, ref List<WinningPayline> payline_won)
@@ -272,27 +278,22 @@ namespace Slot_Engine.Matrix
                 left_right ? symbol < symbols_in_row.Count : symbol >= 0;
                 symbol += left_right ? 1 : -1)
             {
-                try
+                if (!CheckSymbolsMatch(symbols_in_row[primary_symbol_index], symbols_in_row[symbol]))
                 {
-                    if (!CheckSymbolsMatch(symbols_in_row[primary_symbol_index], symbols_in_row[symbol]))
+                    break;
+                }
+                else
+                {
+                    //If the primary symbol is a wild then auto match with next symbol. if next symbol regular symbol that becomes primary symbol
+                    if (symbol < symbols_in_row.Count && primary_symbol_index < symbols_list.Count && primary_symbol_index >= 0 && symbol >= 0)
                     {
-                        break;
-                    }
-                    else
-                    {
-                        //If the primary symbol is a wild then auto match with next symbol. if next symbol regular symbol that becomes primary symbol
                         if (symbols_in_row[primary_symbol_index] == (int)Symbol.SA01)
                             if (CheckNextSymbolWild(symbols_list[primary_symbol_index], symbols_in_row[symbol]))
                             {
                                 primary_symbol_index = symbol;
                             }
-                        symbols_list.Add(symbols_in_row[symbol]);
                     }
-                }
-                catch (Exception e)
-                {
-                    Debug.Log(string.Format("Payline {0} on symbol {1} failed. Primary Symbol index = {2}, symbols_list.Count = {3}", payline, symbol, primary_symbol_index, symbols_list.Count));
-                    Debug.LogError(e.Message);
+                    symbols_list.Add(symbols_in_row[symbol]);
                 }
             }
             if (symbols_list.Count > 2)
@@ -337,7 +338,7 @@ namespace Slot_Engine.Matrix
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
         {
             //Now see if the next symbol is a wild or the same as the primary symbol. check false condition first
-            if (symbol_to_check == (int)Symbol.SA01 || symbol_to_check == primary_symbol) // Wild symbol - look to match next symbol to wild or set symbol 
+            if (symbol_to_check == (int)Symbol.SA01 || symbol_to_check == primary_symbol || primary_symbol == (int)Symbol.SA01) // Wild symbol - look to match next symbol to wild or set symbol 
             {
 
                 return true;
