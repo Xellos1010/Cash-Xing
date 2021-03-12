@@ -72,7 +72,7 @@ namespace Slot_Engine.Matrix
             //Modify Bet Amount
             if (StateManager.enCurrentState == States.Idle_Idle)
             {
-                
+
 #if UNITY_ANDROID
                 //#if UNITY_ANDROID
                 if (Input.touchCount > 0)
@@ -85,9 +85,9 @@ namespace Slot_Engine.Matrix
 
                     if (temp.phase == TouchPhase.Ended)
                     {
-                        if (!CheckPositionBeginEndDistance(temp.position.x - position_on_began.x, distance_to_invoke_swipe_event,true))
+                        if (!CheckPositionBeginEndDistance(temp.position.x - position_on_began.x, distance_to_invoke_swipe_event, true))
                         {
-                            if (CheckPositionBeginEndDistance(temp.position.x - position_on_began.x, distance_to_invoke_tap_event,false))
+                            if (CheckPositionBeginEndDistance(temp.position.x - position_on_began.x, distance_to_invoke_tap_event, false))
                                 RaycastForUIFromPosition(temp.position);
                             else
                             {
@@ -96,7 +96,7 @@ namespace Slot_Engine.Matrix
                         }
                         else
                         {
-                            if(temp.position.x > position_on_began.x)
+                            if (temp.position.x > position_on_began.x)
                             {
                                 IncreaseBetAmount();
                             }
@@ -106,6 +106,7 @@ namespace Slot_Engine.Matrix
                             }
                         }
                     }
+                }
 #endif
                 //#endif
                 if (Input.GetKeyDown(KeyCode.LeftArrow))
