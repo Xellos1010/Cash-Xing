@@ -4,8 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditorInternal;
 #endif
 namespace Slot_Engine.Matrix
 {
@@ -14,29 +16,36 @@ namespace Slot_Engine.Matrix
     [CustomEditor(typeof(EndConfigurationManager))]
     class EndConfigurationManagerEditor : BoomSportsEditor
     {
+        private ReorderableList list;
+
+        int current_configuration_showing = 0;
         EndConfigurationManager myTarget;
         SerializedProperty state;
+        SerializedProperty end_reelstrips_to_display_sequence;
         public void OnEnable()
         {
             myTarget = (EndConfigurationManager)target;
+            list = new ReorderableList(serializedObject,serializedObject.FindProperty("end_reelstrips_to_display_sequence"),true,true,true,true);
         }
-        public override void OnInspectorGUI()
+        public override async void OnInspectorGUI()
         {
             EditorGUILayout.LabelField("EndConfigurationManager Properties");
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+            
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("End Configuration Manager Controls");
             if(GUILayout.Button("Generate Reelstrips"))
             {
-                myTarget.GenerateMultipleEndReelStripsConfiguration(5);
+                await myTarget.GenerateMultipleEndReelStripsConfiguration(500);
+                serializedObject.ApplyModifiedProperties();
             }
             if(GUILayout.Button("Clear Reels Display"))
             {
-                myTarget.end_reelstrips_to_display_sequence = null;
+                //myTarget.end_reelstrips_to_display_sequence = null;
             }
             if(GUILayout.Button("Pop Reel Configuration Test"))
             {
-                Debug.Log(myTarget.pop_end_reelstrips_to_display_sequence.Length);
+                Debug.Log(myTarget.pop_end_reelstrips_to_display_sequence.reelstrips.Length);
             }
             base.OnInspectorGUI();
         }
@@ -59,33 +68,39 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private Matrix _matrix;
 
-        public ReelStrip[] current_reelstrip_configuration;
+        public ReelStripsStruct current_reelstrip_configuration;
         //Ending Reelstrips current
-        public ReelStrip[] pop_end_reelstrips_to_display_sequence
+        public ReelStripsStruct pop_end_reelstrips_to_display_sequence
         {
             get
             {
-                if (end_reelstrips_to_display_sequence?.Length > 0)
+                try
                 {
+                    SetAndRemoveConfiguration(0);
                 }
-                else
+                catch (Exception e)
                 {
-                    GenerateMultipleEndReelStripsConfiguration(5);
+                    Debug.LogWarning(e.Message);
+                    GenerateMultipleEndReelStripsConfiguration(20);
+                    SetAndRemoveConfiguration(0);
                 }
-                //TODO Validate Data in Reel Strip then Generate if no valid data found
-                SetCurrentConfigurationTo(end_reelstrips_to_display_sequence[0]);
-                end_reelstrips_to_display_sequence = end_reelstrips_to_display_sequence.RemoveAt<ReelStrip[]>(0);
                 return current_reelstrip_configuration;
             }
         }
 
-        private void SetCurrentConfigurationTo(ReelStrip[] reelstrips)
+        private void SetAndRemoveConfiguration(int v)
+        {
+            //TODO Validate Data in Reel Strip then Generate if no valid data found
+            SetCurrentConfigurationTo(end_reelstrips_to_display_sequence[v]);
+            end_reelstrips_to_display_sequence.RemoveAt(v);
+        }
+
+        private void SetCurrentConfigurationTo(ReelStripsStruct reelstrips)
         {
             current_reelstrip_configuration = reelstrips;
         }
 
-        [SerializeField]
-        public ReelStrip[][] end_reelstrips_to_display_sequence;
+        public List<ReelStripsStruct> end_reelstrips_to_display_sequence;
         /// <summary>
         /// Generates the Display matrix then runs payline evaluation
         /// </summary>
@@ -95,12 +110,9 @@ namespace Slot_Engine.Matrix
             SetEndingReelStripToDisplay(GenerateReelStrips(matrix.reel_strip_managers).Result);
         }
 
-        private void SetEndingReelStripToDisplay(ReelStrip[] reelstrips_to_display)
+        private void SetEndingReelStripToDisplay(ReelStripsStruct reelstrips_to_display)
         {
-            List<ReelStrip[]> reelStrips= new List<ReelStrip[]>();
-            reelStrips.Add(reelstrips_to_display);
-            reelStrips.AddRange(end_reelstrips_to_display_sequence);
-            end_reelstrips_to_display_sequence = reelStrips.ToArray();
+            end_reelstrips_to_display_sequence.Add(reelstrips_to_display);
         }
 
         /// <summary>
@@ -109,20 +121,21 @@ namespace Slot_Engine.Matrix
         /// <returns>Task.Completed</returns>
         internal async Task GenerateMultipleEndReelStripsConfiguration(int amount)
         {
-            end_reelstrips_to_display_sequence = new ReelStrip[amount][];
+            end_reelstrips_to_display_sequence = new List<ReelStripsStruct>();
             for (int i = 0; i < amount; i++)
             {
-                end_reelstrips_to_display_sequence[i] = GenerateReelStrips(matrix.reel_strip_managers).Result;
+                end_reelstrips_to_display_sequence.Add(GenerateReelStrips(matrix.reel_strip_managers).Result);
             }
-        }
-        internal Task<ReelStrip[]> GenerateReelStrips(ReelStripManager[] reel_strip_managers)
+         }
+        internal Task<ReelStripsStruct> GenerateReelStrips(ReelStripManager[] reel_strip_managers)
         {
-            List<ReelStrip> output = new List<ReelStrip>();
+            ReelStripsStruct output = new ReelStripsStruct();
+            output.reelstrips = new ReelStripStruct[reel_strip_managers.Length];
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
-                output.Add(new ReelStrip(GenerateEndingReelStrip(3))); // TODO change to scale slot size
+                output.reelstrips[reel] = (new ReelStrip(GenerateEndingReelStrip(3))).reelStrip; // TODO change to scale slot size
             }
-            return Task.FromResult<ReelStrip[]>(output.ToArray());
+            return Task.FromResult<ReelStripsStruct>(output);
         }
 
         private int[] GenerateEndingReelStrip(int v)
@@ -140,20 +153,17 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         public int GetRandomWeightedSymbol()
         {
-            return matrix.weighted_distribution_symbols.Draw();
+            int output = matrix.weighted_distribution_symbols.Draw();
+            Debug.Log(String.Format("Symbol Generated form Weighted Distribution is {0}", ((Symbol)output).ToString()));
+            return output;
         }
 
-        internal void RemoveCurrentDisplayReelConfiguration()
-        {
-            end_reelstrips_to_display_sequence.RemoveAt<ReelStrip[]>(0);
-        }
-
-        internal ReelStrip[] UseNextConfigurationInList()
+        internal ReelStripsStruct UseNextConfigurationInList()
         {
             return pop_end_reelstrips_to_display_sequence;
         }
 
-        internal ReelStrip[] GetCurrentConfiguration()
+        internal ReelStripsStruct GetCurrentConfiguration()
         {
             //if(current_reelstrip_configuration.Length < 1)
             //{

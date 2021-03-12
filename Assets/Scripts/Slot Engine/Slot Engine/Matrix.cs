@@ -109,7 +109,16 @@ namespace Slot_Engine.Matrix
             out_positions = new List<Vector3>();
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                Vector3 position_cache = reel_strip_managers[i].positions_in_path_v3[payline[i] + reel_strip_managers[i].padding_slots_top];
+                Vector3 position_cache = Vector3.zero;
+                try
+                {
+                    position_cache = reel_strip_managers[i].positions_in_path_v3[payline[i] + reel_strip_managers[i].padding_slots_top] + transform.position;
+                    position_cache = new Vector3(position_cache.x, position_cache.y, position_cache.z - 10);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e.Message);
+                }
                 out_positions.Add(position_cache);
             }
         }
@@ -440,24 +449,24 @@ namespace Slot_Engine.Matrix
             reel_strip_managers = reels_generated.ToArray();
         }
 
-        internal void GenerateReelStripsToSpinThru(ref ReelStrip[] reel_configuration)
+        internal void GenerateReelStripsToSpinThru(ref ReelStripsStruct reel_configuration)
         {
             //Generate reel strips based on number of reels and symbols per reel - Insert ending symbol configuration and hold reference for array range
             GenerateReelStripsFor(ref reel_strip_managers, ref reel_configuration, slots_per_strip_onSpinLoop);
         }
 
-        private void GenerateReelStripsFor(ref ReelStripManager[] reel_strip_managers, ref ReelStrip[] spin_configuration_reelstrip, int slots_per_strip_onSpinLoop)
+        private void GenerateReelStripsFor(ref ReelStripManager[] reel_strip_managers, ref ReelStripsStruct spin_configuration_reelstrip, int slots_per_strip_onSpinLoop)
         {
             //Loop over each reelstrip and assign reel strip
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                if (spin_configuration_reelstrip[i].reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
+                if (spin_configuration_reelstrip.reelstrips[i].reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
                 {
                     //Generates reelstrip based on weights
-                    spin_configuration_reelstrip[i].GenerateReelStrip(slots_per_strip_onSpinLoop, weighted_distribution_symbols);
+                    spin_configuration_reelstrip.reelstrips[i].reel_spin_symbols = ReelStrip.GenerateReelStripStatic(slots_per_strip_onSpinLoop, weighted_distribution_symbols);
                 }
                 //Assign reelstrip to reel
-                reel_strip_managers[i].reel_strip_to_use_for_spin = spin_configuration_reelstrip[i];
+                reel_strip_managers[i].reel_strip_to_use_for_spin = spin_configuration_reelstrip.reelstrips[i];
             }
         }
 
@@ -499,7 +508,7 @@ namespace Slot_Engine.Matrix
         {
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                reel_strip_managers[i].SetEndingDisplaySymbolsTo(_end_configuration_manager.pop_end_reelstrips_to_display_sequence[i]);
+                reel_strip_managers[i].SetEndingDisplaySymbolsTo(_end_configuration_manager.pop_end_reelstrips_to_display_sequence.reelstrips[i]);
             }
         }
 
@@ -551,8 +560,27 @@ namespace Slot_Engine.Matrix
         {
             //Initialize Machine and Player  Information
             machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, machine_information_manager.supported_bet_amounts.Length - 1, 1, 0);
+            //end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
+            ReelStripsStruct stripInitial = end_configuration_manager.pop_end_reelstrips_to_display_sequence;
+            string print_string = PrintSpinSymbols(ref stripInitial);
+            Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
+        }
+
+        private string PrintSpinSymbols(ref ReelStripsStruct stripInitial)
+        {
+            string output = "";
+            for (int strip = 0; strip < stripInitial.reelstrips.Length; strip++)
+            {
+                output += ReturnDisplaySymbolsPrint(stripInitial.reelstrips[strip]);
+            }
+            return output;
+        }
+
+        private string ReturnDisplaySymbolsPrint(ReelStripStruct reelStripStruct)
+        {
+            return String.Join("|",reelStripStruct.display_symbols);
         }
 
         void OnEnable()

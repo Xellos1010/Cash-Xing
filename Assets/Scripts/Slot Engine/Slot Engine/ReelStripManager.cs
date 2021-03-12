@@ -145,7 +145,7 @@ public enum eEaseType
         /// Holds the reel strip to cycle thru symbols for spin and end symbol configuration for reel
         /// </summary>
         [SerializeField]
-        public ReelStrip reel_strip_to_use_for_spin;
+        public ReelStripStruct reel_strip_to_use_for_spin;
         /// <summary>
         /// On Spin Start uses a curve editor to determine speed over time - 0 -> -100 -> 0 -> +200 for example over for seconds is ease out
         /// </summary>
@@ -369,7 +369,7 @@ public enum eEaseType
         /// Used by the matrix to set display symbols
         /// </summary>
         /// <param name="reelstrip"></param>
-        internal void SetEndingDisplaySymbolsTo(ReelStrip reelstrip)
+        internal void SetEndingDisplaySymbolsTo(ReelStripStruct reelstrip)
         {
             SetEndingSymbolsTo(reelstrip.display_symbols);
         }
@@ -504,12 +504,12 @@ public enum eEaseType
         /// </summary>
         public void StopReelTest()
         {
-            StopReel(new ReelStrip(new int[3] { 0, 1, 2 }));
+            StopReel(new int[3] { 0,  1, 2 });
         }
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public async Task StopReel(ReelStrip reelStrip)
+        public async Task StopReel(ReelStripStruct reelStrip)
         {
             end_symbols_set_from_config = 0;
             SetSpinStateTo(SpinStates.spin_outro);

@@ -206,7 +206,7 @@ namespace Slot_Engine.Matrix
                 if (reel_parent.change_symbol_graphic_on_spin_idle)
                 {
                     //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
-                    if (reel_parent.reel_strip_to_use_for_spin != null)
+                    if (reel_parent.reel_strip_to_use_for_spin.reel_spin_symbols != null)
                     {
                         if (reel_parent.reel_strip_to_use_for_spin.reel_spin_symbols.Length > 0)
                         {

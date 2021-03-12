@@ -187,6 +187,7 @@ namespace Slot_Engine.Matrix
 
         public IEnumerator ShowWinningPayline(WinningPayline payline_to_show)
         {
+            payline_renderer_manager.ShowPayline(payline_to_show.payline);
             yield return matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
         }
 
@@ -199,12 +200,12 @@ namespace Slot_Engine.Matrix
             EvaluateWinningSymbols(matrix.end_configuration_manager.current_reelstrip_configuration);
         }
 
-        internal void EvaluateWinningSymbols(ReelStrip[] ending_reelstrips)
+        internal void EvaluateWinningSymbols(ReelStripsStruct ending_reelstrips)
         {
-            int[][] symbols_configuration = new int[ending_reelstrips.Length][];
-            for (int reel = 0; reel < ending_reelstrips.Length; reel++)
+            int[][] symbols_configuration = new int[ending_reelstrips.reelstrips.Length][];
+            for (int reel = 0; reel < ending_reelstrips.reelstrips.Length; reel++)
             {
-                symbols_configuration[reel] = ending_reelstrips[reel].display_symbols;
+                symbols_configuration[reel] = ending_reelstrips.reelstrips[reel].display_symbols;
             }
             EvaluateWinningSymbols(symbols_configuration); //TODO Determine if Bonus or Special symbols were triggered
         }
