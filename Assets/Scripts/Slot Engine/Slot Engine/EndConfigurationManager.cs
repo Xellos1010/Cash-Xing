@@ -153,7 +153,11 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         public int GetRandomWeightedSymbol()
         {
+#if UNITY_ANDROID
             int output = matrix.weighted_distribution_symbols.Draw();
+#else
+            int output = UnityEngine.Random.Range(0,((int)(Symbol.End))-2);
+#endif
             Debug.Log(String.Format("Symbol Generated form Weighted Distribution is {0}", ((Symbol)output).ToString()));
             return output;
         }
