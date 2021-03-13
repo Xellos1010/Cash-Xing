@@ -426,6 +426,7 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
+                    payline_renderer_manager.ToggleRenderer(true);
                     break;
                 case States.win_presentation:
                     break;
