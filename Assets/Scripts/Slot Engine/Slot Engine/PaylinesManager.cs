@@ -242,6 +242,7 @@ namespace Slot_Engine.Matrix
         {
             cycle_paylines = true;
             current_winning_payline_shown = -1;
+            payline_renderer_manager.ToggleRenderer(true);
             StartCoroutine(ShowWinningPayline());
 
         }
@@ -426,7 +427,6 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
-                    payline_renderer_manager.ToggleRenderer(true);
                     break;
                 case States.win_presentation:
                     break;

@@ -635,7 +635,7 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
-                    racking_manager.GetRackingInformation();
+                    racking_manager.StartRacking();
                     CycleWinningPaylinesMode();
                     break;
                 case States.Resolve_Outro:
@@ -705,6 +705,11 @@ namespace Slot_Engine.Matrix
         void OnApplicationQuit()
         {
             StateManager.SetStateTo(States.None);
+        }
+
+        internal void SetPlayerWalletTo(float to_value)
+        {
+            machine_information_manager.SetPlayerWalletTo(to_value);
         }
     }
 }

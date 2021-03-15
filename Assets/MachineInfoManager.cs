@@ -109,7 +109,8 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public void SetPlayerInformationTo(float player_wallet)
         {
-            current_player_information = new PlayerInformation(player_wallet);
+            current_player_information = new PlayerInformation();
+            current_player_information.player_wallet = player_wallet;
             SetPlayerInformationFrom(ref current_player_information);
         }
         /// <summary>
@@ -128,7 +129,7 @@ namespace Slot_Engine.Matrix
             this.new_bank_amount?.Invoke(new_bank_amount);
         }
 
-        private void SetPlayerWalletTo(float new_player_wallet)
+        internal void SetPlayerWalletTo(float new_player_wallet)
         {
             Debug.Log(String.Format("Player Wallet is being set to {0}", new_player_wallet));
             player_wallet = new_player_wallet;
@@ -181,14 +182,8 @@ namespace Slot_Engine.Matrix
 
         internal void OffsetPlayerAmountBy(float amount)
         {
-            //Decrease Wallet Amount and Update Text on machine
-            OffsetPlayerAmountBy(ref current_player_information ,amount);
-            SetPlayerWalletTo(current_player_information.player_wallet);
-        }
-
-        private void OffsetPlayerAmountBy(ref PlayerInformation information, float offset_amount)
-        {
-            information.player_wallet += offset_amount;
+            //Add the amount to wallet and Update Text on machine
+            SetPlayerWalletTo(player_wallet + amount);
         }
     }
 }

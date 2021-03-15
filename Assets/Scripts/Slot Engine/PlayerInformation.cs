@@ -9,13 +9,8 @@
 //
 //
 [System.Serializable]
-public class PlayerInformation 
+public struct PlayerInformation 
 {
 	public string username;
 	public float player_wallet;
-
-    public PlayerInformation(float player_wallet)
-    {
-        this.player_wallet = player_wallet;
-    }
 }

@@ -33,13 +33,22 @@ namespace Slot_Engine.Matrix
         private UITextManager ui_text_manager;
         [SerializeField]
         private Matrix matrix;
-        public bool is_racking = false;
+        public bool is_racking
+        {
+            get
+            {
+                if (bank_rack_remaining > 0)
+                {
+                    return true;
+                }
+                else
+                    return false;
+            }
+        }
 
         public float bank_rack_remaining;
         public float bank_rack_total_to_rack;
 
-        
-        public float current_player_wallet = 0;
         /// <summary>
         /// Sets the racking to be instant or a rollup
         /// </summary>
@@ -60,8 +69,8 @@ namespace Slot_Engine.Matrix
 
         private void Setplayer_walletTo(float to_value)
         {
-            current_player_wallet = to_value;
-            ui_text_manager.Set_Player_Wallet_To(to_value);
+            //This will fire an event and the UI manager will auto set the text based on new player amount
+            matrix.SetPlayerWalletTo(to_value);
         }
 
         private void StateManager_StateChangedTo(States State)
@@ -77,6 +86,7 @@ namespace Slot_Engine.Matrix
                 case States.Coin_Out:
                     break;
                 case States.Idle_Intro:
+                    FinalizeRacking();
                     break;
                 case States.Idle_Idle:
                     break;
@@ -117,30 +127,102 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void GetRackingInformation()
+        /// <summary>
+        /// Ensure credits are racked and all vars are reset
+        /// </summary>
+        private void FinalizeRacking()
+        {
+            SetCreditDisplayToEnd();
+        }
+        /// <summary>
+        /// Used to set Update the player wallet by bank_rack_remaining
+        /// </summary>
+        private void SetCreditDisplayToEnd()
+        {
+            if(bank_rack_remaining > 0)
+            {
+                UpdateCreditRackingRemaining(bank_rack_remaining);
+            }
+        }
+
+        /// <summary>
+        /// Sets the credit amount to rack and starts racking mode
+        /// </summary>
+        internal void StartRacking()
         {
             SetCreditAmountToRack(matrix.paylines_manager.GetTotalWinAmount());
         }
-
+        /// <summary>
+        /// Set the total amount to rack
+        /// </summary>
+        /// <param name="win_amount">the amount won to rack</param>
         private void SetCreditAmountToRack(float win_amount)
         {
             Debug.Log(String.Format("Setting Credit amount to rack to {0}",win_amount));
             if(set_instantly)
             {
-                matrix.OffetPlayerWalletBy(win_amount);
+                Setplayer_walletTo(matrix.machine_information_manager.player_wallet + win_amount);
             }
             else
             {
-
-                bank_rack_total_to_rack = win_amount;
-                //TODO Enable racking overtime and throw bool event when finished racking
-                throw new NotImplementedException();
+                SetCreditsToRackAtSpeed(win_amount, credit_rack_speed);
             }
         }
-
+        /// <summary>
+        /// Set credits to rack and speed
+        /// </summary>
+        /// <param name="win_amount">amount to rack</param>
+        /// <param name="credit_rack_speed">increment to rack every update</param>
+        private void SetCreditsToRackAtSpeed(float win_amount, float credit_rack_speed)
+        {
+            this.credit_rack_speed = credit_rack_speed;
+            bank_rack_remaining = win_amount;
+        }
+        /// <summary>
+        /// Remove event hooks
+        /// </summary>
         void OnDisable()
         {
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
+        }
+        /// <summary>
+        /// Main racking loop - will iterate if bank_rack_remaining > 0
+        /// </summary>
+        void Update()
+        {
+            if (is_racking)
+            {
+                float amount_to_rack = GetUpdateRackAmount();
+                UpdateCreditRackingRemaining(amount_to_rack);
+            }
+        }
+
+        private void UpdateCreditRackingRemaining(float amount_to_rack)
+        {
+            bank_rack_remaining -= amount_to_rack;
+            Setplayer_walletTo(matrix.machine_information_manager.player_wallet + amount_to_rack);
+        }
+
+        /// <summary>
+        /// Gets the rack amount total for the current update
+        /// </summary>
+        /// <returns>Total amount to rack based on speed</returns>
+        private float GetUpdateRackAmount()
+        {
+            float output = 0;
+            if(credit_rack_speed == 0)
+            {
+                credit_rack_speed = 1;//Something for now so we can still continue with the game
+            }
+            if(bank_rack_remaining - credit_rack_speed < 0)
+            {
+                output = bank_rack_remaining;
+            }
+            else
+            {
+                output = credit_rack_speed;
+            }
+            return output;
         }
     }
 }
