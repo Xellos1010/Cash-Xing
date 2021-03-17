@@ -235,7 +235,7 @@ namespace Slot_Engine.Matrix
         internal IEnumerator SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
             Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",
-                String.Join(" ", winning_payline.payline.payline.ToString()), String.Join(" ",winning_payline.winning_symbols)));
+                String.Join(" ", winning_payline.payline.payline_configuration.ToString()), String.Join(" ",winning_payline.winning_symbols)));
             //Get Winning Slots and loosing slots
             List<SlotManager> winning_slots,losing_slots;
             ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots, ref reel_strip_managers);
@@ -275,7 +275,7 @@ namespace Slot_Engine.Matrix
                 {
                     for (int slot = reel_managers[reel].padding_slots_top; slot < slots_decending_in_reel.Count; slot++)
                     {
-                        if (slot == (winning_payline.payline.payline[reel] + reel_managers[reel].padding_slots_top))
+                        if (slot == (winning_payline.payline.payline_configuration.payline[reel] + reel_managers[reel].padding_slots_top))
                         {
                             winning_slots.Add(slots_decending_in_reel[slot]);
                             winning_symbols_added += 1;
@@ -529,7 +529,7 @@ namespace Slot_Engine.Matrix
                 //Get current slot order based on slot transform compared to positions in path.
                 List<SlotManager> slots_decending_in_reel = reel_strip_managers[reel].GetSlotsDecending();
                 //Cache the position of the slot that we need from this reel
-                linePositions.Add(ReturnSlotPositionOnPayline(payline.payline[reel], ref slots_decending_in_reel, ref reel_strip_managers[reel]));
+                linePositions.Add(ReturnSlotPositionOnPayline(payline.payline_configuration.payline[reel], ref slots_decending_in_reel, ref reel_strip_managers[reel]));
             }
         }
 

@@ -100,7 +100,7 @@ namespace Slot_Engine.Matrix
         internal void ShowPayline(Payline paylines_supported)
         {
             List<Vector3> linePositions;
-            matrix.ReturnPositionsBasedOnPayline(ref paylines_supported.payline, out linePositions);
+            matrix.ReturnPositionsBasedOnPayline(ref paylines_supported.payline_configuration.payline, out linePositions);
             for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end linePositions since your get 2 out for array range
             {
                 //Throws arguments out of range if line positions out of range

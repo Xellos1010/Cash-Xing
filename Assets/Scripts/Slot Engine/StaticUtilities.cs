@@ -38,6 +38,7 @@ public static class StaticUtilities
                 this.Add(keys[i], values[i]);
         }
     }
+
     public static T[] RemoveAt<T>(this T[] source, int index)
     {
         T[] dest = new T[source.Length - 1];
@@ -50,14 +51,27 @@ public static class StaticUtilities
         return dest;
     }
 
-    public static T[] AddAt<T>(this T[] source, int index)
+    public static T Pop<T>(this List<T> source)
+    {
+        T output = source[0];
+        source.RemoveAt(0);
+        return output;
+    }
+
+    public static T[] AddAt<T>(this T[] source, int index, T value)
     {
         T[] dest = new T[source.Length + 1];
+        //Copy the first part of the array until index to insert
         if (index > 0)
             Array.Copy(source, 0, dest, 0, index);
-
-        if (index < source.Length - 1)
-            Array.Copy(source, index + 1, dest, index, source.Length + 1);
+        
+        //insert arr
+        if (index < dest.Length)
+        {
+            dest[index] = value;
+        }
+        if (index < source.Length)
+            Array.Copy(source, index, dest, index+1, source.Length - index);
         return dest;
     }
     public static int findIndex<T>(this T[] array, T item)

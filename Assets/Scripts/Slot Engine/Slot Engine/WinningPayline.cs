@@ -37,7 +37,7 @@ public class WinningPayline
     internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, int symbol_to_check)
     {
         //Check Winning slot at reel 
-        if (payline.payline[reel]+reel_start_padding==slot && IsSymbolWinningSymbol(symbol_to_check))
+        if (payline.payline_configuration.payline[reel]+reel_start_padding==slot && IsSymbolWinningSymbol(symbol_to_check))
         {
             return true;
         }
