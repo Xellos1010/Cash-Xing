@@ -38,7 +38,7 @@ namespace Slot_Engine.Matrix
             {
                 if (GUILayout.Button("Start Test Spin"))
                 {
-                    myTarget.spin_manager.StartSpin();
+                    myTarget.StartCoroutine(myTarget.spin_manager.StartSpin());
                 }
                 if (GUILayout.Button("End Test Spin"))
                 {
@@ -231,8 +231,7 @@ namespace Slot_Engine.Matrix
                 return _weighted_distribution_symbols;
             }
         }
-
-        internal IEnumerator SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
+        internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
             Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",
                 String.Join(" ", winning_payline.payline.payline_configuration.ToString()), String.Join(" ",winning_payline.winning_symbols)));
@@ -241,7 +240,7 @@ namespace Slot_Engine.Matrix
             ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots, ref reel_strip_managers);
             SetWinningSlotsToResolveWinLose(ref winning_slots,true);
             SetWinningSlotsToResolveWinLose(ref losing_slots,false);
-            yield return 0;
+            return Task.CompletedTask;
         }
 
         private void SetWinningSlotsToResolveWinLose(ref List<SlotManager> winning_slots, bool v)
@@ -374,13 +373,15 @@ namespace Slot_Engine.Matrix
 
         private void PrepareSlotMachineToSpin()
         {
-            //for (int reel = 0; reel < reel_strip_managers.Length; reel++)
-            //{
-            //    for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
-            //    {
+            Debug.Log("Preparing Slot Machine for Spin");
+        }
 
-            //    }
-            //}
+        internal void SetSymbolsToDisplayOnMatrixTo(ReelStripsStruct current_reelstrip_configuration)
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].SetSymbolCurrentDisplayTo(current_reelstrip_configuration.reelstrips[reel]);
+            }
         }
 
         private void SetSlotsAnimatorBoolTo(supported_bools bool_name, bool v)
@@ -711,5 +712,27 @@ namespace Slot_Engine.Matrix
         {
             machine_information_manager.SetPlayerWalletTo(to_value);
         }
+    }
+}
+public struct Matrix_Settings
+{
+    public int reels;
+    //can be individual or overall set
+    public int[] slots_per_reel;
+
+    public Matrix_Settings(int reels, int slots_per_reel) : this()
+    {
+        this.reels = reels;
+        this.slots_per_reel = SetSlotsPerReelTo(reels, slots_per_reel);
+    }
+
+    private int[] SetSlotsPerReelTo(int reels, int slots_per_reel)
+    {
+        int[] output = new int[reels];
+        for (int reel = 0; reel < output.Length; reel++)
+        {
+            output[reel] = slots_per_reel;
+        }
+        return output;
     }
 }

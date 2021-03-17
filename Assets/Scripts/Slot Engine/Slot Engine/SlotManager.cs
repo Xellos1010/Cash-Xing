@@ -260,9 +260,8 @@ namespace Slot_Engine.Matrix
         internal void SetDisplaySymbolTo(int symbol_to_display)
         {
             //Debug.Log(string.Format("Set Display symbol to {0}", v));
-            SetPresentationSymbolTo(reel_parent.ending_symbols[symbol_to_display]);
+            SetPresentationSymbolTo(symbol_to_display);
             SetSlotGraphicTo(presentation_symbol_name);
-            reel_parent.end_symbols_set_from_config += 1;
         }
 
         private void SetPresentationSymbolTo(Symbol to_symbol)

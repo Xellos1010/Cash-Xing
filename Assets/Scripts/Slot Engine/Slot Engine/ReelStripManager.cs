@@ -388,6 +388,22 @@ public enum eEaseType
             return output;
         }
 
+        internal void SetSymbolCurrentDisplayTo(ReelStripStruct reelStripStruct)
+        {
+            SlotManager[] slots_decending_order = GetSlotsDecending().ToArray();
+            List<Symbol> symbols_to_display = new List<Symbol>();
+            for (int symbol = 0; symbol < reelStripStruct.display_symbols.Length; symbol++)
+            {
+                symbols_to_display.Add((Symbol)reelStripStruct.display_symbols[symbol]);
+            }
+            ending_symbols = symbols_to_display.ToArray();
+            for (int slot = 1; slot < slots_decending_order.Length; slot++)
+            {
+                slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.display_symbols[slot-1]);
+                end_symbols_set_from_config += 1;
+            }
+        }
+
         /// <summary>
         /// Generates a Slot Gameobject
         /// </summary>
@@ -443,7 +459,7 @@ public enum eEaseType
         /// Spin the Reels
         /// </summary>
         /// <returns>async task to track</returns>
-        public async Task SpinReel()
+        public IEnumerator SpinReel()
         {
             if (!is_reel_spinning)
             {
@@ -461,6 +477,7 @@ public enum eEaseType
                 //TODO refactor check for interupt state
                 SetSpinStateTo(SpinStates.spin_idle);
             }
+            yield return 0;
         }
         /// <summary>
         /// Sets the Spin State to state
@@ -509,11 +526,11 @@ public enum eEaseType
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public async Task StopReel(ReelStripStruct reelStrip)
+        public IEnumerator StopReel(ReelStripStruct reelStrip)
         {
             end_symbols_set_from_config = 0;
             SetSpinStateTo(SpinStates.spin_outro);
-            await StopReel(reelStrip.display_symbols); //This will control ho wfast the reel goes to stop spin
+            yield return StopReel(reelStrip.display_symbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
 
@@ -521,26 +538,25 @@ public enum eEaseType
         /// Stop the reel and set ending symbols
         /// </summary>
         /// <param name="ending_symbols">the symbols to land on</param>
-        public async Task StopReel(int[] ending_symbols)
+        public IEnumerator StopReel(int[] ending_symbols)
         {
             SetEndingSymbolsTo(ending_symbols);
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
-            await AllSlotsStoppedSpinning();
+            yield return AllSlotsStoppedSpinning();
         }
-        internal async Task AllSlotsStoppedSpinning()
+        internal IEnumerator AllSlotsStoppedSpinning()
         {
             bool task_lock = true;
             while (task_lock)
             {
                 if (are_slots_spinning)
-                    await Task.Delay(100);
+                    yield return new WaitForEndOfFrame();
                 else
                 {
                     task_lock = false;
                 }
             }
-                
         }
 
         internal bool are_slots_spinning

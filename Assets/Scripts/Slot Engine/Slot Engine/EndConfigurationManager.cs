@@ -22,10 +22,12 @@ namespace Slot_Engine.Matrix
         EndConfigurationManager myTarget;
         SerializedProperty state;
         SerializedProperty end_reelstrips_to_display_sequence;
+        SerializedProperty current_reelstrip_configuration;
         public void OnEnable()
         {
             myTarget = (EndConfigurationManager)target;
             list = new ReorderableList(serializedObject,serializedObject.FindProperty("end_reelstrips_to_display_sequence"),true,true,true,true);
+            current_reelstrip_configuration = serializedObject.FindProperty("current_reelstrip_configuration");
         }
         public override async void OnInspectorGUI()
         {
@@ -39,13 +41,23 @@ namespace Slot_Engine.Matrix
                 await myTarget.GenerateMultipleEndReelStripsConfiguration(500);
                 serializedObject.ApplyModifiedProperties();
             }
-            if(GUILayout.Button("Clear Reels Display"))
+            if(GUILayout.Button("Clear end_reelstrips_to_display_sequence"))
             {
-                //myTarget.end_reelstrips_to_display_sequence = null;
+                myTarget.end_reelstrips_to_display_sequence = null;
             }
-            if(GUILayout.Button("Pop Reel Configuration Test"))
+            
+            if (GUILayout.Button("Pop Reel Configuration Test"))
             {
-                Debug.Log(myTarget.pop_end_reelstrips_to_display_sequence.reelstrips.Length);
+                Debug.Log(String.Format("current configuration was set with reelstrip length of {0}",myTarget.pop_end_reelstrips_to_display_sequence.reelstrips.Length));
+                serializedObject.Update();
+                current_reelstrip_configuration = serializedObject.FindProperty("current_reelstrip_configuration");
+            }
+            if (current_reelstrip_configuration.type != null)
+            {
+                if (GUILayout.Button("Set Matrix to Display End Reel Configuration"))
+                {
+                    myTarget.SetMatrixToReelConfiguration();
+                }
             }
             base.OnInspectorGUI();
         }
@@ -180,6 +192,11 @@ namespace Slot_Engine.Matrix
             //    return current_reelstrip_configuration;
             //}
             return current_reelstrip_configuration;
+        }
+
+        internal void SetMatrixToReelConfiguration()
+        {
+            matrix.SetSymbolsToDisplayOnMatrixTo(current_reelstrip_configuration);
         }
     }
 }

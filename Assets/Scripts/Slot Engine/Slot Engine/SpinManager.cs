@@ -75,11 +75,11 @@ namespace Slot_Engine.Matrix
             {
                 if (GUILayout.Button("Start Test Spin"))
                 {
-                    myTarget.SetSpinStateTo(SpinStates.spin_start);
+                    myTarget.StartCoroutine(myTarget.SetSpinStateTo(SpinStates.spin_start));
                 }
                 if (GUILayout.Button("End Test Spin"))
                 {
-                    myTarget.SetSpinStateTo(SpinStates.spin_outro);
+                    myTarget.StartCoroutine(myTarget.SetSpinStateTo(SpinStates.spin_outro));
                 }
             }
             base.OnInspectorGUI();
@@ -199,7 +199,7 @@ namespace Slot_Engine.Matrix
             use_timer = false;
         }
 
-        internal async void SetSpinStateTo(SpinStates state)
+        internal IEnumerator SetSpinStateTo(SpinStates state)
         {
             Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
@@ -211,7 +211,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_start:
                     StateManager.SetStateTo(States.Spin_Intro);
-                    await StartSpin();
+                    yield return StartSpin();
                     StateManager.SetStateTo(States.Spin_Idle);
                     break;
                 case SpinStates.spin_intro:
@@ -224,7 +224,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_outro:
                     ResetUseTimer();
-                    await StopReels();
+                    yield return StopReels();
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
@@ -237,7 +237,7 @@ namespace Slot_Engine.Matrix
                     else
                     {
                         // Set Trigger for state machine to SymbolResolve and WinRacking to false
-                        await ResetMachine();
+                        yield return ResetMachine();
                     }
                     break;
                 default:
@@ -265,12 +265,12 @@ namespace Slot_Engine.Matrix
         }
 
         //Engine Functions
-        public async Task StartSpin()
+        public IEnumerator StartSpin()
         {
-            await SpinReels();
+            yield return SpinReels();
         }
 
-        internal async Task SpinReels()
+        internal IEnumerator SpinReels()
         {
             ReelStripsStruct end_reel_configuration = matrix.end_configuration_manager.UseNextConfigurationInList();
             matrix.paylines_manager.EvaluateWinningSymbols(end_reel_configuration);
@@ -286,11 +286,11 @@ namespace Slot_Engine.Matrix
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
                 i = spin_reels_starting_forward_back ? i+1:i-1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
-                await matrix.reel_strip_managers[i].SpinReel();
+                yield return matrix.reel_strip_managers[i].SpinReel();
             }
         }
 
-        async Task StopReels()
+        internal IEnumerator StopReels()
         {
             ReelStripsStruct configuration_to_use = matrix.end_configuration_manager.GetCurrentConfiguration();
             for (int i = spin_reels_starting_forward_back ? 0 : matrix.reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
@@ -299,17 +299,17 @@ namespace Slot_Engine.Matrix
             {
                 if (reel_spin_delay_end_enabled)
                 {
-                    await matrix.reel_strip_managers[i].StopReel(configuration_to_use.reelstrips[i]);//Only use for specific reel stop features
+                    yield return matrix.reel_strip_managers[i].StopReel(configuration_to_use.reelstrips[i]);//Only use for specific reel stop features
                 }
                 else
                 {
                     matrix.reel_strip_managers[i].StopReel(configuration_to_use.reelstrips[i]);//Only use for specific reel stop features
                 }
             }
-            await WaitForAllReelsToStop(matrix.reel_strip_managers);
+            yield return WaitForAllReelsToStop(matrix.reel_strip_managers);
         }
 
-        private async Task WaitForAllReelsToStop(ReelStripManager[] reel_strip_managers)
+        private IEnumerator WaitForAllReelsToStop(ReelStripManager[] reel_strip_managers)
         {
             bool lock_task = true;
             while (lock_task)
@@ -326,7 +326,7 @@ namespace Slot_Engine.Matrix
                     }
                     else 
                     {
-                        await Task.Delay(100);
+                        yield return new WaitForEndOfFrame();
                         break;
                     }
                 }
@@ -376,21 +376,21 @@ namespace Slot_Engine.Matrix
                 case States.Idle_Intro:
                     break;
                 case States.Idle_Idle:
-                    SetSpinStateTo(SpinStates.idle_idle);
+                    StartCoroutine(SetSpinStateTo(SpinStates.idle_idle));
                     break;
                 case States.Idle_Outro:
-                    SetSpinStateTo(SpinStates.spin_start);
+                    StartCoroutine(SetSpinStateTo(SpinStates.spin_start));
                     break;
                 case States.Spin_Intro:
                     break;
                 case States.Spin_Idle:
-                    SetSpinStateTo(SpinStates.spin_idle);
+                    StartCoroutine(SetSpinStateTo(SpinStates.spin_idle));
                     break;
                 case States.Spin_Outro:
-                    SetSpinStateTo(SpinStates.spin_outro);
+                    StartCoroutine(SetSpinStateTo(SpinStates.spin_outro));
                     break;
                 case States.Spin_End:
-                    SetSpinStateTo(SpinStates.end);
+                    StartCoroutine(SetSpinStateTo(SpinStates.end));
                     break;
                 case States.win_presentation:
                     break;
