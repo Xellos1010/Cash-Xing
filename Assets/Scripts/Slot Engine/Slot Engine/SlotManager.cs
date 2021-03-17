@@ -192,7 +192,8 @@ namespace Slot_Engine.Matrix
 
                 if (reel_parent.end_symbols_set_from_config < reel_parent.ending_symbols.Length)
                 {
-                    SetDisplaySymbolTo(reel_parent.ending_symbols.Length - 1 - reel_parent.end_symbols_set_from_config);
+                    SetDisplaySymbolTo((int)reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1 - reel_parent.end_symbols_set_from_config]);
+                    reel_parent.end_symbols_set_from_config += 1;
                 }
                 else
                 {

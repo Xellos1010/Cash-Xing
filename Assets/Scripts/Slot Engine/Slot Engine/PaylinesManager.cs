@@ -438,6 +438,7 @@ namespace Slot_Engine.Matrix
             Debug.Log(String.Format("a match was found on payline {0}, {1} symbols match {2}", payline, left_right ? "left" : "right", String.Join(" ", symbol_names)));
 
             //Check if Payline symbol configuration are already the list - keep highest winning payline
+            
             payline_won.Add(new WinningPayline(paylines_supported_from_file.Length > 0 ? paylines_supported_from_file[payline] : dynamic_paylines.paylines_supported[payline], matching_symbols_list.ToArray(), left_right));
         }
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
@@ -508,12 +509,13 @@ namespace Slot_Engine.Matrix
                 case States.Coin_Out:
                     break;
                 case States.Idle_Intro:
+                    payline_renderer_manager.ToggleRenderer(false);
+                    cycle_paylines = false;
+                    ClearWinningPaylines();
                     break;
                 case States.Idle_Idle:
                     break;
                 case States.Idle_Outro:
-                    payline_renderer_manager.ToggleRenderer(false);
-                    cycle_paylines = false;
                     break;
                 case States.Spin_Intro:
                     break;

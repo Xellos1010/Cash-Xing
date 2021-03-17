@@ -55,10 +55,6 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.SetReelStripsEndConfiguration();
                 }
-                if (GUILayout.Button("Display End Reels and Reset"))
-                {
-                    myTarget.DisplayEndingReelStrips();
-                }
             }
             base.OnInspectorGUI();
         }
@@ -510,14 +506,6 @@ namespace Slot_Engine.Matrix
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
                 reel_strip_managers[i].SetEndingDisplaySymbolsTo(_end_configuration_manager.pop_end_reelstrips_to_display_sequence.reelstrips[i]);
-            }
-        }
-
-        internal void DisplayEndingReelStrips()
-        {
-            for (int i = 0; i < reel_strip_managers.Length; i++)
-            {
-                reel_strip_managers[i].TestDisplayEndSymbols();
             }
         }
 

@@ -356,16 +356,6 @@ public enum eEaseType
         }
 
         /// <summary>
-        /// Assumes the reels haven't spun - once the reels spin you need to re-order slots_in_reel to decend based on position of slots
-        /// </summary>
-        internal void TestDisplayEndSymbols()
-        {
-            for (int i = slots_in_reel.Length - 1; i > 0; i--)
-            {
-                slots_in_reel[i].SetDisplaySymbolTo((int)ending_symbols[i]);
-            }
-        }
-        /// <summary>
         /// Used by the matrix to set display symbols
         /// </summary>
         /// <param name="reelstrip"></param>
@@ -396,7 +386,7 @@ public enum eEaseType
             {
                 symbols_to_display.Add((Symbol)reelStripStruct.display_symbols[symbol]);
             }
-            ending_symbols = symbols_to_display.ToArray();
+            SetEndingSymbolsTo(symbols_to_display.ToArray());
             for (int slot = 1; slot < slots_decending_order.Length; slot++)
             {
                 slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.display_symbols[slot-1]);
@@ -585,6 +575,11 @@ public enum eEaseType
         private void SetEndingSymbolsTo(int[] ending_symbols)
         {
             this.ending_symbols = Array.ConvertAll(ending_symbols, value => (Symbol)value);
+        }
+
+        private void SetEndingSymbolsTo(Symbol[] ending_symbols)
+        {
+            this.ending_symbols = ending_symbols;
         }
 
         /// <summary>
