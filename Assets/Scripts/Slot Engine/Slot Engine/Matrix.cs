@@ -34,28 +34,28 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
-            if (Application.isPlaying)
-            {
-                if (GUILayout.Button("Start Test Spin"))
-                {
-                    myTarget.StartCoroutine(myTarget.spin_manager.StartSpin());
-                }
-                if (GUILayout.Button("End Test Spin"))
-                {
-                    myTarget.spin_manager.InterruptSpin();
-                }
-            }
-            else
-            {
-                if (GUILayout.Button("Generate Ending Symbols"))
-                {
-                    myTarget.end_configuration_manager.GenerateEndReelStripsConfiguration();
-                }
-                if (GUILayout.Button("Set Symbols to End Symbols"))
-                {
-                    myTarget.SetReelStripsEndConfiguration();
-                }
-            }
+            //if (Application.isPlaying)
+            //{
+            //    if (GUILayout.Button("Start Test Spin"))
+            //    {
+            //        myTarget.StartCoroutine(myTarget.spin_manager.StartSpin());
+            //    }
+            //    if (GUILayout.Button("End Test Spin"))
+            //    {
+            //        myTarget.spin_manager.InterruptSpin();
+            //    }
+            //}
+            //else
+            //{
+            //    if (GUILayout.Button("Generate Ending Symbols"))
+            //    {
+            //        myTarget.slot_machine_managers.end_configuration_manager.GenerateEndReelStripsConfiguration();
+            //    }
+            //    if (GUILayout.Button("Set Symbols to End Symbols"))
+            //    {
+            //        myTarget.SetReelStripsEndConfiguration();
+            //    }
+            //}
             base.OnInspectorGUI();
         }
     }
@@ -63,85 +63,43 @@ namespace Slot_Engine.Matrix
 
     public class Matrix : MonoBehaviour
     {
-        /**Managers needed by Slot Engine**/
-        /// <summary>
-        /// Manages the reference for the machine information manager
-        /// </summary>
-        [SerializeField]
-        internal MachineInfoManager machine_information_manager;
-        /// <summary>
-        /// handles setting the reference to end configuration manager if one is not set.
-        /// </summary>
-        internal EndConfigurationManager end_configuration_manager
+        public ManagersReferenceScript slot_machine_managers
         {
             get
             {
-                if (_end_configuration_manager == null)
-                    _end_configuration_manager = GameObject.FindObjectOfType<EndConfigurationManager>();
-                return _end_configuration_manager;
+                if (_slot_machine_managers == null)
+                    _slot_machine_managers = transform.parent.GetComponentInChildren<ManagersReferenceScript>();
+                return _slot_machine_managers;
             }
         }
+        [SerializeField]
+        internal ManagersReferenceScript _slot_machine_managers;
+
+        private ReelStripStructDisplayZones[] display_zones_per_reelstrip;
         /// <summary>
-        /// Manages Reference to End Configuration Manager
+        /// What is the size of the slot in pixels
+        /// </summary>
+        public Vector3 slot_size;
+        /// <summary>
+        /// The padding between each slot
+        /// </summary>
+        public Vector3 padding;
+        /// <summary>
+        /// The padding between each reel
+        /// </summary>
+        public Vector2 reel_slot_padding = new Vector2(0, 1); //TODO set from Matrix Generator
+        [SerializeField]
+        internal int reel_start_padding = 1;
+        internal int reel_ending_padding = 1;
+
+        /// <summary>
+        /// Controls how many slots to include in reel strip
         /// </summary>
         [SerializeField]
-        private EndConfigurationManager _end_configuration_manager;
+        internal int slots_per_strip_onSpinLoop = 50;
 
-        /// <summary>
-        /// symbols_material_manager internal get accessor - Sets symbols_material_manager reference to GetComponent<SymbolMaterialsManager>()
-        /// </summary>
-        internal SymbolMaterialsManager symbols_material_manager
-        {
-            get
-            {
-                if (_symbols_material_manager == null)
-                    _symbols_material_manager = GameObject.FindObjectOfType<SymbolMaterialsManager>();
-                return _symbols_material_manager;
-            }
-        }
-
-        internal void ReturnPositionsBasedOnPayline(ref int[] payline, out List<Vector3> out_positions)
-        {
-            out_positions = new List<Vector3>();
-            for (int i = 0; i < reel_strip_managers.Length; i++)
-            {
-                Vector3 position_cache = Vector3.zero;
-                try
-                {
-                    position_cache = reel_strip_managers[i].positions_in_path_v3[payline[i] + reel_strip_managers[i].padding_slots_top] + transform.position;
-                    position_cache = new Vector3(position_cache.x, position_cache.y, position_cache.z - 10);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning(e.Message);
-                }
-                out_positions.Add(position_cache);
-            }
-        }
-
-        /// <summary>
-        /// symbols_material_manager reference
-        /// </summary>
-        [SerializeField]
-        internal SymbolMaterialsManager _symbols_material_manager;
-        /// <summary>
-        /// paylines_manager internal get accessor - Sets paylines_manager reference to GetComponent<PaylinesManager>()
-        /// </summary>
-        internal PaylinesManager paylines_manager
-        {
-            get
-            {
-                if (_paylines_manager == null)
-                    _paylines_manager = GameObject.FindObjectOfType<PaylinesManager>();
-                return _paylines_manager;
-            }
-        }
-
-        /// <summary>
-        /// paylines_manager reference
-        /// </summary>
-        [SerializeField]
-        private PaylinesManager _paylines_manager;
+        public AnimatorOverrideController symbol_win_resolve;
+        public AnimatorOverrideController symbol_lose_resolve;
         /// <summary>
         /// Reel Strip Managers that make up the matrix - Generated with MatrixGenerator Script - Order determines reel strip spin delay and Symbol Evaluation Logic
         /// </summary>
@@ -161,24 +119,14 @@ namespace Slot_Engine.Matrix
                 return Enumerable.Reverse(reel_strip_managers).ToArray();
             }
         }
-        internal SpinManager spin_manager
-        {
-            get
-            {
-                if (_spin_manager == null)
-                    _spin_manager = GetComponent<SpinManager>();
-                return _spin_manager;
-            }
-        }
-        [SerializeField]
-        private SpinManager _spin_manager;
+        
         public string[] supported_symbols
         {
             get
             {
                 Debug.Log("Getting supported symbols");
                 List<string> output = new List<string>();
-                List<WeightedDistribution.IntDistributionItem> distributionList = weighted_distribution_symbols.Items;
+                List<WeightedDistribution.IntDistributionItem> distributionList = slot_machine_managers.symbols_weights.Items;
                 for (int i = 0; i < distributionList.Count; i++)
                 {
                     output.Add(distributionList[i].name);
@@ -186,46 +134,30 @@ namespace Slot_Engine.Matrix
                 return output.ToArray();
             }
         }
-        public Vector3[] matrix; //elements are reels value is slot per reel
-        /// <summary>
-        /// What is the size of the slot in pixels
-        /// </summary>
-        public Vector3 slot_size;
-        /// <summary>
-        /// The padding between each slot
-        /// </summary>
-        public Vector3 padding;
-        /// <summary>
-        /// The padding between each reel
-        /// </summary>
-        public Vector2 reel_slot_padding = new Vector2(0, 1); //TODO set from Matrix Generator
-        [SerializeField]
-        internal int reel_start_padding = 1;
-        internal int reel_ending_padding = 1;
-        public AnimatorStateMachineManager animator_state_machine;
-        
-        public AnimatorOverrideController symbol_win_resolve;
-        public AnimatorOverrideController symbol_lose_resolve;
+
+        internal void ReturnPositionsBasedOnPayline(ref int[] payline, out List<Vector3> out_positions)
+        {
+            out_positions = new List<Vector3>();
+            for (int i = 0; i < reel_strip_managers.Length; i++)
+            {
+                Vector3 position_cache = Vector3.zero;
+                try
+                {
+                    position_cache = reel_strip_managers[i].positions_in_path_v3[payline[i] + reel_strip_managers[i].reelstrip_info.before_display_zone_slot_objects] + transform.position;
+                    position_cache = new Vector3(position_cache.x, position_cache.y, position_cache.z - 10);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning(e.Message);
+                }
+                out_positions.Add(position_cache);
+            }
+        }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
             SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
             yield return 0;
-        }
-
-        /// <summary>
-        /// Controls the wegihted probability of symbols appearing on the reel
-        /// </summary>
-        internal WeightedDistribution.IntDistribution weighted_distribution_symbols
-        {
-            get
-            {
-                if(_weighted_distribution_symbols == null)
-                {
-                    _weighted_distribution_symbols = FindObjectOfType<WeightedDistribution.IntDistribution>();
-                }
-                return _weighted_distribution_symbols;
-            }
         }
         internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
@@ -268,9 +200,9 @@ namespace Slot_Engine.Matrix
                 }
                 else
                 {
-                    for (int slot = reel_managers[reel].padding_slots_top; slot < slots_decending_in_reel.Count; slot++)
+                    for (int slot = reel_managers[reel].reelstrip_info.before_display_zone_slot_objects; slot < slots_decending_in_reel.Count; slot++)
                     {
-                        if (slot == (winning_payline.payline.payline_configuration.payline[reel] + reel_managers[reel].padding_slots_top))
+                        if (slot == (winning_payline.payline.payline_configuration.payline[reel] + reel_managers[reel].reelstrip_info.before_display_zone_slot_objects))
                         {
                             winning_slots.Add(slots_decending_in_reel[slot]);
                             winning_symbols_added += 1;
@@ -292,17 +224,17 @@ namespace Slot_Engine.Matrix
         internal void SetSystemToPresentWin()
         {
 
-            animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
-            animator_state_machine.SetBool(supported_bools.ResolveSpin,true);
-            animator_state_machine.SetBool(supported_bools.WinRacking, true);
+            slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinResolve);
+            slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.ResolveSpin,true);
+            slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.WinRacking, true);
             SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
             SetSlotsAnimatorBoolTo(supported_bools.WinRacking, true);
         }
 
         internal void CycleWinningPaylinesMode()
         {
-            paylines_manager.PlayCycleWins();
-            animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+            slot_machine_managers.paylines_manager.PlayCycleWins();
+            slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinResolve);
         }
 
         internal async void SetTriggersByState(States state)
@@ -320,7 +252,7 @@ namespace Slot_Engine.Matrix
                 case States.Idle_Intro:
                     //Reset all Triggers and bools and set state for slots to idle idle
                     //SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
-                    //animator_state_machine.SetTrigger(supported_triggers.SpinResolve);
+                    //slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinResolve);
                     break;
                 case States.Idle_Idle:
                     PrepareSlotMachineToSpin();
@@ -392,58 +324,112 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        [SerializeField]
-        private WeightedDistribution.IntDistribution _weighted_distribution_symbols;
-
         /// <summary>
-        /// Controls how many slots to include in reel strip
+        /// Sets the reelstrips info for the matrix
         /// </summary>
-        [SerializeField]
-        internal int slots_per_strip_onSpinLoop = 50;
-        [SerializeField]
-        internal RackingManager racking_manager;
-
-        //TODO - Enable offset from 0,0,0
-        public Task GenerateMatrix(Vector3[] matrix, Vector3 slot_size, Vector3 padding)
+        /// <param name="before_display_zone_objects_per_reel">number of display slot objects to generate before the display zone</param>
+        /// <param name="display_zones_per_reel">The display zone breakdown per reel</param>
+        /// <param name="after_display_zone_empty_positions_per_reel">The empty positions after each display zone to allow spin off</param>
+        /// <param name="slot_size">Size of the slot prefab instantiated in each reel_strip</param>
+        /// <returns></returns>
+        public Task SetMatrixReelStripsInfo(int[] before_display_zone_objects_per_reel, ReelStripStructDisplayZones[] display_zones_per_reel, int[] after_display_zone_empty_positions_per_reel, Vector3 slot_size)
         {
-            this.matrix = matrix;
-            this.slot_size = slot_size;
-            this.padding = padding;
-            GenerateReels(matrix);
+            //Build reelstrip info 
+            ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel);
+
+            SetSpinDirectionForReelStrip(ref reelstrips_configuration, Vector3.down);
+
+            //Set Matrix Settings first then update the reel configuration 
+            SetMatrixSettings(slot_size);
+            UpdateReelsAndReelStripsSlotsPerReel(reelstrips_configuration);
+            //TODO Update Slot Size
             return Task.CompletedTask;
         }
-
-        private void GenerateReels(Vector3[] matrix)
+        /// <summary>
+        /// Sets the spin direction for the reelstrip
+        /// </summary>
+        /// <param name="reelstrips_configuration">reference reelstrip configuration to set direction</param>
+        /// <param name="direction">Direction to spin in</param>
+        private void SetSpinDirectionForReelStrip(ref ReelStripsStruct reelstrips_configuration, Vector3 direction)
         {
-            List<ReelStripManager> reels_generated = new List<ReelStripManager>();
-            if (reel_strip_managers == null)
-                reel_strip_managers = new ReelStripManager[0];
-            reels_generated.AddRange(reel_strip_managers);
-            bool add_subtract_reels = reels_generated.Count < matrix.Length ? true:false;
+            for (int reelstrip = 0; reelstrip < reelstrips_configuration.reelstrips.Length; reelstrip++)
+            {
+                reelstrips_configuration.reelstrips[reelstrip].SetSpinDirectionTo(direction);
+            }
+        }
+
+        private void SetMatrixSettings(Vector3 slot_size)
+        {
+            SetSlotSize(slot_size);
+            //TODO padding offset
+        }
+
+        private void SetSlotSize(Vector3 slot_size)
+        {
+            this.slot_size = slot_size;
+        }
+
+        /// <summary>
+        /// Anytime this is called - the end_configuration, paylines managers need to update.
+        /// </summary>
+        /// <param name="slots_per_reelstrip"></param>
+        private void UpdateReelsAndReelStripsSlotsPerReel(ReelStripsStruct reelstrips_configuration)
+        {
+            List<ReelStripManager> reelstrip_managers = FindReelstripManagers();
+            SetReelStripManagersTo(reelstrips_configuration.reelstrips.Length, ref reelstrip_managers);
+
+            //Ensure reels have slots
+            for (int i = 0; i < reelstrips_configuration.reelstrips.Length; i++)
+            {
+                reelstrip_managers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
+            }
+            reel_strip_managers = reelstrip_managers.ToArray();
+        }
+        /// <summary>
+        /// Generate or remove reelstrip objects based on number of reels set
+        /// </summary>
+        /// <param name="number_of_reels">Reels in Configuration</param>
+        /// <param name="reelstrip_managers">reference var to cached reelstrip_managers</param>
+        private void SetReelStripManagersTo(int number_of_reels, ref List<ReelStripManager> reelstrip_managers)
+        {
+            //See whether we need to make more or subtract some 
+            bool add_subtract_reels = reelstrip_managers.Count < number_of_reels ? true : false;
+            //First we are going to ensure the amount of reels are the correct amount - then we are going to initialize the amount of slots per reel
+
             //If current reels generated are > or < matrix.length then need to adjust accordingly
             //Ensure enough reels are on the board then ensure all reels have slots
-            for (int i = add_subtract_reels ? reels_generated.Count : reels_generated.Count - 1;
-                add_subtract_reels ? i < matrix.Length : i >= matrix.Length;
-                i = add_subtract_reels ? i+1: i-1)
+            for (int reel = add_subtract_reels ? reelstrip_managers.Count : reelstrip_managers.Count - 1;
+                add_subtract_reels ? reel < number_of_reels : reel >= number_of_reels;
+                reel = add_subtract_reels ? reel + 1 : reel - 1)
             {
-                if(add_subtract_reels)
+                if (add_subtract_reels)
                 {
-                    reels_generated.Add(GenerateReel(i));
-                    reels_generated[i].InitializeSlotsInReel(matrix[i], this, reel_ending_padding);
+                    reelstrip_managers.Add(GenerateReel(reel));
                 }
                 else
                 {
-                    if(reels_generated[i] != null)
-                        Destroy(reels_generated[i].gameObject);
-                    reels_generated.RemoveAt(i);
+                    if (reelstrip_managers[reel] != null)
+                        Destroy(reelstrip_managers[reel].gameObject);
+                    reelstrip_managers.RemoveAt(reel);
                 }
             }
-            //Ensure reels have slots
-            for (int i = 0; i < reels_generated.Count; i++)
+        }
+
+        private List<ReelStripManager> FindReelstripManagers()
+        {
+            //Initialize reelstrips managers
+            List<ReelStripManager> reelstrip_managers = new List<ReelStripManager>();
+            if (reel_strip_managers == null)
             {
-                reels_generated[i].InitializeSlotsInReel(matrix[i], this, reel_ending_padding);
+                ReelStripManager[] reelstrip_managers_intiialzied = transform.GetComponentsInChildren<ReelStripManager>(true);
+                if (reelstrip_managers_intiialzied.Length < 1)
+                    reel_strip_managers = new ReelStripManager[0];
+                else
+                    reel_strip_managers = reelstrip_managers_intiialzied;
             }
-            reel_strip_managers = reels_generated.ToArray();
+            //Load any reelstrip managers that are already initialized
+            reelstrip_managers.AddRange(reel_strip_managers);
+            return reelstrip_managers;
         }
 
         internal void GenerateReelStripsToSpinThru(ref ReelStripsStruct reel_configuration)
@@ -457,41 +443,42 @@ namespace Slot_Engine.Matrix
             //Loop over each reelstrip and assign reel strip
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                if (spin_configuration_reelstrip.reelstrips[i].reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
+                if (spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
                 {
                     //Generates reelstrip based on weights
-                    spin_configuration_reelstrip.reelstrips[i].reel_spin_symbols = ReelStrip.GenerateReelStripStatic(slots_per_strip_onSpinLoop, weighted_distribution_symbols);
+                    spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols = ReelStrip.GenerateReelStripStatic(slots_per_strip_onSpinLoop, slot_machine_managers.symbols_weights);
                 }
                 //Assign reelstrip to reel
-                reel_strip_managers[i].reel_strip_to_use_for_spin = spin_configuration_reelstrip.reelstrips[i];
+                reel_strip_managers[i].reelstrip_info.SetSpinConfigurationTo(spin_configuration_reelstrip.reelstrips[i]);
             }
         }
 
         ReelStripManager GenerateReel(int reel_number)
         {
             //Create Reel Game Object
-            Type[] ReelType = new Type[1];
-            ReelType[0] = typeof(ReelStripManager);
-            //Debug.Log("Creating Reel Number " + ReelNumber);
-            ReelStripManager ReturnValue = new GameObject("Reel_" + reel_number, ReelType).GetComponent<ReelStripManager>();
-            //Debug.Log("Setting Transform and Parent Reel-" + ReelNumber);
-            //Position object in Game Space based on Reel Number Then set the parent
-            ReturnValue.transform.parent = transform;
-            ReturnValue.reel_number = reel_number;
-            return ReturnValue;
+            
+            Type[] gameobject_components = new Type[1];
+            gameobject_components[0] = typeof(ReelStripManager);
+            ReelStripManager output_reelstrip_manager = StaticUtilities.CreateGameobject<ReelStripManager>(gameobject_components,"Reel_" + reel_number, transform);
+            return output_reelstrip_manager;
         }
-
-        internal void UpdateNumberOfSlotsInReel()
+        /// <summary>
+        /// generate pre-slot objects or remove pre slot objects - generate display zone per reel - set after display zone positions and calculate the longest empty position path and apply to all reels. A reel may have slots turned on and off
+        /// </summary>
+        /// <param name="slots_per_reel"></param>
+        /// <param name="display_zones_per_reel"></param>
+        /// <param name="after_display_zone_empty_positions_per_reel"></param>
+        internal void UpdateSlotObjectsPerReel(int[] slots_per_reel, ReelStripStructDisplayZones[] display_zones_per_reel, int[] after_display_zone_empty_positions_per_reel)
         {
-            for (int i = 0; i < reel_strip_managers.Length; i++)
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
-                reel_strip_managers[i].InitializeSlotsInReel(matrix[i],this, reel_ending_padding);
+                //reel_strip_managers[reel].InitializeSlotsInReel(slots_per_reel[reel], this, reel_ending_padding);
             }
         }
 
         internal void ResetAnimatorsSlots()
         {
-            animator_state_machine.InitializeAnimator();
+            slot_machine_managers.animator_statemachine_master.InitializeAnimator();
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
@@ -505,7 +492,7 @@ namespace Slot_Engine.Matrix
         {
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
-                reel_strip_managers[i].SetEndingDisplaySymbolsTo(_end_configuration_manager.pop_end_reelstrips_to_display_sequence.reelstrips[i]);
+                reel_strip_managers[i].SetEndingDisplaySymbolsTo(_slot_machine_managers.end_configuration_manager.pop_end_reelstrips_to_display_sequence.reelstrips[i]);
             }
         }
 
@@ -531,7 +518,8 @@ namespace Slot_Engine.Matrix
 
         private SlotManager[] ReturnDisplaySlots(ref List<SlotManager> slots_decending_in_reel, ref ReelStripManager reelStripManager)
         {
-            return slots_decending_in_reel.GetRange(reelStripManager.padding_slots_top, reelStripManager.display_slots).ToArray();
+            throw new Exception("Todo refactor");
+            //return slots_decending_in_reel.GetRange(reelStripManager.reelstrip_info.display_zones, reelStripManager.reelstrip_info.display_zones.Length).ToArray();
         }
 
         internal void PlayerHasBet(float amount)
@@ -542,15 +530,15 @@ namespace Slot_Engine.Matrix
 
         internal void OffetPlayerWalletBy(float amount)
         {
-            machine_information_manager.OffsetPlayerAmountBy(amount);
+            slot_machine_managers.machine_info_manager.OffsetPlayerAmountBy(amount);
         }
 
         void Start()
         {
             //Initialize Machine and Player  Information
-            machine_information_manager.InitializeTestMachineValues(10000.0f, 0.0f, machine_information_manager.supported_bet_amounts.Length - 1, 1, 0);
-            //end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
-            ReelStripsStruct stripInitial = end_configuration_manager.pop_end_reelstrips_to_display_sequence;
+            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.supported_bet_amounts.Length - 1, 1, 0);
+            //slot_machine_managers.end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
+            ReelStripsStruct stripInitial = slot_machine_managers.end_configuration_manager.pop_end_reelstrips_to_display_sequence;
             string print_string = PrintSpinSymbols(ref stripInitial);
             Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
@@ -567,9 +555,9 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        private string ReturnDisplaySymbolsPrint(ReelStripStruct reelStripStruct)
+        private string ReturnDisplaySymbolsPrint(ReelStripStruct reelstrip_info)
         {
-            return String.Join("|",reelStripStruct.display_symbols);
+            return String.Join("|",reelstrip_info.spin_info.display_symbols);
         }
 
         void OnEnable()
@@ -606,8 +594,8 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Idle_Outro:
                     //Decrease Bet Amount
-                    PlayerHasBet(machine_information_manager.bet_amount);
-                    animator_state_machine.SetTrigger(supported_triggers.SpinStart);
+                    PlayerHasBet(slot_machine_managers.machine_info_manager.bet_amount);
+                    slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinStart);
                     break;
                 case States.Spin_Intro:
                     break;
@@ -615,7 +603,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Spin_Interrupt:
                     //Set the matrix and slots to spin interrupt
-                    animator_state_machine.SetTrigger(supported_triggers.SpinSlam);
+                    slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinSlam);
                     SetSlotsAnimatorTrigger(supported_triggers.SpinSlam);
                     StateManager.SetStateTo(States.Spin_Outro);
                     break;
@@ -624,13 +612,13 @@ namespace Slot_Engine.Matrix
                 case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
-                    racking_manager.StartRacking();
+                    slot_machine_managers.racking_manager.StartRacking();
                     CycleWinningPaylinesMode();
                     break;
                 case States.Resolve_Outro:
-                    paylines_manager.CancelCycleWins();
+                    slot_machine_managers.paylines_manager.CancelCycleWins();
                     SetSlotsAnimatorBoolTo(supported_bools.WinRacking, false);
-                    animator_state_machine.SetBool(supported_bools.WinRacking, false);
+                    slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.WinRacking, false);
                     await Task.Delay(1000);
                     StateManager.SetStateTo(States.Idle_Intro);
                     break;
@@ -698,7 +686,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetPlayerWalletTo(float to_value)
         {
-            machine_information_manager.SetPlayerWalletTo(to_value);
+            slot_machine_managers.machine_info_manager.SetPlayerWalletTo(to_value);
         }
     }
 }

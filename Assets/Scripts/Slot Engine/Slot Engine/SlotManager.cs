@@ -104,7 +104,7 @@ namespace Slot_Engine.Matrix
             //Debug.Log(String.Format("Settings {0} slot symbol to {1}",transform.name,to_symbol));
             //TODO add test cases for if to_graphic is present in directory
             //TODO Add State Dependant Graphics Loading
-            Material to_material = reel_parent.matrix.symbols_material_manager.ReturnSymbolMaterial(to_symbol);
+            Material to_material = reel_parent.matrix.slot_machine_managers.symbol_materials_manager.ReturnSymbolMaterial(to_symbol);
             SetMeshRendererMaterialTo(to_material);
         }
 
@@ -140,18 +140,18 @@ namespace Slot_Engine.Matrix
             {
                 Vector3 toPosition;
                
-                toPosition = GeneratePositionUpdateSpeed(reel_parent.reel_spin_speed_direction * reel_parent.reel_spin_speed_current);
+                toPosition = GeneratePositionUpdateSpeed(reel_parent.reelstrip_info.reel_spin_speed_direction * reel_parent.reel_spin_speed_current);
                 //Check X Y and Z and move slot to opposite
 
                 //Check if to far left or right and move
 
                 //Check if to far down or up and move
-                if (reel_parent.reel_spin_speed_direction.y < 0)
+                if (reel_parent.reelstrip_info.reel_spin_speed_direction.y < 0)
                 {
                     if (toPosition.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], true);
                 }
-                else if (reel_parent.reel_spin_speed_direction.y > 0)
+                else if (reel_parent.reelstrip_info.reel_spin_speed_direction.y > 0)
                 {
                     if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
@@ -207,9 +207,9 @@ namespace Slot_Engine.Matrix
                 if (reel_parent.change_symbol_graphic_on_spin_idle)
                 {
                     //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
-                    if (reel_parent.reel_strip_to_use_for_spin.reel_spin_symbols != null)
+                    if (reel_parent.reelstrip_info.spin_info.reel_spin_symbols != null)
                     {
-                        if (reel_parent.reel_strip_to_use_for_spin.reel_spin_symbols.Length > 0)
+                        if (reel_parent.reelstrip_info.spin_info.reel_spin_symbols.Length > 0)
                         {
                             int symbol = reel_parent.ReturnNextSymbolInStrip();
                             SetSlotGraphicTo(ReturnSymbolNameFromInt(symbol));
@@ -219,7 +219,7 @@ namespace Slot_Engine.Matrix
                     }
                     if (!symbol_set)
                     {
-                        int symbol = reel_parent.matrix.end_configuration_manager.GetRandomWeightedSymbol();
+                        int symbol = reel_parent.matrix.slot_machine_managers.end_configuration_manager.GetRandomWeightedSymbol();
                         SetSlotGraphicTo(ReturnSymbolNameFromInt(symbol));
                         SetPresentationSymbolTo(symbol);
                     }

@@ -38,6 +38,23 @@ public static class StaticUtilities
                 this.Add(keys[i], values[i]);
         }
     }
+    /// <summary>
+    /// Create a Gameobject with Components and return component from within components added
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="components_to_add">components to add to gameobject created</param>
+    /// <param name="name">Name of the Gamobject created</param>
+    /// <param name="parent">parent transform</param>
+    /// <returns>any componented added to gameobject in components_to_add[]</returns>
+    public static T CreateGameobject<T>(Type[] components_to_add,string name,Transform parent)
+    {
+        GameObject created_gameobject = new GameObject(name, components_to_add);
+        T output_component = created_gameobject.GetComponent<T>();
+        if (output_component == null)
+            DebugLogWarning("Component returned from CreateGameObject was not in list of components_to_add");
+        created_gameobject.transform.parent = parent;
+        return output_component;
+    }
 
     public static T[] RemoveAt<T>(this T[] source, int index)
     {
@@ -74,6 +91,8 @@ public static class StaticUtilities
             Array.Copy(source, index, dest, index+1, source.Length - index);
         return dest;
     }
+
+
     public static int findIndex<T>(this T[] array, T item)
     {
         return Array.IndexOf(array, item);

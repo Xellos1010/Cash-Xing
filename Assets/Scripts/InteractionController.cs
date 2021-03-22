@@ -46,7 +46,16 @@ namespace Slot_Engine.Matrix
         }
         public AnimatorStateMachineManager _StateMachineController;
         [SerializeField]
-        private Matrix matrix;
+        private Matrix matrix
+        {
+            get
+            {
+                if (_matrix == null)
+                    _matrix = transform.parent.parent.GetComponentInChildren<Matrix>();
+                return _matrix;
+            }
+        }
+        private Matrix _matrix;
         public bool can_spin_slam = false;
 
         public float distance_to_invoke_swipe_event = 50.0f;
@@ -229,12 +238,12 @@ namespace Slot_Engine.Matrix
 
         private void IncreaseBetAmount()
         {
-            matrix.machine_information_manager.IncreaseBetAmount();
+            matrix.slot_machine_managers.machine_info_manager.IncreaseBetAmount();
         }
 
         private void DecreaseBetAmount()
         {
-            matrix.machine_information_manager.DecreaseBetAmount();
+            matrix.slot_machine_managers.machine_info_manager.DecreaseBetAmount();
         }
 
         private void SetTriggerTo(supported_triggers to_trigger)

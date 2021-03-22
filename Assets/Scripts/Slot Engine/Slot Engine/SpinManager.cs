@@ -256,7 +256,7 @@ namespace Slot_Engine.Matrix
 
         private bool CheckForWin()
         {
-            return matrix.paylines_manager.winning_paylines.Length > 0 ? true : false;
+            return matrix.slot_machine_managers.paylines_manager.winning_paylines.Length > 0 ? true : false;
         }
 
         internal void InterruptSpin()
@@ -272,8 +272,8 @@ namespace Slot_Engine.Matrix
 
         internal IEnumerator SpinReels()
         {
-            ReelStripsStruct end_reel_configuration = matrix.end_configuration_manager.UseNextConfigurationInList();
-            matrix.paylines_manager.EvaluateWinningSymbols(end_reel_configuration);
+            ReelStripsStruct end_reel_configuration = matrix.slot_machine_managers.end_configuration_manager.UseNextConfigurationInList();
+            matrix.slot_machine_managers.paylines_manager.EvaluateWinningSymbols(end_reel_configuration);
             //Generate ReelStrips to cycle through if there is no reelstrip present
             if (use_reelstrips_for_spin_loop)
             {
@@ -292,7 +292,7 @@ namespace Slot_Engine.Matrix
 
         internal IEnumerator StopReels()
         {
-            ReelStripsStruct configuration_to_use = matrix.end_configuration_manager.GetCurrentConfiguration();
+            ReelStripsStruct configuration_to_use = matrix.slot_machine_managers.end_configuration_manager.GetCurrentConfiguration();
             for (int i = spin_reels_starting_forward_back ? 0 : matrix.reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
                 i = spin_reels_starting_forward_back ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1

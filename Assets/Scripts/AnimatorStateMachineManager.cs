@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 #if UNITY_EDITOR
+
 [CustomEditor(typeof(AnimatorStateMachineManager))]
 class AnimatorStateMachineManagerEditor : BoomSportsEditor
 {

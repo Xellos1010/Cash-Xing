@@ -73,7 +73,8 @@ namespace Slot_Engine.Matrix
             get
             {
                 if (_matrix == null)
-                    _matrix = GetComponent<Matrix>();
+                    //TODO hardcoded - will change
+                    _matrix = transform.parent.parent.GetComponentInChildren<Matrix>();
                 return _matrix;
             }
         }
@@ -102,6 +103,10 @@ namespace Slot_Engine.Matrix
 
         private void SetAndRemoveConfiguration(int v)
         {
+            if(v > end_reelstrips_to_display_sequence.Count)
+            {
+                GenerateMultipleEndReelStripsConfiguration(v);
+            }
             //TODO Validate Data in Reel Strip then Generate if no valid data found
             SetCurrentConfigurationTo(end_reelstrips_to_display_sequence[v]);
             end_reelstrips_to_display_sequence.RemoveAt(v);
@@ -166,7 +171,7 @@ namespace Slot_Engine.Matrix
         public int GetRandomWeightedSymbol()
         {
 #if UNITY_EDITOR
-            int output = matrix.weighted_distribution_symbols.Draw();
+            int output = matrix.slot_machine_managers.symbols_weights.Draw();
 #else
             int output = UnityEngine.Random.Range(0,((int)(Symbol.End))-2);
 #endif

@@ -11,6 +11,7 @@
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditorInternal;
 #endif
 using System;
 using System.Collections;
@@ -23,95 +24,77 @@ namespace Slot_Engine.Matrix
 
 #if UNITY_EDITOR
     [CustomEditor(typeof(MatrixGenerator))]
-    class MatrixGeneratorEditor : Editor
+    class MatrixGeneratorEditor : BoomSportsEditor
     {
+        ReorderableList display_zone_reorderable_list;
+        List<ReorderableList> display_zone_elements_reorderable_list;
         MatrixGenerator myTarget;
         SerializedProperty padding_xyz;
         SerializedProperty slot_size_xyz;
-        SerializedProperty matrix; //Vector3[] slot to generate and which direction 
+        SerializedProperty before_display_zone_objects_per_reel; //int[] amount of slots to generate before the display slots
+        SerializedProperty display_zones_per_reel; //int[] display slots to generate per reel
+        SerializedProperty after_display_zone_empty_positions_per_reel; //int[] after display zone amount of empty position slots to generate per reel
 
         SerializedProperty symbols_supported;
         SerializedProperty skin_graphics;
+        SerializedProperty connected_matrix;
 
+        //Do you want to set the individual reels before slot objects or group it together
+        bool individual_group_set_before_display_zone_objects_per_reel_elements = false;
+        //How many objects do you want?
+        int before_display_zone_group_slider_value = 1;
+        int after_display_zone_group_slider_value = 1;
         public void OnEnable()
         {
             myTarget = (MatrixGenerator)target;
             padding_xyz = serializedObject.FindProperty("matrix_padding");
             slot_size_xyz = serializedObject.FindProperty("slot_size");
-            matrix = serializedObject.FindProperty("matrix");
+            RefreshPropertiesDisplayZones();
             symbols_supported = serializedObject.FindProperty("symbols_supported");
             skin_graphics = serializedObject.FindProperty("skin_graphics");
+            connected_matrix = serializedObject.FindProperty("connected_matrix");
+        }
+
+        private void RefreshPropertiesDisplayZones()
+        {
+            display_zones_per_reel = serializedObject.FindProperty("display_zones_per_reel");
+            before_display_zone_objects_per_reel = serializedObject.FindProperty("before_display_zone_objects_per_reel");
+            after_display_zone_empty_positions_per_reel = serializedObject.FindProperty("after_display_zone_empty_positions_per_reel");
         }
 
         public override void OnInspectorGUI()
         {
-            //base.OnInspectorGUI();
+            serializedObject.Update();
             BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Commands");
-            if (GUILayout.Button("Generate Matrix"))
-            {
-                myTarget.CreateMatrix();
-            }
+            GenerateEditorHeader();
             BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Modify Matrix - Reel Size");
-            EditorGUI.BeginChangeCheck();
-            int reel_size = EditorGUILayout.IntSlider(matrix.arraySize, 0, 10);
-            if (EditorGUI.EndChangeCheck())
-            {
-                if(reel_size > matrix.arraySize)
-                {
-                    for (int x = matrix.arraySize; x <= reel_size; x++)
-                        matrix.InsertArrayElementAtIndex(x);
-                }
-                else
-                {
-                    for (int x = matrix.arraySize-1; x >= reel_size; x--)
-                        matrix.DeleteArrayElementAtIndex(x);
-                }
-                serializedObject.ApplyModifiedProperties();
-                //TODO reduce to 1 call - Update Matrix Position
-                myTarget.UpdateReelSlotPositions();
-                myTarget.UpdateSlotsInReels();
-            }
-            EditorGUILayout.LabelField("Modify Matrix - Slot Number per reel");
-            List<int[]> slots_per_reel = new List<int[]>();
-            serializedObject.ApplyModifiedProperties();
+            GenerateEditorBody();
+            BoomEditorUtilities.DrawUILine(Color.white);
+            base.OnInspectorGUI();
+        }
 
+        private void GenerateEditorBody()
+        {
+            //Reel Size Editor Menu
+            int reel_size = GenerateReelSizeEditor();
+            individual_group_set_before_display_zone_objects_per_reel_elements = EditorGUILayout.Toggle("Modify Before Slot Objects individually?",individual_group_set_before_display_zone_objects_per_reel_elements);
+            //Present slider per reel to adjust - display zones per reel - pre-display-zone slot-objects per reel - post-display-zone empty_positions at the of reel
             EditorGUI.BeginChangeCheck();
-            for (int x = 0; x < reel_size; x++)
-            {
-                BoomEditorUtilities.DrawUILine(Color.white);
-                EditorGUILayout.LabelField("Modify Matrix - Reel " + x.ToString() + " Slots per reel");
-                //TODO Select slot appropriate based on direction - hard coded for now
-                slots_per_reel.Add(new int[3] { 0, 0, 0 });
-                slots_per_reel[x][0] = EditorGUILayout.IntSlider((int)matrix.GetArrayElementAtIndex(x).vector3Value.x,0,10);
-                slots_per_reel[x][1] = EditorGUILayout.IntSlider((int)matrix.GetArrayElementAtIndex(x).vector3Value.y, 0, 10);
-                slots_per_reel[x][2] = EditorGUILayout.IntSlider((int)matrix.GetArrayElementAtIndex(x).vector3Value.z, 0, 10);
-            }
+            string subElementLabel = individual_group_set_before_display_zone_objects_per_reel_elements ? "Reel {0} before display slots objects" : "All Reel before display slots objects";
+            //Build the array to match number of reels
+            GenerateIntArrayEditorForSerializedProperty(ref before_display_zone_objects_per_reel,ref before_display_zone_group_slider_value,"Before display zone objects per reel", subElementLabel, before_display_zone_objects_per_reel.arraySize, 1,100);
+            subElementLabel = individual_group_set_before_display_zone_objects_per_reel_elements ? "Reel {0} after display empty slots" : "All Reel after display empty slots";
+            
+            GenerateDisplayZoneEditor(ref display_zones_per_reel);
+
+            GenerateIntArrayEditorForSerializedProperty(ref after_display_zone_empty_positions_per_reel, ref after_display_zone_group_slider_value,"After display zone positions per reel", subElementLabel, after_display_zone_empty_positions_per_reel.arraySize, 1,5);
             if (EditorGUI.EndChangeCheck())
             {
-                for (int x = 0; x < reel_size; x++)
-                {
-                    matrix.GetArrayElementAtIndex(x).vector3Value = new Vector3(slots_per_reel[x][0], slots_per_reel[x][1], slots_per_reel[x][2]);
-                }
                 serializedObject.ApplyModifiedProperties();
-                myTarget.UpdateSlotsInReels();
-
+                myTarget.UpdateSlotObjectsPerReel();
             }
             BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Modify Padding");
-            EditorGUI.BeginChangeCheck();
-            float padding_x = EditorGUILayout.Slider(padding_xyz.vector3Value.x, 0, 800);
-            float padding_y = EditorGUILayout.Slider(padding_xyz.vector3Value.y, 0, 800);
-            float padding_z = EditorGUILayout.Slider(padding_xyz.vector3Value.z, 0, 800);
-            if (EditorGUI.EndChangeCheck())
-            {
-                padding_xyz.vector3Value = new Vector3(padding_x, padding_y, padding_z);
-                serializedObject.ApplyModifiedProperties();
-                //TODO reduce to 1 call - Update Matrix Position
-                myTarget.UpdateReelSlotPositions();
-                myTarget.UpdateSlotsInReels();
-            }
+            
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Modify Slot Size");
             EditorGUI.BeginChangeCheck();
@@ -122,13 +105,244 @@ namespace Slot_Engine.Matrix
             {
                 slot_size_xyz.vector3Value = new Vector3(slot_size_x, slot_size_y, slot_size_z);
                 serializedObject.ApplyModifiedProperties();
-                myTarget.UpdateReelSlotPositions();
-                myTarget.UpdateSlotsInReels();
+                //myTarget.UpdateReelSlotPositions();
+                //myTarget.UpdateSlotObjectsPerReel();
             }
+            //EditorGUILayout.LabelField("Modify Padding");
+            //EditorGUI.BeginChangeCheck();
+            //float padding_x = EditorGUILayout.Slider(padding_xyz.vector3Value.x, 0, 800);
+            //float padding_y = EditorGUILayout.Slider(padding_xyz.vector3Value.y, 0, 800);
+            //float padding_z = EditorGUILayout.Slider(padding_xyz.vector3Value.z, 0, 800);
+            //if (EditorGUI.EndChangeCheck())
+            //{
+            //    padding_xyz.vector3Value = new Vector3(padding_x, padding_y, padding_z);
+            //    serializedObject.ApplyModifiedProperties();
+            //    //TODO reduce to 1 call - Update Matrix Position
+            //    myTarget.UpdateReelSlotPositions();
+            //    myTarget.UpdateSlotObjectsPerReel();
+            //}
+        }
+
+        private void GenerateDisplayZoneEditor(ref SerializedProperty display_zones_per_reel)
+        {
+
+            EditorGUILayout.LabelField("Display Zones per reel");
+            EditorGUILayout.PropertyField(display_zones_per_reel);
+            //display_zone_reorderable_list = new ReorderableList(serializedObject, display_zones_per_reel, draggable: true, displayHeader: true, displayAddButton: true, displayRemoveButton: true);
+            //Set up the method callback to draw our list header
+            //display_zone_reorderable_list.drawHeaderCallback = DrawHeaderCallbackDisplayZoneList;
+
+            ////Set up the method callback to draw each element in our reorderable list
+            //display_zone_reorderable_list.drawElementCallback = DrawElementCallback;
+
+            ////Set the height of each element.
+            //display_zone_reorderable_list.elementHeightCallback += ElementHeightCallback;
+
+            ////Set up the method callback to define what should happen when we add a new object to our list.
+            //display_zone_reorderable_list.onAddCallback += OnAddCallback;
+
+            //display_zone_reorderable_list.DoLayoutList();
+            //TODO enable re-orderable lists in sub elements
+            //for (int display_zone = 0; display_zone < display_zone_elements_reorderable_list.Count; display_zone++)
+            //{
+            //    display_zone_elements_reorderable_list[display_zone].DoLayoutList();
+            //}
+        }
+
+        /// <summary>
+        /// Draws the header for the reorderable list
+        /// </summary>
+        /// <param name="rect"></param>
+        private void DrawHeaderCallbackDisplayZoneList(Rect rect)
+        {
+            EditorGUI.LabelField(rect, "Display Zones Per Reel");
+        }
+
+
+        /// <summary>
+        /// This methods decides how to draw each element in the list
+        /// </summary>
+        /// <param name="rect"></param>
+        /// <param name="index"></param>
+        /// <param name="isactive"></param>
+        /// <param name="isfocused"></param>
+        private void DrawElementCallback(Rect rect, int index, bool isactive, bool isfocused) //TODO Enable configuration of display zones
+        {
+            //Get the element we want to draw from the list. The element is an array of struct data int and bool
+            SerializedProperty display_zones_element = display_zone_reorderable_list.serializedProperty.GetArrayElementAtIndex(index);
+
+            //We get the name property of our element so we can display this in our list.
+            SerializedProperty reelstrip_display_zones = display_zones_element.FindPropertyRelative("reelstrip_display_zones");
+            int properties_in_struct = 2; //This is hard coded
+            rect.y += 2 * (reelstrip_display_zones.arraySize * properties_in_struct);
+            //Generate a reorderable list per element
+            string elementTitle = String.Format("ReelStrip {0} Display Zones",index);
+
+            //Need to display each sub-element
+            for (int display_zone = 0; display_zone < reelstrip_display_zones.arraySize; display_zone++)
+            {
+                SerializedProperty display_zone_element = reelstrip_display_zones.GetArrayElementAtIndex(display_zone);
+                EditorGUILayout.LabelField(String.Format("ReelStrip {0} Display Zone {1}", index,display_zone));
+                //Draw an int Slider for slots and a bool toggle for active or in-active
+                SerializedProperty slots_in_reelstrip_zone = display_zone_element.FindPropertyRelative("slots_in_reelstrip_zone");
+                SerializedProperty active_payline_evaluations = display_zone_element.FindPropertyRelative("active_payline_evaluations");
+                slots_in_reelstrip_zone.intValue = EditorGUILayout.IntSlider("ReelStrip-Zone_length",slots_in_reelstrip_zone.intValue, 0, 50);
+                active_payline_evaluations.boolValue = EditorGUILayout.Toggle("Active Payline Evaluation Zone?", active_payline_evaluations.boolValue);
+            }
+        }
+
+
+        /// <summary>
+        /// Calculates the height of a single element in the list.
+        /// This is extremely useful when displaying list-items with nested data.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        private float ElementHeightCallback(int index)
+        {
+            //Gets the height of the element. This also accounts for properties that can be expanded, like structs.
+            float propertyHeight =
+                EditorGUI.GetPropertyHeight(display_zone_reorderable_list.serializedProperty.GetArrayElementAtIndex(index), true);
+
+            float spacing = EditorGUIUtility.singleLineHeight / 2;
+
+            return propertyHeight + spacing;
+        }
+
+        /// <summary>
+        /// Defines how a new list element should be created and added to our list.
+        /// </summary>
+        /// <param name="list"></param>
+        private void OnAddCallback(ReorderableList list)
+        {
+            var index = list.serializedProperty.arraySize;
+            list.serializedProperty.arraySize++;
+            list.index = index;
+            var element = list.serializedProperty.GetArrayElementAtIndex(index);
+        }
+
+        private void GenerateIntArrayEditorForSerializedProperty(ref SerializedProperty int_array_serialized_property, ref int int_reference, string header_label, string array_element_label, int array_size,int slider_minimum, int slider_maximum)
+        {
+            //Draw divider and 
             BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField(header_label);
+            //Check for the array length of slots per reel and reel
+            if (individual_group_set_before_display_zone_objects_per_reel_elements)
+            {
+                for (int element = 0; element < array_size; element++)
+                {
+                    //Draw divider and 
+                    BoomEditorUtilities.DrawUILine(Color.white);
+                    EditorGUILayout.LabelField(String.Format(array_element_label, element));
+                    int_array_serialized_property.GetArrayElementAtIndex(element).intValue = EditorGUILayout.IntSlider(int_array_serialized_property.GetArrayElementAtIndex(element).intValue, slider_minimum, slider_maximum);
+                }
+            }
+            else
+            {
+                EditorGUI.BeginChangeCheck();
+                int_reference = EditorGUILayout.IntSlider(array_element_label,int_reference, 1,100);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    int_array_serialized_property.ClearArray();
+                    int_array_serialized_property.arraySize = array_size;
+                    for (int element = 0; element < array_size; element++)
+                    {
+                        int_array_serialized_property.GetArrayElementAtIndex(element).intValue = before_display_zone_group_slider_value;
+                    }
+                    serializedObject.ApplyModifiedProperties();
+                }
+            }
+        }
+
+        private int GenerateReelSizeEditor()
+        {
+            EditorGUILayout.LabelField("Modify Matrix - Reel Size");
+            EditorGUI.BeginChangeCheck();
+            int reel_size = EditorGUILayout.IntSlider(this.display_zones_per_reel.arraySize, 0, 20);
+            if (EditorGUI.EndChangeCheck())
+            {
+                myTarget.SetReelSizeTo(reel_size);
+                serializedObject.Update();
+                RefreshPropertiesDisplayZones();
+            }
+
+            return reel_size;
+        }
+
+        private void GenerateEditorHeader()
+        {
+            if (myTarget.transform.childCount < 1)
+            {
+                EditorGUILayout.LabelField("Commands");
+                //Display zones, Slot Size, Slot Padding and all the managers need to be initialized
+                if (GUILayout.Button("Generate Matrix From Current Configuration"))
+                {
+                    //Will need to generate managers and all UI tools
+                    myTarget.CreateMatrix();
+                }
+            }
+            else
+            {
+                if (connected_matrix.objectReferenceValue == null && myTarget.transform.GetComponentInChildren<Matrix>())
+                {
+                    EditorGUILayout.LabelField("Commands");
+                    if (GUILayout.Button("Connect matrix generator to child matrix"))
+                    {
+                        myTarget.ConnectMatrixToChild();
+                        serializedObject.Update();
+                    }
+                }
+                else if (connected_matrix.objectReferenceValue == null && !myTarget.transform.GetComponentInChildren<Matrix>())
+                {
+                    EditorGUILayout.LabelField("Child gameobject must have matrix component");
+                    if (GUILayout.Button("Generate Matrix From Current Configuration"))
+                    {
+                        //Will need to generate managers and all UI tools
+                        myTarget.CreateMatrix();
+                    }
+                }
+                else if (connected_matrix.objectReferenceValue != null)
+                {
+                    EditorGUILayout.LabelField("Modifying below will modify Connected Matrix");
+                }
+            }
         }
     }
 #endif
+    //This is to be able to have multiple display zone's that share the same reel_strip_spin_loop_symbols generated by end_configuration_generater
+    //Theory - You have multiple ReelStripStructDisplayZone's - if you have multiple display_slots_per_reel then you have so many active matrix zones
+    //for a pyramid stacked matrix (3) 2x5 matrix's which are connected top->bottom 1-> 2 is connected at reel 1,3,5. 2 -> 3 is connected at reel 2,4. 3 has an extra slot in reel 3.
+    //So you would need a DisplayZone[] that would be 2x2x2x2x2, 1x0x1x0x1, 2x2x2x2x2, 0x1x0x1x0, 2x2x2x2x2, 0x0x1x0x0
+    //A position would have to be made in every reel strip until the lowest point atleast, 9 positions in path for display area - 1 position at end - 10 total 
+    /// <summary>
+    /// A stackable display zone active display zones will be affected by payline evaluations. in-active zones will be omitted from paylien evaluations
+    /// </summary>
+    [Serializable]
+    public struct ReelStripStructDisplayZones
+    {
+        /// <summary>
+        /// This is where you can stack display zones that are affected or not affected by payline evaluations
+        /// </summary>
+        [SerializeField]
+        public ReelStripStructDisplayZone[] reelstrip_display_zones; //regular 3x5 matrix needs 3 slots in reelstrip and active_payline_evalutation = true
+    }
+    /// <summary>
+    /// Controls a display zone for a reel strip
+    /// </summary>
+    [Serializable]
+    public struct ReelStripStructDisplayZone
+    {
+        /// <summary>
+        /// The Reel strip slot amount
+        /// </summary>
+        [SerializeField]
+        public int slots_in_reelstrip_zone;
+        /// <summary>
+        /// Is this an active zone for payline evaluations?
+        /// </summary>
+        [SerializeField]
+        public bool active_payline_evaluations;
+    }
 
     public class MatrixGenerator : MonoBehaviour
     {
@@ -164,28 +378,47 @@ namespace Slot_Engine.Matrix
         /// list of supported symbols. TODO Display editor which allows you to add based on enum dropdown select and add. Do not display symbols in dropdown already in list
         /// </summary>
         public string[] symbols_supported;
-
+        /// <summary>
+        /// The size of the slot prefabs in the matrix
+        /// </summary>
         public Vector3 slot_size;
-        public Vector3 matrix_padding = new Vector3(10, 10, 0);
-        public Vector3 matrix_anchor_top_left;
-        public Vector3[] matrix; // number of elements is number of reels - Vector3 is slot direction and how many
+        /// <summary>
+        /// 
+        /// </summary>
+        public Vector3 matrix_object_position_worldspace;
+        /// <summary>
+        /// the amount of slots to display before reel
+        /// </summary>
+        public int[] before_display_zone_objects_per_reel;
+        /// <summary>
+        /// Display Zones per reel. stacked 2x5 inverted pyramid matrix requires ReelStripStructDisplayZone[5]{2x1x2x0x2x0,2x0x2x1x2x0,2x1x2x0x2x1,2x0x2x1x2x0, 2x1x2x0x2x0}
+        /// </summary>
+        public ReelStripStructDisplayZones[] display_zones_per_reel;
+        /// <summary>
+        /// Empty position slots after the display slots - please set to 1 atleast
+        /// </summary>
+        public int[] after_display_zone_empty_positions_per_reel;
 
         /// <summary>
         /// Used to cushion the top and bottom of the reel
         /// </summary>
-        [Range(1, 5)]
-        public int slot_spin_paddingSlots = 1;
+        public int reel_start_padding_slot_objects = 1;
         //********
 
+        //Associate the instance that gets updated with Generate Matrix
+        public Matrix connected_matrix;
 
-        public async void CreateMatrix() //Main matric Create Function
+        public async void CreateMatrix() //Main matrix Create Function
         {
-            Matrix generated_matrix = transform.childCount > 0 ?
-                GetComponentInChildren<Matrix>() :
-                GenerateMatrixObject();
-            await generated_matrix.GenerateMatrix(matrix,slot_size,matrix_padding); // TODO add ability to insert offset from anchor
+            //Check for a child object. If there is then connect and modify
+            connected_matrix = GenerateMatrixObject();
+            //
+            await connected_matrix.SetMatrixReelStripsInfo(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel, slot_size); // TODO add ability to insert offset from anchor
         }
-
+        /// <summary>
+        /// Generates a new matrix object child with reelstrips configured
+        /// </summary>
+        /// <returns>matrix reference for connected matrix</returns>
         private Matrix GenerateMatrixObject()
         {
             Type[] MatrixComponents = new Type[1];
@@ -207,12 +440,112 @@ namespace Slot_Engine.Matrix
                     matrixInUse.transform.GetChild(i).GetComponent<ReelStripManager>().SetSlotPositionToStart();
                 }
         }
-
-        internal void UpdateSlotsInReels()
+        /// <summary>
+        /// Updates the slot objects and empty positions in path on reels
+        /// </summary>
+        internal void UpdateSlotObjectsPerReel()
         {
-            Matrix matrixInUse = FindObjectOfType<Matrix>();
-            if(matrixInUse != null)
-                matrixInUse.UpdateNumberOfSlotsInReel();
+            connected_matrix?.UpdateSlotObjectsPerReel(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel);
+        }
+
+        internal void SetReelSizeTo(int reel_size)
+        {
+            SetBeforeDisplayZonesTo(reel_size);
+            SetDisplayZonesTo(reel_size);
+            SetAfterDisplayZonesTo(reel_size);
+        }
+
+        private void SetAfterDisplayZonesTo(int reel_size)
+        {
+            int[] after_display_zone_empty_positions_per_reel_cache;
+            //generate enough display zones per reel
+            if (after_display_zone_empty_positions_per_reel != null)
+            {
+                after_display_zone_empty_positions_per_reel_cache = after_display_zone_empty_positions_per_reel;
+            }
+            else
+            {
+                after_display_zone_empty_positions_per_reel_cache = new int[0];
+            }
+            after_display_zone_empty_positions_per_reel = new int[reel_size];
+            for (int i = 0; i < reel_size; i++)
+            {
+                SetIntArrayAtIndex(ref after_display_zone_empty_positions_per_reel_cache, ref after_display_zone_empty_positions_per_reel, i);
+            }
+        }
+
+        private void SetBeforeDisplayZonesTo(int reel_size)
+        {
+            int[] before_display_zone_objects_per_reel_cache;
+            //generate enough display zones per reel
+            if (before_display_zone_objects_per_reel != null)
+            {
+                before_display_zone_objects_per_reel_cache = before_display_zone_objects_per_reel;
+            }
+            else
+            {
+                before_display_zone_objects_per_reel_cache = new int[0];
+            }
+            before_display_zone_objects_per_reel = new int[reel_size];
+            for (int i = 0; i < reel_size; i++)
+            {
+                SetIntArrayAtIndex(ref before_display_zone_objects_per_reel_cache, ref before_display_zone_objects_per_reel, i);
+            }
+        }
+
+        private void SetDisplayZonesTo(int reel_size)
+        {
+            ReelStripStructDisplayZones[] display_zone_cache;
+            //generate enough display zones per reel
+            if (display_zones_per_reel != null)
+            {
+                display_zone_cache = display_zones_per_reel;
+            }
+            else
+            {
+                display_zone_cache = new ReelStripStructDisplayZones[0];
+            }
+            display_zones_per_reel = new ReelStripStructDisplayZones[reel_size];
+            for (int i = 0; i < reel_size; i++)
+            {
+                SetDisplayZoneAtIndex(ref display_zone_cache, i);
+            }
+        }
+
+        private void SetIntArrayAtIndex(ref int[] int_array_cache,ref int[] int_array, int reel_size)
+        {
+            for (int i = 0; i < reel_size; i++)
+            {
+                if (i < int_array_cache.Length)
+                    int_array[i] = int_array_cache[i];
+                else
+                    int_array[i] = 0;
+                //SetDisplayZoneAtIndex(ref display_zone_cache, i);
+            }
+        }
+
+        private void SetDisplayZoneAtIndex(ref ReelStripStructDisplayZones[] display_zone_cache, int index)
+        {
+            if (index < display_zone_cache.Length)
+                display_zones_per_reel[index] = display_zone_cache[index];
+            else
+                display_zones_per_reel[index] = new ReelStripStructDisplayZones();
+        }
+
+        internal void ConnectMatrixToChild()
+        {
+            //Connect Matrix Child
+            connected_matrix = GetComponentInChildren<Matrix>();
+            //Get all reels slots per reel and pre-populate the reelstrip config structs
+            InitializeReelsFromConnectedMatrix();
+        }
+
+        private void InitializeReelsFromConnectedMatrix()
+        {
+            for (int i = 0; i < connected_matrix.reel_strip_managers.Length; i++)
+            {
+                
+            }
         }
         //******************
     }

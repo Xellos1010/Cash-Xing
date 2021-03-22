@@ -219,7 +219,7 @@ namespace Slot_Engine.Matrix
             float output = 0;
             for (int i = 0; i < winning_paylines.Length; i++)
             {
-                output += winning_paylines[i].GetTotalWin(matrix.weighted_distribution_symbols, matrix);
+                output += winning_paylines[i].GetTotalWin(matrix.slot_machine_managers.symbols_weights, matrix);
             }
             return output;
         }
@@ -287,7 +287,7 @@ namespace Slot_Engine.Matrix
         }
         public async void EvaluateWinningSymbolsFromCurrentConfiguration()
         {
-            await EvaluateWinningSymbols(matrix.end_configuration_manager.current_reelstrip_configuration);
+            await EvaluateWinningSymbols(matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration);
             paylines_evaluated = true;
         }
 
@@ -296,7 +296,7 @@ namespace Slot_Engine.Matrix
             int[][] symbols_configuration = new int[ending_reelstrips.reelstrips.Length][];
             for (int reel = 0; reel < ending_reelstrips.reelstrips.Length; reel++)
             {
-                symbols_configuration[reel] = ending_reelstrips.reelstrips[reel].display_symbols;
+                symbols_configuration[reel] = ending_reelstrips.reelstrips[reel].spin_info.display_symbols;
             }
             EvaluateWinningSymbols(symbols_configuration); //TODO Determine if Bonus or Special symbols were triggered
             return Task.CompletedTask;

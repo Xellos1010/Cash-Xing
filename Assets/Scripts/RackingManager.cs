@@ -32,7 +32,17 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private UITextManager ui_text_manager;
         [SerializeField]
-        private Matrix matrix;
+        private Matrix matrix
+        {
+            get
+            {
+                if (_matrix == null)
+                    _matrix = GameObject.FindObjectOfType<Matrix>();
+                return _matrix;
+            }
+        }
+        private Matrix _matrix;
+
         public bool is_racking
         {
             get
@@ -55,6 +65,8 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private bool set_instantly = true;
         public float credit_rack_speed;
+
+        public 
 
         //Store amount to increase credits
         //Credit Rack Speed
@@ -150,7 +162,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void StartRacking()
         {
-            SetCreditAmountToRack(matrix.paylines_manager.GetTotalWinAmount());
+            SetCreditAmountToRack(matrix.slot_machine_managers.paylines_manager.GetTotalWinAmount());
         }
         /// <summary>
         /// Set the total amount to rack
@@ -161,7 +173,7 @@ namespace Slot_Engine.Matrix
             Debug.Log(String.Format("Setting Credit amount to rack to {0}",win_amount));
             if(set_instantly)
             {
-                Setplayer_walletTo(matrix.machine_information_manager.player_wallet + win_amount);
+                Setplayer_walletTo(matrix.slot_machine_managers.machine_info_manager.player_wallet + win_amount);
             }
             else
             {
@@ -200,7 +212,7 @@ namespace Slot_Engine.Matrix
         private void UpdateCreditRackingRemaining(float amount_to_rack)
         {
             bank_rack_remaining -= amount_to_rack;
-            Setplayer_walletTo(matrix.machine_information_manager.player_wallet + amount_to_rack);
+            Setplayer_walletTo(matrix.slot_machine_managers.machine_info_manager.player_wallet + amount_to_rack);
         }
 
         /// <summary>
