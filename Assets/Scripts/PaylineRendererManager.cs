@@ -130,24 +130,38 @@ namespace Slot_Engine.Matrix
             int line_position_index = 0;
             int winning_symbols_set = 0;
             List<Vector3> linePositionsToUse;
-            for (int i = 0;i < linePositions.Count -1;i++)
+            for (int i = 0; i < linePositions.Count - 1; i++)
             {
+                Debug.Log("Setting Line positions");
+                linePositionsToUse = new List<Vector3>();
                 try
 
                 {
-                    linePositionsToUse = new List<Vector3>();
                     line_position_index = ReturnIndexFirstLastFromList(payline_to_show.left_right, i, linePositions.Count);
-                    linePositionsToUse.Add(linePositions[line_position_index]);
-                    linePositionsToUse.Add(linePositions[payline_to_show.left_right ? line_position_index + 1 : line_position_index - 1]);
-                    //Set line renderer either highlighting left to right or right to left
-                    SetLineRendererPositions(payline_to_show.left_right ?
-                        linePositions.GetRange(i, 2) : linePositions.GetRange(i - 1, 2), 
-                        ref payline_renderers[i]);
+                    if (line_position_index + 1 >= linePositions.Count && payline_to_show.left_right)
+                    {
+                        Debug.Log(String.Format("Error here. cant get beyond positions of reel. linePositions.Count = {0}", linePositions.Count));
+                    }
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError(String.Format("Setting LineRenderer Positions failed to get range of linePositions[{0}] error message is outside of range. linePositions.Length = {1}. exception message = {2}",i,linePositions.Count.ToString(),e.Message));
+                    Debug.LogError(String.Format("Setting LineRenderer Positions failed to get range of linePositions[{0}] error message is outside of range. linePositions.Length = {1}. exception message = {2}", line_position_index, linePositions.Count.ToString(), e.Message));
                 }
+                linePositionsToUse.Add(linePositions[line_position_index]);
+                if (line_position_index + 1 < linePositions.Count)
+                    linePositionsToUse.Add(linePositions[payline_to_show.left_right ? line_position_index + 1 : line_position_index - 1]);
+                else
+                {
+                    //Temporary Fix
+                    //Debug.Log("Temp Fix");
+                    if (!payline_to_show.left_right)
+                        linePositionsToUse.Insert(0, linePositions[line_position_index - 1]);
+                }
+                Debug.Log(String.Format("Showing payline {0}, configuration = {1}", payline_to_show.left_right ? "Left" : "Right", payline_to_show.payline.PrintConfiguration()));
+                //Set line renderer either highlighting left to right or right to left
+                SetLineRendererPositions(linePositionsToUse, ref payline_renderers[i]);
+            
+                
                 payline_renderer_index_to_set = i;
                 if (i >= payline_renderers.Length)
                 {

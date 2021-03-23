@@ -2,6 +2,8 @@
 //  @ Author : Evan McCall
 #if UNITY_EDITOR
 #endif
+using System;
+
 [System.Serializable]
 public class Payline
 {
@@ -11,6 +13,11 @@ public class Payline
     public Payline(int[] vs)
     {
         payline_configuration.payline = vs;
+    }
+
+    internal string PrintConfiguration()
+    {
+        return String.Join("|", payline_configuration.payline);
     }
 }
 
