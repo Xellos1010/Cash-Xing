@@ -6,13 +6,11 @@ public class WinningPayline
 {
     public Payline payline;
     public int[] winning_symbols;
-    public bool left_right; //true for left to right false for right to left
 
-    public WinningPayline(Payline payline, int[] winning_symbols, bool left_right)
+    public WinningPayline(Payline payline, int[] winning_symbols)
     {
         this.payline = payline;
         this.winning_symbols = winning_symbols;
-        this.left_right = left_right;
     }
     /// <summary>
     /// Calculates total win of payline then returns final value

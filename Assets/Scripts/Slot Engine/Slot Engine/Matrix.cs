@@ -135,21 +135,48 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void ReturnPositionsBasedOnPayline(ref int[] payline, out List<Vector3> out_positions)
+        internal void ReturnPositionsBasedOnPayline(ref Payline payline, out List<Vector3> out_positions)
         {
             out_positions = new List<Vector3>();
-            for (int i = 0; i < reel_strip_managers.Length; i++)
+            int payline_positions_set = 0;
+            for (int reel = payline.left_right ? 0 : reel_strip_managers.Length-1; 
+                payline.left_right? reel < reel_strip_managers.Length : reel >= 0; 
+                reel += payline.left_right? 1:-1)
             {
-                Vector3 position_cache = Vector3.zero;
+                Vector3 payline_posiiton_on_reel = Vector3.zero;
                 try
                 {
-                    position_cache = reel_strip_managers[i].positions_in_path_v3[payline[i] + reel_strip_managers[i].reelstrip_info.before_display_zone_slot_objects] + transform.position;
-                    position_cache = new Vector3(position_cache.x, position_cache.y, position_cache.z - 10);
-                    out_positions.Add(position_cache);
+                    if (payline_positions_set < payline.payline_configuration.payline.Length)
+                    { 
+                        payline_posiiton_on_reel = ReturnPositionOnReel(ref reel_strip_managers[reel], payline.payline_configuration.payline[payline_positions_set]);
+                        payline_positions_set += 1;
+                        out_positions.Add(payline_posiiton_on_reel);
+                    }
                 }
                 catch (Exception e)
                 {
                     Debug.LogWarning(e.Message);
+                }
+            }
+        }
+
+        private Vector3 ReturnPositionOnReel(ref ReelStripManager reel, int slot_in_reel)
+        {
+            List<SlotManager> reel_slots = reel.GetSlotsDecending();
+            int start_display_area = reel.reelstrip_info.before_display_zone_slot_objects;
+            if(start_display_area > reel_slots.Count)
+            {
+                Debug.Log("start_display_area > reel_slots.Count");
+                return Vector3.zero;
+            }
+            else
+            {
+                if (start_display_area + slot_in_reel < reel_slots.Count)
+                    return reel_slots[start_display_area + slot_in_reel].transform.position + (Vector3.back * 10);
+                else
+                {
+                    Debug.Log("start_display_area + slot_in_reel < reel_slots.Count");
+                    return Vector3.zero;
                 }
             }
         }
@@ -186,35 +213,43 @@ namespace Slot_Engine.Matrix
         {
             winning_slots = new List<SlotManager>();
             losing_slots = new List<SlotManager>();
-            //Implement check left right
+            //Iterate over each reel and get the winning slot
+
             int winning_symbols_added = 0;
-            for (int reel = winning_payline.left_right ? 0 : reel_managers.Length-1;
-                winning_payline.left_right ? reel < reel_managers.Length: reel >= 0; 
-                reel += winning_payline.left_right ? 1 : -1)
+            bool winning_slot_set = false;
+            for (int reel = winning_payline.payline.left_right ? 0 : reel_managers.Length - 1;
+                winning_payline.payline.left_right ? reel < reel_managers.Length : reel >= 0;
+                reel += winning_payline.payline.left_right ? 1 : -1)
             {
                 List<SlotManager> slots_decending_in_reel = reel_managers[reel].GetSlotsDecending();
-                if (winning_symbols_added >= winning_payline.winning_symbols.Length)
+                int first_display_slot = reel_managers[reel].reelstrip_info.before_display_zone_slot_objects;
+                Debug.Log(String.Format("first_display_slot for reel {0} = {1}", reel, first_display_slot));
+                for (int slot = first_display_slot; slot < slots_decending_in_reel.Count; slot++)
                 {
-                    //to_controller = symbol_lose_resolve;
-                    losing_slots.AddRange(slots_decending_in_reel);
-                }
-                else
-                {
-                    for (int slot = reel_managers[reel].reelstrip_info.before_display_zone_slot_objects; slot < slots_decending_in_reel.Count; slot++)
+                    if (winning_symbols_added < winning_payline.payline.payline_configuration.payline.Length && !winning_slot_set)
                     {
-                        if (slot == (winning_payline.payline.payline_configuration.payline[reel] + reel_managers[reel].reelstrip_info.before_display_zone_slot_objects))
+                        int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].reelstrip_info.before_display_zone_slot_objects;
+                        if (slot == winning_slot)
                         {
+                            Debug.Log(String.Format("Adding Winning Symbol on reel {0} slot {1}",reel, slot));
                             winning_slots.Add(slots_decending_in_reel[slot]);
                             winning_symbols_added += 1;
+                            winning_slot_set = true;
                         }
                         else
                         {
                             losing_slots.Add(slots_decending_in_reel[slot]);
                         }
+                    }
+                    else
+                    {
+                        losing_slots.Add(slots_decending_in_reel[slot]);
+                    }
                 }
-            }
+                winning_slot_set = false;
             }
         }
+        
         internal void SlamLoopingPaylines()
         {
             StateManager.SetStateTo(States.Resolve_Outro);
@@ -223,7 +258,6 @@ namespace Slot_Engine.Matrix
 
         internal void SetSystemToPresentWin()
         {
-
             slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinResolve);
             slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.ResolveSpin,true);
             slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.WinRacking, true);

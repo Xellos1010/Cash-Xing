@@ -186,29 +186,30 @@ namespace Slot_Engine.Matrix
         public Task cycle_paylines_task;
         internal void SetPaylinesFromFile()
         {
-            //Find File - Parse File - Fill Array of int[]
-            TextAsset paylines = Resources.Load<TextAsset>("Data/99paylines_m3x5");
-            Debug.Log(paylines.text);
-            List<int> paylineListRaw = new List<int>();
-            List<Payline> paylineListOutput = new List<Payline>();
+            throw new Exception("Obsolete - use dynamic paylines");
+            ////Find File - Parse File - Fill Array of int[]
+            //TextAsset paylines = Resources.Load<TextAsset>("Data/99paylines_m3x5");
+            //Debug.Log(paylines.text);
+            //List<int> paylineListRaw = new List<int>();
+            //List<Payline> paylineListOutput = new List<Payline>();
 
-            for (int i = 0; i < paylines.text.Length; i++)
-            {
-                if (Char.IsDigit(paylines.text[i]))
-                {
-                    Debug.Log(string.Format("Char {0} is {1}", i, Char.GetNumericValue(paylines.text[i])));
-                    paylineListRaw.Add((int)Char.GetNumericValue(paylines.text[i]));
-                    if (paylineListRaw.Count == 5)
-                    {
+            //for (int i = 0; i < paylines.text.Length; i++)
+            //{
+            //    if (Char.IsDigit(paylines.text[i]))
+            //    {
+            //        Debug.Log(string.Format("Char {0} is {1}", i, Char.GetNumericValue(paylines.text[i])));
+            //        paylineListRaw.Add((int)Char.GetNumericValue(paylines.text[i]));
+            //        if (paylineListRaw.Count == 5)
+            //        {
 
-                        paylineListOutput.Add(new Payline(paylineListRaw.ToArray()));
-                        Debug.Log(paylineListRaw.ToArray().ToString());
-                        paylineListRaw.Clear();
-                    }
-                }
-            }
-            Debug.Log(paylineListOutput.ToArray().ToString());
-            paylines_supported_from_file = paylineListOutput.ToArray();
+            //            paylineListOutput.Add(new Payline(paylineListRaw.ToArray()));
+            //            Debug.Log(paylineListRaw.ToArray().ToString());
+            //            paylineListRaw.Clear();
+            //        }
+            //    }
+            //}
+            //Debug.Log(paylineListOutput.ToArray().ToString());
+            //paylines_supported_from_file = paylineListOutput.ToArray();
         }
 
         /// <summary>
@@ -305,29 +306,11 @@ namespace Slot_Engine.Matrix
         public Task EvaluateWinningSymbols(int[][] symbols_configuration)
         {
             //Initialize variabled needed for caching
-            List<WinningPayline> payline_won = new List<WinningPayline>();
-            List<int> symbols_in_row = new List<int>();
             List<int> matching_symbols_list;
             int primary_symbol_index;//index for machine_symbols_list with the symbol to check for in the payline.
             winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration);
-
-            //Iterate through each payline and check for a win 
-            //for (int payline = active_payline_range_lower; payline < active_payline_range_upper; payline++)
-            //{
-            //    //Gather raw symbols in row
-            //    GetSymbolsOnPayline(payline, ref symbols_configuration, out symbols_in_row);
-
-            //    //Initialize variabled needed for checking symbol matches and direction
-            //    InitializeMachingSymbolsVars(0, symbols_in_row[0], out matching_symbols_list, out primary_symbol_index);
-            //    CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
-            //    //Time to check right to left
-            //    InitializeMachingSymbolsVars(symbols_in_row.Count - 1, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
-            //    CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
-            //}
-            if (payline_won.Count > 0)
+            if (winning_paylines.Length > 0)
             {
-                winning_paylines = payline_won.ToArray();
-                //TODO Remove hard coded reference - should have matrix recieve event
                 matrix.SetSystemToPresentWin();
             }
             paylines_evaluated = true;
@@ -337,14 +320,78 @@ namespace Slot_Engine.Matrix
         private WinningPayline[] CheckForWinningPaylinesDynamic(ref int[][] symbols_configuration)
         {
             List<WinningPayline> output_raw = new List<WinningPayline>();
-            //output = dynamic_paylines.root_nodes[dynamic_paylines.root_nodes.Length-1].InitializeAndCheckForWinningPaylines(ref symbols_configuration);
-            //for every root node check for winning payline
+            List<WinningPayline> output_filtered = new List<WinningPayline>();
             for (int root_node = 0; root_node < dynamic_paylines.root_nodes.Length; root_node++)
             {
                 output_raw.AddRange(dynamic_paylines.root_nodes[root_node].InitializeAndCheckForWinningPaylines(ref symbols_configuration));
+                FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw);
+                output_filtered.AddRange(output_raw);
+                output_raw.Clear();
             }
-            return output_raw.ToArray();
+            return output_filtered.ToArray();
 
+        }
+
+        private void FilterRawOutputForDuplicateRootNodeEntries(ref List<WinningPayline> output_filtered, ref List<WinningPayline> output_raw)
+        {
+            List<WinningPayline> duplicate_paylines = new List<WinningPayline>();
+            WinningPayline raw_payline;
+            for (int payline = 0; payline < output_raw.Count; payline++)
+            {
+                raw_payline = output_raw[payline];
+                //Compare both ends of a line win spanning the reels.length
+                if(raw_payline.winning_symbols.Length == matrix.reel_strip_managers.Length)
+                {
+                    //Check for a duplicate entry already in output filter
+                    if(IsFullLineWinInList(raw_payline,ref output_filtered))
+                    {
+                        duplicate_paylines.Add(raw_payline);
+                        //I can either keep the first one or second one at this point
+                        Debug.Log("Entry was removed ");
+                    }
+                }
+            }
+            for (int duplicate_payline = 0; duplicate_payline < duplicate_paylines.Count; duplicate_payline++)
+            {
+                output_raw.Remove(duplicate_paylines[duplicate_payline]);
+            }
+        }
+
+
+        /// <summary>
+        /// This ensures there are no winning paylines that share the same payline already. Keep highest value winning_payline 
+        /// </summary>
+        /// <param name="new_winning_payline"></param>
+        /// <param name="winning_paylines"></param>
+        private bool IsFullLineWinInList(WinningPayline new_winning_payline, ref List<WinningPayline> winning_paylines)
+        {
+            //Check which 
+            int left_root_node_new_winning_payline = new_winning_payline.payline.ReturnLeftRootNodeFromFullLineWin();
+            int right_root_node_new_winning_payline = new_winning_payline.payline.ReturnRightRootNodeFromFullLineWin();
+            int left_root_node_winning_payline = 0;
+            int right_root_node_winning_payline = 0;
+            for (int winning_payline = 0; winning_payline < winning_paylines.Count; winning_payline++)
+            {
+                left_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnLeftRootNodeFromFullLineWin();
+                right_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnRightRootNodeFromFullLineWin();
+                Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
+                if(left_root_node_winning_payline == left_root_node_new_winning_payline && right_root_node_new_winning_payline == right_root_node_winning_payline)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Compares 2 paylines and returns shortest one
+        /// </summary>
+        /// <param name="payline1"></param>
+        /// <param name="payline2"></param>
+        /// <returns></returns>
+        private int[] CompareReturnShortestPayline(Payline payline1, Payline payline2)
+        {
+            return payline1.payline_configuration.payline.Length > payline2.payline_configuration.payline.Length ? payline2.payline_configuration.payline : payline1.payline_configuration.payline;
         }
 
         internal void PlayCycleWins()
@@ -362,16 +409,15 @@ namespace Slot_Engine.Matrix
             while (cycle_paylines)
             {
                 yield return CyclePaylines();
-                current_winning_payline_shown += 1;
             }
         }
 
         private IEnumerator CyclePaylines()
         {
             //matrix.InitializeSymbolsForWinConfigurationDisplay();
-            //yield return new WaitForSeconds(delay_between_wininng_payline/2);
-            Debug.Log("Showing Payline");
-            yield return ShowWinningPayline(current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0);
+            int payline_to_show = current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0;
+            Debug.Log(String.Format("Showing Payline {0}", payline_to_show));
+            yield return ShowWinningPayline(payline_to_show);
             Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
             yield return new WaitForSeconds(wininng_payline_highlight_time);
             Debug.Log("Hiding Payline");
@@ -455,7 +501,7 @@ namespace Slot_Engine.Matrix
 
             //Check if Payline symbol configuration are already the list - keep highest winning payline
             
-            payline_won.Add(new WinningPayline(paylines_supported_from_file.Length > 0 ? paylines_supported_from_file[payline] : dynamic_paylines.paylines_supported[payline], matching_symbols_list.ToArray(), left_right));
+            payline_won.Add(new WinningPayline(paylines_supported_from_file.Length > 0 ? paylines_supported_from_file[payline] : dynamic_paylines.paylines_supported[payline], matching_symbols_list.ToArray()));
         }
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
         {
@@ -632,7 +678,7 @@ namespace Slot_Engine.Matrix
                 next_column < 0)
             {
                 Debug.Log("Reached end of payline");
-                dynamic_paylines.AddPaylineSupported(payline.ToArray());
+                dynamic_paylines.AddPaylineSupported(payline.ToArray(), node.left_right);
                 number_of_paylines += 1;
                 Debug.Log(string.Join("|", payline));
             }
@@ -775,11 +821,11 @@ namespace Slot_Engine.Matrix
                 return paylines_supported[payline_to_show];
             }
 
-            internal void AddPaylineSupported(int[] vs)
+            internal void AddPaylineSupported(int[] vs, bool left_right)
             {
                 if (paylines_supported == null)
                     paylines_supported = new Payline[0];
-                paylines_supported = paylines_supported.AddAt<Payline>(paylines_supported.Length,new Payline(vs));
+                paylines_supported = paylines_supported.AddAt<Payline>(paylines_supported.Length,new Payline(vs, left_right));
             }
         }
 
@@ -930,8 +976,8 @@ namespace Slot_Engine.Matrix
                     symbol_names.Add(((Symbol)matching_symbols_list[i]).ToString());
                 }
                 Debug.Log(String.Format("a match was found on payline {0}, {1} symbols match {2}", payline, left_right ? "left" : "right", String.Join(" ", symbol_names)));
-                Payline payline_won = new Payline(payline);
-                WinningPayline new_winning_payline = new WinningPayline(payline_won, matching_symbols_list.ToArray(), left_right);
+                Payline payline_won = new Payline(payline,left_right);
+                WinningPayline new_winning_payline = new WinningPayline(payline_won, matching_symbols_list.ToArray());
 
                 //If we have a payline that is similiar enough to our current payline to submit then we need to keep highest value payline
                 WinningPayline duplicate_payline;

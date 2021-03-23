@@ -100,7 +100,7 @@ namespace Slot_Engine.Matrix
         internal void ShowPayline(Payline paylines_supported)
         {
             List<Vector3> linePositions;
-            matrix.ReturnPositionsBasedOnPayline(ref paylines_supported.payline_configuration.payline, out linePositions);
+            matrix.ReturnPositionsBasedOnPayline(ref paylines_supported, out linePositions);
             for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end linePositions since your get 2 out for array range
             {
                 //Throws arguments out of range if line positions out of range
@@ -123,8 +123,8 @@ namespace Slot_Engine.Matrix
             //initialize the line positions list and 
             List<Vector3> linePositions;
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
-            //matrix.ReturnSymbolPositionsOnPayline(ref payline_to_show.payline, out linePositions);
-            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline.payline_configuration.payline,out linePositions);
+            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline,out linePositions);
+            Debug.Log(String.Format("linePositions"));
             int renderers_widths_set = 0;
             int payline_renderer_index_to_set = 0;
             int line_position_index = 0;
@@ -137,8 +137,8 @@ namespace Slot_Engine.Matrix
                 try
 
                 {
-                    line_position_index = ReturnIndexFirstLastFromList(payline_to_show.left_right, i, linePositions.Count);
-                    if (line_position_index + 1 >= linePositions.Count && payline_to_show.left_right)
+                    line_position_index = ReturnIndexFirstLastFromList(payline_to_show.payline.left_right, i, linePositions.Count);
+                    if (line_position_index + 1 >= linePositions.Count && payline_to_show.payline.left_right)
                     {
                         Debug.Log(String.Format("Error here. cant get beyond positions of reel. linePositions.Count = {0}", linePositions.Count));
                     }
@@ -149,15 +149,15 @@ namespace Slot_Engine.Matrix
                 }
                 linePositionsToUse.Add(linePositions[line_position_index]);
                 if (line_position_index + 1 < linePositions.Count)
-                    linePositionsToUse.Add(linePositions[payline_to_show.left_right ? line_position_index + 1 : line_position_index - 1]);
+                    linePositionsToUse.Add(linePositions[payline_to_show.payline.left_right ? line_position_index + 1 : line_position_index - 1]);
                 else
                 {
                     //Temporary Fix
                     //Debug.Log("Temp Fix");
-                    if (!payline_to_show.left_right)
+                    if (!payline_to_show.payline.left_right)
                         linePositionsToUse.Insert(0, linePositions[line_position_index - 1]);
                 }
-                Debug.Log(String.Format("Showing payline {0}, configuration = {1}", payline_to_show.left_right ? "Left" : "Right", payline_to_show.payline.PrintConfiguration()));
+                Debug.Log(String.Format("Showing payline {0}, configuration = {1}", payline_to_show.payline.left_right ? "Left" : "Right", payline_to_show.payline.PrintConfiguration()));
                 //Set line renderer either highlighting left to right or right to left
                 SetLineRendererPositions(linePositionsToUse, ref payline_renderers[i]);
             
