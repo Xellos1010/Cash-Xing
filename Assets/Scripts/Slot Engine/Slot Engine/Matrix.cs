@@ -145,12 +145,12 @@ namespace Slot_Engine.Matrix
                 {
                     position_cache = reel_strip_managers[i].positions_in_path_v3[payline[i] + reel_strip_managers[i].reelstrip_info.before_display_zone_slot_objects] + transform.position;
                     position_cache = new Vector3(position_cache.x, position_cache.y, position_cache.z - 10);
+                    out_positions.Add(position_cache);
                 }
                 catch (Exception e)
                 {
                     Debug.LogWarning(e.Message);
                 }
-                out_positions.Add(position_cache);
             }
         }
 
@@ -693,6 +693,7 @@ namespace Slot_Engine.Matrix
 public struct Matrix_Settings
 {
     public int reels;
+
     //can be individual or overall set
     public int[] slots_per_reel;
 

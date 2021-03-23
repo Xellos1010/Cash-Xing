@@ -66,6 +66,10 @@ public class PaylineRenderer : MonoBehaviour
     {
         line_renderer.positionCount = position_list.Count;
         line_renderer.SetPositions(position_list.ToArray());
+        if(line_renderer.enabled == false)
+        {
+            ToggleRenderer(true);
+        }
     }
 
     internal void ToggleRenderer(bool on_off)

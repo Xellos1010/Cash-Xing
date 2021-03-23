@@ -117,13 +117,14 @@ namespace Slot_Engine.Matrix
         /// Show the winning payline and highlight symbols that won with...a bigger line!
         /// </summary>
         /// <param name="payline_to_show">The Winning payline to show</param>
-        internal void RenderWinningPayline(WinningPayline payline_to_show)
+        internal void ShowWinningPayline(WinningPayline payline_to_show)
         {
             ToggleRenderer(render_paylines);
             //initialize the line positions list and 
             List<Vector3> linePositions;
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
-            matrix.ReturnSymbolPositionsOnPayline(ref payline_to_show.payline, out linePositions);
+            //matrix.ReturnSymbolPositionsOnPayline(ref payline_to_show.payline, out linePositions);
+            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline.payline_configuration.payline,out linePositions);
             int renderers_widths_set = 0;
             int payline_renderer_index_to_set = 0;
             int line_position_index = 0;
@@ -140,7 +141,8 @@ namespace Slot_Engine.Matrix
                     linePositionsToUse.Add(linePositions[payline_to_show.left_right ? line_position_index + 1 : line_position_index - 1]);
                     //Set line renderer either highlighting left to right or right to left
                     SetLineRendererPositions(payline_to_show.left_right ?
-                        linePositions.GetRange(i, 2) : linePositions.GetRange(i - 1, 2), ref payline_renderers[i]);
+                        linePositions.GetRange(i, 2) : linePositions.GetRange(i - 1, 2), 
+                        ref payline_renderers[i]);
                 }
                 catch (Exception e)
                 {
@@ -165,6 +167,15 @@ namespace Slot_Engine.Matrix
                 {
                     SetWidth(standard_payline_width, standard_payline_width, ref payline_renderers[payline_renderer_index_to_set]);
                     renderers_widths_set += 1;
+                }
+            }
+            //Disable any extra line renderers if positions < line renderers
+            if (payline_to_show.winning_symbols.Length < matrix.reel_strip_managers.Length)
+            {
+                //for 5 symbols there are 4 line renderers. for 4 symbools you need to point to - 1 to disable the last line renderer on a 3x5 matrix
+                for (int i = payline_to_show.winning_symbols.Length -1 ; i < payline_renderers.Length; i++)
+                {
+                    payline_renderers[i].ToggleRenderer(false);
                 }
             }
         }

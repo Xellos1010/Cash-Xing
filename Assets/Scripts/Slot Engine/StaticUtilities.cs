@@ -68,6 +68,11 @@ public static class StaticUtilities
         return dest;
     }
 
+    public static string PrintElements<T>(this List<T> source)
+    {
+        return String.Join("|", source);
+    }
+
     public static T Pop<T>(this List<T> source)
     {
         T output = source[0];

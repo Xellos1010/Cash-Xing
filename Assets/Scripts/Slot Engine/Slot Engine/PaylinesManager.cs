@@ -276,7 +276,7 @@ namespace Slot_Engine.Matrix
         [ExecuteInEditMode]
         public Task ShowWinningPayline(WinningPayline payline_to_show)
         {
-            payline_renderer_manager.ShowPayline(payline_to_show.payline);
+            payline_renderer_manager.ShowWinningPayline(payline_to_show);
             matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
             return Task.CompletedTask;
         }
@@ -309,28 +309,44 @@ namespace Slot_Engine.Matrix
             List<int> symbols_in_row = new List<int>();
             List<int> matching_symbols_list;
             int primary_symbol_index;//index for machine_symbols_list with the symbol to check for in the payline.
+            winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration);
 
             //Iterate through each payline and check for a win 
-            for (int payline = active_payline_range_lower; payline < active_payline_range_upper; payline++)
-            {
-                //Gather raw symbols in row
-                GetSymbolsOnPayline(payline, ref symbols_configuration, out symbols_in_row);
+            //for (int payline = active_payline_range_lower; payline < active_payline_range_upper; payline++)
+            //{
+            //    //Gather raw symbols in row
+            //    GetSymbolsOnPayline(payline, ref symbols_configuration, out symbols_in_row);
 
-                //Initialize variabled needed for checking symbol matches and direction
-                InitializeMachingSymbolsVars(0, symbols_in_row[0], out matching_symbols_list, out primary_symbol_index);
-                CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
-                //Time to check right to left
-                InitializeMachingSymbolsVars(symbols_in_row.Count - 1, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
-                CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
-            }
+            //    //Initialize variabled needed for checking symbol matches and direction
+            //    InitializeMachingSymbolsVars(0, symbols_in_row[0], out matching_symbols_list, out primary_symbol_index);
+            //    CheckSymbolsMatchLeftRight(true, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
+            //    //Time to check right to left
+            //    InitializeMachingSymbolsVars(symbols_in_row.Count - 1, symbols_in_row[symbols_in_row.Count - 1], out matching_symbols_list, out primary_symbol_index);
+            //    CheckSymbolsMatchLeftRight(false, ref symbols_in_row, ref matching_symbols_list, ref primary_symbol_index, ref payline, ref payline_won);
+            //}
             if (payline_won.Count > 0)
             {
                 winning_paylines = payline_won.ToArray();
+                //TODO Remove hard coded reference - should have matrix recieve event
                 matrix.SetSystemToPresentWin();
             }
             paylines_evaluated = true;
             return Task.CompletedTask;
         }
+
+        private WinningPayline[] CheckForWinningPaylinesDynamic(ref int[][] symbols_configuration)
+        {
+            List<WinningPayline> output_raw = new List<WinningPayline>();
+            //output = dynamic_paylines.root_nodes[dynamic_paylines.root_nodes.Length-1].InitializeAndCheckForWinningPaylines(ref symbols_configuration);
+            //for every root node check for winning payline
+            for (int root_node = 0; root_node < dynamic_paylines.root_nodes.Length; root_node++)
+            {
+                output_raw.AddRange(dynamic_paylines.root_nodes[root_node].InitializeAndCheckForWinningPaylines(ref symbols_configuration));
+            }
+            return output_raw.ToArray();
+
+        }
+
         internal void PlayCycleWins()
         {
             cycle_paylines = true;
@@ -402,7 +418,7 @@ namespace Slot_Engine.Matrix
             }
             if (symbols_list.Count > 2)
             {
-                AddWinningPayline(payline, symbols_list, left_right, ref payline_won);
+                AddFileWinningPayline(payline, symbols_list, left_right, ref payline_won);
             }
         }
 
@@ -428,7 +444,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void AddWinningPayline(int payline, List<int> matching_symbols_list, bool left_right, ref List<WinningPayline> payline_won)
+        internal void AddFileWinningPayline(int payline, List<int> matching_symbols_list, bool left_right, ref List<WinningPayline> payline_won)
         {
             List<string> symbol_names = new List<string>();
             for (int i = 0; i < matching_symbols_list.Count; i++)
@@ -590,20 +606,10 @@ namespace Slot_Engine.Matrix
             List<suffix_tree_node> paylines = new List<suffix_tree_node>();
             List<suffix_tree_node> finished_list = new List<suffix_tree_node>();
 
-            //Initialize and Generate Paylines Left to Right
-            int column = 0;
-            int rows_in_column = matrix.slots_per_reel[0];
-
             number_of_paylines = 0;
             dynamic_paylines.paylines_supported = new Payline[0];
 
-/* Unmerged change from project 'Assembly-CSharp.Player'
-Before:
-            root_payline_nodes.root_nodes = InitializeRootNodes(column, rows_in_column).ToArray();
-After:
-            dynamic_paylines.root_nodes = InitializeRootNodes(column, rows_in_column).ToArray();
-*/
-            dynamic_paylines.root_nodes = InitializeRootNodes(column, rows_in_column).ToArray();
+            dynamic_paylines.root_nodes = InitializeRootNodes(ref matrix.slots_per_reel).ToArray();
             List<suffix_tree_node> to_finish_list = new List<suffix_tree_node>();
 
             for (int root_node = 0; root_node < dynamic_paylines.root_nodes.Length; root_node++)
@@ -611,18 +617,19 @@ After:
                 //Start a new payline that is going to be printed per root node
                 List<int> payline = new List<int>();
                 //Build all paylines
-                BuildPayline(ref payline, ref dynamic_paylines.root_nodes[root_node], ref matrix.reels, ref matrix.slots_per_reel);
-                //Remove any payline information added in build payline
-
+                BuildPayline(ref payline, ref dynamic_paylines.root_nodes[root_node], ref matrix.slots_per_reel);
             }
         }
 
-        internal void BuildPayline(ref List<int> payline, ref suffix_tree_node node, ref int reels, ref int[] slots_per_reel)
+        internal void BuildPayline(ref List<int> payline, ref suffix_tree_node node, ref int[] slots_per_reel)
         {
             //Add current node to payline
-            payline.Add(node.node_info.primary_node);
+            payline.Add(node.node_info.row);
+            int next_column = node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;
             //Check the column is the last column and continue if it is
-            if (node.node_info.column + 1 >= reels)
+            if (node.left_right ?
+                next_column >= slots_per_reel.Length:
+                next_column < 0)
             {
                 Debug.Log("Reached end of payline");
                 dynamic_paylines.AddPaylineSupported(payline.ToArray());
@@ -631,38 +638,37 @@ After:
             }
             else
             {
-                //Initialize each childs tasks and move out
-                int next_column = node.node_info.column + 1;
                 suffix_tree_node parent_node = node; //First pass thru this will be nothing
                 int rows_in_next_column = slots_per_reel[next_column];
                 //First in is parent_node = 0 | Children Column = 1 | slots_per_reel = 5
-                node.InitializeNextNodes(next_column, rows_in_next_column, ref parent_node);
+                node.InitializeNextNodes(next_column, rows_in_next_column, ref parent_node, node.left_right);
                 for (int child_nodes = 0; child_nodes < node.connected_nodes_struct.Length; child_nodes++)
                 {
                     //Now build out the child refs
-                    BuildPayline(ref payline, ref node.connected_nodes_struct[child_nodes], ref reels, ref slots_per_reel);
+                    BuildPayline(ref payline, ref node.connected_nodes_struct[child_nodes], ref slots_per_reel);
                     //Remove payline buildup
                     payline.RemoveRange(node.parent_nodes.Length, payline.Count - node.parent_nodes.Length);
                 }
             }
         }
 
-        private List<suffix_tree_node> InitializeRootNodes(int column, int rows_in_root_column)
+        private List<suffix_tree_node> InitializeRootNodes(ref int[] slots_per_reel)
         {
+
             List<suffix_tree_node> root_nodes = new List<suffix_tree_node>();
             suffix_tree_node node;
             //Initialize all the rows and the next elements
             switch (evaluation_direction)
             {
                 case payline_direction.left:
-                    root_nodes.AddRange(BuildRootNodes(column, rows_in_root_column, true));
+                    root_nodes.AddRange(BuildRootNodes(0, slots_per_reel[0], true));
                     break;
                 case payline_direction.right:
-                    root_nodes.AddRange(BuildRootNodes(column, rows_in_root_column, false));
+                    root_nodes.AddRange(BuildRootNodes(slots_per_reel.Length - 1, slots_per_reel[slots_per_reel.Length - 1], false));
                     break;
                 case payline_direction.both:
-                    root_nodes.AddRange(BuildRootNodes(column, rows_in_root_column, true));
-                    root_nodes.AddRange(BuildRootNodes(column, rows_in_root_column, false));
+                    root_nodes.AddRange(BuildRootNodes(0, slots_per_reel[0], true));
+                    root_nodes.AddRange(BuildRootNodes(slots_per_reel.Length - 1, slots_per_reel[slots_per_reel.Length - 1], false));
                     break;
                 default:
                     Debug.Log("Please set the evaluation direciton to left, right or both");
@@ -675,12 +681,10 @@ After:
         {
             List<suffix_tree_node> root_nodes = new List<suffix_tree_node>();
             suffix_tree_node node;
-            for (int primary_node = left_right ? 0 : rows_in_root_column - 1;
-                left_right ? primary_node < rows_in_root_column : primary_node >= 0;
-                primary_node += left_right ? 1 : -1)
+            for (int row = 0;row < rows_in_root_column;row += 1)
             {
                 //Build my node
-                node = new suffix_tree_node(primary_node, null, new suffix_tree_node_info(-1, -1), column,left_right);
+                node = new suffix_tree_node(row, null, new suffix_tree_node_info(-1, -1), column,left_right);
                 root_nodes.Add(node);
             }
             return root_nodes;
@@ -724,17 +728,37 @@ After:
         }
 
         [Serializable]
+        public struct SymbolWinStruct
+        {
+            [SerializeField]
+            internal suffix_tree_node_info suffix_tree_node_info;
+            [SerializeField]
+            internal int symbol;
+
+            public SymbolWinStruct(suffix_tree_node_info suffix_tree_node_info, int symbol) : this()
+            {
+                this.suffix_tree_node_info = suffix_tree_node_info;
+                this.symbol = symbol;
+            }
+        }
+
+        [Serializable]
         public struct suffix_tree_node_info
         {
             [SerializeField]
             internal int column;
             [SerializeField]
-            internal int primary_node;
+            internal int row;
 
-            public suffix_tree_node_info(int column, int primary_node) : this()
+            public suffix_tree_node_info(int column, int row) : this()
             {
                 this.column = column;
-                this.primary_node = primary_node;
+                this.row = row;
+            }
+
+            internal string Print()
+            {
+                return String.Format("Node: Column {0} Row {1}", column, row);
             }
         }
 
@@ -778,7 +802,7 @@ After:
 
             public suffix_tree_node(int primary_node, suffix_tree_node_info[] parent_nodes, suffix_tree_node_info parent_node, int column) : this()
             {
-                this.node_info.primary_node = primary_node;
+                this.node_info.row = primary_node;
 
                 if (this.parent_nodes == null && parent_nodes == null)
                 {
@@ -794,7 +818,7 @@ After:
 
             public suffix_tree_node(int primary_node, suffix_tree_node_info[] parent_nodes, suffix_tree_node_info parent_node, int column, bool left_right) : this()
             {
-                this.node_info.primary_node = primary_node;
+                this.node_info.row = primary_node;
 
                 if (this.parent_nodes == null && parent_nodes == null)
                 {
@@ -808,34 +832,258 @@ After:
                 this.node_info.column = column;
                 this.left_right = left_right;
             }
+            /// <summary>
+            /// Initialize the winning symbol list and check dynamic paylines for wins
+            /// </summary>
+            /// <param name="symbols_configuration">symbols on matrix</param>
+            internal WinningPayline[] InitializeAndCheckForWinningPaylines(ref int[][] symbols_configuration)
+            {
+                Debug.Log("Initialize check for winning paylines");
+                //Initialize Winning Symbol List
+                List<SymbolWinStruct> winning_symbols = new List<SymbolWinStruct>();
+                int primary_linewin_symbol = symbols_configuration[node_info.column][node_info.row];
+                //Add the first symbol to the list
+                AddWinningSymbol(primary_linewin_symbol, ref winning_symbols,ref node_info);
 
-            internal void InitializeNextNodes(int current_column, int rows_in_column, ref suffix_tree_node parent_node)
+                //Initialize Winning Paylines
+                List<WinningPayline> winning_paylines = new List<WinningPayline>();
+                Debug.Log(String.Format("Starting check for winning paylines from node {0}", node_info.Print()));
+                //Check all connected nodes for a win using dfs (depth first search) search
+                CheckConnectedNodes(ref node_info,ref connected_nodes_struct, ref symbols_configuration, ref winning_symbols, ref winning_paylines, primary_linewin_symbol);
+                return winning_paylines.ToArray();
+            }
+
+            private void CheckConnectedNodes(ref suffix_tree_node_info current_node,ref suffix_tree_node[] connected_nodes_struct, ref int[][] symbols_configuration, ref List<SymbolWinStruct> winning_symbols, ref List<WinningPayline> winning_paylines, int symbol_to_check_for)
+            {
+                //if primary_linewin_symbol is a wild then use the next symbol in sequence - if next symbol is a wild then continue
+                //Cycle thru each connected node for a winning payline
+                for (int connected_node = 0; connected_node < connected_nodes_struct.Length; connected_node++)
+                {
+                    Debug.Log(String.Format("Checking Connected node {0} from {1}", connected_nodes_struct[connected_node].node_info.Print(),
+                        current_node.Print()));
+                    //reference list
+                    CheckForDynamicWinningPaylines(ref connected_nodes_struct[connected_node], ref symbols_configuration, ref winning_symbols, symbol_to_check_for, ref winning_paylines);
+                    //if connected nodes are the same leading up to the end winning symbol use the largest list length
+                }
+            }
+
+            /// <summary>
+            /// Used for recursive check of suffix tree to evaluate winning paylines
+            /// </summary>
+            /// <param name="suffix_tree_node">Node being checked</param>
+            /// <param name="symbols_configuration">symbols configuration to check against</param>
+            /// <param name="winning_symbols">winning symbols list</param>
+            private void CheckForDynamicWinningPaylines(ref suffix_tree_node suffix_tree_node, ref int[][] symbols_configuration, ref List<SymbolWinStruct> winning_symbols, int symbol_to_check_for, ref List<WinningPayline> winning_paylines)
+            {
+                Debug.Log(String.Format("Checking node {0}", suffix_tree_node.node_info.Print()));
+                int current_symbol_to_check = symbols_configuration[suffix_tree_node.node_info.column][suffix_tree_node.node_info.row];
+
+                if (current_symbol_to_check == symbol_to_check_for || current_symbol_to_check == (int)Symbol.SA01 || symbol_to_check_for == (int)Symbol.SA01)
+                {
+                    if (symbol_to_check_for == (int)Symbol.SA01)
+                    {
+                        symbol_to_check_for = current_symbol_to_check;
+                    }
+                    AddWinningSymbol(current_symbol_to_check, ref winning_symbols, ref suffix_tree_node.node_info);
+                    int current_index = winning_symbols.Count - 1;
+                    //There is a match - move to the next node if the winning symbols don't equal total columns
+                    if (winning_symbols.Count < symbols_configuration.Length)
+                    {
+                        //Check each connected node
+                        CheckConnectedNodes(ref suffix_tree_node.node_info, ref suffix_tree_node.connected_nodes_struct, ref symbols_configuration, ref winning_symbols, ref winning_paylines, symbol_to_check_for);
+                    }
+                    else
+                    {
+                        //Reached the end of the payline - add this payline and override others - remove symbol and start down next tree
+                        InitializeAndAddDynamicWinningPayline(suffix_tree_node, ref winning_symbols, ref winning_paylines);
+                    }
+                    //Debug.Log(winning_symbols.PrintElements<int>());
+                    RemoveWinningSymbol(ref winning_symbols, current_index);
+                }
+                else
+                {
+                    if (winning_symbols.Count >= 3)
+                    {
+                        InitializeAndAddDynamicWinningPayline(suffix_tree_node, ref winning_symbols, ref winning_paylines);
+                    }
+                }
+            }
+
+            private void InitializeAndAddDynamicWinningPayline(suffix_tree_node suffix_tree_node, ref List<SymbolWinStruct> winning_symbols, ref List<WinningPayline> winning_paylines)
+            {
+                Debug.Log(String.Format("Payline {0} won!", PrintDynamicPayline(ref winning_symbols)));
+                int[] payline = new int[winning_symbols.Count];
+                List<int> winning_symbol_row = new List<int>();
+                for (int symbol = 0; symbol < winning_symbols.Count; symbol++)
+                {
+                    payline[symbol] = winning_symbols[symbol].suffix_tree_node_info.row;
+                    winning_symbol_row.Add(winning_symbols[symbol].symbol);
+                }
+                AddDynamicWinningPayline(payline, winning_symbol_row, suffix_tree_node.left_right, ref winning_paylines);
+            }
+
+            internal void AddDynamicWinningPayline(int[] payline, List<int> matching_symbols_list, bool left_right, ref List<WinningPayline> winning_paylines)
+            {
+                List<string> symbol_names = new List<string>();
+                for (int i = 0; i < matching_symbols_list.Count; i++)
+                {
+                    symbol_names.Add(((Symbol)matching_symbols_list[i]).ToString());
+                }
+                Debug.Log(String.Format("a match was found on payline {0}, {1} symbols match {2}", payline, left_right ? "left" : "right", String.Join(" ", symbol_names)));
+                Payline payline_won = new Payline(payline);
+                WinningPayline new_winning_payline = new WinningPayline(payline_won, matching_symbols_list.ToArray(), left_right);
+
+                //If we have a payline that is similiar enough to our current payline to submit then we need to keep highest value payline
+                WinningPayline duplicate_payline;
+                //Check if Payline symbol configuration are already the list - keep highest winning payline
+                if (IsWinningPaylineInList(new_winning_payline, ref winning_paylines, out duplicate_payline))
+                {
+                    if (duplicate_payline != new_winning_payline)
+                    {
+                        Debug.Log(String.Format("New winning payline {0} is higher value than a payline already in the list {1}", 
+                            string.Join("|", new_winning_payline.payline.payline_configuration.payline),
+                            string.Join("|", duplicate_payline.payline.payline_configuration.payline)));
+                        winning_paylines.Remove(duplicate_payline);
+                        winning_paylines.Add(new_winning_payline);
+                    }
+                    else
+                    {
+                        Debug.Log(String.Format("New winning payline {0} is lower value or already in the list. Not adding to list", string.Join("|", new_winning_payline.payline.payline_configuration.payline)));
+                    }
+                }
+                else
+                {
+                    Debug.Log(String.Format("adding winning payline {0}", string.Join("|", new_winning_payline.payline.payline_configuration.payline)));
+                    winning_paylines.Add(new_winning_payline);
+                }
+            }
+
+
+            /// <summary>
+            /// This ensures there are no winning paylines that share the same payline already. Keep highest value winning_payline 
+            /// </summary>
+            /// <param name="new_winning_payline"></param>
+            /// <param name="winning_paylines"></param>
+            private bool IsWinningPaylineInList(WinningPayline new_winning_payline, ref List<WinningPayline> winning_paylines, out WinningPayline duplicate_payline_reference)
+            {
+                //Initialize vars for payline checking
+                int[] new_winning_payline_configuration = new_winning_payline.payline.payline_configuration.payline;
+                int[] shortest_payline_configuration;
+                int[] list_entry_winning_payline_configuration;
+
+                //Iterate thru each winning payline to compare to new payline
+                for (int winning_payline = 0; winning_payline < winning_paylines.Count; winning_payline++)
+                {
+                    list_entry_winning_payline_configuration = winning_paylines[winning_payline].payline.payline_configuration.payline;
+                    //if the paylines are the same up to the third symbol - and the new winning payline is a 4 symbol payline - keep the 4 symbol
+
+                    //Compare both paylines until the shortest length. then keep the highest winning payling
+                    shortest_payline_configuration = CompareReturnShortestPayline(new_winning_payline.payline, winning_paylines[winning_payline].payline);
+                    for (int column = 0; column < shortest_payline_configuration.Length; column++)
+                    {
+                        //Compare Both Paylines for duplicate payline entry
+                        if (new_winning_payline_configuration[column] == list_entry_winning_payline_configuration[column])
+                        {
+                            //if column
+                            if (column == shortest_payline_configuration.Length-1)
+                            {
+                                //Check for largest payline configuration and keep highest
+                                if (new_winning_payline_configuration.Length > list_entry_winning_payline_configuration.Length)
+                                {
+                                    Debug.Log("Duplicate reference = winning_paylines[winning_payline]");
+                                    duplicate_payline_reference = winning_paylines[winning_payline];
+                                    //We have a similar payline - keep the one with highest value
+                                    return true;
+                                }
+                                else
+                                {
+                                    Debug.Log("Duplicate reference = new_winning_payline");
+                                    duplicate_payline_reference = new_winning_payline;
+                                    return true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                Debug.Log("No Duplicate found");
+                duplicate_payline_reference = null;
+                return false;
+            }
+            /// <summary>
+            /// Compares 2 paylines and returns shortest one
+            /// </summary>
+            /// <param name="payline1"></param>
+            /// <param name="payline2"></param>
+            /// <returns></returns>
+            private int[] CompareReturnShortestPayline(Payline payline1, Payline payline2)
+            {
+                return payline1.payline_configuration.payline.Length > payline2.payline_configuration.payline.Length ? payline2.payline_configuration.payline : payline1.payline_configuration.payline;
+            }
+
+            private string PrintDynamicPayline(ref List<SymbolWinStruct> winning_symbols)
+            {
+                int[] payline = new int[winning_symbols.Count];
+                int[] winning_symbol_row = new int[winning_symbols.Count];
+                for (int symbol = 0; symbol < winning_symbols.Count; symbol++)
+                {
+                    payline[symbol] = winning_symbols[symbol].suffix_tree_node_info.row;
+                    winning_symbol_row[symbol] = winning_symbols[symbol].symbol;
+                }
+                return String.Format(
+                    "Payline = {0} Symbol Win Configuration = {1}",
+                    String.Join("|",payline),
+                    String.Join("|", winning_symbol_row)
+                    );
+            }
+
+            private void RemoveWinningSymbol(ref List<SymbolWinStruct> winning_symbols, int index)
+            {
+                Debug.Log(String.Format("Removing winning symbol {0}", winning_symbols[index]));
+                winning_symbols.RemoveAt(index);
+            }
+
+            /// <summary>
+            /// Adds a winning symbol to track for dynamic payline evaluation
+            /// </summary>
+            /// <param name="symbol">symbol to add</param>
+            /// <param name="winning_symbols">winning symbols reference list</param>
+            private void AddWinningSymbol(int symbol, ref List<SymbolWinStruct> winning_symbols, ref suffix_tree_node_info suffix_tree_node_info)
+            {
+                Debug.Log(String.Format("Adding winning symbol {0} from node {1}", symbol, suffix_tree_node_info.Print()));
+                winning_symbols.Add(new SymbolWinStruct(suffix_tree_node_info, symbol));
+            }
+
+            internal void InitializeNextNodes(int current_column, int rows_in_column, ref suffix_tree_node parent_node, bool left_right)
             {
                 //Start in column 1
 
                 List<suffix_tree_node> children_nodes = new List<suffix_tree_node>();
                 List<int> child_nodes = new List<int>();
                 //Check if within range of primary node
-                if (parent_node.node_info.primary_node == -1)
+                if (parent_node.node_info.row == -1)
                 {
                     throw new NotImplementedException();
                 }
                 else
                 {
-                    if (parent_node.node_info.primary_node - 1 >= 0)
+                    if (parent_node.node_info.row - 1 >= 0)
                     {
-                        child_nodes.Add(parent_node.node_info.primary_node - 1);
-                        children_nodes.Add(new suffix_tree_node(parent_node.node_info.primary_node - 1, parent_node.parent_nodes, parent_node.node_info, current_column));
+                        child_nodes.Add(parent_node.node_info.row - 1);
+                        children_nodes.Add(new suffix_tree_node(parent_node.node_info.row - 1, parent_node.parent_nodes, parent_node.node_info, current_column, left_right));
                     }
-                    if (parent_node.node_info.primary_node < rows_in_column)
+                    if (parent_node.node_info.row < rows_in_column)
                     {
-                        child_nodes.Add(parent_node.node_info.primary_node);
-                        children_nodes.Add(new suffix_tree_node(parent_node.node_info.primary_node, parent_node.parent_nodes, parent_node.node_info, current_column));
+                        child_nodes.Add(parent_node.node_info.row);
+                        children_nodes.Add(new suffix_tree_node(parent_node.node_info.row, parent_node.parent_nodes, parent_node.node_info, current_column, left_right));
                     }
-                    if (parent_node.node_info.primary_node + 1 < rows_in_column)
+                    if (parent_node.node_info.row + 1 < rows_in_column)
                     {
-                        child_nodes.Add(parent_node.node_info.primary_node + 1);
-                        children_nodes.Add(new suffix_tree_node(parent_node.node_info.primary_node + 1, parent_node.parent_nodes, parent_node.node_info, current_column));
+                        child_nodes.Add(parent_node.node_info.row + 1);
+                        children_nodes.Add(new suffix_tree_node(parent_node.node_info.row + 1, parent_node.parent_nodes, parent_node.node_info, current_column, left_right));
                     }
                 }
                 connected_nodes = child_nodes.ToArray();
@@ -852,10 +1100,10 @@ After:
             private List<int> GetPrimaryNodeOfNodeAndParents(ref suffix_tree_node node)
             {
                 List<int> output = new List<int>();
-                output.Add(node.node_info.primary_node);
+                output.Add(node.node_info.row);
                 for (int parent_node = 0; parent_node < parent_nodes.Length; parent_node++)
                 {
-                    output.Add(parent_nodes[parent_node].primary_node);
+                    output.Add(parent_nodes[parent_node].row);
                 }
                 return output;
             }
