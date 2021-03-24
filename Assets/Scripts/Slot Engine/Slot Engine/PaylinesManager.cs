@@ -274,8 +274,13 @@ namespace Slot_Engine.Matrix
             cycle_paylines = false;
             StopAllCoroutines();
         }
+        /// <summary>
+        /// Renderes the line for winniing payline
+        /// </summary>
+        /// <param name="payline_to_show"></param>
+        /// <returns></returns>
         [ExecuteInEditMode]
-        public Task ShowWinningPayline(WinningPayline payline_to_show)
+        public Task RenderWinningPayline(WinningPayline payline_to_show)
         {
             payline_renderer_manager.ShowWinningPayline(payline_to_show);
             matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
@@ -399,20 +404,26 @@ namespace Slot_Engine.Matrix
             cycle_paylines = true;
             current_winning_payline_shown = -1;
             payline_renderer_manager.ToggleRenderer(true);
-            StartCoroutine(ShowWinningPayline());
+            StartCoroutine(InitializeAndCycleWinningPaylines());
 
         }
-
-        private IEnumerator ShowWinningPayline()
+        /// <summary>
+        /// Initializes and Cycles thru winning paylines
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator InitializeAndCycleWinningPaylines()
         {
             current_winning_payline_shown = -1;
             while (cycle_paylines)
             {
-                yield return CyclePaylines();
+                yield return CycleWinningPaylines();
             }
         }
-
-        private IEnumerator CyclePaylines()
+        /// <summary>
+        /// Cycles thru winning paylines
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator CycleWinningPaylines()
         {
             //matrix.InitializeSymbolsForWinConfigurationDisplay();
             int payline_to_show = current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0;
@@ -435,7 +446,7 @@ namespace Slot_Engine.Matrix
         {
             current_winning_payline_shown = v;
             Debug.Log(String.Format("Current wining payline shown = {0}", v));
-            ShowWinningPayline(winning_paylines[current_winning_payline_shown]);
+            RenderWinningPayline(winning_paylines[current_winning_payline_shown]);
             return Task.CompletedTask;
         }
 

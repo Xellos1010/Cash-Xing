@@ -162,23 +162,25 @@ namespace Slot_Engine.Matrix
 
         private Vector3 ReturnPositionOnReel(ref ReelStripManager reel, int slot_in_reel)
         {
-            List<SlotManager> reel_slots = reel.GetSlotsDecending();
-            int start_display_area = reel.reelstrip_info.before_display_zone_slot_objects;
-            if(start_display_area > reel_slots.Count)
-            {
-                Debug.Log("start_display_area > reel_slots.Count");
-                return Vector3.zero;
-            }
-            else
-            {
-                if (start_display_area + slot_in_reel < reel_slots.Count)
-                    return reel_slots[start_display_area + slot_in_reel].transform.position + (Vector3.back * 10);
-                else
-                {
-                    Debug.Log("start_display_area + slot_in_reel < reel_slots.Count");
-                    return Vector3.zero;
-                }
-            }
+            //List<SlotManager> reel_slots = reel.GetSlotsDecending();
+            //int start_display_area = reel.reelstrip_info.before_display_zone_slot_objects;
+            //if(start_display_area > reel_slots.Count)
+            //{
+            //    Debug.Log("start_display_area > reel_slots.Count");
+            //    return Vector3.zero;
+            //}
+            //else
+            //{
+            //    if (start_display_area + slot_in_reel < reel_slots.Count)
+            //        return reel_slots[start_display_area + slot_in_reel].transform.position + (Vector3.back * 10);
+            //    else
+            //    {
+            //        Debug.Log("start_display_area + slot_in_reel < reel_slots.Count");
+            //        return Vector3.zero;
+            //    }
+            //}
+            //TODO calculate with Display Zones
+            return reel.positions_in_path_v3[reel.reelstrip_info.before_display_zone_slot_objects+slot_in_reel] + (Vector3.back * 10);
         }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
