@@ -77,6 +77,10 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.StartCoroutine(myTarget.SetSpinStateTo(SpinStates.spin_start));
                 }
+                if (GUILayout.Button("Start Test Spin - Bonus Trigger"))
+                {
+                    myTarget.TriggerFeatureWithSpin(Features.freespin);
+                }
                 if (GUILayout.Button("End Test Spin"))
                 {
                     myTarget.StartCoroutine(myTarget.SetSpinStateTo(SpinStates.spin_outro));
@@ -88,6 +92,7 @@ namespace Slot_Engine.Matrix
 
     }
 #endif
+
     public class SpinManager : MonoBehaviour
     {
         public Matrix matrix
@@ -423,6 +428,12 @@ namespace Slot_Engine.Matrix
             {
                 matrix.reel_strip_managers[i].SetSpinDirectionTo(new_spin_direction);
             }
+        }
+
+        internal void TriggerFeatureWithSpin(Features feature)
+        {
+            matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(feature);
+            matrix.slot_machine_managers.interaction_controller.CheckForSpinSlam();
         }
     }
 }

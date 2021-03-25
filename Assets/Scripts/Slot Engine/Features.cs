@@ -8,9 +8,48 @@
 //  @ Author : Evan McCall
 //
 //
+using System;
+using System.Collections.Generic;
 
+namespace Slot_Engine.Matrix
+{
 
-public enum Features {
-	None,
-	SuperStacks
+	public enum Features
+	{
+		None,
+		freespin,
+		wild,
+		Count
+	}
+
+	[System.Serializable]
+	public struct FeaturesStructSymbolEvaluation
+	{
+		[UnityEngine.SerializeField]
+		public Features feature;
+		[UnityEngine.SerializeField]
+		public List<suffix_tree_node_info> appeared_on_node;
+
+		public FeaturesStructSymbolEvaluation(Features feature) : this()
+		{
+			this.feature = feature;
+		}
+
+        internal void AddNodeIfNotExist(ref suffix_tree_node_info node_info)
+        {
+			UnityEngine.Debug.Log(String.Format("Checking node to add for feature activation {0}",node_info.Print()));
+            //bool add_to_list = true;
+            if (appeared_on_node == null)
+                appeared_on_node = new List<suffix_tree_node_info>();
+            //         for (int node = 0; node < appeared_on_node.Count; node++)
+            //         {
+            //	if (appeared_on_node[node].row == node_info.row &&
+            //		appeared_on_node[node].row == node_info.column)
+            //		add_to_list = false;
+            //		break;
+            //}
+            if (!appeared_on_node.Contains(node_info))
+				appeared_on_node.Add(node_info);
+		}
+    }
 }

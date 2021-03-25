@@ -335,6 +335,11 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void ActivateFreeSpins()
+        {
+            slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.BonusActive, true);
+        }
+
         private void PrepareSlotMachineToSpin()
         {
             Debug.Log("Preparing Slot Machine for Spin");

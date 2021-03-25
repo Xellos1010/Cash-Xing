@@ -149,7 +149,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void CheckForSpinSlam()
+        internal void CheckForSpinSlam()
         {
             if (StateManager.enCurrentState == States.Idle_Idle)
             {
