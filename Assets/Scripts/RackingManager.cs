@@ -89,50 +89,8 @@ namespace Slot_Engine.Matrix
         {
             switch (State)
             {
-                case States.None:
-                    break;
-                case States.preloading:
-                    break;
-                case States.Coin_In:
-                    break;
-                case States.Coin_Out:
-                    break;
                 case States.Idle_Intro:
                     FinalizeRacking();
-                    break;
-                case States.Idle_Idle:
-                    break;
-                case States.Idle_Outro:
-                    break;
-                case States.Spin_Intro:
-                    break;
-                case States.Spin_Idle:
-                    break;
-                case States.Spin_Outro:
-                    break;
-                case States.Spin_End:
-                    break;
-                case States.Resolve_Intro:
-                    break;
-                case States.Resolve_Win_Idle:
-                    break;
-                case States.Resolve_Lose_Idle:
-                    break;
-                case States.Resolve_Win_Outro:
-                    break;
-                case States.win_presentation:
-                    break;
-                case States.racking_start:
-                    break;
-                case States.racking_loop:
-                    break;
-                case States.racking_end:
-                    break;
-                case States.feature_transition_out:
-                    break;
-                case States.feature_transition_in:
-                    break;
-                case States.total_win_presentation:
                     break;
                 default:
                     break;

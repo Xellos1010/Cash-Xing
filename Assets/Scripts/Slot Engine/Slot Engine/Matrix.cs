@@ -105,6 +105,11 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         internal ReelStripManager[] reel_strip_managers; //Each reel strip has a manager 
+        /// <summary>
+        /// Used for logical gate to activate bonus mode in animator
+        /// </summary>
+        internal bool bonus_game_triggered = false;
+
         internal ReelStripManager[] reel_strips_forward_to_back
         {
             get
@@ -134,6 +139,17 @@ namespace Slot_Engine.Matrix
                 return output.ToArray();
             }
         }
+        void Start()
+        {
+            //Initialize Machine and Player  Information
+            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.supported_bet_amounts.Length - 1, 1, 0);
+            //slot_machine_managers.end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
+            ReelStripsStruct stripInitial = slot_machine_managers.end_configuration_manager.pop_end_reelstrips_to_display_sequence;
+            string print_string = PrintSpinSymbols(ref stripInitial);
+            Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
+            //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
+            StateManager.SetStateTo(States.Idle_Intro);
+        }
 
         internal void ReturnPositionsBasedOnPayline(ref Payline payline, out List<Vector3> out_positions)
         {
@@ -162,24 +178,6 @@ namespace Slot_Engine.Matrix
 
         private Vector3 ReturnPositionOnReel(ref ReelStripManager reel, int slot_in_reel)
         {
-            //List<SlotManager> reel_slots = reel.GetSlotsDecending();
-            //int start_display_area = reel.reelstrip_info.before_display_zone_slot_objects;
-            //if(start_display_area > reel_slots.Count)
-            //{
-            //    Debug.Log("start_display_area > reel_slots.Count");
-            //    return Vector3.zero;
-            //}
-            //else
-            //{
-            //    if (start_display_area + slot_in_reel < reel_slots.Count)
-            //        return reel_slots[start_display_area + slot_in_reel].transform.position + (Vector3.back * 10);
-            //    else
-            //    {
-            //        Debug.Log("start_display_area + slot_in_reel < reel_slots.Count");
-            //        return Vector3.zero;
-            //    }
-            //}
-            //TODO calculate with Display Zones
             return reel.positions_in_path_v3[reel.reelstrip_info.before_display_zone_slot_objects+slot_in_reel] + (Vector3.back * 10);
         }
 
@@ -255,7 +253,6 @@ namespace Slot_Engine.Matrix
         internal void SlamLoopingPaylines()
         {
             StateManager.SetStateTo(States.Resolve_Outro);
-
         }
 
         internal void SetSystemToPresentWin()
@@ -275,69 +272,19 @@ namespace Slot_Engine.Matrix
 
         internal async void SetTriggersByState(States state)
         {
-            switch (state)
-            {
-                case States.None:
-                    break;
-                case States.preloading:
-                    break;
-                case States.Coin_In:
-                    break;
-                case States.Coin_Out:
-                    break;
-                case States.Idle_Intro:
-                    //Reset all Triggers and bools and set state for slots to idle idle
-                    //SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
-                    //slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinResolve);
-                    break;
-                case States.Idle_Idle:
-                    PrepareSlotMachineToSpin();
-                    break;
-                case States.Idle_Outro:
-                    break;
-                case States.Spin_Intro:
-                    break;
-                case States.Spin_Idle:
-                    break;
-                case States.Spin_Interrupt:
-                    break;
-                case States.Spin_Outro:
-                    break;
-                case States.Spin_End:
-                    break;
-                case States.Resolve_Intro:
-                    break;
-                
-                case States.Resolve_Win_Idle:
-                    break;
-                case States.Resolve_Lose_Idle:
-                    break;
-                case States.Resolve_Lose_Outro:
-                    break;
-                case States.Resolve_Win_Outro:
-                    break;
-                case States.win_presentation:
-                    break;
-                case States.racking_start:
-                    break;
-                case States.racking_loop:
-                    break;
-                case States.racking_end:
-                    break;
-                case States.feature_transition_out:
-                    break;
-                case States.feature_transition_in:
-                    break;
-                case States.total_win_presentation:
-                    break;
-                default:
-                    break;
-            }
+
         }
 
         internal void ActivateFreeSpins()
         {
-            slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.BonusActive, true);
+            bonus_game_triggered = true;
+            SetAllAnimatorsBoolTo(supported_bools.BonusActive, true);
+        }
+
+        private void SetAllAnimatorsBoolTo(supported_bools bool_to_set, bool value)
+        {
+            slot_machine_managers.animator_statemachine_master.SetBool(bool_to_set, value);
+            SetSlotsAnimatorBoolTo(bool_to_set,value);
         }
 
         private void PrepareSlotMachineToSpin()
@@ -574,18 +521,6 @@ namespace Slot_Engine.Matrix
             slot_machine_managers.machine_info_manager.OffsetPlayerAmountBy(amount);
         }
 
-        void Start()
-        {
-            //Initialize Machine and Player  Information
-            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.supported_bet_amounts.Length - 1, 1, 0);
-            //slot_machine_managers.end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
-            ReelStripsStruct stripInitial = slot_machine_managers.end_configuration_manager.pop_end_reelstrips_to_display_sequence;
-            string print_string = PrintSpinSymbols(ref stripInitial);
-            Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
-            //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
-            StateManager.SetStateTo(States.Idle_Intro);
-        }
-
         private string PrintSpinSymbols(ref ReelStripsStruct stripInitial)
         {
             string output = "";
@@ -636,7 +571,7 @@ namespace Slot_Engine.Matrix
                 case States.Idle_Outro:
                     //Decrease Bet Amount
                     PlayerHasBet(slot_machine_managers.machine_info_manager.bet_amount);
-                    slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinStart);
+                    SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     break;
                 case States.Spin_Intro:
                     break;
@@ -658,20 +593,12 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Resolve_Outro:
                     slot_machine_managers.paylines_manager.CancelCycleWins();
-                    SetSlotsAnimatorBoolTo(supported_bools.WinRacking, false);
-                    slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.WinRacking, false);
-                    await Task.Delay(1000);
-                    StateManager.SetStateTo(States.Idle_Intro);
+                    SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     break;
-                case States.Resolve_Win_Idle:
-                    break;
-                case States.Resolve_Lose_Idle:
-                    break;
-                case States.Resolve_Lose_Outro:
-                    break;
-                case States.Resolve_Win_Outro:
-                    break;
-                case States.win_presentation:
+                case States.bonus_idle_intro:
+                    SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,false);
+                    SetAllAnimatorsBoolTo(supported_bools.ResolveSpin,false);
+                    SetAllAnimatorsTriggerTo(supported_triggers.SpinSlam, false);
                     break;
                 case States.racking_start:
                     break;
@@ -687,6 +614,20 @@ namespace Slot_Engine.Matrix
                     break;
                 default:
                     break;
+            }
+        }
+
+        private void SetAllAnimatorsTriggerTo(supported_triggers trigger, bool v)
+        {
+            if(v)
+            {
+                slot_machine_managers.animator_statemachine_master.SetTrigger(trigger);
+                SetSlotsAnimatorTrigger(trigger);
+            }
+            else
+            {
+                slot_machine_managers.animator_statemachine_master.ResetTrigger(trigger);
+                ResetSlotsAnimatorTrigger(trigger);
             }
         }
 
@@ -716,6 +657,17 @@ namespace Slot_Engine.Matrix
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
                 {
                     reel_strip_managers[reel].slots_in_reel[slot].SetTriggerTo(slot_to_trigger);
+                }
+            }
+        }
+
+        private void ResetSlotsAnimatorTrigger(supported_triggers slot_to_trigger)
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                {
+                    reel_strip_managers[reel].slots_in_reel[slot].ResetTrigger(slot_to_trigger);
                 }
             }
         }

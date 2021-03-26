@@ -220,5 +220,28 @@ namespace Slot_Engine.Matrix
         {
             Debug.Log(string.Format("lineRenderer Initialized with {0} components", payline_renderers.Length.ToString()));
         }
+
+        void OnEnable()
+        {
+            StateManager.StateChangedTo += StateManager_StateChangedTo;
+        }
+
+        private void StateManager_StateChangedTo(States state)
+        {
+            switch (state)
+            {
+                case States.Resolve_Intro:
+                    ToggleRenderer(true);
+                    break;
+                default:
+                    ToggleRenderer(false);
+                    break;
+            }
+        }
+
+        void OnDisable()
+        {
+            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+        }
     }
 }

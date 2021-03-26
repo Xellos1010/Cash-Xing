@@ -785,7 +785,7 @@ namespace Slot_Engine.Matrix
         {
             if (dynamic_paylines.root_nodes.Length > 0)
             {
-                if (payline_to_show >= 0 && payline_to_show < GetSupportedGeneratedPaylines()) // TODO have a number of valid paylines printed
+                if (payline_to_show >= 0 && payline_to_show < GetSupportedGeneratedPaylines())
                 {
                     payline_renderer_manager.ShowPayline(dynamic_paylines.ReturnPayline(payline_to_show));
                 }

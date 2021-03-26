@@ -41,13 +41,6 @@ namespace Slot_Engine.Matrix
             //bool add_to_list = true;
             if (appeared_on_node == null)
                 appeared_on_node = new List<suffix_tree_node_info>();
-            //         for (int node = 0; node < appeared_on_node.Count; node++)
-            //         {
-            //	if (appeared_on_node[node].row == node_info.row &&
-            //		appeared_on_node[node].row == node_info.column)
-            //		add_to_list = false;
-            //		break;
-            //}
             if (!appeared_on_node.Contains(node_info))
 				appeared_on_node.Add(node_info);
 		}

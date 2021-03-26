@@ -307,5 +307,10 @@ namespace Slot_Engine.Matrix
         {
             state_machine.SetTrigger(to_trigger);
         }
+
+        internal void ResetTrigger(supported_triggers slot_to_trigger)
+        {
+            state_machine.ResetTrigger(slot_to_trigger);
+        }
     }
 }
