@@ -244,7 +244,6 @@ namespace Slot_Engine.Matrix
         {
             SetBoolTo(supported_bools.SymbolResolve, true);
             SetBoolTo(supported_bools.LoopPaylineWins, true);
-            //SetFloatMotionTimeTo(0.0f);
         }
         private void SetFloatMotionTimeTo(float v)
         {
@@ -259,6 +258,7 @@ namespace Slot_Engine.Matrix
         internal void SetSymbolResolveToLose()
         {
             SetBoolTo(supported_bools.SymbolResolve, false);
+            //SetBoolTo(supported_bools.LoopPaylineWins, true);
         }
 
         internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)

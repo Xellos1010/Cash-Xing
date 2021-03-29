@@ -133,6 +133,10 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public float spin_speed = 50;
         /// <summary>
+        /// Timer used to start each free spin
+        /// </summary>
+        public float timer_to_start_free_spin = 2.0f;
+        /// <summary>
         /// What direction should the slots spin? will reposition slots based on direction - please use -1, 0 or 1
         /// </summary>
         public Vector3 spin_direction = Vector3.down; // Initial state is down
@@ -236,6 +240,7 @@ namespace Slot_Engine.Matrix
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
+                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart,false);
                     if (CheckForWin())
                     {
                         StateManager.SetStateTo(States.Resolve_Intro);
@@ -245,7 +250,10 @@ namespace Slot_Engine.Matrix
                     {
                         // Set Trigger for state machine to SymbolResolve and WinRacking to false
                         //yield return ResetMachine();
-                        StateManager.SetStateTo(States.Idle_Intro);
+                        if(matrix.bonus_game_triggered)
+                            StateManager.SetStateTo(States.bonus_idle_intro);
+                        else
+                            StateManager.SetStateTo(States.Idle_Intro);
                     }
                     matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,true);
                     break;
@@ -412,6 +420,20 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.bonus_idle_outro:
                     StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_start));
+                    break;
+                case States.bonus_idle_idle:
+                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.idle_idle));
+                    break;
+                case States.bonus_spin_intro:
+                    break;
+                case States.bonus_spin_loop:
+                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_idle));
+                    break;
+                case States.bonus_spin_outro:
+                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_outro));
+                    break;
+                case States.bonus_spin_end:
+                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.end));
                     break;
                 case States.racking_start:
                     break;

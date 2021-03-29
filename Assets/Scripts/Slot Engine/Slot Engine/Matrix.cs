@@ -264,7 +264,10 @@ namespace Slot_Engine.Matrix
         {
             slot_machine_managers.paylines_manager.PlayCycleWins();
         }
-
+        /// <summary>
+        /// Set Free spin information for all Animators
+        /// </summary>
+        /// <param name="onOff"></param>
         internal void ToggleFreeSpinActive(bool onOff)
         {
             bonus_game_triggered = onOff;
@@ -586,6 +589,7 @@ namespace Slot_Engine.Matrix
                 case States.Idle_Outro:
                     //Decrease Bet Amount
                     PlayerHasBet(slot_machine_managers.machine_info_manager.bet_amount);
+                    SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,false);
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     break;
                 case States.Spin_Intro:
@@ -600,18 +604,31 @@ namespace Slot_Engine.Matrix
                     StateManager.SetStateTo(States.Spin_Outro);
                     break;
                 case States.Resolve_Intro:
+                    Debug.Log("Playing resolve Intro");
                     slot_machine_managers.racking_manager.StartRacking();
                     CycleWinningPaylinesMode();
                     break;
                 case States.Resolve_Outro:
                     slot_machine_managers.paylines_manager.CancelCycleWins();
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
-                    //TODO wait for all animators to go thru idle_intro state
-                    StateManager.SetStateTo(States.Idle_Intro);
+                    SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
+                    if (!bonus_game_triggered)
+                    {                        //TODO wait for all animators to go thru idle_intro state
+                        StateManager.SetStateTo(States.Idle_Intro);
+                    }
+                    else
+                    {
+                        StateManager.SetStateTo(States.bonus_idle_intro);
+                    }
                     break;
                 case States.bonus_idle_intro:
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,false);
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinSlam, false);
+                    StateManager.SetStateTo(States.bonus_idle_idle);
+                    break;
+                case States.bonus_idle_outro:
+                    ReduceFreeSpinBy(1);
+                    SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     break;
                 case States.racking_start:
                     break;
@@ -627,6 +644,19 @@ namespace Slot_Engine.Matrix
                     break;
                 default:
                     break;
+            }
+        }
+
+        private void ReduceFreeSpinBy(int amount)
+        {
+            if(slot_machine_managers.machine_info_manager.freespins > 0)
+            {
+                slot_machine_managers.machine_info_manager.SetFreeSpinsTo(slot_machine_managers.machine_info_manager.freespins - amount);
+                if (slot_machine_managers.machine_info_manager.freespins - amount < 0)
+                {
+                    //TODO remove hardcode and set event
+                    bonus_game_triggered = false;
+                }
             }
         }
 

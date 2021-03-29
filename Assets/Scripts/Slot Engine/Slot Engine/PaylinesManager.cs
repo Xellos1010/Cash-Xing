@@ -378,7 +378,6 @@ namespace Slot_Engine.Matrix
                     {
                         duplicate_paylines.Add(raw_payline);
                         //I can either keep the first one or second one at this point
-                        Debug.Log("Entry was removed ");
                     }
                 }
             }
@@ -405,7 +404,7 @@ namespace Slot_Engine.Matrix
             {
                 left_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnLeftRootNodeFromFullLineWin();
                 right_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnRightRootNodeFromFullLineWin();
-                Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
+                //Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
                 if(left_root_node_winning_payline == left_root_node_new_winning_payline && right_root_node_new_winning_payline == right_root_node_winning_payline)
                 {
                     return true;
@@ -429,7 +428,6 @@ namespace Slot_Engine.Matrix
         {
             cycle_paylines = true;
             current_winning_payline_shown = -1;
-            payline_renderer_manager.ToggleRenderer(true);
             StartCoroutine(InitializeAndCycleWinningPaylines());
 
         }
@@ -621,8 +619,6 @@ namespace Slot_Engine.Matrix
                 case States.Spin_Idle:
                     break;
                 case States.Spin_End:
-                    break;
-                case States.Resolve_Intro:
                     break;
                 case States.win_presentation:
                     break;

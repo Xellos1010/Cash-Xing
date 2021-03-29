@@ -28,7 +28,7 @@ public static class StateManager
     public delegate void SpinStateChangedTo(SpinStates spinState);
     public static event SpinDelegate spin_activated_event;
     public static event SpinStateChangedTo spin_state_changed;
-    public delegate void FeatureDelegate(Features feature_active, bool active_inactive);
+    public delegate void FeatureDelegate(Features feature, bool active_inactive);
     public static event FeatureDelegate FeatureTransition;
 
     //*************
