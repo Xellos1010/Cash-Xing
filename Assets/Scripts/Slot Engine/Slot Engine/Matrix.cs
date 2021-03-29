@@ -184,6 +184,14 @@ namespace Slot_Engine.Matrix
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
             SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                {
+                    //Stop all animation co-routines
+                    reel_strip_managers[reel].slots_in_reel[slot].SetPingPong(false);
+                }
+            }
             yield return 0;
         }
         internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
@@ -198,14 +206,14 @@ namespace Slot_Engine.Matrix
             return Task.CompletedTask;
         }
 
-        private void SetWinningSlotsToResolveWinLose(ref List<SlotManager> winning_slots, bool v)
+        private void SetWinningSlotsToResolveWinLose(ref List<SlotManager> slots, bool v)
         {
-            for (int slot = 0; slot < winning_slots.Count; slot++)
+            for (int slot = 0; slot < slots.Count; slot++)
             {
                 if (v)
-                    winning_slots[slot].SetSymbolResolveWin();
+                    slots[slot].SetSymbolResolveWin();
                 else
-                    winning_slots[slot].SetSymbolResolveToLose();
+                    slots[slot].SetSymbolResolveToLose();
             }
         }
 

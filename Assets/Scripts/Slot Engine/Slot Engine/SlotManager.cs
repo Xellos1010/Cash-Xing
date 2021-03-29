@@ -12,6 +12,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -19,7 +20,7 @@ namespace Slot_Engine.Matrix
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(SlotManager))]
-    class SlotEditor : Editor
+    class SlotEditor : BoomSportsEditor
     {
         SlotManager myTarget;
 
@@ -35,8 +36,6 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("Commands");
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
-            BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("To be Removed");
             base.OnInspectorGUI();
 
         }
@@ -175,6 +174,36 @@ namespace Slot_Engine.Matrix
                     }
                 transform.localPosition = toPosition;
             }
+            if(ping_pong)
+            {
+                if (up_down)
+                {
+                    new_percentage = completePercent + Time.deltaTime;
+                    if (new_percentage > 1)
+                    {
+                        completePercent = 1 - ((completePercent + new_percentage) - 1);
+                        up_down = false;
+                    }
+                    else
+                    {
+                        completePercent = new_percentage;
+                    }
+                }
+                else
+                {
+                    new_percentage = completePercent - Time.deltaTime;
+                    if (new_percentage < 0)
+                    {
+                        completePercent = 0 + Math.Abs(new_percentage);
+                        up_down = true;
+                    }
+                    else
+                    {
+                        completePercent = new_percentage;
+                    }
+                }
+                SetFloatMotionTimeTo(completePercent);
+            }
         }
 
         private void ResetAllVars()
@@ -235,16 +264,35 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void SetPingPong(bool v)
+        {
+            ping_pong = v;
+            if (v)
+                completePercent = 0;
+        }
+
         private string ReturnSymbolNameFromInt(int symbol)
         {
             return ((Symbol)symbol).ToString();
         }
 
-        internal void SetSymbolResolveWin()
+        internal async void SetSymbolResolveWin()
         {
             SetBoolTo(supported_bools.SymbolResolve, true);
             SetBoolTo(supported_bools.LoopPaylineWins, true);
+            //PingPong float
+            //StartCoroutine(PingPongAnimation());
+            //SetPingPong(true);
+            //SetFloatMotionTimeTo(0);
+            state_machine.state_machine.PlayInFixedTime("Resolve_Win_Idle",-1,0);
         }
+
+        public bool ping_pong = false;
+        public bool up_down = true;
+        public float new_percentage = 0;
+
+        public float completePercent = 0;
+
         private void SetFloatMotionTimeTo(float v)
         {
             state_machine.SetFloatTo(supported_floats.MotionTime,0.0f);
@@ -259,6 +307,11 @@ namespace Slot_Engine.Matrix
         {
             SetBoolTo(supported_bools.SymbolResolve, false);
             //SetBoolTo(supported_bools.LoopPaylineWins, true);
+            if (!state_machine.state_machine.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+            {
+                Debug.Log(String.Format("current state name != Resolve Intro"));
+                state_machine.state_machine.PlayInFixedTime("Resolve_Intro", -1, 0);
+            }
         }
 
         internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)
