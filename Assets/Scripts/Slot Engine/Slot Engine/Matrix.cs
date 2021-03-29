@@ -257,28 +257,18 @@ namespace Slot_Engine.Matrix
 
         internal void SetSystemToPresentWin()
         {
-            slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinResolve);
-            slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.ResolveSpin,true);
-            slot_machine_managers.animator_statemachine_master.SetBool(supported_bools.WinRacking, true);
-            SetSlotsAnimatorTrigger(supported_triggers.SpinResolve);
-            SetSlotsAnimatorBoolTo(supported_bools.WinRacking, true);
+            SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
         }
 
         internal void CycleWinningPaylinesMode()
         {
             slot_machine_managers.paylines_manager.PlayCycleWins();
-            slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinResolve);
         }
 
-        internal async void SetTriggersByState(States state)
+        internal void ToggleFreeSpinActive(bool onOff)
         {
-
-        }
-
-        internal void ActivateFreeSpins()
-        {
-            bonus_game_triggered = true;
-            SetAllAnimatorsBoolTo(supported_bools.BonusActive, true);
+            bonus_game_triggered = onOff;
+            SetAllAnimatorsBoolTo(supported_bools.BonusActive, onOff);
         }
 
         private void SetAllAnimatorsBoolTo(supported_bools bool_to_set, bool value)
@@ -539,10 +529,35 @@ namespace Slot_Engine.Matrix
         void OnEnable()
         {
             StateManager.StateChangedTo += StateManager_StateChangedTo;
+            StateManager.FeatureTransition += StateManager_FeatureTransition;
         }
+        /// <summary>
+        /// Used to receive and execute functions based on feature active or inactive
+        /// </summary>
+        /// <param name="feature">feature reference</param>
+        /// <param name="active_inactive">state</param>
+        private void StateManager_FeatureTransition(Features feature, bool active_inactive)
+        {
+            switch (feature)
+            {
+                case Features.None:
+                    break;
+                case Features.freespin:
+                    ToggleFreeSpinActive(active_inactive);
+                    break;
+                case Features.wild:
+                    break;
+                case Features.Count:
+                    break;
+                default:
+                    break;
+            }
+        }
+
         void OnDisable()
         {
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
+            StateManager.FeatureTransition -= StateManager_FeatureTransition;
         }
         /// <summary>
         /// Matrix State Machine
@@ -578,14 +593,11 @@ namespace Slot_Engine.Matrix
                 case States.Spin_Idle:
                     break;
                 case States.Spin_Interrupt:
-                    //Set the matrix and slots to spin interrupt
-                    slot_machine_managers.animator_statemachine_master.SetTrigger(supported_triggers.SpinSlam);
-                    SetSlotsAnimatorTrigger(supported_triggers.SpinSlam);
+                    //Set the matrix and slots to spin_Outro
+                    SetAllAnimatorsTriggerTo(supported_triggers.SpinSlam,true);
+                    //Set State to spin outro and wait for reels to stop to ResolveSpin
+                    //Spin Manager
                     StateManager.SetStateTo(States.Spin_Outro);
-                    break;
-                case States.Spin_Outro:
-                    break;
-                case States.Spin_End:
                     break;
                 case States.Resolve_Intro:
                     slot_machine_managers.racking_manager.StartRacking();
@@ -594,10 +606,11 @@ namespace Slot_Engine.Matrix
                 case States.Resolve_Outro:
                     slot_machine_managers.paylines_manager.CancelCycleWins();
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
+                    //TODO wait for all animators to go thru idle_intro state
+                    StateManager.SetStateTo(States.Idle_Intro);
                     break;
                 case States.bonus_idle_intro:
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,false);
-                    SetAllAnimatorsBoolTo(supported_bools.ResolveSpin,false);
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinSlam, false);
                     break;
                 case States.racking_start:
@@ -617,7 +630,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void SetAllAnimatorsTriggerTo(supported_triggers trigger, bool v)
+        internal void SetAllAnimatorsTriggerTo(supported_triggers trigger, bool v)
         {
             if(v)
             {

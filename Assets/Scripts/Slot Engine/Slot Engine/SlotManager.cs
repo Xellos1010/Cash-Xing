@@ -57,9 +57,19 @@ namespace Slot_Engine.Matrix
         /// the end position for the reels to calculate and land on
         /// </summary>
         public Vector3 end_position;
+        /// <summary>
+        /// While slot is moving will go to end position and stop
+        /// </summary>
         public bool set_to_display_end_symbol = false;
+        /// <summary>
+        /// Reference if slot is in end position
+        /// </summary>
         public bool slot_in_end_position = false;
+        /// <summary>
+        /// Reference if slot has end graphics assigned
+        /// </summary>
         public bool graphics_set_to_end = false;
+
         public MeshRenderer _meshRenderer;
 
         public AnimatorStateMachineManager state_machine
@@ -126,8 +136,8 @@ namespace Slot_Engine.Matrix
         {
             ResetAllVars();
             StopAnimation();
+            SetSlotMovementEnabledTo(true);
             SetTriggerTo(supported_triggers.SpinStart);
-            movement_enabled = true;
         }
 
         Vector3 GeneratePositionUpdateSpeed(Vector3 amount_to_add) //Needs to be positive to move forwards and negative to move backwards
@@ -156,9 +166,8 @@ namespace Slot_Engine.Matrix
                     if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
                 }
-                //TODO setup to set end position based on number of slots - slot width + padding and direction of spin
                 if(set_to_display_end_symbol && graphics_set_to_end)
-                    if (toPosition.y <= end_position.y)
+                    if (toPosition.y <= end_position.y) //TODO refactor for Omni Spin
                     {
                         toPosition = end_position;
                         slot_in_end_position = true;
@@ -172,7 +181,6 @@ namespace Slot_Engine.Matrix
         {
             SetSlotMovementEnabledTo(false);
             set_to_display_end_symbol = false;
-            graphics_set_to_end = false;
             //Set state of reel to end
         }
 
@@ -277,17 +285,24 @@ namespace Slot_Engine.Matrix
                 presentation_symbol_name = ReturnSymbolNameFromInt(to_symbol);
             presentation_symbol = to_symbol;
         }
+        /// <summary>
+        /// Used to set the slot to go to end position
+        /// </summary>
         internal void SetToStopSpin()
         {
-            //TODO setup state machine
             set_to_display_end_symbol = true;
+            slot_in_end_position = false;
+            graphics_set_to_end = false;
         }
 
         internal void SetSlotMovementEnabledTo(bool enable_disable)
         {
             movement_enabled = enable_disable;
             if (enable_disable)
+            {
                 slot_in_end_position = false;
+                graphics_set_to_end = false;
+            }
         }
 
         internal void ResetAnimator()
@@ -299,7 +314,6 @@ namespace Slot_Engine.Matrix
         {
             state_machine.InitializeAnimator();
             state_machine.SetBool(supported_bools.WinRacking, true);
-            state_machine.SetBool(supported_bools.ResolveSpin, true);
             
         }
 

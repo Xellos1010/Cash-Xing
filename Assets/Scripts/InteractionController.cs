@@ -259,13 +259,6 @@ namespace Slot_Engine.Matrix
             SetStateDisableInteraction(States.Spin_Interrupt);
         }
 
-
-        private void SetStateTo(States to_state)
-        {
-            can_spin_slam = false;
-            StateManager.SetStateTo(to_state);
-        }
-
         void OnEnable()
         {
             StateManager.StateChangedTo += StateManager_StateChangedTo;

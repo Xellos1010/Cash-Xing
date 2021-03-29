@@ -577,7 +577,9 @@ public enum eEaseType
         public IEnumerator StopReel(ReelStripStruct reelStrip)
         {
             end_symbols_set_from_config = 0;
+            //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
+            //Waits until all slots have stopped spinning
             yield return StopReel(reelStrip.spin_info.display_symbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
@@ -592,6 +594,7 @@ public enum eEaseType
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
             yield return AllSlotsStoppedSpinning();
+            Debug.Log(String.Format("All slots stopped spinning for reel {0}",transform.name));
         }
         internal IEnumerator AllSlotsStoppedSpinning()
         {

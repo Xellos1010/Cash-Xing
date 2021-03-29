@@ -273,6 +273,7 @@ namespace Slot_Engine.Matrix
             Debug.Log("Canceling Cycle Wins");
             cycle_paylines = false;
             StopAllCoroutines();
+
         }
         /// <summary>
         /// Renderes the line for winniing payline
@@ -296,18 +297,29 @@ namespace Slot_Engine.Matrix
             await EvaluateWinningSymbols(matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration);
             paylines_evaluated = true;
         }
-
+        /// <summary>
+        /// Evaluate the winning symbols from a reelstrip configuration
+        /// </summary>
+        /// <param name="ending_reelstrips">The reelstrips configuration</param>
+        /// <returns>Task can be awaited</returns>
         internal Task EvaluateWinningSymbols(ReelStripsStruct ending_reelstrips)
         {
+            //Gather symbol Configuration
             int[][] symbols_configuration = new int[ending_reelstrips.reelstrips.Length][];
             for (int reel = 0; reel < ending_reelstrips.reelstrips.Length; reel++)
             {
                 symbols_configuration[reel] = ending_reelstrips.reelstrips[reel].spin_info.display_symbols;
             }
-            EvaluateWinningSymbols(symbols_configuration); //TODO Determine if Bonus or Special symbols were triggered
+
+            EvaluateWinningSymbols(symbols_configuration);
             return Task.CompletedTask;
         }
-        
+        /// <summary>
+        /// Evaluates whether a symbols_configuration is has winning paylines
+        /// </summary>
+        /// <param name="symbols_configuration"></param>
+        /// <returns></returns>
+        /// //TODO Make static utility
         public Task EvaluateWinningSymbols(int[][] symbols_configuration)
         {
             //Initialize variabled needed for caching
@@ -317,14 +329,19 @@ namespace Slot_Engine.Matrix
             Dictionary<Symbol, FeaturesStructSymbolEvaluation> special_symbols = new Dictionary<Symbol, FeaturesStructSymbolEvaluation>();
             special_symbols[Symbol.SA01] = new FeaturesStructSymbolEvaluation(Features.freespin);
             winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref special_symbols);
-            Debug.Log(String.Format("Recognized {0} Scatter pay symbols", special_symbols[Symbol.SA01].appeared_on_node.Count));
-            if(special_symbols[Symbol.SA01].appeared_on_node.Count > 2)
+            if (special_symbols[Symbol.SA01].appeared_on_node != null)
             {
-                //Activate FreeSpins
-                matrix.ActivateFreeSpins();
+                Debug.Log(String.Format("Recognized {0} Scatter pay symbols", special_symbols[Symbol.SA01].appeared_on_node.Count));
+                if (special_symbols[Symbol.SA01].appeared_on_node.Count > 2)
+                {
+                    //Activate FreeSpins
+                    StateManager.SetFeatureActiveTo(Features.freespin, true);
+                }
             }
             if (winning_paylines.Length > 0)
             {
+                //TODO Implement isWinningConfiguration Event
+                //StateManager.IsWinningConfiguration(true);
                 matrix.SetSystemToPresentWin();
             }
             paylines_evaluated = true;

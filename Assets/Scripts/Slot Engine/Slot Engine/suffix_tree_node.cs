@@ -67,10 +67,10 @@ namespace Slot_Engine.Matrix
         /// <param name="symbols_configuration">symbols on matrix</param>
         internal WinningPayline[] InitializeAndCheckForWinningPaylines(ref int[][] symbols_configuration, ref Dictionary<Symbol, FeaturesStructSymbolEvaluation> special_symbols)
         {
-            Debug.Log("Initialize check for winning paylines");
+            //Debug.Log("Initialize check for winning paylines");
             //Initialize Winning Symbol List
             List<SymbolWinStruct> winning_symbols = new List<SymbolWinStruct>();
-            Debug.Log(String.Format("Checking for winning node {0}", node_info.Print()));
+            //Debug.Log(String.Format("Checking for winning node {0}", node_info.Print()));
             int primary_linewin_symbol = symbols_configuration[node_info.column][node_info.row];
             //Check for features to activate with the first symbol and add the first symbol to the line win
             CheckFeatureConditions(primary_linewin_symbol, ref special_symbols, ref node_info);
@@ -79,7 +79,7 @@ namespace Slot_Engine.Matrix
             //Initialize Winning Paylines
             List<WinningPayline> winning_paylines = new List<WinningPayline>();
 
-            Debug.Log(String.Format("Starting check for winning paylines from node {0}", node_info.Print()));
+            //Debug.Log(String.Format("Starting check for winning paylines from node {0}", node_info.Print()));
             //Check all connected nodes for a win using dfs (depth first search) search
             CheckConnectedNodes(ref node_info, ref connected_nodes_struct, ref symbols_configuration, ref winning_symbols, ref winning_paylines, primary_linewin_symbol, ref special_symbols);
 
@@ -118,8 +118,7 @@ namespace Slot_Engine.Matrix
             //Cycle thru each connected node for a winning payline
             for (int connected_node = 0; connected_node < connected_nodes_struct.Length; connected_node++)
             {
-                Debug.Log(String.Format("Checking Connected node {0} from {1}", connected_nodes_struct[connected_node].node_info.Print(),
-                    current_node.Print()));
+                //Debug.Log(String.Format("Checking Connected node {0} from {1}", connected_nodes_struct[connected_node].node_info.Print(),current_node.Print()));
                 //reference list
                 CheckForDynamicWinningPaylinesOnNode(ref connected_nodes_struct[connected_node], ref symbols_configuration, ref winning_symbols, symbol_to_check_for, ref winning_paylines, ref special_symbols);
                 //if connected nodes are the same leading up to the end winning symbol use the largest list length
@@ -134,7 +133,7 @@ namespace Slot_Engine.Matrix
         /// <param name="winning_symbols">winning symbols list</param>
         private void CheckForDynamicWinningPaylinesOnNode(ref suffix_tree_node suffix_tree_node, ref int[][] symbols_configuration, ref List<SymbolWinStruct> winning_symbols, int symbol_to_check_for, ref List<WinningPayline> winning_paylines, ref Dictionary<Symbol, FeaturesStructSymbolEvaluation> special_symbols)
         {
-            Debug.Log(String.Format("Checking node {0}", suffix_tree_node.node_info.Print()));
+            //Debug.Log(String.Format("Checking node {0}", suffix_tree_node.node_info.Print()));
             //Get current node symbol
             int current_symbol_to_check = symbols_configuration[suffix_tree_node.node_info.column][suffix_tree_node.node_info.row];
             //get the feature condition if any for the node
@@ -176,7 +175,7 @@ namespace Slot_Engine.Matrix
                     //Reached the end of the payline - add this payline and override others - remove symbol and start down next tree
                     InitializeAndAddDynamicWinningPayline(suffix_tree_node, ref winning_symbols, ref winning_paylines);
                 }
-                //Debug.Log(winning_symbols.PrintElements<int>());
+                ////Debug.Log(winning_symbols.PrintElements<int>());
                 RemoveWinningSymbol(ref winning_symbols, column_index);
             }
             else
@@ -190,7 +189,7 @@ namespace Slot_Engine.Matrix
 
         private void InitializeAndAddDynamicWinningPayline(suffix_tree_node suffix_tree_node, ref List<SymbolWinStruct> winning_symbols, ref List<WinningPayline> winning_paylines)
         {
-            Debug.Log(String.Format("Payline {0} won!", PrintDynamicPayline(ref winning_symbols)));
+            //Debug.Log(String.Format("Payline {0} won!", PrintDynamicPayline(ref winning_symbols)));
             int[] payline = new int[winning_symbols.Count];
             List<int> winning_symbol_row = new List<int>();
             for (int symbol = 0; symbol < winning_symbols.Count; symbol++)
@@ -208,7 +207,7 @@ namespace Slot_Engine.Matrix
             {
                 symbol_names.Add(((Symbol)matching_symbols_list[i]).ToString());
             }
-            Debug.Log(String.Format("a match was found on payline {0}, {1} symbols match {2}", payline, left_right ? "left" : "right", String.Join(" ", symbol_names)));
+            //Debug.Log(String.Format("a match was found on payline {0}, {1} symbols match {2}", payline, left_right ? "left" : "right", String.Join(" ", symbol_names)));
             Payline payline_won = new Payline(payline, left_right);
             WinningPayline new_winning_payline = new WinningPayline(payline_won, matching_symbols_list.ToArray());
 
@@ -219,20 +218,18 @@ namespace Slot_Engine.Matrix
             {
                 if (duplicate_payline != new_winning_payline)
                 {
-                    Debug.Log(String.Format("New winning payline {0} is higher value than a payline already in the list {1}",
-                        string.Join("|", new_winning_payline.payline.payline_configuration.payline),
-                        string.Join("|", duplicate_payline.payline.payline_configuration.payline)));
+                    //Debug.Log(String.Format("New winning payline {0} is higher value than a payline already in the list {1}",string.Join("|", new_winning_payline.payline.payline_configuration.payline), string.Join("|", duplicate_payline.payline.payline_configuration.payline)));
                     winning_paylines.Remove(duplicate_payline);
                     winning_paylines.Add(new_winning_payline);
                 }
                 else
                 {
-                    Debug.Log(String.Format("New winning payline {0} is lower value or already in the list. Not adding to list", string.Join("|", new_winning_payline.payline.payline_configuration.payline)));
+                    //Debug.Log(String.Format("New winning payline {0} is lower value or already in the list. Not adding to list", string.Join("|", new_winning_payline.payline.payline_configuration.payline)));
                 }
             }
             else
             {
-                Debug.Log(String.Format("adding winning payline {0}", string.Join("|", new_winning_payline.payline.payline_configuration.payline)));
+                //Debug.Log(String.Format("adding winning payline {0}", string.Join("|", new_winning_payline.payline.payline_configuration.payline)));
                 winning_paylines.Add(new_winning_payline);
             }
         }
@@ -269,14 +266,14 @@ namespace Slot_Engine.Matrix
                             //Check for largest payline configuration and keep highest
                             if (new_winning_payline_configuration.Length > list_entry_winning_payline_configuration.Length)
                             {
-                                Debug.Log("Duplicate reference = winning_paylines[winning_payline]");
+                                //Debug.Log("Duplicate reference = winning_paylines[winning_payline]");
                                 duplicate_payline_reference = winning_paylines[winning_payline];
                                 //We have a similar payline - keep the one with highest value
                                 return true;
                             }
                             else
                             {
-                                Debug.Log("Duplicate reference = new_winning_payline");
+                                //Debug.Log("Duplicate reference = new_winning_payline");
                                 duplicate_payline_reference = new_winning_payline;
                                 return true;
                             }
@@ -288,7 +285,7 @@ namespace Slot_Engine.Matrix
                     }
                 }
             }
-            Debug.Log("No Duplicate found");
+            //Debug.Log("No Duplicate found");
             duplicate_payline_reference = null;
             return false;
         }
@@ -321,7 +318,7 @@ namespace Slot_Engine.Matrix
 
         private void RemoveWinningSymbol(ref List<SymbolWinStruct> winning_symbols, int index)
         {
-            Debug.Log(String.Format("Removing winning symbol {0}", winning_symbols[index]));
+            //Debug.Log(String.Format("Removing winning symbol {0}", winning_symbols[index]));
             winning_symbols.RemoveAt(index);
         }
 
@@ -332,7 +329,7 @@ namespace Slot_Engine.Matrix
         /// <param name="winning_symbols">winning symbols reference list</param>
         private void AddWinningSymbol(int symbol, ref List<SymbolWinStruct> winning_symbols, ref suffix_tree_node_info suffix_tree_node_info)
         {
-            Debug.Log(String.Format("Adding winning symbol {0} from node {1}", symbol, suffix_tree_node_info.Print()));
+            ////Debug.Log(String.Format("Adding winning symbol {0} from node {1}", symbol, suffix_tree_node_info.Print()));
             winning_symbols.Add(new SymbolWinStruct(suffix_tree_node_info, symbol));
         }
 

@@ -37,7 +37,7 @@ namespace Slot_Engine.Matrix
 
         internal void AddNodeIfNotExist(ref suffix_tree_node_info node_info)
         {
-			UnityEngine.Debug.Log(String.Format("Checking node to add for feature activation {0}",node_info.Print()));
+			//UnityEngine.Debug.Log(String.Format("Checking node to add for feature activation {0}",node_info.Print()));
             //bool add_to_list = true;
             if (appeared_on_node == null)
                 appeared_on_node = new List<suffix_tree_node_info>();
