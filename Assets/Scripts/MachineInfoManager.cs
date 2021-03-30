@@ -153,7 +153,7 @@ namespace Slot_Engine.Matrix
             multiplier = to_multipler_value;
             new_multiplier_set?.Invoke(to_multipler_value);
         }
-        private void SetFreeSpinsTo(int new_free_spins)
+        internal void SetFreeSpinsTo(int new_free_spins)
         {
             Debug.Log(String.Format("Free Spins is being set to {0}", new_free_spins));
             freespins = new_free_spins;
@@ -184,6 +184,42 @@ namespace Slot_Engine.Matrix
         {
             //Add the amount to wallet and Update Text on machine
             SetPlayerWalletTo(player_wallet + amount);
+        }
+
+        void OnEnable()
+        {
+            StateManager.FeatureTransition += StateManager_FeatureTransition;
+        }
+        /// <summary>
+        /// Pull information based on feature being active
+        /// </summary>
+        /// <param name="feature"></param>
+        /// <param name="active_inactive"></param>
+        private void StateManager_FeatureTransition(Features feature, bool active_inactive)
+        {
+            switch (feature)
+            {
+                case Features.None:
+                    break;
+                case Features.freespin:
+                    if (active_inactive)
+                    {
+                        //Set Freespin Text to 10 remaining
+                        SetFreeSpinsTo(10);
+                    }
+                    break;
+                case Features.wild:
+                    break;
+                case Features.Count:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        void OnDisable()
+        {
+            StateManager.FeatureTransition += StateManager_FeatureTransition;
         }
     }
 }

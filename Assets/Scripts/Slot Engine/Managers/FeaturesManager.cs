@@ -9,11 +9,19 @@
 //
 //
 
-
-public class FeaturesManager {
-	public Features feaActivatedFeatures ;
-	//public void AnalyzeWinForFeatureActivation(Reel[] EndingCombination){
-	//}
-	public void ActivateFeature(string Feature){
+namespace Slot_Engine.Matrix
+{
+	public class FeaturesManager
+	{
+		public Features feaActivatedFeatures;
+		
+		/// <summary>
+		/// Sets the options for the game to activate a specific feature
+		/// </summary>
+		/// <param name="Feature"></param>
+		public void ActivateFeature(Features Feature)
+		{
+			
+		}
 	}
 }

@@ -9,20 +9,28 @@
 //
 //
 
+using Slot_Engine.Matrix;
+using System;
+
 public static class StateManager
 {
     public static States enCurrentState;
     public static States enCurrentMode;
-
+    /// <summary>
+    /// the current active feature reference for the game
+    /// </summary>
+    public static Features current_feature_active;
     //State Switching Variables
     public delegate void StateDelegate(States State);
     public static event StateDelegate StateChangedTo;
     public static event StateDelegate StateSwitched;
-    
     public delegate void SpinDelegate();
     public delegate void SpinStateChangedTo(SpinStates spinState);
     public static event SpinDelegate spin_activated_event;
     public static event SpinStateChangedTo spin_state_changed;
+    public delegate void FeatureDelegate(Features feature, bool active_inactive);
+    public static event FeatureDelegate FeatureTransition;
+
     //*************
 
     //Unity Functions
@@ -37,4 +45,12 @@ public static class StateManager
         if(StateChangedTo != null)
             StateChangedTo.Invoke(State);
 	}
+
+    internal static void SetFeatureActiveTo(Features feature, bool active_inactive)
+    {
+        StaticUtilities.DebugLog(string.Format("State switched to {0}", feature.ToString()));
+        current_feature_active = active_inactive ? feature : Features.None;
+        if (FeatureTransition != null)
+            FeatureTransition.Invoke(feature, active_inactive);
+    }
 }

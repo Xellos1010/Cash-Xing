@@ -149,9 +149,9 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void CheckForSpinSlam()
+        internal void CheckForSpinSlam()
         {
-            if (StateManager.enCurrentState == States.Idle_Idle)
+            if (StateManager.enCurrentState == States.Idle_Idle || StateManager.enCurrentState == States.bonus_idle_idle)
             {
                 StartSpin();
             }
@@ -175,7 +175,10 @@ namespace Slot_Engine.Matrix
 
         private void StartSpin()
         {
-            SetStateDisableInteraction(States.Idle_Outro);
+            if(StateManager.enCurrentState == States.Idle_Idle)
+                SetStateDisableInteraction(States.Idle_Outro);
+            else if (StateManager.enCurrentState == States.bonus_idle_idle)
+                SetStateDisableInteraction(States.bonus_idle_outro);
         }
 
         private void SetStateDisableInteraction(States to_state)
@@ -256,13 +259,6 @@ namespace Slot_Engine.Matrix
             SetStateDisableInteraction(States.Spin_Interrupt);
         }
 
-
-        private void SetStateTo(States to_state)
-        {
-            can_spin_slam = false;
-            StateManager.SetStateTo(to_state);
-        }
-
         void OnEnable()
         {
             StateManager.StateChangedTo += StateManager_StateChangedTo;
@@ -277,56 +273,20 @@ namespace Slot_Engine.Matrix
         {
             switch (State)
             {
-                case States.None:
-                    break;
-                case States.preloading:
-                    break;
-                case States.Coin_In:
-                    break;
-                case States.Coin_Out:
-                    break;
-                case States.Idle_Intro:
-                    break;
                 case States.Idle_Idle:
                     can_spin_slam = true;
                     break;
                 case States.Idle_Outro:
                     can_spin_slam = true;
                     break;
-                case States.Spin_Intro:
-                    break;
-                case States.Spin_Idle:
-                    break;
-                case States.Spin_Interrupt:
-                    break;
-                case States.Spin_Outro:
-                    break;
-                case States.Spin_End:
-                    break;
                 case States.Resolve_Intro:
                     can_spin_slam = true;
                     break;
-                case States.Resolve_Win_Idle:
+                case States.bonus_idle_idle:
+                    can_spin_slam = true;
                     break;
-                case States.Resolve_Lose_Idle:
-                    break;
-                case States.Resolve_Lose_Outro:
-                    break;
-                case States.Resolve_Win_Outro:
-                    break;
-                case States.win_presentation:
-                    break;
-                case States.racking_start:
-                    break;
-                case States.racking_loop:
-                    break;
-                case States.racking_end:
-                    break;
-                case States.feature_transition_out:
-                    break;
-                case States.feature_transition_in:
-                    break;
-                case States.total_win_presentation:
+                case States.bonus_idle_outro:
+                    can_spin_slam = true;
                     break;
                 default:
                     break;

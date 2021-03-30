@@ -36,7 +36,12 @@ namespace Slot_Engine.Matrix
             
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("End Configuration Manager Controls");
-            if(GUILayout.Button("Generate Reelstrips"))
+            if (GUILayout.Button("Generate feature configuration to spin"))
+            {
+                myTarget.AddConfigurationToSequence(Features.freespin);
+                serializedObject.ApplyModifiedProperties();
+            }
+            if (GUILayout.Button("Generate Reelstrips"))
             {
                 await myTarget.GenerateMultipleEndReelStripsConfiguration(500);
                 serializedObject.ApplyModifiedProperties();
@@ -175,7 +180,7 @@ namespace Slot_Engine.Matrix
 #else
             int output = UnityEngine.Random.Range(0,((int)(Symbol.End))-2);
 #endif
-            Debug.Log(String.Format("Symbol Generated form Weighted Distribution is {0}", ((Symbol)output).ToString()));
+            //Debug.Log(String.Format("Symbol Generated form Weighted Distribution is {0}", ((Symbol)output).ToString()));
             return output;
         }
 
@@ -202,6 +207,33 @@ namespace Slot_Engine.Matrix
         internal void SetMatrixToReelConfiguration()
         {
             matrix.SetSymbolsToDisplayOnMatrixTo(current_reelstrip_configuration);
+        }
+
+        internal void AddConfigurationToSequence(ReelStripsStruct configuration)
+        {
+            if (end_reelstrips_to_display_sequence == null)
+                end_reelstrips_to_display_sequence = new List<ReelStripsStruct>();
+            //if valid configuration then add and move on
+            end_reelstrips_to_display_sequence.Insert(0, configuration);
+        }
+
+        internal void AddConfigurationToSequence(Features feature)
+        {
+            ReelStripsStruct configuration = new ReelStripsStruct();
+            switch (feature)
+            {
+                case Features.freespin:
+                    configuration.reelstrips = new ReelStripStruct[matrix.reel_strip_managers.Length];
+                    for (int i = 0; i < configuration.reelstrips.Length; i++)
+                    {
+                        configuration.reelstrips[i].spin_info.display_symbols = new int[3] { i % 2 == 0 ? (int)Symbol.SA01 : (int)Symbol.RO03, (int)Symbol.RO01, (int)Symbol.RO02 };
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            AddConfigurationToSequence(configuration);
         }
     }
 }

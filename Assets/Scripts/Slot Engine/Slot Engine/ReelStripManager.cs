@@ -60,12 +60,20 @@ public enum eEaseType
         {
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Controls");
+            if(!Application.isPlaying)
+            {
+                if (GUILayout.Button("Set Slot Positions Initial"))
+                {
+                    my_target.SetSlotPositionToStart();
+                }
+            }
             if (my_target.is_reel_spinning)
             {
                 if (GUILayout.Button("Spin Reel Test"))
                 {
                     my_target.SpinReel();
                 }
+                
             }
             else
             {
@@ -350,7 +358,7 @@ public enum eEaseType
         /// </summary>
         /// <param name="display_zones">Display Slots in reel</param>
         /// <param name="before_display_slots">amount of slots before display slots to generate objects for - minimum 1</param>
-        private void UpdateSlotObjectsInReelStrip(int slots_in_reelstrip)
+        internal void UpdateSlotObjectsInReelStrip(int slots_in_reelstrip)
         {
 
             List<SlotManager> slots_in_reel = new List<SlotManager>();
@@ -375,7 +383,7 @@ public enum eEaseType
             this.slots_in_reel = slots_in_reel.ToArray();
         }
 
-        private void SetSlotObjectsInReelTo(ref List<SlotManager> slots_in_reel, int total_slot_objects_required)
+        internal void SetSlotObjectsInReelTo(ref List<SlotManager> slots_in_reel, int total_slot_objects_required)
         {
 
             //Do we need to add or remove display slot objects on reelstrip
@@ -392,7 +400,7 @@ public enum eEaseType
                 }
                 else
                 {
-                    Destroy(slots_in_reel[slot_to_update].gameObject);
+                    DestroyImmediate(slots_in_reel[slot_to_update].gameObject);
                     slots_in_reel.RemoveAt(slot_to_update);
                 }
             }
@@ -577,7 +585,9 @@ public enum eEaseType
         public IEnumerator StopReel(ReelStripStruct reelStrip)
         {
             end_symbols_set_from_config = 0;
+            //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
+            //Waits until all slots have stopped spinning
             yield return StopReel(reelStrip.spin_info.display_symbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
@@ -592,6 +602,7 @@ public enum eEaseType
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
             yield return AllSlotsStoppedSpinning();
+            Debug.Log(String.Format("All slots stopped spinning for reel {0}",transform.name));
         }
         internal IEnumerator AllSlotsStoppedSpinning()
         {
@@ -645,15 +656,13 @@ public enum eEaseType
         /// </summary>
         /// <param name="position_in_reel">Position in Reel slot will be</param>
         /// <returns>Slot Position Vector3</returns>
-        Vector3 GetSlotPositionBasedOnReelPosition(int position_in_reel)
+        internal Vector3 GetSlotPositionBasedOnReelPosition(int position_in_reel)
         {
-            //Change later to enter customizes reel starting height (Matrix 3x4x5x4x3)
-            //Need To Determine How many Slots are in the Reel and calculate the iExtraSlotsPerReel (-1 to include the end slot not being active)
-            //of the reel into the starting Y Position
-            //TODO refactor to include which direction building only supports left to right atm
-            float x = reelstrip_info.reel_number * (matrix.slot_size.x + matrix.padding.x); // * matrix.padding.x; used later to add padding between reels
-            float y = (position_in_reel * (matrix.slot_size.y + matrix.padding.y)) * reelstrip_info.reel_spin_speed_direction.y;
-            Debug.Log("Generate Local Position = " + x.ToString() + " , " + y.ToString() + "," + 0);
+            //TODO Base on Spin Direction
+            Debug.Log(String.Format("reelstrip_info.reel_number = {0} slot size = ({1},{2}) matrix padding.x = {3}", reelstrip_info.reel_number, matrix.slot_size.x, matrix.slot_size.y, matrix.padding.x));
+            float x = reelstrip_info.reel_number * (matrix.slot_size.x + matrix.padding.x);
+            float y = -(position_in_reel * (matrix.slot_size.y + matrix.padding.y));
+            Debug.Log(string.Format("Local Position for slot {0} int reel {1} is ({2},{3},{4}) ",position_in_reel, transform.name,x.ToString(), y.ToString(),0));
             Vector3 return_position = new Vector3(x, y, 0);
             return return_position;
         }

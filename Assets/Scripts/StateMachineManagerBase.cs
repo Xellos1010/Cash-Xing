@@ -12,7 +12,6 @@ public enum supported_bools
     BonusActive,
     FeatureTrigger,
     SymbolResolve,
-    ResolveSpin,
     LoopPaylineWins,
     End
 }

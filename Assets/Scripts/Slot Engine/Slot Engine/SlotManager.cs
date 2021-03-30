@@ -12,6 +12,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -19,7 +20,7 @@ namespace Slot_Engine.Matrix
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(SlotManager))]
-    class SlotEditor : Editor
+    class SlotEditor : BoomSportsEditor
     {
         SlotManager myTarget;
 
@@ -35,8 +36,6 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("Commands");
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
-            BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("To be Removed");
             base.OnInspectorGUI();
 
         }
@@ -57,9 +56,19 @@ namespace Slot_Engine.Matrix
         /// the end position for the reels to calculate and land on
         /// </summary>
         public Vector3 end_position;
+        /// <summary>
+        /// While slot is moving will go to end position and stop
+        /// </summary>
         public bool set_to_display_end_symbol = false;
+        /// <summary>
+        /// Reference if slot is in end position
+        /// </summary>
         public bool slot_in_end_position = false;
+        /// <summary>
+        /// Reference if slot has end graphics assigned
+        /// </summary>
         public bool graphics_set_to_end = false;
+
         public MeshRenderer _meshRenderer;
 
         public AnimatorStateMachineManager state_machine
@@ -126,8 +135,8 @@ namespace Slot_Engine.Matrix
         {
             ResetAllVars();
             StopAnimation();
+            SetSlotMovementEnabledTo(true);
             SetTriggerTo(supported_triggers.SpinStart);
-            movement_enabled = true;
         }
 
         Vector3 GeneratePositionUpdateSpeed(Vector3 amount_to_add) //Needs to be positive to move forwards and negative to move backwards
@@ -156,9 +165,8 @@ namespace Slot_Engine.Matrix
                     if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
                 }
-                //TODO setup to set end position based on number of slots - slot width + padding and direction of spin
                 if(set_to_display_end_symbol && graphics_set_to_end)
-                    if (toPosition.y <= end_position.y)
+                    if (toPosition.y <= end_position.y) //TODO refactor for Omni Spin
                     {
                         toPosition = end_position;
                         slot_in_end_position = true;
@@ -166,13 +174,42 @@ namespace Slot_Engine.Matrix
                     }
                 transform.localPosition = toPosition;
             }
+            if(ping_pong)
+            {
+                if (up_down)
+                {
+                    new_percentage = completePercent + Time.deltaTime;
+                    if (new_percentage > 1)
+                    {
+                        completePercent = 1 - ((completePercent + new_percentage) - 1);
+                        up_down = false;
+                    }
+                    else
+                    {
+                        completePercent = new_percentage;
+                    }
+                }
+                else
+                {
+                    new_percentage = completePercent - Time.deltaTime;
+                    if (new_percentage < 0)
+                    {
+                        completePercent = 0 + Math.Abs(new_percentage);
+                        up_down = true;
+                    }
+                    else
+                    {
+                        completePercent = new_percentage;
+                    }
+                }
+                SetFloatMotionTimeTo(completePercent);
+            }
         }
 
         private void ResetAllVars()
         {
             SetSlotMovementEnabledTo(false);
             set_to_display_end_symbol = false;
-            graphics_set_to_end = false;
             //Set state of reel to end
         }
 
@@ -227,17 +264,43 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void SetPingPong(bool v)
+        {
+            ping_pong = v;
+            if (v)
+                completePercent = 0;
+            else
+            {
+                if (!state_machine.state_machine.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+                {
+                    Debug.Log(String.Format("current state name != Resolve Intro"));
+                    state_machine.state_machine.PlayInFixedTime("Resolve_Intro", -1, 0);
+                }
+            }
+        }
+
         private string ReturnSymbolNameFromInt(int symbol)
         {
             return ((Symbol)symbol).ToString();
         }
 
-        internal void SetSymbolResolveWin()
+        internal async void SetSymbolResolveWin()
         {
             SetBoolTo(supported_bools.SymbolResolve, true);
             SetBoolTo(supported_bools.LoopPaylineWins, true);
-            //SetFloatMotionTimeTo(0.0f);
+            //PingPong float
+            //StartCoroutine(PingPongAnimation());
+            //SetPingPong(true);
+            //SetFloatMotionTimeTo(0);
+            state_machine.state_machine.PlayInFixedTime("Resolve_Win_Idle",-1,0);
         }
+
+        public bool ping_pong = false;
+        public bool up_down = true;
+        public float new_percentage = 0;
+
+        public float completePercent = 0;
+
         private void SetFloatMotionTimeTo(float v)
         {
             state_machine.SetFloatTo(supported_floats.MotionTime,0.0f);
@@ -251,6 +314,12 @@ namespace Slot_Engine.Matrix
         internal void SetSymbolResolveToLose()
         {
             SetBoolTo(supported_bools.SymbolResolve, false);
+            //SetBoolTo(supported_bools.LoopPaylineWins, true);
+            if (!state_machine.state_machine.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+            {
+                Debug.Log(String.Format("current state name != Resolve Intro"));
+                state_machine.state_machine.PlayInFixedTime("Resolve_Intro", -1, 0);
+            }
         }
 
         internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)
@@ -277,17 +346,24 @@ namespace Slot_Engine.Matrix
                 presentation_symbol_name = ReturnSymbolNameFromInt(to_symbol);
             presentation_symbol = to_symbol;
         }
+        /// <summary>
+        /// Used to set the slot to go to end position
+        /// </summary>
         internal void SetToStopSpin()
         {
-            //TODO setup state machine
             set_to_display_end_symbol = true;
+            slot_in_end_position = false;
+            graphics_set_to_end = false;
         }
 
         internal void SetSlotMovementEnabledTo(bool enable_disable)
         {
             movement_enabled = enable_disable;
             if (enable_disable)
+            {
                 slot_in_end_position = false;
+                graphics_set_to_end = false;
+            }
         }
 
         internal void ResetAnimator()
@@ -299,13 +375,17 @@ namespace Slot_Engine.Matrix
         {
             state_machine.InitializeAnimator();
             state_machine.SetBool(supported_bools.WinRacking, true);
-            state_machine.SetBool(supported_bools.ResolveSpin, true);
             
         }
 
         internal void SetTriggerTo(supported_triggers to_trigger)
         {
             state_machine.SetTrigger(to_trigger);
+        }
+
+        internal void ResetTrigger(supported_triggers slot_to_trigger)
+        {
+            state_machine.ResetTrigger(slot_to_trigger);
         }
     }
 }
