@@ -99,13 +99,12 @@ namespace Slot_Engine.Matrix
         {
             get
             {
-                if (_matrix == null)
-                    _matrix = FindObjectOfType<Matrix>();
-                return _matrix;
+                if (managers == null)
+                    managers = transform.GetComponentInParent<ManagersReferenceScript>();
+                return managers.matrix;
             }
         }
-        [SerializeField]
-        private Matrix _matrix;
+        public ManagersReferenceScript managers;
         [SerializeField]
         private InteractionController controller;
         //TODO - Define reel strip length per reel - 50 - define time to traverse reel strip - speed is calculated based on traverse time - On Outro set speed to outro traverse time - 50% 

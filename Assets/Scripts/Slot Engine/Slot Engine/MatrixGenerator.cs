@@ -221,6 +221,10 @@ namespace Slot_Engine.Matrix
                 else if (connected_matrix.objectReferenceValue != null)
                 {
                     EditorGUILayout.LabelField("Modifying below will modify Connected Matrix");
+                    if(GUILayout.Button("Ensure slot objects are generated"))
+                    {
+                        myTarget.UpdateSlotObjectsPerReel();
+                    }
                 }
             }
         }
@@ -314,17 +318,9 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public Vector3 matrix_object_position_worldspace;
         /// <summary>
-        /// the amount of slots to display before reel
-        /// </summary>
-        public int[] before_display_zone_objects_per_reel;
-        /// <summary>
         /// Display Zones per reel. stacked 2x5 inverted pyramid matrix requires ReelStripStructDisplayZone[5]{2x1x2x0x2x0,2x0x2x1x2x0,2x1x2x0x2x1,2x0x2x1x2x0, 2x1x2x0x2x0}
         /// </summary>
         public ReelStripStructDisplayZones[] display_zones_per_reel;
-        /// <summary>
-        /// Empty position slots after the display slots - please set to 1 atleast
-        /// </summary>
-        public int[] after_display_zone_empty_positions_per_reel;
 
         /// <summary>
         /// Used to cushion the top and bottom of the reel
@@ -340,7 +336,7 @@ namespace Slot_Engine.Matrix
             //Check for a child object. If there is then connect and modify
             connected_matrix = GenerateMatrixObject();
             //
-            await connected_matrix.SetMatrixReelStripsInfo(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel, slot_size); 
+            await connected_matrix.SetMatrixReelStripsInfo(display_zones_per_reel, slot_size); 
         }
         /// <summary>
         /// Generates a new matrix object child with reelstrips configured
@@ -357,75 +353,23 @@ namespace Slot_Engine.Matrix
         }
 
         //**************************
-
-        internal void UpdateReelSlotPositions()
-        {
-            Matrix matrixInUse = FindObjectOfType<Matrix>();
-            if(matrixInUse != null)
-                for (int i = 0; i < matrixInUse.transform.childCount; i++)
-                {
-                    matrixInUse.transform.GetChild(i).GetComponent<ReelStripManager>().SetSlotPositionToStart();
-                }
-        }
         /// <summary>
         /// Updates the slot objects and empty positions in path on reels
         /// </summary>
         internal void UpdateSlotObjectsPerReel()
         {
-            Debug.Log(String.Format("Length of all display zone information= {0},{1},{2}",before_display_zone_objects_per_reel.Length, display_zones_per_reel.Length, after_display_zone_empty_positions_per_reel.Length));
+            Debug.Log(String.Format("Length of all display zone information= {0}",display_zones_per_reel.Length));
             //Build reelstrip info 
-            ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel);
+            ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(display_zones_per_reel);
 
             connected_matrix?.SetReelsAndSlotsPerReel(reelstrips_configuration);        
         }
 
         internal void SetReelSizeTo(int reel_size)
         {
-            SetBeforeDisplayZonesTo(reel_size);
             SetDisplayZonesTo(reel_size);
-            SetAfterDisplayZonesTo(reel_size);
-
             connected_matrix?.SetReelsTo(reel_size);
         }
-
-        private void SetAfterDisplayZonesTo(int reel_size)
-        {
-            int[] after_display_zone_empty_positions_per_reel_cache;
-            //generate enough display zones per reel
-            if (after_display_zone_empty_positions_per_reel != null)
-            {
-                after_display_zone_empty_positions_per_reel_cache = after_display_zone_empty_positions_per_reel;
-            }
-            else
-            {
-                after_display_zone_empty_positions_per_reel_cache = new int[0];
-            }
-            after_display_zone_empty_positions_per_reel = new int[reel_size];
-            for (int i = 0; i < reel_size; i++)
-            {
-                SetIntArrayAtIndex(ref after_display_zone_empty_positions_per_reel_cache, ref after_display_zone_empty_positions_per_reel, i);
-            }
-        }
-
-        private void SetBeforeDisplayZonesTo(int reel_size)
-        {
-            int[] before_display_zone_objects_per_reel_cache;
-            //generate enough display zones per reel
-            if (before_display_zone_objects_per_reel != null)
-            {
-                before_display_zone_objects_per_reel_cache = before_display_zone_objects_per_reel;
-            }
-            else
-            {
-                before_display_zone_objects_per_reel_cache = new int[0];
-            }
-            before_display_zone_objects_per_reel = new int[reel_size];
-            for (int i = 0; i < reel_size; i++)
-            {
-                SetIntArrayAtIndex(ref before_display_zone_objects_per_reel_cache, ref before_display_zone_objects_per_reel, i);
-            }
-        }
-
         private void SetDisplayZonesTo(int reel_size)
         {
             ReelStripStructDisplayZones[] display_zone_cache;
@@ -471,14 +415,6 @@ namespace Slot_Engine.Matrix
             connected_matrix = GetComponentInChildren<Matrix>();
             //Get all reels slots per reel and pre-populate the reelstrip config structs
             //InitializeReelsFromConnectedMatrix();
-        }
-
-        private void InitializeReelsFromConnectedMatrix()
-        {
-            for (int i = 0; i < connected_matrix.reel_strip_managers.Length; i++)
-            {
-                
-            }
         }
         //******************
     }

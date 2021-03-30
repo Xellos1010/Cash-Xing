@@ -117,24 +117,9 @@ namespace Slot_Engine.Matrix
             SetMeshRendererMaterialTo(to_material);
         }
 
-        public void PlayAnimation()
-        {
-            //Sprite.frameRate = 24;
-            //Sprite.Play();
-            //TODO Insert Play Animation Logic
-        }
-
-        public void StopAnimation()
-        {
-            //Sprite.frameRate = 24;
-            //Sprite.Stop();
-            //TODO Insert Stop Animation Logic
-        }
-
         public void StartSpin()
         {
             ResetAllVars();
-            StopAnimation();
             SetSlotMovementEnabledTo(true);
             SetTriggerTo(supported_triggers.SpinStart);
         }
@@ -149,18 +134,18 @@ namespace Slot_Engine.Matrix
             {
                 Vector3 toPosition;
                
-                toPosition = GeneratePositionUpdateSpeed(reel_parent.reelstrip_info.reel_spin_speed_direction * reel_parent.reel_spin_speed_current);
+                toPosition = GeneratePositionUpdateSpeed(reel_parent.reelstrip_info.reel_spin_direction * reel_parent.reel_spin_speed_current);
                 //Check X Y and Z and move slot to opposite
 
                 //Check if to far left or right and move
 
                 //Check if to far down or up and move
-                if (reel_parent.reelstrip_info.reel_spin_speed_direction.y < 0)
+                if (reel_parent.reelstrip_info.reel_spin_direction.y < 0)
                 {
                     if (toPosition.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], true);
                 }
-                else if (reel_parent.reelstrip_info.reel_spin_speed_direction.y > 0)
+                else if (reel_parent.reelstrip_info.reel_spin_direction.y > 0)
                 {
                     if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);

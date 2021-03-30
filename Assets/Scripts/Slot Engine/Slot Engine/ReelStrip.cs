@@ -45,12 +45,12 @@ namespace Slot_Engine.Matrix
         [UnityEngine.SerializeField]
         public ReelStripStruct[] reelstrips;
 
-        public ReelStripsStruct(int[] before_display_zone_objects_per_reel, ReelStripStructDisplayZones[] display_zones_per_reel, int[] after_display_zone_empty_positions_per_reel) : this()
+        public ReelStripsStruct(ReelStripStructDisplayZones[] display_zones_per_reel) : this()
         {
             reelstrips = new ReelStripStruct[display_zones_per_reel.Length];
             for (int reel_number = 0; reel_number < reelstrips.Length; reel_number++)
             {
-                reelstrips[reel_number] = new ReelStripStruct(reel_number,before_display_zone_objects_per_reel[reel_number], display_zones_per_reel[reel_number].reelstrip_display_zones, after_display_zone_empty_positions_per_reel[reel_number]);
+                reelstrips[reel_number] = new ReelStripStruct(reel_number,display_zones_per_reel[reel_number]);
             }
         }
     }
@@ -61,7 +61,7 @@ namespace Slot_Engine.Matrix
         /// The direction to spin the slots in. reel_spin_speed_direction * reelSpinSpeed will be the distance the slot travels
         /// </summary>
         [SerializeField]
-        internal Vector3 reel_spin_speed_direction;
+        internal Vector3 reel_spin_direction;
         /// <summary>
         /// Reel position in sequence
         /// </summary>
@@ -72,7 +72,7 @@ namespace Slot_Engine.Matrix
         /// Controls how many positions to generate after the display area for the slots to spin off-screen
         /// </summary>
         [SerializeField]
-        internal int before_display_zone_slot_objects;
+        internal int padding_before;
         /// <summary>
         /// Controls the active display zones
         /// </summary>
@@ -82,7 +82,7 @@ namespace Slot_Engine.Matrix
         /// Controls the empty positions generated after the display zone
         /// </summary>
         [UnityEngine.SerializeField]
-        internal int after_display_zones_position_padding;
+        internal int padding_after;
         /// <summary>
         /// spin_informatino for the reelstrip
         /// </summary>
@@ -104,31 +104,31 @@ namespace Slot_Engine.Matrix
             {
                 int output = 0;
                 GetTotalSlotObjects(ref output);
-                output += after_display_zones_position_padding;
+                output += padding_after;
                 return output;
             }
         }
 
         private void GetTotalSlotObjects(ref int output)
         {
-            output += before_display_zone_slot_objects;
+            output += padding_before;
             for (int display_zone = 0; display_zone < display_zones.Length; display_zone++)
             {
                 output += display_zones[display_zone].slots_in_reelstrip_zone;
             }
         }
 
-        public ReelStripStruct(int reel_number, int before_display_zone_slot_objects, ReelStripStructDisplayZone[] display_zones, int after_display_zones_position_padding) : this()
+        public ReelStripStruct(int reel_number, ReelStripStructDisplayZones display_zone) : this()
         {
             this.reel_number = reel_number;
-            this.display_zones = display_zones;
-            this.before_display_zone_slot_objects = before_display_zone_slot_objects;
-            this.after_display_zones_position_padding = after_display_zones_position_padding;
+            this.display_zones = display_zone.reelstrip_display_zones;
+            this.padding_before = display_zone.padding_before;
+            this.padding_after = display_zone.padding_after;
         }
 
         internal void SetSpinDirectionTo(Vector3 direction)
         {
-            reel_spin_speed_direction = direction;
+            reel_spin_direction = direction;
         }
 
         internal void SetSpinConfigurationTo(ReelStripStruct reelStripStruct)

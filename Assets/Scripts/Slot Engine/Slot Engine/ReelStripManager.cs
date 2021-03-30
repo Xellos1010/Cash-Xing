@@ -91,15 +91,6 @@ public enum eEaseType
                 }
             }
             BoomEditorUtilities.DrawUILine(Color.white);
-            //EditorGUILayout.LabelField(String.Format("Spin Properties for Reel {0}", reel_number.intValue));
-            //if (display_slots.arraySize > 0)
-            //{
-            //    EditorGUILayout.LabelField(String.Format("Slots in display area = {0}", display_slots.intValue));
-            //    if (my_target.is_reel_spinning)
-            //    {
-            //        EditorGUILayout.LabelField("Current Slot speed = " + reel_spin_speed_current.floatValue.ToString());
-            //    }
-            //}
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(ending_symbols);
             if(EditorGUI.EndChangeCheck())
@@ -349,7 +340,9 @@ public enum eEaseType
 
         internal void SetSpinDirectionTo(Vector3 new_direction)
         {
-            reelstrip_info.SetSpinDirectionTo(new_direction);
+            ReelStripStruct temp = reelstrip_info;
+            temp.SetSpinDirectionTo(new_direction);
+            reelstrip_info = temp;
             UpdatePositionInPathForDirection();
         }
 
@@ -476,14 +469,14 @@ public enum eEaseType
         public void UpdatePositionInPathForDirection()
         {
             //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
-            if(reelstrip_info.reel_spin_speed_direction.y < 0)
+            if(reelstrip_info.reel_spin_direction.y < 0)
                 for (int i = 0; i < positions_in_path_v3.Length; i++)
                 {
                     float positions_in_path_v3_y = -Math.Abs(positions_in_path_v3[i].y);
                     positions_in_path_v3[i] = new Vector3(Math.Abs(positions_in_path_v3[i].x),positions_in_path_v3_y,0);
                 }
             //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
-            if (reelstrip_info.reel_spin_speed_direction.y > 0)
+            if (reelstrip_info.reel_spin_direction.y > 0)
                 for (int i = 0; i < positions_in_path_v3.Length; i++)
                 {
                     positions_in_path_v3[i] = new Vector3(Math.Abs(positions_in_path_v3[i].x), Math.Abs(positions_in_path_v3[i].y), 0);
@@ -673,7 +666,7 @@ public enum eEaseType
         {
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
-                slots_in_reel[i].transform.position = GetSlotPositionBasedOnReelPosition(i);
+                slots_in_reel[i].transform.localPosition = GetSlotPositionBasedOnReelPosition(i);
             }
         }
 

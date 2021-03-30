@@ -2,8 +2,45 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 namespace Slot_Engine.Matrix
 {
+#if UNITY_EDITOR
+    [CustomEditor(typeof(ManagersReferenceScript))]
+    class ManagersReferenceScriptEditor : BoomSportsEditor
+    {
+        ManagersReferenceScript myTarget;
+        public void OnEnable()
+        {
+            myTarget = (ManagersReferenceScript)target;
+        }
+        public override void OnInspectorGUI()
+        {
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Matrix Properties");
+
+            BoomEditorUtilities.DrawUILine(Color.white);
+            EditorGUILayout.LabelField("Matrix Controls");
+            if (GUILayout.Button("Set All References"))
+            {
+                Debug.Log(String.Format("myTarget.matrix = {0}", myTarget.matrix.gameObject.name));
+                Debug.Log(String.Format("myTarget.animator_statemachine_master = {0}", myTarget.animator_statemachine_master.gameObject.name));
+                Debug.Log(String.Format("myTarget.spin_manager = {0}", myTarget.spin_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.interaction_controller = {0}", myTarget.interaction_controller.gameObject.name));
+                Debug.Log(String.Format("myTarget.paylines_manager = {0}", myTarget.paylines_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.end_configuration_manager = {0}", myTarget.end_configuration_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.symbol_materials_manager = {0}", myTarget.symbol_materials_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.racking_manager = {0}", myTarget.racking_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.machine_info_manager = {0}", myTarget.machine_info_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.symbols_weights = {0}", myTarget.symbols_weights.gameObject.name));
+            }
+            base.OnInspectorGUI();
+        }
+    }
+#endif
     public class ManagersReferenceScript : MonoBehaviour
     {
         public Matrix matrix
@@ -11,7 +48,7 @@ namespace Slot_Engine.Matrix
             get
             {
                 if (_matrix == null)
-                    _matrix = transform.parent.parent.GetComponentInChildren<Matrix>();
+                    _matrix = transform.parent.GetComponentInChildren<Matrix>();
                 return _matrix;
             }
         }

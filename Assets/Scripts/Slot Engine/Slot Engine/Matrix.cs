@@ -34,6 +34,10 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
+            if(GUILayout.Button("Set Reel Numbers"))
+            {
+                myTarget.SetReelInfoNumbers();
+            }
             base.OnInspectorGUI();
         }
     }
@@ -156,7 +160,7 @@ namespace Slot_Engine.Matrix
 
         private Vector3 ReturnPositionOnReel(ref ReelStripManager reel, int slot_in_reel)
         {
-            return reel.positions_in_path_v3[reel.reelstrip_info.before_display_zone_slot_objects+slot_in_reel] + (Vector3.back * 10);
+            return reel.positions_in_path_v3[reel.reelstrip_info.padding_before+slot_in_reel] + (Vector3.back * 10);
         }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
@@ -209,13 +213,13 @@ namespace Slot_Engine.Matrix
                 reel += winning_payline.payline.left_right ? 1 : -1)
             {
                 List<SlotManager> slots_decending_in_reel = reel_managers[reel].GetSlotsDecending();
-                int first_display_slot = reel_managers[reel].reelstrip_info.before_display_zone_slot_objects;
+                int first_display_slot = reel_managers[reel].reelstrip_info.padding_before;
                 Debug.Log(String.Format("first_display_slot for reel {0} = {1}", reel, first_display_slot));
                 for (int slot = first_display_slot; slot < slots_decending_in_reel.Count; slot++)
                 {
                     if (winning_symbols_added < winning_payline.payline.payline_configuration.payline.Length && !winning_slot_set)
                     {
-                        int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].reelstrip_info.before_display_zone_slot_objects;
+                        int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].reelstrip_info.padding_before;
                         if (slot == winning_slot)
                         {
                             Debug.Log(String.Format("Adding Winning Symbol on reel {0} slot {1}",reel, slot));
@@ -300,10 +304,10 @@ namespace Slot_Engine.Matrix
         /// <param name="after_display_zone_empty_positions_per_reel">The empty positions after each display zone to allow spin off</param>
         /// <param name="slot_size">Size of the slot prefab instantiated in each reel_strip</param>
         /// <returns></returns>
-        public Task SetMatrixReelStripsInfo(int[] before_display_zone_objects_per_reel, ReelStripStructDisplayZones[] display_zones_per_reel, int[] after_display_zone_empty_positions_per_reel, Vector3 slot_size)
+        public Task SetMatrixReelStripsInfo(ReelStripStructDisplayZones[] display_zones_per_reel, Vector3 slot_size)
         {
             //Build reelstrip info 
-            ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel);
+            ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(display_zones_per_reel);
 
             SetSpinDirectionForReelStrip(ref reelstrips_configuration, Vector3.down);
 
@@ -349,6 +353,8 @@ namespace Slot_Engine.Matrix
             {
                 reel_strip_managers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
             }
+            //Update Payline Manager
+            slot_machine_managers.paylines_manager.GeneratePaylinesFromMatrix();
         }
 
         /// <summary>
@@ -676,6 +682,16 @@ namespace Slot_Engine.Matrix
         internal void SetPlayerWalletTo(float to_value)
         {
             slot_machine_managers.machine_info_manager.SetPlayerWalletTo(to_value);
+        }
+
+        internal void SetReelInfoNumbers()
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                ReelStripStruct temp = reel_strip_managers[reel].reelstrip_info;
+                temp.reel_number = reel;
+                reel_strip_managers[reel].reelstrip_info = temp;
+            }
         }
     }
 }

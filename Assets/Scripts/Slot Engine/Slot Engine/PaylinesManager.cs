@@ -572,18 +572,6 @@ namespace Slot_Engine.Matrix
             paylines_evaluated = false;
         }
 
-        /// <summary>
-        /// This will animate the Payline. (May need to cache slots into Event and fire event off. Find out in Optimization Phase)
-        /// </summary>
-        /// <param name="iPayline"> Defines the Payline. Length of input should be reel length</param>
-        public void AnimateSymboldOnPayLine(int[] iPayline)
-        {
-            for (int i = 0; i < iPayline.Length; i++)
-            {
-                matrix.reel_strip_managers[i].slots_in_reel[iPayline[i]].PlayAnimation();
-            }
-        }
-
         void OnEnable()
         {
             StateManager.StateChangedTo += StateManager_StateChangedTo;
