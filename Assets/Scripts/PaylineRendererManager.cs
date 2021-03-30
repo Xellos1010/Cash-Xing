@@ -119,7 +119,7 @@ namespace Slot_Engine.Matrix
         /// <param name="payline_to_show">The Winning payline to show</param>
         internal void ShowWinningPayline(WinningPayline payline_to_show)
         {
-            ToggleRenderer(render_paylines);
+            ToggleRenderer(true);
             //initialize the line positions list and 
             List<Vector3> linePositions;
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel

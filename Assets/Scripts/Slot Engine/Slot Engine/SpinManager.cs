@@ -391,8 +391,6 @@ namespace Slot_Engine.Matrix
             //Debug.Log(String.Format("Checking for state dependant logic for SpinManager via state {0}",State.ToString()));
             switch (State)
             {
-                case States.None:
-                    break;
                 case States.preloading:
                     break;
                 case States.Coin_In:

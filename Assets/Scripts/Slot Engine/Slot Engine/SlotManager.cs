@@ -269,6 +269,14 @@ namespace Slot_Engine.Matrix
             ping_pong = v;
             if (v)
                 completePercent = 0;
+            else
+            {
+                if (!state_machine.state_machine.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+                {
+                    Debug.Log(String.Format("current state name != Resolve Intro"));
+                    state_machine.state_machine.PlayInFixedTime("Resolve_Intro", -1, 0);
+                }
+            }
         }
 
         private string ReturnSymbolNameFromInt(int symbol)

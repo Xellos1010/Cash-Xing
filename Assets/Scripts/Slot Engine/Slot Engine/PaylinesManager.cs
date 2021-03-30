@@ -288,10 +288,6 @@ namespace Slot_Engine.Matrix
             return Task.CompletedTask;
         }
 
-        public void SetReelConfiguration()
-        {
-
-        }
         public async void EvaluateWinningSymbolsFromCurrentConfiguration()
         {
             await EvaluateWinningSymbols(matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration);
@@ -597,8 +593,6 @@ namespace Slot_Engine.Matrix
         {
             switch (state)
             {
-                case States.None:
-                    break;
                 case States.preloading:
                     break;
                 case States.Coin_In:

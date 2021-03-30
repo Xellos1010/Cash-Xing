@@ -29,6 +29,7 @@ class BoomSportsStateMachine : DTStateMachineBehaviour<StateMachineBehaviour>
             AnimatorStaticUtilites.ResetAllBools(ref animator);
             AnimatorStaticUtilites.ResetAllTriggers(ref animator);
         }
+        Debug.Log(animator.gameObject.name);
     }
 
     protected override void OnStateEntered()

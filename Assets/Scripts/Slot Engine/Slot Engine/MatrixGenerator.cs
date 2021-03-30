@@ -27,23 +27,15 @@ namespace Slot_Engine.Matrix
     class MatrixGeneratorEditor : BoomSportsEditor
     {
         ReorderableList display_zone_reorderable_list;
-        List<ReorderableList> display_zone_elements_reorderable_list;
         MatrixGenerator myTarget;
         SerializedProperty padding_xyz;
         SerializedProperty slot_size_xyz;
-        SerializedProperty before_display_zone_objects_per_reel; //int[] amount of slots to generate before the display slots
-        SerializedProperty display_zones_per_reel; //int[] display slots to generate per reel
-        SerializedProperty after_display_zone_empty_positions_per_reel; //int[] after display zone amount of empty position slots to generate per reel
+        SerializedProperty display_zones_per_reel;
 
         SerializedProperty symbols_supported;
         SerializedProperty skin_graphics;
         SerializedProperty connected_matrix;
 
-        //Do you want to set the individual reels before slot objects or group it together
-        bool individual_group_set_before_display_zone_objects_per_reel_elements = false;
-        //How many objects do you want?
-        int before_display_zone_group_slider_value = 1;
-        int after_display_zone_group_slider_value = 1;
         public void OnEnable()
         {
             myTarget = (MatrixGenerator)target;
@@ -58,8 +50,6 @@ namespace Slot_Engine.Matrix
         private void RefreshPropertiesDisplayZones()
         {
             display_zones_per_reel = serializedObject.FindProperty("display_zones_per_reel");
-            before_display_zone_objects_per_reel = serializedObject.FindProperty("before_display_zone_objects_per_reel");
-            after_display_zone_empty_positions_per_reel = serializedObject.FindProperty("after_display_zone_empty_positions_per_reel");
         }
 
         public override void OnInspectorGUI()
@@ -77,17 +67,11 @@ namespace Slot_Engine.Matrix
         {
             //Reel Size Editor Menu
             int reel_size = GenerateReelSizeEditor();
-            individual_group_set_before_display_zone_objects_per_reel_elements = EditorGUILayout.Toggle("Modify Before Slot Objects individually?",individual_group_set_before_display_zone_objects_per_reel_elements);
-            //Present slider per reel to adjust - display zones per reel - pre-display-zone slot-objects per reel - post-display-zone empty_positions at the of reel
+            
             EditorGUI.BeginChangeCheck();
-            string subElementLabel = individual_group_set_before_display_zone_objects_per_reel_elements ? "Reel {0} before display slots objects" : "All Reel before display slots objects";
-            //Build the array to match number of reels
-            GenerateIntArrayEditorForSerializedProperty(ref before_display_zone_objects_per_reel,ref before_display_zone_group_slider_value,"Before display zone objects per reel", subElementLabel, before_display_zone_objects_per_reel.arraySize, 1,100);
-            subElementLabel = individual_group_set_before_display_zone_objects_per_reel_elements ? "Reel {0} after display empty slots" : "All Reel after display empty slots";
             
             GenerateDisplayZoneEditor(ref display_zones_per_reel);
 
-            GenerateIntArrayEditorForSerializedProperty(ref after_display_zone_empty_positions_per_reel, ref after_display_zone_group_slider_value,"After display zone positions per reel", subElementLabel, after_display_zone_empty_positions_per_reel.arraySize, 1,5);
             if (EditorGUI.EndChangeCheck())
             {
                 serializedObject.ApplyModifiedProperties();
@@ -105,22 +89,7 @@ namespace Slot_Engine.Matrix
             {
                 slot_size_xyz.vector3Value = new Vector3(slot_size_x, slot_size_y, slot_size_z);
                 serializedObject.ApplyModifiedProperties();
-                //myTarget.UpdateReelSlotPositions();
-                //myTarget.UpdateSlotObjectsPerReel();
             }
-            //EditorGUILayout.LabelField("Modify Padding");
-            //EditorGUI.BeginChangeCheck();
-            //float padding_x = EditorGUILayout.Slider(padding_xyz.vector3Value.x, 0, 800);
-            //float padding_y = EditorGUILayout.Slider(padding_xyz.vector3Value.y, 0, 800);
-            //float padding_z = EditorGUILayout.Slider(padding_xyz.vector3Value.z, 0, 800);
-            //if (EditorGUI.EndChangeCheck())
-            //{
-            //    padding_xyz.vector3Value = new Vector3(padding_x, padding_y, padding_z);
-            //    serializedObject.ApplyModifiedProperties();
-            //    //TODO reduce to 1 call - Update Matrix Position
-            //    myTarget.UpdateReelSlotPositions();
-            //    myTarget.UpdateSlotObjectsPerReel();
-            //}
         }
 
         private void GenerateDisplayZoneEditor(ref SerializedProperty display_zones_per_reel)
@@ -128,25 +97,6 @@ namespace Slot_Engine.Matrix
 
             EditorGUILayout.LabelField("Display Zones per reel");
             EditorGUILayout.PropertyField(display_zones_per_reel);
-            //display_zone_reorderable_list = new ReorderableList(serializedObject, display_zones_per_reel, draggable: true, displayHeader: true, displayAddButton: true, displayRemoveButton: true);
-            //Set up the method callback to draw our list header
-            //display_zone_reorderable_list.drawHeaderCallback = DrawHeaderCallbackDisplayZoneList;
-
-            ////Set up the method callback to draw each element in our reorderable list
-            //display_zone_reorderable_list.drawElementCallback = DrawElementCallback;
-
-            ////Set the height of each element.
-            //display_zone_reorderable_list.elementHeightCallback += ElementHeightCallback;
-
-            ////Set up the method callback to define what should happen when we add a new object to our list.
-            //display_zone_reorderable_list.onAddCallback += OnAddCallback;
-
-            //display_zone_reorderable_list.DoLayoutList();
-            //TODO enable re-orderable lists in sub elements
-            //for (int display_zone = 0; display_zone < display_zone_elements_reorderable_list.Count; display_zone++)
-            //{
-            //    display_zone_elements_reorderable_list[display_zone].DoLayoutList();
-            //}
         }
 
         /// <summary>
@@ -221,39 +171,6 @@ namespace Slot_Engine.Matrix
             var element = list.serializedProperty.GetArrayElementAtIndex(index);
         }
 
-        private void GenerateIntArrayEditorForSerializedProperty(ref SerializedProperty int_array_serialized_property, ref int int_reference, string header_label, string array_element_label, int array_size,int slider_minimum, int slider_maximum)
-        {
-            //Draw divider and 
-            BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField(header_label);
-            //Check for the array length of slots per reel and reel
-            if (individual_group_set_before_display_zone_objects_per_reel_elements)
-            {
-                for (int element = 0; element < array_size; element++)
-                {
-                    //Draw divider and 
-                    BoomEditorUtilities.DrawUILine(Color.white);
-                    EditorGUILayout.LabelField(String.Format(array_element_label, element));
-                    int_array_serialized_property.GetArrayElementAtIndex(element).intValue = EditorGUILayout.IntSlider(int_array_serialized_property.GetArrayElementAtIndex(element).intValue, slider_minimum, slider_maximum);
-                }
-            }
-            else
-            {
-                EditorGUI.BeginChangeCheck();
-                int_reference = EditorGUILayout.IntSlider(array_element_label,int_reference, 1,100);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    int_array_serialized_property.ClearArray();
-                    int_array_serialized_property.arraySize = array_size;
-                    for (int element = 0; element < array_size; element++)
-                    {
-                        int_array_serialized_property.GetArrayElementAtIndex(element).intValue = before_display_zone_group_slider_value;
-                    }
-                    serializedObject.ApplyModifiedProperties();
-                }
-            }
-        }
-
         private int GenerateReelSizeEditor()
         {
             EditorGUILayout.LabelField("Modify Matrix - Reel Size");
@@ -320,6 +237,16 @@ namespace Slot_Engine.Matrix
     [Serializable]
     public struct ReelStripStructDisplayZones
     {
+        /// <summary>
+        /// Padding before display zone
+        /// </summary>
+        [Range(1,50)]
+        public int padding_before;
+        /// <summary>
+        /// Padding After Display Zone - default to 1
+        /// </summary>
+        [Range(1,50)]
+        public int padding_after;
         /// <summary>
         /// This is where you can stack display zones that are affected or not affected by payline evaluations
         /// </summary>
@@ -413,7 +340,7 @@ namespace Slot_Engine.Matrix
             //Check for a child object. If there is then connect and modify
             connected_matrix = GenerateMatrixObject();
             //
-            await connected_matrix.SetMatrixReelStripsInfo(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel, slot_size); // TODO add ability to insert offset from anchor
+            await connected_matrix.SetMatrixReelStripsInfo(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel, slot_size); 
         }
         /// <summary>
         /// Generates a new matrix object child with reelstrips configured
@@ -445,7 +372,11 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void UpdateSlotObjectsPerReel()
         {
-            connected_matrix?.UpdateSlotObjectsPerReel(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel);
+            Debug.Log(String.Format("Length of all display zone information= {0},{1},{2}",before_display_zone_objects_per_reel.Length, display_zones_per_reel.Length, after_display_zone_empty_positions_per_reel.Length));
+            //Build reelstrip info 
+            ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(before_display_zone_objects_per_reel, display_zones_per_reel, after_display_zone_empty_positions_per_reel);
+
+            connected_matrix?.SetReelsAndSlotsPerReel(reelstrips_configuration);        
         }
 
         internal void SetReelSizeTo(int reel_size)
@@ -453,6 +384,8 @@ namespace Slot_Engine.Matrix
             SetBeforeDisplayZonesTo(reel_size);
             SetDisplayZonesTo(reel_size);
             SetAfterDisplayZonesTo(reel_size);
+
+            connected_matrix?.SetReelsTo(reel_size);
         }
 
         private void SetAfterDisplayZonesTo(int reel_size)
@@ -537,7 +470,7 @@ namespace Slot_Engine.Matrix
             //Connect Matrix Child
             connected_matrix = GetComponentInChildren<Matrix>();
             //Get all reels slots per reel and pre-populate the reelstrip config structs
-            InitializeReelsFromConnectedMatrix();
+            //InitializeReelsFromConnectedMatrix();
         }
 
         private void InitializeReelsFromConnectedMatrix()

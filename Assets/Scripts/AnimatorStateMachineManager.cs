@@ -10,6 +10,7 @@ using UnityEditor;
 class AnimatorStateMachineManagerEditor : BoomSportsEditor
 {
     AnimatorStateMachineManager myTarget;
+    public static States enCurrentState;
     public void OnEnable()
     {
         myTarget = (AnimatorStateMachineManager)target;
@@ -36,8 +37,6 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
             EditorGUILayout.LabelField("Animator State Machine Manager Controls");
             base.OnInspectorGUI();
         }
-
-
     }
 #endif
     public class AnimatorStateMachineManager : StateMachineManagerBase

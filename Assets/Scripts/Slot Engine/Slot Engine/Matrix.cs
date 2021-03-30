@@ -34,28 +34,6 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
-            //if (Application.isPlaying)
-            //{
-            //    if (GUILayout.Button("Start Test Spin"))
-            //    {
-            //        myTarget.StartCoroutine(myTarget.spin_manager.StartSpin());
-            //    }
-            //    if (GUILayout.Button("End Test Spin"))
-            //    {
-            //        myTarget.spin_manager.InterruptSpin();
-            //    }
-            //}
-            //else
-            //{
-            //    if (GUILayout.Button("Generate Ending Symbols"))
-            //    {
-            //        myTarget.slot_machine_managers.end_configuration_manager.GenerateEndReelStripsConfiguration();
-            //    }
-            //    if (GUILayout.Button("Set Symbols to End Symbols"))
-            //    {
-            //        myTarget.SetReelStripsEndConfiguration();
-            //    }
-            //}
             base.OnInspectorGUI();
         }
     }
@@ -190,6 +168,7 @@ namespace Slot_Engine.Matrix
                 {
                     //Stop all animation co-routines
                     reel_strip_managers[reel].slots_in_reel[slot].SetPingPong(false);
+                    
                 }
             }
             yield return 0;
@@ -330,8 +309,7 @@ namespace Slot_Engine.Matrix
 
             //Set Matrix Settings first then update the reel configuration 
             SetMatrixSettings(slot_size);
-            UpdateReelsAndReelStripsSlotsPerReel(reelstrips_configuration);
-            //TODO Update Slot Size
+            SetReelsAndSlotsPerReel(reelstrips_configuration);
             return Task.CompletedTask;
         }
         /// <summary>
@@ -362,46 +340,55 @@ namespace Slot_Engine.Matrix
         /// Anytime this is called - the end_configuration, paylines managers need to update.
         /// </summary>
         /// <param name="slots_per_reelstrip"></param>
-        private void UpdateReelsAndReelStripsSlotsPerReel(ReelStripsStruct reelstrips_configuration)
+        internal void SetReelsAndSlotsPerReel(ReelStripsStruct reelstrips_configuration)
         {
-            List<ReelStripManager> reelstrip_managers = FindReelstripManagers();
-            SetReelStripManagersTo(reelstrips_configuration.reelstrips.Length, ref reelstrip_managers);
+            SetReelsTo(reelstrips_configuration.reelstrips.Length, ref reel_strip_managers);
 
             //Ensure reels have slots
             for (int i = 0; i < reelstrips_configuration.reelstrips.Length; i++)
             {
-                reelstrip_managers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
+                reel_strip_managers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
             }
-            reel_strip_managers = reelstrip_managers.ToArray();
         }
+
+        /// <summary>
+        /// Generate or remove reelstrip objects based on number of reels set
+        /// </summary>
+        /// <param name="number_of_reels">Reels in Configuration</param>
+        internal void SetReelsTo(int number_of_reels)
+        {
+            SetReelsTo(number_of_reels, ref reel_strip_managers);
+        }
+
         /// <summary>
         /// Generate or remove reelstrip objects based on number of reels set
         /// </summary>
         /// <param name="number_of_reels">Reels in Configuration</param>
         /// <param name="reelstrip_managers">reference var to cached reelstrip_managers</param>
-        private void SetReelStripManagersTo(int number_of_reels, ref List<ReelStripManager> reelstrip_managers)
+        internal void SetReelsTo(int number_of_reels, ref ReelStripManager[] reelstrip_managers)
         {
             //See whether we need to make more or subtract some 
-            bool add_subtract_reels = reelstrip_managers.Count < number_of_reels ? true : false;
+            bool add_subtract_reels = reelstrip_managers.Length < number_of_reels ? true : false;
             //First we are going to ensure the amount of reels are the correct amount - then we are going to initialize the amount of slots per reel
 
             //If current reels generated are > or < matrix.length then need to adjust accordingly
             //Ensure enough reels are on the board then ensure all reels have slots
-            for (int reel = add_subtract_reels ? reelstrip_managers.Count : reelstrip_managers.Count - 1;
+            for (int reel = add_subtract_reels ? reelstrip_managers.Length : reelstrip_managers.Length - 1;
                 add_subtract_reels ? reel < number_of_reels : reel >= number_of_reels;
                 reel = add_subtract_reels ? reel + 1 : reel - 1)
             {
                 if (add_subtract_reels)
                 {
-                    reelstrip_managers.Add(GenerateReel(reel));
+                    reelstrip_managers = reelstrip_managers.AddAt<ReelStripManager>(reel,GenerateReel(reel));
                 }
                 else
                 {
                     if (reelstrip_managers[reel] != null)
-                        Destroy(reelstrip_managers[reel].gameObject);
-                    reelstrip_managers.RemoveAt(reel);
+                        DestroyImmediate(reelstrip_managers[reel].gameObject);
+                    reelstrip_managers = reelstrip_managers.RemoveAt(reel);
                 }
             }
+
         }
 
         private List<ReelStripManager> FindReelstripManagers()
@@ -444,25 +431,10 @@ namespace Slot_Engine.Matrix
 
         ReelStripManager GenerateReel(int reel_number)
         {
-            //Create Reel Game Object
-            
             Type[] gameobject_components = new Type[1];
             gameobject_components[0] = typeof(ReelStripManager);
             ReelStripManager output_reelstrip_manager = StaticUtilities.CreateGameobject<ReelStripManager>(gameobject_components,"Reel_" + reel_number, transform);
             return output_reelstrip_manager;
-        }
-        /// <summary>
-        /// generate pre-slot objects or remove pre slot objects - generate display zone per reel - set after display zone positions and calculate the longest empty position path and apply to all reels. A reel may have slots turned on and off
-        /// </summary>
-        /// <param name="slots_per_reel"></param>
-        /// <param name="display_zones_per_reel"></param>
-        /// <param name="after_display_zone_empty_positions_per_reel"></param>
-        internal void UpdateSlotObjectsPerReel(int[] slots_per_reel, ReelStripStructDisplayZones[] display_zones_per_reel, int[] after_display_zone_empty_positions_per_reel)
-        {
-            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
-            {
-                //reel_strip_managers[reel].InitializeSlotsInReel(slots_per_reel[reel], this, reel_ending_padding);
-            }
         }
 
         internal void ResetAnimatorsSlots()
@@ -578,31 +550,17 @@ namespace Slot_Engine.Matrix
         {
             switch (State)
             {
-                case States.None:
-                    break;
-                case States.preloading:
-                    break;
-                case States.Coin_In:
-                    break;
-                case States.Coin_Out:
-                    break;
                 case States.Idle_Intro:
                     //Reset the state of all slots to 
                     ResetAnimatorsSlots();
                     //Fall thru to Idle_Idle State - ATM the animator falls thru Idle_Intro
                     StateManager.SetStateTo(States.Idle_Idle);
                     break;
-                case States.Idle_Idle:
-                    break;
                 case States.Idle_Outro:
                     //Decrease Bet Amount
                     PlayerHasBet(slot_machine_managers.machine_info_manager.bet_amount);
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,false);
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
-                    break;
-                case States.Spin_Intro:
-                    break;
-                case States.Spin_Idle:
                     break;
                 case States.Spin_Interrupt:
                     //Set the matrix and slots to spin_Outro
@@ -637,20 +595,6 @@ namespace Slot_Engine.Matrix
                 case States.bonus_idle_outro:
                     ReduceFreeSpinBy(1);
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
-                    break;
-                case States.racking_start:
-                    break;
-                case States.racking_loop:
-                    break;
-                case States.racking_end:
-                    break;
-                case States.feature_transition_out:
-                    break;
-                case States.feature_transition_in:
-                    break;
-                case States.total_win_presentation:
-                    break;
-                default:
                     break;
             }
         }
@@ -725,6 +669,7 @@ namespace Slot_Engine.Matrix
 
         void OnApplicationQuit()
         {
+            Debug.Log("Application Quit");
             StateManager.SetStateTo(States.None);
         }
 
