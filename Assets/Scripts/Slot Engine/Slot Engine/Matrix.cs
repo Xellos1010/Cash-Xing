@@ -146,7 +146,7 @@ namespace Slot_Engine.Matrix
                 {
                     if (payline_positions_set < payline.payline_configuration.payline.Length)
                     { 
-                        payline_posiiton_on_reel = ReturnPositionOnReel(ref reel_strip_managers[reel], payline.payline_configuration.payline[payline_positions_set]);
+                        payline_posiiton_on_reel = ReturnPositionOnReelForPayline(ref reel_strip_managers[reel], payline.payline_configuration.payline[payline_positions_set]);
                         payline_positions_set += 1;
                         out_positions.Add(payline_posiiton_on_reel);
                     }
@@ -158,9 +158,9 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private Vector3 ReturnPositionOnReel(ref ReelStripManager reel, int slot_in_reel)
+        private Vector3 ReturnPositionOnReelForPayline(ref ReelStripManager reel, int slot_in_reel)
         {
-            return reel.positions_in_path_v3[reel.reelstrip_info.padding_before+slot_in_reel] + (Vector3.back * 10);
+            return reel.slot_objects_initial_world[reel.reelstrip_info.padding_before+slot_in_reel] + (Vector3.back * 10);
         }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
@@ -354,7 +354,7 @@ namespace Slot_Engine.Matrix
                 reel_strip_managers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
             }
             //Update Payline Manager
-            slot_machine_managers.paylines_manager.GeneratePaylinesFromMatrix();
+            slot_machine_managers.paylines_manager.GenerateDynamicPaylinesFromMatrix();
         }
 
         /// <summary>

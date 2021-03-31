@@ -142,13 +142,13 @@ namespace Slot_Engine.Matrix
                 //Check if to far down or up and move
                 if (reel_parent.reelstrip_info.reel_spin_direction.y < 0)
                 {
-                    if (toPosition.y <= reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1].y)
-                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], true);
+                    if (toPosition.y <= reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1].y)
+                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], true);
                 }
                 else if (reel_parent.reelstrip_info.reel_spin_direction.y > 0)
                 {
-                    if (toPosition.y >= reel_parent.positions_in_path_v3[0].y)
-                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3[reel_parent.positions_in_path_v3.Length - 1], false);
+                    if (toPosition.y >= reel_parent.positions_in_path_v3_local[0].y)
+                        ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], false);
                 }
                 if(set_to_display_end_symbol && graphics_set_to_end)
                     if (toPosition.y <= end_position.y) //TODO refactor for Omni Spin
@@ -210,7 +210,7 @@ namespace Slot_Engine.Matrix
             {
                 //Set Graphics and end position
                 graphics_set_to_end = true;
-                end_position = reel_parent.positions_in_path_v3[(reel_parent.positions_in_path_v3.Length - 2) - reel_parent.end_symbols_set_from_config];
+                end_position = reel_parent.positions_in_path_v3_local[(reel_parent.positions_in_path_v3_local.Length - 2) - reel_parent.end_symbols_set_from_config];
 
                 if (reel_parent.end_symbols_set_from_config < reel_parent.ending_symbols.Length)
                 {

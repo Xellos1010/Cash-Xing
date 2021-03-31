@@ -53,6 +53,16 @@ namespace Slot_Engine.Matrix
                 reelstrips[reel_number] = new ReelStripStruct(reel_number,display_zones_per_reel[reel_number]);
             }
         }
+
+        internal string PrintDisplaySymbols()
+        {
+            string output = "";
+            for (int i = 0; i < reelstrips.Length; i++)
+            {
+                output += "-" + String.Join("|", reelstrips[i].spin_info.display_symbols);
+            }
+            return output;
+        }
     }
     [Serializable]
     public struct ReelStripStruct
@@ -93,25 +103,34 @@ namespace Slot_Engine.Matrix
             get
             {
                 int output = 0;
-                GetTotalSlotObjects(ref output);
+                output += padding_before;
+                GetTotalDisplaySlots(ref output);
                 return output;
             }
         }
-
+        internal int total_display_slots
+        {
+            get
+            {
+                int output = 0;
+                GetTotalDisplaySlots(ref output);
+                return output;
+            }
+        }
         internal int total_positions
         {
             get
             {
                 int output = 0;
-                GetTotalSlotObjects(ref output);
+                output += padding_before;
+                GetTotalDisplaySlots(ref output);
                 output += padding_after;
                 return output;
             }
         }
 
-        private void GetTotalSlotObjects(ref int output)
+        private void GetTotalDisplaySlots(ref int output)
         {
-            output += padding_before;
             for (int display_zone = 0; display_zone < display_zones.Length; display_zone++)
             {
                 output += display_zones[display_zone].slots_in_reelstrip_zone;

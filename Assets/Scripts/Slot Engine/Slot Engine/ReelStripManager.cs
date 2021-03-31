@@ -66,6 +66,10 @@ public enum eEaseType
                 {
                     my_target.SetSlotPositionToStart();
                 }
+                if (GUILayout.Button("Update Slot objects and positions local world reference"))
+                {
+                    my_target.UpdateSlotObjectsAndPositions();
+                }
             }
             if (my_target.is_reel_spinning)
             {
@@ -141,15 +145,36 @@ public enum eEaseType
             }
             set
             {
+                ReelStripStruct temp = _reelstrip_info;
                 _reelstrip_info = value;
-                //Update slots in reels and such
-                //Order of operations are important here.
-                //Update position in path first then set slot objects otherwise error will occur. this is intentional
-                UpdatePositionsInPath(reelstrip_info.total_positions);
-                //Set display slots in reel strip - used for display end configuration logic
-                UpdateSlotObjectsInReelStrip(reelstrip_info.total_slot_objects);
+                if (_reelstrip_info.total_positions != temp.total_positions)
+                {
+                    UpdateSlotObjectsAndPositions();
+                }
             }
         }
+
+        internal void UpdateSlotObjectsAndPositions()
+        {
+            UpdatePositionsInPath(reelstrip_info.total_positions);
+            UpdateSlotObjectsInReelStrip(reelstrip_info.total_slot_objects);
+            UpdateWorldPositionsInPath();
+        }
+
+        /// <summary>
+        /// World position reference based on slot object positions
+        /// </summary>
+        internal void UpdateWorldPositionsInPath()
+        {
+            //Setup the positions the slot will hit along path. Based on size and padding
+            slot_objects_initial_world = new Vector3[slots_in_reel.Length]; //Spin into empty slots then move to top
+            //get slots_in_reel: destroy slots if to many - add slots if to few
+            for (int position_in_reel = 0; position_in_reel < slot_objects_initial_world.Length; position_in_reel++)
+            {
+                slot_objects_initial_world[position_in_reel] = slots_in_reel[position_in_reel].transform.position;
+            }
+        }
+
         [SerializeField]
         internal ReelStripStruct _reelstrip_info;
 
@@ -161,7 +186,12 @@ public enum eEaseType
         /// Holds the reference for the slots position in path from entering to exiting reel area
         /// </summary>
         [SerializeField]
-        internal Vector3[] positions_in_path_v3;
+        internal Vector3[] positions_in_path_v3_local;
+        /// <summary>
+        /// Holds the reference for the slots position in path from entering to exiting reel area
+        /// </summary>
+        [SerializeField]
+        internal Vector3[] slot_objects_initial_world;
         /// <summary>
         /// The Ending symbols to Set To 
         /// </summary>
@@ -285,18 +315,18 @@ public enum eEaseType
         /// </summary>
         private void DrawDebugForPositionsOnPath()
         {
-            if (positions_in_path_v3 != null)
+            if (positions_in_path_v3_local != null)
             { 
-            if (positions_in_path_v3.Length > 0)
+            if (positions_in_path_v3_local.Length > 0)
                 {
-                    for (int i = 0; i < positions_in_path_v3.Length; i++)
+                    for (int i = 0; i < positions_in_path_v3_local.Length; i++)
                     {
                         if (i == 0)
-                            Gizmos.DrawSphere(positions_in_path_v3[i], .5f);//String.Format("Slot Start Position {0}", i));
-                        else if (i == (positions_in_path_v3.Length - 1))
-                            Gizmos.DrawSphere(positions_in_path_v3[i], .5f);//String.Format("Slot End Position {0}", i));
+                            Gizmos.DrawSphere(positions_in_path_v3_local[i], .5f);//String.Format("Slot Start Position {0}", i));
+                        else if (i == (positions_in_path_v3_local.Length - 1))
+                            Gizmos.DrawSphere(positions_in_path_v3_local[i], .5f);//String.Format("Slot End Position {0}", i));
                         else
-                            Gizmos.DrawSphere(positions_in_path_v3[i], .5f);//String.Format("Slot Display Position {0}", i));
+                            Gizmos.DrawSphere(positions_in_path_v3_local[i], .5f);//String.Format("Slot Display Position {0}", i));
                     }
                 }
             }
@@ -330,11 +360,11 @@ public enum eEaseType
         private void UpdatePositionsInPath(int positions_to_generate_path_for)
         {
             //Setup the positions the slot will hit along path. Based on size and padding
-            positions_in_path_v3 = new Vector3[positions_to_generate_path_for]; //Spin into empty slots then move to top
+            positions_in_path_v3_local = new Vector3[positions_to_generate_path_for]; //Spin into empty slots then move to top
             //get slots_in_reel: destroy slots if to many - add slots if to few
-            for (int position_in_reel = 0; position_in_reel < positions_in_path_v3.Length; position_in_reel++)
+            for (int position_in_reel = 0; position_in_reel < positions_in_path_v3_local.Length; position_in_reel++)
             {
-                positions_in_path_v3[position_in_reel] = GetSlotPositionBasedOnReelPosition(position_in_reel);
+                positions_in_path_v3_local[position_in_reel] = GetSlotPositionBasedOnReelPosition(position_in_reel);
             }
         }
 
@@ -425,11 +455,11 @@ public enum eEaseType
         internal List<SlotManager> GetSlotsDecending()
         {
             List<SlotManager> output = new List<SlotManager>();
-            for (int position_to_check = 0; position_to_check < positions_in_path_v3.Length; position_to_check++)
+            for (int position_to_check = 0; position_to_check < positions_in_path_v3_local.Length; position_to_check++)
             {
                 for (int slot = 0; slot < slots_in_reel.Length; slot++)
                 {
-                    if(slots_in_reel[slot].transform.localPosition == positions_in_path_v3[position_to_check])
+                    if(slots_in_reel[slot].transform.localPosition == positions_in_path_v3_local[position_to_check])
                         output.Add(slots_in_reel[slot]);
                 }
             }
@@ -462,7 +492,7 @@ public enum eEaseType
             Vector3 slot_position_on_path = GetSlotPositionBasedOnReelPosition(slot_position_in_reel);
             SlotManager generated_slot = InstantiateSlotGameobject(slot_position_in_reel, this, slot_position_on_path, Vector3.one,new Quaternion(0,180,0,0));
             generated_slot.reel_parent = this;
-            positions_in_path_v3[slot_position_in_reel] = slot_position_on_path;
+            positions_in_path_v3_local[slot_position_in_reel] = slot_position_on_path;
             return generated_slot;
         }
 
@@ -470,16 +500,16 @@ public enum eEaseType
         {
             //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
             if(reelstrip_info.reel_spin_direction.y < 0)
-                for (int i = 0; i < positions_in_path_v3.Length; i++)
+                for (int i = 0; i < positions_in_path_v3_local.Length; i++)
                 {
-                    float positions_in_path_v3_y = -Math.Abs(positions_in_path_v3[i].y);
-                    positions_in_path_v3[i] = new Vector3(Math.Abs(positions_in_path_v3[i].x),positions_in_path_v3_y,0);
+                    float positions_in_path_v3_y = -Math.Abs(positions_in_path_v3_local[i].y);
+                    positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x),positions_in_path_v3_y,0);
                 }
             //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
             if (reelstrip_info.reel_spin_direction.y > 0)
-                for (int i = 0; i < positions_in_path_v3.Length; i++)
+                for (int i = 0; i < positions_in_path_v3_local.Length; i++)
                 {
-                    positions_in_path_v3[i] = new Vector3(Math.Abs(positions_in_path_v3[i].x), Math.Abs(positions_in_path_v3[i].y), 0);
+                    positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x), Math.Abs(positions_in_path_v3_local[i].y), 0);
                 }
             for (int i = 0; i < slots_in_reel.Length; i++)
             {

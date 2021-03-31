@@ -155,15 +155,16 @@ namespace Slot_Engine.Matrix
             output.reelstrips = new ReelStripStruct[reel_strip_managers.Length];
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
-                output.reelstrips[reel] = (new ReelStrip(GenerateEndingReelStrip(3))).reelStrip; // TODO change to scale slot size
+                output.reelstrips[reel] = (new ReelStrip(GenerateEndingReelStrip(ref reel_strip_managers[reel]))).reelStrip;
             }
             return Task.FromResult<ReelStripsStruct>(output);
         }
 
-        private int[] GenerateEndingReelStrip(int v)
+        private int[] GenerateEndingReelStrip(ref ReelStripManager reelStripManager)
         {
             List<int> output = new List<int>();
-            for (int i = 0; i < v; i++)
+            //Generate a symbol for each display zone slot
+            for (int i = 0; i < reelStripManager.reelstrip_info.total_display_slots; i++)
             {
                 output.Add(GetRandomWeightedSymbol());
             }

@@ -282,7 +282,7 @@ namespace Slot_Engine.Matrix
             //The end reel configuration is set when spin starts to the next item in the list
             ReelStripsStruct end_reel_configuration = matrix.slot_machine_managers.end_configuration_manager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
-            matrix.slot_machine_managers.paylines_manager.EvaluateWinningSymbols(end_reel_configuration);
+            matrix.slot_machine_managers.paylines_manager.EvaluateWinningSymbolsFromCurrentConfiguration();
 
             yield return SpinReels(end_reel_configuration);
         }

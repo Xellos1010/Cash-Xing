@@ -44,10 +44,10 @@ namespace Slot_Engine.Matrix
             this.node_info.column = column;
         }
 
-        public suffix_tree_node(int primary_node, suffix_tree_node_info[] parent_nodes, suffix_tree_node_info parent_node, int column, bool left_right) : this()
+        public suffix_tree_node(int column, int row, suffix_tree_node_info[] parent_nodes, suffix_tree_node_info parent_node, bool left_right) : this()
         {
-            this.node_info.row = primary_node;
-
+            suffix_tree_node_info node_Info = new suffix_tree_node_info(column,row);
+            this.node_info = node_Info;
             if (this.parent_nodes == null && parent_nodes == null)
             {
                 this.parent_nodes = new suffix_tree_node_info[0];
@@ -57,7 +57,6 @@ namespace Slot_Engine.Matrix
                 this.parent_nodes = parent_nodes;
             }
             this.parent_nodes = this.parent_nodes.AddAt<suffix_tree_node_info>(0, parent_node);
-            this.node_info.column = column;
             this.left_right = left_right;
         }
 
@@ -67,7 +66,8 @@ namespace Slot_Engine.Matrix
         /// <param name="symbols_configuration">symbols on matrix</param>
         internal WinningPayline[] InitializeAndCheckForWinningPaylines(ref int[][] symbols_configuration, ref Dictionary<Symbol, FeaturesStructSymbolEvaluation> special_symbols)
         {
-            //Debug.Log("Initialize check for winning paylines");
+
+            Debug.Log(String.Format("Checking for line win in configuration {0}", PrintIntIntArray(symbols_configuration)));
             //Initialize Winning Symbol List
             List<SymbolWinStruct> winning_symbols = new List<SymbolWinStruct>();
             //Debug.Log(String.Format("Checking for winning node {0}", node_info.Print()));
@@ -85,6 +85,17 @@ namespace Slot_Engine.Matrix
 
             return winning_paylines.ToArray();
         }
+
+        private string PrintIntIntArray(int[][] symbols_configuration)
+        {
+            string output = "";
+            for (int column = 0; column < symbols_configuration.Length; column++)
+            {
+                output += (String.Format("Column {0} Symbols = {1}", column, String.Join("|", symbols_configuration[column])));
+            }
+            return output;
+        }
+
         /// <summary>
         /// Checks a symbol for any win conditions within special symbols
         /// </summary>
@@ -333,7 +344,7 @@ namespace Slot_Engine.Matrix
             winning_symbols.Add(new SymbolWinStruct(suffix_tree_node_info, symbol));
         }
 
-        internal void InitializeNextNodes(int current_column, int rows_in_column, ref suffix_tree_node parent_node, bool left_right)
+        internal void InitializeNextNodes(int current_column, ref ReelStripStructDisplayZone[] display_zones, ref suffix_tree_node parent_node, bool left_right)
         {
             //Start in column 1
 
@@ -346,24 +357,51 @@ namespace Slot_Engine.Matrix
             }
             else
             {
-                if (parent_node.node_info.row - 1 >= 0)
+
+                if (IsInActiveDisplayZone(parent_node.node_info.row - 1, ref display_zones))
                 {
                     child_nodes.Add(parent_node.node_info.row - 1);
-                    children_nodes.Add(new suffix_tree_node(parent_node.node_info.row - 1, parent_node.parent_nodes, parent_node.node_info, current_column, left_right));
+                    children_nodes.Add(new suffix_tree_node(current_column, parent_node.node_info.row - 1, parent_node.parent_nodes, parent_node.node_info, left_right));
                 }
-                if (parent_node.node_info.row < rows_in_column)
+                if (IsInActiveDisplayZone(parent_node.node_info.row, ref display_zones))
                 {
                     child_nodes.Add(parent_node.node_info.row);
-                    children_nodes.Add(new suffix_tree_node(parent_node.node_info.row, parent_node.parent_nodes, parent_node.node_info, current_column, left_right));
+                    children_nodes.Add(new suffix_tree_node(current_column, parent_node.node_info.row, parent_node.parent_nodes, parent_node.node_info,  left_right));
                 }
-                if (parent_node.node_info.row + 1 < rows_in_column)
+
+                if (IsInActiveDisplayZone(parent_node.node_info.row + 1, ref display_zones))
                 {
                     child_nodes.Add(parent_node.node_info.row + 1);
-                    children_nodes.Add(new suffix_tree_node(parent_node.node_info.row + 1, parent_node.parent_nodes, parent_node.node_info, current_column, left_right));
+                    children_nodes.Add(new suffix_tree_node(current_column, parent_node.node_info.row + 1, parent_node.parent_nodes, parent_node.node_info,left_right));
                 }
             }
             connected_nodes = child_nodes.ToArray();
             connected_nodes_struct = children_nodes.ToArray();
+        }
+        private bool IsInActiveDisplayZone(int v, ref ReelStripStructDisplayZone[] display_zones)
+        {
+            int active_slot = 0;
+            for (int i = 0; i < display_zones.Length; i++)
+            {
+                if (active_slot > v)
+                    return false;
+                if (display_zones[i].active_payline_evaluations)
+                {
+                    for (int slot = 0; slot < display_zones[i].slots_in_reelstrip_zone; slot++)
+                    {
+                        if (v == active_slot)
+                        {
+                            return true;
+                        }
+                        active_slot += 1;
+                    }
+                }
+                else
+                {
+                    active_slot += display_zones[i].slots_in_reelstrip_zone;
+                }
+            }
+            return false;
         }
 
         internal string PrintPayline()

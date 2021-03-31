@@ -58,7 +58,7 @@ namespace Slot_Engine.Matrix
             if (GUILayout.Button("Generate Paylines from Matrix"))
             {
                 //todo get matrix from script
-                myTarget.GeneratePaylinesFromMatrix(new Matrix_Settings(5, 3));
+                myTarget.GenerateDynamicPaylinesFromMatrix();
                 serializedObject.ApplyModifiedProperties();
             }
 
@@ -273,7 +273,6 @@ namespace Slot_Engine.Matrix
             Debug.Log("Canceling Cycle Wins");
             cycle_paylines = false;
             StopAllCoroutines();
-
         }
         /// <summary>
         /// Renderes the line for winniing payline
@@ -290,32 +289,22 @@ namespace Slot_Engine.Matrix
 
         public async void EvaluateWinningSymbolsFromCurrentConfiguration()
         {
+            Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
             await EvaluateWinningSymbols(matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration);
             paylines_evaluated = true;
         }
-        /// <summary>
-        /// Evaluate the winning symbols from a reelstrip configuration
-        /// </summary>
-        /// <param name="ending_reelstrips">The reelstrips configuration</param>
-        /// <returns>Task can be awaited</returns>
-        internal Task EvaluateWinningSymbols(ReelStripsStruct ending_reelstrips)
-        {
-            //Gather symbol Configuration
-            int[][] symbols_configuration = new int[ending_reelstrips.reelstrips.Length][];
-            for (int reel = 0; reel < ending_reelstrips.reelstrips.Length; reel++)
-            {
-                symbols_configuration[reel] = ending_reelstrips.reelstrips[reel].spin_info.display_symbols;
-            }
 
+        internal Task EvaluateWinningSymbols(ReelStripsStruct reelstrips_configuration)
+        {
+            int[][] symbols_configuration = new int[reelstrips_configuration.reelstrips.Length][];
+            for (int reel = 0; reel < reelstrips_configuration.reelstrips.Length; reel++)
+            {
+                symbols_configuration[reel] = reelstrips_configuration.reelstrips[reel].spin_info.display_symbols;
+            }
             EvaluateWinningSymbols(symbols_configuration);
             return Task.CompletedTask;
         }
-        /// <summary>
-        /// Evaluates whether a symbols_configuration is has winning paylines
-        /// </summary>
-        /// <param name="symbols_configuration"></param>
-        /// <returns></returns>
-        /// //TODO Make static utility
+
         public Task EvaluateWinningSymbols(int[][] symbols_configuration)
         {
             //Initialize variabled needed for caching
@@ -344,7 +333,7 @@ namespace Slot_Engine.Matrix
             return Task.CompletedTask;
         }
 
-        private WinningPayline[] CheckForWinningPaylinesDynamic(ref int[][] symbols_configuration, ref Dictionary<Symbol,FeaturesStructSymbolEvaluation> special_symbols)
+        private WinningPayline[] CheckForWinningPaylinesDynamic(ref int[][] symbols_configuration, ref Dictionary<Symbol, FeaturesStructSymbolEvaluation> special_symbols)
         {
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();
@@ -354,6 +343,7 @@ namespace Slot_Engine.Matrix
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
+                Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,root_node, dynamic_paylines.root_nodes[root_node].node_info.Print()));
             }
             return output_filtered.ToArray();
 
@@ -374,6 +364,7 @@ namespace Slot_Engine.Matrix
                     {
                         duplicate_paylines.Add(raw_payline);
                         //I can either keep the first one or second one at this point
+                        Debug.Log("Entry was removed ");
                     }
                 }
             }
@@ -400,7 +391,7 @@ namespace Slot_Engine.Matrix
             {
                 left_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnLeftRootNodeFromFullLineWin();
                 right_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnRightRootNodeFromFullLineWin();
-                //Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
+                Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
                 if(left_root_node_winning_payline == left_root_node_new_winning_payline && right_root_node_new_winning_payline == right_root_node_winning_payline)
                 {
                     return true;
@@ -424,6 +415,7 @@ namespace Slot_Engine.Matrix
         {
             cycle_paylines = true;
             current_winning_payline_shown = -1;
+            payline_renderer_manager.ToggleRenderer(true);
             StartCoroutine(InitializeAndCycleWinningPaylines());
 
         }
@@ -574,6 +566,7 @@ namespace Slot_Engine.Matrix
 
         void OnEnable()
         {
+            GenerateDynamicPaylinesFromMatrix();
             StateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
@@ -581,6 +574,8 @@ namespace Slot_Engine.Matrix
         {
             switch (state)
             {
+                case States.None:
+                    break;
                 case States.preloading:
                     break;
                 case States.Coin_In:
@@ -601,6 +596,8 @@ namespace Slot_Engine.Matrix
                 case States.Spin_Idle:
                     break;
                 case States.Spin_End:
+                    break;
+                case States.Resolve_Intro:
                     break;
                 case States.win_presentation:
                     break;
@@ -639,12 +636,15 @@ namespace Slot_Engine.Matrix
             return winning_paylines[winning_payline_to_show];
         }
 
-        internal void GeneratePaylines()
+        internal void GenerateDynamicPaylinesFromMatrix()
         {
-            GeneratePaylinesFromMatrix(new Matrix_Settings(5, 3));
+            GenerateDynamicPaylinesFromMatrix(ref matrix.reel_strip_managers);
         }
-
-        internal void GeneratePaylinesFromMatrix(Matrix_Settings matrix)
+        /// <summary>
+        /// Use a suffix tree to generate paylines
+        /// </summary>
+        /// <param name="reel_strip_managers"></param>
+        internal void GenerateDynamicPaylinesFromMatrix(ref ReelStripManager[] reel_strip_managers)
         {
             //        Initialize:
             //          Create a root node at column 0(off - screen, non - column part of all solutions)
@@ -670,7 +670,7 @@ namespace Slot_Engine.Matrix
             number_of_paylines = 0;
             dynamic_paylines.paylines_supported = new Payline[0];
 
-            dynamic_paylines.root_nodes = InitializeRootNodes(ref matrix.slots_per_reel).ToArray();
+            dynamic_paylines.root_nodes = InitializeRootNodes(ref matrix.reel_strip_managers).ToArray();
             List<suffix_tree_node> to_finish_list = new List<suffix_tree_node>();
 
             for (int root_node = 0; root_node < dynamic_paylines.root_nodes.Length; root_node++)
@@ -678,42 +678,41 @@ namespace Slot_Engine.Matrix
                 //Start a new payline that is going to be printed per root node
                 List<int> payline = new List<int>();
                 //Build all paylines
-                BuildPayline(ref payline, ref dynamic_paylines.root_nodes[root_node], ref matrix.slots_per_reel);
+                BuildPayline(ref payline, ref dynamic_paylines.root_nodes[root_node], ref matrix.reel_strip_managers);
             }
         }
 
-        internal void BuildPayline(ref List<int> payline, ref suffix_tree_node node, ref int[] slots_per_reel)
+        internal void BuildPayline(ref List<int> payline, ref suffix_tree_node node, ref ReelStripManager[] reel_strip_managers)
         {
             //Add current node to payline
             payline.Add(node.node_info.row);
             int next_column = node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;
             //Check the column is the last column and continue if it is
             if (node.left_right ?
-                next_column >= slots_per_reel.Length:
+                next_column >= reel_strip_managers.Length :
                 next_column < 0)
             {
                 Debug.Log("Reached end of payline");
                 dynamic_paylines.AddPaylineSupported(payline.ToArray(), node.left_right);
                 number_of_paylines += 1;
-                Debug.Log(string.Join("|", payline));
             }
             else
             {
                 suffix_tree_node parent_node = node; //First pass thru this will be nothing
-                int rows_in_next_column = slots_per_reel[next_column];
+                ReelStripStructDisplayZone[] rows_in_next_column = reel_strip_managers[next_column].reelstrip_info.display_zones;
                 //First in is parent_node = 0 | Children Column = 1 | slots_per_reel = 5
-                node.InitializeNextNodes(next_column, rows_in_next_column, ref parent_node, node.left_right);
+                node.InitializeNextNodes(next_column, ref rows_in_next_column, ref parent_node, node.left_right);
                 for (int child_nodes = 0; child_nodes < node.connected_nodes_struct.Length; child_nodes++)
                 {
                     //Now build out the child refs
-                    BuildPayline(ref payline, ref node.connected_nodes_struct[child_nodes], ref slots_per_reel);
+                    BuildPayline(ref payline, ref node.connected_nodes_struct[child_nodes], ref reel_strip_managers);
                     //Remove payline buildup
                     payline.RemoveRange(node.parent_nodes.Length, payline.Count - node.parent_nodes.Length);
                 }
             }
         }
 
-        private List<suffix_tree_node> InitializeRootNodes(ref int[] slots_per_reel)
+        private List<suffix_tree_node> InitializeRootNodes(ref ReelStripManager[] reel_strip_managers)
         {
             List<suffix_tree_node> root_nodes = new List<suffix_tree_node>();
             suffix_tree_node node;
@@ -721,14 +720,14 @@ namespace Slot_Engine.Matrix
             switch (evaluation_direction)
             {
                 case payline_direction.left:
-                    root_nodes.AddRange(BuildRootNodes(0, slots_per_reel[0], true));
+                    root_nodes.AddRange(BuildRootNodes(0, ref reel_strip_managers[0], true));
                     break;
                 case payline_direction.right:
-                    root_nodes.AddRange(BuildRootNodes(slots_per_reel.Length - 1, slots_per_reel[slots_per_reel.Length - 1], false));
+                    root_nodes.AddRange(BuildRootNodes(reel_strip_managers.Length - 1, ref reel_strip_managers[reel_strip_managers.Length - 1], false));
                     break;
                 case payline_direction.both:
-                    root_nodes.AddRange(BuildRootNodes(0, slots_per_reel[0], true));
-                    root_nodes.AddRange(BuildRootNodes(slots_per_reel.Length - 1, slots_per_reel[slots_per_reel.Length - 1], false));
+                    root_nodes.AddRange(BuildRootNodes(0, ref reel_strip_managers[0], true));
+                    root_nodes.AddRange(BuildRootNodes(reel_strip_managers.Length - 1,ref reel_strip_managers[reel_strip_managers.Length - 1], false));
                     break;
                 default:
                     Debug.Log("Please set the evaluation direciton to left, right or both");
@@ -737,38 +736,84 @@ namespace Slot_Engine.Matrix
             return root_nodes;
         }
 
-        private List<suffix_tree_node> BuildRootNodes(int column, int rows_in_root_column, bool left_right)
+        private List<suffix_tree_node> BuildRootNodes(int column, ref ReelStripManager reel_strip_manager, bool left_right)
         {
             List<suffix_tree_node> root_nodes = new List<suffix_tree_node>();
             suffix_tree_node node;
-            for (int row = 0;row < rows_in_root_column;row += 1)
+            //Used to assign each row in the column - active or inactive payline evaluation
+            int row = 0;
+            for (int display_zone = 0; display_zone < reel_strip_manager.reelstrip_info.display_zones.Length; display_zone++)
             {
-                //Build my node
-                node = new suffix_tree_node(row, null, new suffix_tree_node_info(-1, -1), column,left_right);
-                root_nodes.Add(node);
+                ReelStripStructDisplayZone reel_display_zone = reel_strip_manager.reelstrip_info.display_zones[display_zone];
+                if (reel_display_zone.active_payline_evaluations)
+                {
+                    for (int slot = 0; slot < reel_display_zone.slots_in_reelstrip_zone; slot++)
+                    {
+                        //Build my node
+                        node = new suffix_tree_node(column, row, null, new suffix_tree_node_info(-1, -1), left_right);
+                        root_nodes.Add(node);
+                        Debug.Log(String.Format("Registering Root Node {0}", node.node_info.Print()));
+                        row += 1;
+                    }
+                }
+                else
+                {
+                    Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", reel_display_zone.slots_in_reelstrip_zone));
+                    for (int slot = 0; slot < reel_display_zone.slots_in_reelstrip_zone; slot++)
+                    {
+                        //Register blank slot
+                        Debug.Log(String.Format("Root Node {0} {1} not in active payzone", column, row));
+                        row += 1;
+                    }
+                }
             }
             return root_nodes;
         }
 
-        private static List<int> GenerateConnectedNodes(int rows_in_next_column, int primary_node)
+        private static List<int> GenerateConnectedNodes(ref ReelStripStructDisplayZone[] rows_in_next_column, int primary_node)
         {
             List<int> connected_nodes = new List<int>();
-            if (primary_node - 1 >= 0)
+            if (IsInActiveDisplayZone(primary_node - 1, ref rows_in_next_column))
             {
                 connected_nodes.Add(primary_node - 1);
             }
             //if you have a 5x4x3x4x5 then we want to be able to calculate 5 -> 4 but not 4 -> 5
-            if (primary_node < rows_in_next_column)
+            if (IsInActiveDisplayZone(primary_node, ref rows_in_next_column))
             {
                 connected_nodes.Add(primary_node);
             }
             //if you have a 5x4x3x4x5 then we want to be able to calculate 5 -> 4 but not 4 -> 5
-            if (primary_node + 1 < rows_in_next_column)
+            if (IsInActiveDisplayZone(primary_node + 1, ref rows_in_next_column))
             {
                 connected_nodes.Add(primary_node + 1);
             }
 
             return connected_nodes;
+        }
+        private static bool IsInActiveDisplayZone(int node, ref ReelStripStructDisplayZone[] display_zones)
+        {
+            int active_slot = 0;
+            for (int i = 0; i < display_zones.Length; i++)
+            {
+                if (active_slot > node)
+                    return false;
+                if (display_zones[i].active_payline_evaluations)
+                {
+                    for (int slot = 0; slot < display_zones[i].slots_in_reelstrip_zone; slot++)
+                    {
+                        if (node == active_slot)
+                        {
+                            return true;
+                        }
+                        active_slot += 1;
+                    }
+                }
+                else
+                {
+                    active_slot += display_zones[i].slots_in_reelstrip_zone;
+                }
+            }
+            return false;
         }
 
         internal void ClearPaylinesSupportedFromFile()
@@ -780,10 +825,25 @@ namespace Slot_Engine.Matrix
         {
             if (dynamic_paylines.root_nodes.Length > 0)
             {
-                if (payline_to_show >= 0 && payline_to_show < GetSupportedGeneratedPaylines())
+                if (payline_to_show >= 0 && payline_to_show < GetSupportedGeneratedPaylines()) // TODO have a number of valid paylines printed
                 {
                     payline_renderer_manager.ShowPayline(dynamic_paylines.ReturnPayline(payline_to_show));
                 }
+            }
+        }
+
+        [Serializable]
+        public struct SymbolWinStruct
+        {
+            [SerializeField]
+            internal suffix_tree_node_info suffix_tree_node_info;
+            [SerializeField]
+            internal int symbol;
+
+            public SymbolWinStruct(suffix_tree_node_info suffix_tree_node_info, int symbol) : this()
+            {
+                this.suffix_tree_node_info = suffix_tree_node_info;
+                this.symbol = symbol;
             }
         }
     }
