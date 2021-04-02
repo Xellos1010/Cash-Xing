@@ -34,8 +34,6 @@ namespace Slot_Engine.Matrix
                 Debug.Log(String.Format("myTarget.end_configuration_manager = {0}", myTarget.end_configuration_manager.gameObject.name));
                 Debug.Log(String.Format("myTarget.symbol_materials_manager = {0}", myTarget.symbol_materials_manager.gameObject.name));
                 Debug.Log(String.Format("myTarget.racking_manager = {0}", myTarget.racking_manager.gameObject.name));
-                Debug.Log(String.Format("myTarget.machine_info_manager = {0}", myTarget.machine_info_manager.gameObject.name));
-                Debug.Log(String.Format("myTarget.symbols_weights = {0}", myTarget.symbols_weights.gameObject.name));
             }
             base.OnInspectorGUI();
         }
@@ -130,14 +128,6 @@ namespace Slot_Engine.Matrix
             }
         }
         internal MachineInfoManager _machine_info_manager;
-        public WeightedDistribution.IntDistribution symbols_weights
-        {
-            get
-            {
-                return CheckReturnComponent<WeightedDistribution.IntDistribution>(ref _symbols_weights);
-            }
-        }
-        internal WeightedDistribution.IntDistribution _symbols_weights;
 
         private T CheckReturnComponent<T>(ref T component_referenece)
         {

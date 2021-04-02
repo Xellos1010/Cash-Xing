@@ -16,12 +16,12 @@ public class WinningPayline
     /// Calculates total win of payline then returns final value
     /// </summary>
     /// <returns></returns>
-    internal float GetTotalWin(WeightedDistribution.IntDistribution intWeightedDistributionSymbols, Slot_Engine.Matrix.Matrix matrix)
+    internal float GetTotalWin(Slot_Engine.Matrix.Matrix matrix)
     {
         float output = 0;
         for (int i = 0; i < winning_symbols.Length; i++)
         {
-            output += CalculateTotalWin(intWeightedDistributionSymbols.Items[winning_symbols[i]].win_value,ref matrix);
+            output += CalculateTotalWin(matrix.symbols_in_matrix.symbols[i].win_value,ref matrix);
         }
         return output;
     }

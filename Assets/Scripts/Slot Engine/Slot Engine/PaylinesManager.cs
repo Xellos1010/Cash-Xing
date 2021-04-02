@@ -220,7 +220,7 @@ namespace Slot_Engine.Matrix
             float output = 0;
             for (int i = 0; i < winning_paylines.Length; i++)
             {
-                output += winning_paylines[i].GetTotalWin(matrix.slot_machine_managers.symbols_weights, matrix);
+                output += winning_paylines[i].GetTotalWin(matrix);
             }
             return output;
         }

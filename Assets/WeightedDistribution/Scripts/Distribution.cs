@@ -8,8 +8,6 @@ namespace WeightedDistribution
     [System.Serializable]
     public class DistributionItem<T>
     {
-        public string name;
-        public int win_value;
         [SerializeField]
         float weight;
         public float Weight { get { return weight; } set { weight = value; } }
@@ -97,6 +95,8 @@ namespace WeightedDistribution
 
         public void Add(T value, float weight)
         {
+            if (items == null)
+                items = new List<T_ITEM>();
             items.Add(new T_ITEM { Value = value, Weight = weight });
             OnItemsChange(true);
         }

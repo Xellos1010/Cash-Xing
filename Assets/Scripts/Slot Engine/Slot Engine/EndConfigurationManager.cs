@@ -86,6 +86,23 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private Matrix _matrix;
 
+        internal WeightedDistribution.IntDistribution symbol_weights
+        {
+            get
+            {
+                if(_symbol_weights.Items.Count < 1)
+                {
+                    for (int symbol = 0; symbol < matrix.symbols_in_matrix.symbols.Length; symbol++)
+                    {
+                        WeightedDistribution.IntDistributionItem item = matrix.symbols_in_matrix.symbols[symbol].symbol_weight_info;
+                        _symbol_weights.Add(item.Value,item.Weight);
+                    }
+                }
+                return _symbol_weights;
+            }
+        }
+        internal WeightedDistribution.IntDistribution _symbol_weights;
+
         public ReelStripsStruct current_reelstrip_configuration;
         //Ending Reelstrips current
         public ReelStripsStruct pop_end_reelstrips_to_display_sequence
@@ -177,7 +194,7 @@ namespace Slot_Engine.Matrix
         public int GetRandomWeightedSymbol()
         {
 #if UNITY_EDITOR
-            int output = matrix.slot_machine_managers.symbols_weights.Draw();
+            int output = matrix.symbol_weights.Draw();
 #else
             int output = UnityEngine.Random.Range(0,((int)(Symbol.End))-2);
 #endif
