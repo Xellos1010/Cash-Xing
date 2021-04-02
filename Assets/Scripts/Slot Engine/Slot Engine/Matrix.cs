@@ -414,6 +414,14 @@ namespace Slot_Engine.Matrix
             return reelstrip_managers;
         }
 
+        internal void SetSpinParametersTo(ReelStripSpinParameters spin_parameters)
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].SetSpinParametersTo(spin_parameters);
+            }
+        }
+
         internal void GenerateReelStripsToSpinThru(ref ReelStripsStruct reel_configuration)
         {
             //Generate reel strips based on number of reels and symbols per reel - Insert ending symbol configuration and hold reference for array range

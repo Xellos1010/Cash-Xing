@@ -31,8 +31,8 @@ namespace Slot_Engine.Matrix
         SerializedProperty padding_xyz;
         SerializedProperty slot_size_xyz;
         SerializedProperty display_zones_per_reel;
+        SerializedProperty spin_parameters;
 
-        SerializedProperty symbols_supported;
         SerializedProperty skin_graphics;
         SerializedProperty connected_matrix;
 
@@ -42,7 +42,7 @@ namespace Slot_Engine.Matrix
             padding_xyz = serializedObject.FindProperty("matrix_padding");
             slot_size_xyz = serializedObject.FindProperty("slot_size");
             RefreshPropertiesDisplayZones();
-            symbols_supported = serializedObject.FindProperty("symbols_supported");
+            spin_parameters = serializedObject.FindProperty("spin_parameters");
             skin_graphics = serializedObject.FindProperty("skin_graphics");
             connected_matrix = serializedObject.FindProperty("connected_matrix");
         }
@@ -78,7 +78,18 @@ namespace Slot_Engine.Matrix
                 myTarget.UpdateSlotObjectsPerReel();
             }
             BoomEditorUtilities.DrawUILine(Color.white);
-            
+            EditorGUILayout.LabelField("Modify Spin Information");
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(spin_parameters);
+            if (EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+                myTarget.UpdateSpinParameters();
+            }
+            if (GUILayout.Button("Force Spin Parameters Update"))
+            {
+                myTarget.UpdateSpinParameters();
+            }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Modify Slot Size");
             EditorGUI.BeginChangeCheck();
@@ -328,6 +339,8 @@ namespace Slot_Engine.Matrix
         public int reel_start_padding_slot_objects = 1;
         //********
 
+        public ReelStripSpinParameters spin_parameters;
+
         //Associate the instance that gets updated with Generate Matrix
         public Matrix connected_matrix;
 
@@ -415,6 +428,11 @@ namespace Slot_Engine.Matrix
             connected_matrix = GetComponentInChildren<Matrix>();
             //Get all reels slots per reel and pre-populate the reelstrip config structs
             //InitializeReelsFromConnectedMatrix();
+        }
+
+        internal void UpdateSpinParameters()
+        {
+            connected_matrix.SetSpinParametersTo(spin_parameters);
         }
         //******************
     }

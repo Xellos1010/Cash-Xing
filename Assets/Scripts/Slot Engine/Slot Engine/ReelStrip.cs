@@ -65,7 +65,7 @@ namespace Slot_Engine.Matrix
         }
     }
     [Serializable]
-    public struct ReelStripStruct
+    public struct ReelStripSpinParameters
     {
         /// <summary>
         /// The direction to spin the slots in. reel_spin_speed_direction * reelSpinSpeed will be the distance the slot travels
@@ -73,11 +73,31 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal Vector3 reel_spin_direction;
         /// <summary>
+        /// The spin speed of the reel
+        /// </summary>
+        [SerializeField]
+        internal float spin_speed;
+
+        public ReelStripSpinParameters(ReelStripSpinParameters previous, Vector3 direction) : this()
+        {
+            this.reel_spin_direction = direction;
+            this.spin_speed = previous.spin_speed;
+        }
+    }
+
+    [Serializable]
+    public struct ReelStripStruct
+    {
+        /// <summary>
         /// Reel position in sequence
         /// </summary>
         [SerializeField]
         internal int reel_number;
-        
+        /// <summary>
+        /// Holds information for spinning - direction speed etc
+        /// </summary>
+        [SerializeField]
+        internal ReelStripSpinParameters spin_parameters;
         /// <summary>
         /// Controls how many positions to generate after the display area for the slots to spin off-screen
         /// </summary>
@@ -147,12 +167,17 @@ namespace Slot_Engine.Matrix
 
         internal void SetSpinDirectionTo(Vector3 direction)
         {
-            reel_spin_direction = direction;
+            spin_parameters = new ReelStripSpinParameters(spin_parameters, direction);
         }
 
         internal void SetSpinConfigurationTo(ReelStripStruct reelStripStruct)
         {
             spin_info = reelStripStruct.spin_info;
+        }
+
+        internal void SetSpinParametersTo(ReelStripSpinParameters spin_parameters)
+        {
+            this.spin_parameters = spin_parameters;
         }
     }
     /// <summary>

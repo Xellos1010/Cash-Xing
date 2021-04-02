@@ -20,10 +20,10 @@ namespace Slot_Engine.Matrix
         public override void OnInspectorGUI()
         {
             BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Matrix Properties");
+            EditorGUILayout.LabelField("ManagersReference Properties");
 
             BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Matrix Controls");
+            EditorGUILayout.LabelField("ManagersReference Controls");
             if (GUILayout.Button("Set All References"))
             {
                 Debug.Log(String.Format("myTarget.matrix = {0}", myTarget.matrix.gameObject.name));

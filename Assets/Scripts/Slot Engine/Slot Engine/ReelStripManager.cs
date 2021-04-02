@@ -482,6 +482,13 @@ public enum eEaseType
             }
         }
 
+        internal void SetSpinParametersTo(ReelStripSpinParameters spin_parameters)
+        {
+            ReelStripStruct new_reelstrip_info = reelstrip_info;
+            new_reelstrip_info.spin_parameters = spin_parameters;
+            reelstrip_info = new_reelstrip_info;
+        }
+
         /// <summary>
         /// Generates a Slot Gameobject
         /// </summary>
@@ -499,14 +506,14 @@ public enum eEaseType
         public void UpdatePositionInPathForDirection()
         {
             //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
-            if(reelstrip_info.reel_spin_direction.y < 0)
+            if(reelstrip_info.spin_parameters.reel_spin_direction.y < 0)
                 for (int i = 0; i < positions_in_path_v3_local.Length; i++)
                 {
                     float positions_in_path_v3_y = -Math.Abs(positions_in_path_v3_local[i].y);
                     positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x),positions_in_path_v3_y,0);
                 }
             //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
-            if (reelstrip_info.reel_spin_direction.y > 0)
+            if (reelstrip_info.spin_parameters.reel_spin_direction.y > 0)
                 for (int i = 0; i < positions_in_path_v3_local.Length; i++)
                 {
                     positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x), Math.Abs(positions_in_path_v3_local[i].y), 0);
