@@ -21,7 +21,13 @@ using System.Collections.Generic;
 //public string[] symbol_set_supported = new string[6] { "SF01", "SF02", "MA01" };//Want this list populated by whatever output brent is using. If we are unable to have access from a list then we should pull based on assets provided in skins folder. Read folder names of folders in Base Game/Symbols Directory
 namespace Slot_Engine.Matrix
 {
-
+    [CreateAssetMenu(fileName = "SymbolData", menuName = "ScriptableObjects/SymbolScriptableObject", order = 1)]
+    public class SymbolScriptableObject : ScriptableObject
+    {
+        public string symbol_name;
+        public int value;
+        public WeightedDistribution.IntDistributionItem IntDistributionItem;
+    }
 #if UNITY_EDITOR
     [CustomEditor(typeof(MatrixGenerator))]
     class MatrixGeneratorEditor : BoomSportsEditor

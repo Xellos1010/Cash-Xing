@@ -83,6 +83,14 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal AnimatorStateMachineManager _state_machine;
 
+        public class SymbolPrefab
+        {
+            //Path to prefab
+            //Generated Prefab Reference
+            //Generate Prefab Call
+        }
+        public SymbolPrefab symbol_prefab;
+
         public MeshRenderer meshRenderer
         {
             get
