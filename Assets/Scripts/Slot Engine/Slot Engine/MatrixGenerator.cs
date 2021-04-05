@@ -228,7 +228,7 @@ namespace Slot_Engine.Matrix
                 else if (connected_matrix.objectReferenceValue != null)
                 {
                     EditorGUILayout.LabelField("Modifying below will modify Connected Matrix");
-                    if(GUILayout.Button("Ensure slot objects are generated"))
+                    if(GUILayout.Button("Ensure reels and slot objects are generated"))
                     {
                         myTarget.UpdateSlotObjectsPerReel();
                     }

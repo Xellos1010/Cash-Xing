@@ -390,23 +390,30 @@ namespace Slot_Engine.Matrix
         {
             if (symbol_prefabs?.Length != reel_parent.matrix.symbols_in_matrix.symbols.Length)
             {
-                symbol_prefabs = new Transform[reel_parent.matrix.symbols_in_matrix.symbols.Length];
-                for (int symbol = 0; symbol < symbol_prefabs.Length; symbol++)
-                {
-                    symbol_prefabs[symbol] = Instantiate(reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_prefab) as Transform;
-                    symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_name);
-                    symbol_prefabs[symbol].parent = transform;
-                    symbol_prefabs[symbol].localPosition = Vector3.zero;
-                    symbol_prefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);
-                    symbol_prefabs[symbol].localScale = reel_parent.matrix.slot_size;
-                    symbol_prefabs[symbol].gameObject.SetActive(false);
-                }
+                InstantiateSymbolPrefabs();
             }
             for (int symbol_prefab = 0; symbol_prefab < symbol_prefabs.Length; symbol_prefab++)
             {
                 symbol_prefabs[symbol_prefab].gameObject.SetActive(false);
             }
             symbol_prefabs[symbol_to_show].gameObject.SetActive(true);
+        }
+
+        private void InstantiateSymbolPrefabs()
+        {
+#if UNITY_EDITOR
+            symbol_prefabs = new Transform[reel_parent.matrix.symbols_in_matrix.symbols.Length];
+            for (int symbol = 0; symbol < symbol_prefabs.Length; symbol++)
+            {
+                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_prefab) as Transform;
+                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_name);
+                symbol_prefabs[symbol].parent = transform;
+                symbol_prefabs[symbol].localPosition = Vector3.zero;
+                symbol_prefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);
+                symbol_prefabs[symbol].localScale = reel_parent.matrix.slot_size;
+                symbol_prefabs[symbol].gameObject.SetActive(false);
+        }
+#endif
         }
     }
 }

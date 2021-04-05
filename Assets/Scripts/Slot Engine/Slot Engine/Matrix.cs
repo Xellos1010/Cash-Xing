@@ -411,7 +411,13 @@ namespace Slot_Engine.Matrix
                     reelstrip_managers = reelstrip_managers.RemoveAt(reel);
                 }
             }
-
+            for (int reel = 0; reel < reelstrip_managers.Length; reel++)
+            {
+                if(reelstrip_managers[reel] == null)
+                {
+                    reelstrip_managers[reel] = GenerateReel(reel);
+                }
+            }
         }
 
         private List<ReelStripManager> FindReelstripManagers()

@@ -131,9 +131,12 @@ namespace Slot_Engine.Matrix
 
         private void GetTotalDisplaySlots(ref int output)
         {
-            for (int display_zone = 0; display_zone < display_zones.Length; display_zone++)
+            if (display_zones != null)
             {
-                output += display_zones[display_zone].slots_in_reelstrip_zone;
+                for (int display_zone = 0; display_zone < display_zones.Length; display_zone++)
+                {
+                    output += display_zones[display_zone].slots_in_reelstrip_zone;
+                }
             }
         }
 
