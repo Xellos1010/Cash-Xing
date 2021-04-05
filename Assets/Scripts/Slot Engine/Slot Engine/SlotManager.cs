@@ -33,6 +33,10 @@ namespace Slot_Engine.Matrix
             //base.OnInspectorGUI();
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Commands");
+            if(GUILayout.Button("Set Sub Animators State Machine"))
+            {
+                myTarget.SetSubStateMachineAnimators();
+            }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
             base.OnInspectorGUI();
@@ -132,6 +136,7 @@ namespace Slot_Engine.Matrix
             ResetAllVars();
             SetSlotMovementEnabledTo(true);
             SetTriggerTo(supported_triggers.SpinStart);
+            SetTriggerSubStatesTo(supported_triggers.SpinStart);
         }
 
         Vector3 GeneratePositionUpdateSpeed(Vector3 amount_to_add) //Needs to be positive to move forwards and negative to move backwards
@@ -279,13 +284,20 @@ namespace Slot_Engine.Matrix
 
         internal async void SetSymbolResolveWin()
         {
-            SetBoolTo(supported_bools.SymbolResolve, true);
-            SetBoolTo(supported_bools.LoopPaylineWins, true);
+            //Set the sub symbol Animator
+            Animator sub_state_animator = state_machine.sub_state_machines[presentation_symbol]; //may display wrong animator is out of order
+            SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, true);
+            SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
             //PingPong float
             //StartCoroutine(PingPongAnimation());
             //SetPingPong(true);
             //SetFloatMotionTimeTo(0);
-            state_machine.state_machine.PlayInFixedTime("Resolve_Win_Idle",-1,0);
+            sub_state_animator.Play("Resolve_Win_Idle",-1,0);
+        }
+
+        private void SetBoolTo(ref Animator sub_state_animator, supported_bools symbolResolve, bool value)
+        {
+            state_machine.SetBoolSubStateMachineTo(ref sub_state_animator, symbolResolve,value);
         }
 
         public bool ping_pong = false;
@@ -306,12 +318,12 @@ namespace Slot_Engine.Matrix
 
         internal void SetSymbolResolveToLose()
         {
-            SetBoolTo(supported_bools.SymbolResolve, false);
-            //SetBoolTo(supported_bools.LoopPaylineWins, true);
-            if (!state_machine.state_machine.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+            Animator sub_state_animator = GetComponentInChildren<Animator>();
+            SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
+            if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
             {
                 Debug.Log(String.Format("current state name != Resolve Intro"));
-                state_machine.state_machine.PlayInFixedTime("Resolve_Intro", -1, 0);
+                sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
             }
         }
 
@@ -339,6 +351,21 @@ namespace Slot_Engine.Matrix
                 presentation_symbol_name = ReturnSymbolNameFromInt(to_symbol);
             presentation_symbol = to_symbol;
         }
+        /// <summary>
+        /// Sets the sub-state machine references to the symbol animators
+        /// </summary>
+        internal void SetSubStateMachineAnimators()
+        {
+            //Remove at 1st index because self reference
+            state_machine.SetSubStateMachinesTo(transform.GetComponentsInChildren<Animator>(true).RemoveAt<Animator>(0));
+        }
+
+        internal void SetBoolStateMachines(supported_bools bool_name, bool v)
+        {
+            state_machine.SetBool(bool_name, v);
+            state_machine.SetBoolSubStateMachinesTo(bool_name,v);
+        }
+
         /// <summary>
         /// Used to set the slot to go to end position
         /// </summary>
@@ -394,9 +421,23 @@ namespace Slot_Engine.Matrix
             }
             for (int symbol_prefab = 0; symbol_prefab < symbol_prefabs.Length; symbol_prefab++)
             {
-                symbol_prefabs[symbol_prefab].gameObject.SetActive(false);
+                if (symbol_prefabs[symbol_prefab].gameObject.activeSelf == false)
+                    symbol_prefabs[symbol_prefab].gameObject.SetActive(true);
+                MeshRenderer renderer = symbol_prefabs[symbol_prefab].GetChild(0).GetComponent<MeshRenderer>();
+                if(renderer.enabled && symbol_prefab != symbol_to_show)
+                    renderer.enabled = false;
             }
-            symbol_prefabs[symbol_to_show].gameObject.SetActive(true);
+            symbol_prefabs[symbol_to_show].GetChild(0).GetComponent<MeshRenderer>().enabled = true;
+        }
+
+        internal void SetAllSubSymbolsGameobjectActive()
+        {
+            for (int symbol_prefab = 0; symbol_prefab < symbol_prefabs.Length; symbol_prefab++)
+            {
+                if (symbol_prefabs[symbol_prefab].gameObject.activeSelf == false)
+                    symbol_prefabs[symbol_prefab].gameObject.SetActive(true);
+                symbol_prefabs[symbol_prefab].GetChild(0).GetComponent<MeshRenderer>().enabled = false;
+            }
         }
 
         private void InstantiateSymbolPrefabs()
@@ -414,6 +455,17 @@ namespace Slot_Engine.Matrix
                 symbol_prefabs[symbol].gameObject.SetActive(false);
         }
 #endif
+        }
+
+        internal void SetTriggerSubStatesTo(supported_triggers toTrigger)
+        {
+            Debug.Log(String.Format("Setting sub states to trigger {0}",toTrigger.ToString()));
+            state_machine.SetTriggerSubStateMachinesTo(toTrigger);
+        }
+
+        internal void ResetTriggerSubStates(supported_triggers triggerToReset)
+        {
+            state_machine.ResetTriggerSubStateMachines(triggerToReset);
         }
     }
 }

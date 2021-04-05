@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 public enum supported_triggers
 {
     SpinStart,
@@ -25,6 +26,23 @@ public enum supported_floats
 [RequireComponent(typeof(Animator))]
 public class StateMachineManagerBase : MonoBehaviour
 {
+    public Animator[] sub_state_machines
+    {
+        get
+        {
+            if(_sub_state_machines?.Length < 1)
+            {
+                _sub_state_machines = transform.GetComponentsInChildren<Animator>().RemoveAt<Animator>(0);
+            }
+            else if(_sub_state_machines == null)
+            {
+                _sub_state_machines = transform.GetComponentsInChildren<Animator>().RemoveAt<Animator>(0);
+            }
+            return _sub_state_machines;
+        }
+    }
+    public Animator[] _sub_state_machines;
+
     [SerializeField]
     private Animator _state_machine;
 
@@ -59,12 +77,36 @@ public class StateMachineManagerBase : MonoBehaviour
     {
         Animator animator = state_machine;
         AnimatorStaticUtilites.InitializeAnimator(ref animator);
+        InitializeAnimatorSubStates();
+    }
+
+    private void InitializeAnimatorSubStates()
+    {
+        if (_sub_state_machines?.Length > 0)
+        {
+            for (int state_machine = 0; state_machine < sub_state_machines.Length; state_machine++)
+            {
+                AnimatorStaticUtilites.InitializeAnimator(ref sub_state_machines[state_machine]);
+            }
+        }
     }
 
     internal void ResetAllBools()
     {
         Animator animator = state_machine;
         AnimatorStaticUtilites.ResetAllBools(ref animator);
+        ResetAllBoolsSubStates();
+    }
+
+    private void ResetAllBoolsSubStates()
+    {
+        if(sub_state_machines?.Length > 0)
+        {
+            for (int state_machine = 0; state_machine < sub_state_machines.Length; state_machine++)
+            {
+                AnimatorStaticUtilites.ResetAllBools(ref sub_state_machines[state_machine]);
+            }
+        }
     }
 
     internal void SetBool(supported_bools bool_name, bool value)
@@ -72,7 +114,20 @@ public class StateMachineManagerBase : MonoBehaviour
         Animator animator = state_machine;
         AnimatorStaticUtilites.SetBoolTo(ref animator, bool_name, value);
     }
-
+    internal void SetBoolSubStateMachineTo(ref Animator sub_state_machine, supported_bools bool_name, bool value)
+    {
+        AnimatorStaticUtilites.SetBoolTo(ref sub_state_machine, bool_name, value);
+    }
+    internal void SetBoolSubStateMachinesTo(supported_bools bool_name, bool value)
+    {
+        if(sub_state_machines?.Length > 0)
+        {
+            for (int state_machine = 0; state_machine < sub_state_machines.Length; state_machine++)
+            {
+                AnimatorStaticUtilites.SetBoolTo(ref sub_state_machines[state_machine], bool_name, value); 
+            }
+        }
+    }
 
     internal void SetTrigger(supported_triggers trigger_to_set)
     {

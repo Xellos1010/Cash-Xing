@@ -496,7 +496,6 @@ namespace Slot_Engine.Matrix
 
         void OnEnable()
         {
-            GenerateDynamicPaylinesFromMatrix();
             StateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
@@ -682,7 +681,7 @@ namespace Slot_Engine.Matrix
                         //Build my node
                         node = new suffix_tree_node(column, row, null, new suffix_tree_node_info(-1, -1), left_right);
                         root_nodes.Add(node);
-                        Debug.Log(String.Format("Registering Root Node {0}", node.node_info.Print()));
+                        //Debug.Log(String.Format("Registering Root Node {0}", node.node_info.Print()));
                         row += 1;
                     }
                 }

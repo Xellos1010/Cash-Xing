@@ -440,12 +440,6 @@ namespace Slot_Engine.Matrix
                 default:
                     break;
             }
-            if (State == States.Spin_Intro)
-            {
-            }
-            else if (State == States.Spin_Outro)
-            {
-            }
         }
 
         internal void TriggerFeatureWithSpin(Features feature)

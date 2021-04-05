@@ -13,6 +13,7 @@ using System.Linq;
 namespace Slot_Engine.Matrix
 {
 #if UNITY_EDITOR
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(Matrix))]
     class MatrixEditor : BoomSportsEditor
     {
@@ -323,7 +324,7 @@ namespace Slot_Engine.Matrix
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
                 {
-                    reel_strip_managers[reel].slots_in_reel[slot].state_machine.SetBool(bool_name,v);
+                    reel_strip_managers[reel].slots_in_reel[slot].SetBoolStateMachines(bool_name,v);
                 }
             }
         }
@@ -662,7 +663,7 @@ namespace Slot_Engine.Matrix
             if(v)
             {
                 slot_machine_managers.animator_statemachine_master.SetTrigger(trigger);
-                SetSlotsAnimatorTrigger(trigger);
+                SetSlotsAnimatorTriggerTo(trigger);
             }
             else
             {
@@ -690,13 +691,14 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void SetSlotsAnimatorTrigger(supported_triggers slot_to_trigger)
+        private void SetSlotsAnimatorTriggerTo(supported_triggers slot_to_trigger)
         {
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
                 {
                     reel_strip_managers[reel].slots_in_reel[slot].SetTriggerTo(slot_to_trigger);
+                    reel_strip_managers[reel].slots_in_reel[slot].SetTriggerSubStatesTo(slot_to_trigger);
                 }
             }
         }
@@ -708,6 +710,7 @@ namespace Slot_Engine.Matrix
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
                 {
                     reel_strip_managers[reel].slots_in_reel[slot].ResetTrigger(slot_to_trigger);
+                    reel_strip_managers[reel].slots_in_reel[slot].ResetTriggerSubStates(slot_to_trigger);
                 }
             }
         }

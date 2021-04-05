@@ -71,6 +71,10 @@ public enum eEaseType
                 {
                     my_target.UpdateSlotObjectsAndPositions();
                 }
+                if (GUILayout.Button("Update sub state machines slot managers"))
+                {
+                    my_target.UpdateSlotManagersSubStateMachines();
+                }
             }
             if (my_target.is_reel_spinning)
             {
@@ -738,6 +742,18 @@ public enum eEaseType
         internal void SetSpinSpeedTo(float to_speed)
         {
             reel_spin_speed_current = to_speed;
+        }
+        /// <summary>
+        /// Sets all slot managers sub state machines to trigger and set bools
+        /// </summary>
+        internal void UpdateSlotManagersSubStateMachines()
+        {
+            for (int i = 0; i < slots_in_reel?.Length; i++)
+            {
+                slots_in_reel[i].SetSubStateMachineAnimators();
+                slots_in_reel[i].SetAllSubSymbolsGameobjectActive();
+            }
+            matrix._slot_machine_managers.end_configuration_manager.SetMatrixToReelConfiguration();
         }
     }
 }

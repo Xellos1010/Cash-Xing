@@ -45,4 +45,33 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
     {
         state_machine.runtimeAnimatorController = to_controller;
     }
+
+    internal void SetSubStateMachinesTo(Animator[] animators)
+    {
+        _sub_state_machines = animators;
+    }
+
+    internal void SetTriggerSubStateMachinesTo(supported_triggers trigger)
+    {
+        if(sub_state_machines.Length > 0)
+        {
+            for (int animator = 0; animator < sub_state_machines.Length; animator++)
+            {
+                sub_state_machines[animator].SetTrigger(trigger.ToString());
+            }
+        }
+    }
+
+    internal void ResetTriggerSubStateMachines(supported_triggers triggerToReset)
+    {
+        if (sub_state_machines == null)
+        {
+
+        }
+        for (int animator = 0; animator < sub_state_machines.Length; animator++)
+        {
+            sub_state_machines[animator].ResetTrigger(triggerToReset.ToString());
+        }
+        
+    }
 }
