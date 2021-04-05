@@ -38,6 +38,10 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.SetReelInfoNumbers();
             }
+            if(GUILayout.Button("Set Weights from symbols data"))
+            {
+                Debug.Log(myTarget.symbol_weights);
+            }
             base.OnInspectorGUI();
         }
     }
@@ -68,14 +72,15 @@ namespace Slot_Engine.Matrix
         {
             get
             {
-                if(_symbol_weights == null )
-                    _symbol_weights = transform.gameObject.AddComponent<WeightedDistribution.IntDistribution>();
-                for (int symbol = 0; symbol < symbols_in_matrix.symbols.Length; symbol++)
+                if (_symbol_weights == null)
                 {
-                    WeightedDistribution.IntDistributionItem symbol_weight = symbols_in_matrix.symbols[symbol].symbol_weight_info;
-                    _symbol_weights.Add(symbol_weight.Value, symbol_weight.Weight);
+                    _symbol_weights = transform.gameObject.AddComponent<WeightedDistribution.IntDistribution>();
+                    for (int symbol = 0; symbol < symbols_in_matrix.symbols.Length; symbol++)
+                    {
+                        WeightedDistribution.IntDistributionItem symbol_weight = symbols_in_matrix.symbols[symbol].symbol_weight_info;
+                        _symbol_weights.Add(symbol_weight.Value, symbol_weight.Weight);
+                    }
                 }
-                
                 return _symbol_weights;
             }
         }
@@ -187,7 +192,7 @@ namespace Slot_Engine.Matrix
 
         private Vector3 ReturnPositionOnReelForPayline(ref ReelStripManager reel, int slot_in_reel)
         {
-            return reel.slot_objects_initial_world[reel.reelstrip_info.padding_before+slot_in_reel] + (Vector3.back * 10);
+            return reel.transform.TransformPoint(reel.positions_in_path_v3_local[reel.reelstrip_info.padding_before+slot_in_reel] + (Vector3.back * 10));
         }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
@@ -335,25 +340,10 @@ namespace Slot_Engine.Matrix
         {
             //Build reelstrip info 
             ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(display_zones_per_reel);
-
-            SetSpinDirectionForReelStrip(ref reelstrips_configuration, Vector3.down);
-
             //Set Matrix Settings first then update the reel configuration 
             SetMatrixSettings(slot_size);
             SetReelsAndSlotsPerReel(reelstrips_configuration);
             return Task.CompletedTask;
-        }
-        /// <summary>
-        /// Sets the spin direction for the reelstrip
-        /// </summary>
-        /// <param name="reelstrips_configuration">reference reelstrip configuration to set direction</param>
-        /// <param name="direction">Direction to spin in</param>
-        private void SetSpinDirectionForReelStrip(ref ReelStripsStruct reelstrips_configuration, Vector3 direction)
-        {
-            for (int reelstrip = 0; reelstrip < reelstrips_configuration.reelstrips.Length; reelstrip++)
-            {
-                reelstrips_configuration.reelstrips[reelstrip].SetSpinDirectionTo(direction);
-            }
         }
 
         private void SetMatrixSettings(Vector3 slot_size)
@@ -449,7 +439,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void SetSpinParametersTo(ReelStripSpinParameters spin_parameters)
+        internal void SetSpinParametersTo(ReelStripSpinParametersScriptableObject spin_parameters)
         {
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {

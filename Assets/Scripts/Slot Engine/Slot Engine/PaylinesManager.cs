@@ -20,105 +20,74 @@ namespace Slot_Engine.Matrix
     class PayLinesEditor : BoomSportsEditor
     {
         PaylinesManager myTarget;
-        SerializedProperty paylines_supported_from_file;
         SerializedProperty winning_paylines;
         SerializedProperty paylines_evaluated;
-        SerializedProperty root_payline_nodes;
+        SerializedProperty dynamic_paylines_evaluation;
+
         private int payline_to_show;
         private int winning_payline_to_show;
         public void OnEnable()
         {
             myTarget = (PaylinesManager)target;
-            paylines_supported_from_file = serializedObject.FindProperty("paylines_supported_from_file");
             winning_paylines = serializedObject.FindProperty("winning_paylines");
             paylines_evaluated = serializedObject.FindProperty("paylines_evaluated");
-            root_payline_nodes = serializedObject.FindProperty("root_payline_nodes");
-            //EditorApplication.update += EditorUpdate;
+            dynamic_paylines_evaluation = serializedObject.FindProperty("dynamic_paylines_evaluation");
         }
-        //public void OnDisable()
-        //{
-        //    //EditorApplication.update -= EditorUpdate;
-        //}
-        //internal IEnumerator coroutine;
-        
-        //void EditorUpdate()
-        //{
-        //    coroutine?.MoveNext();
-        //}
 
         public override void OnInspectorGUI()
         {
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Commands");
-            if (GUILayout.Button("Set Paylines From file"))
+            if(dynamic_paylines_evaluation.type != null)
             {
-                myTarget.SetPaylinesFromFile();
-                serializedObject.ApplyModifiedProperties();
-            }
-            if (GUILayout.Button("Generate Paylines from Matrix"))
-            {
-                //todo get matrix from script
-                myTarget.GenerateDynamicPaylinesFromMatrix();
-                serializedObject.ApplyModifiedProperties();
-            }
-
-            //Phasing out payline support file
-            if (paylines_supported_from_file.arraySize > 0)
-            {
-                EditorGUILayout.LabelField("Payliens From File Commands");
-                payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, paylines_supported_from_file.arraySize - 1);
-                if (GUILayout.Button("Show Payline"))
+                if (GUILayout.Button("Generate Paylines from Matrix"))
                 {
-                    myTarget.ShowDynamicPaylineRaw(payline_to_show);
-                }
-                if (GUILayout.Button("Evaluate Payline"))
-                {
-                    myTarget.EvaluateWinningSymbolsFromCurrentConfiguration();
+                    //todo get matrix from script
+                    myTarget.GenerateDynamicPaylinesFromMatrix();
                     serializedObject.ApplyModifiedProperties();
                 }
-                if (GUILayout.Button("Clear Payline supported from file"))
-                {
-                    paylines_supported_from_file.ClearArray();
-                    serializedObject.ApplyModifiedProperties();
-                }
-            }
 
-            if (myTarget.dynamic_paylines.paylines_supported.Length > 0)
-            {
-                EditorGUILayout.LabelField("Dynamic Paylines Commands");
-                EditorGUI.BeginChangeCheck();
-                payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, myTarget.dynamic_paylines.paylines_supported.Length - 1);
-                if (EditorGUI.EndChangeCheck())
+                if (myTarget.dynamic_paylines_evaluation.dynamic_paylines.paylines_supported.Length > 0)
                 {
-                    myTarget.ShowDynamicPaylineRaw(payline_to_show);
-                }
-                EditorGUILayout.LabelField(String.Format("Currently Showing Payline {0}", payline_to_show));
-                if (paylines_evaluated.boolValue)
-                {
-                    if (winning_paylines.arraySize > 0)
+                    EditorGUILayout.LabelField("Dynamic Paylines Commands");
+                    EditorGUI.BeginChangeCheck();
+                    payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, myTarget.dynamic_paylines_evaluation.dynamic_paylines.paylines_supported.Length - 1);
+                    if (EditorGUI.EndChangeCheck())
                     {
-                        EditorGUI.BeginChangeCheck();
-                        winning_payline_to_show = EditorGUILayout.IntSlider(winning_payline_to_show, 0, winning_paylines.arraySize - 1);
-                        if (EditorGUI.EndChangeCheck())
+                        myTarget.ShowDynamicPaylineRaw(payline_to_show);
+                    }
+                    EditorGUILayout.LabelField(String.Format("Currently Showing Payline {0}", payline_to_show));
+                    if (paylines_evaluated.boolValue)
+                    {
+                        if (winning_paylines.arraySize > 0)
                         {
-                            myTarget.ShowWinningPayline(winning_payline_to_show);
+                            EditorGUI.BeginChangeCheck();
+                            winning_payline_to_show = EditorGUILayout.IntSlider(winning_payline_to_show, 0, winning_paylines.arraySize - 1);
+                            if (EditorGUI.EndChangeCheck())
+                            {
+                                myTarget.ShowWinningPayline(winning_payline_to_show);
+                            }
+                            EditorGUILayout.LabelField(String.Format("Currently Showing winning Payline {0}", winning_payline_to_show));
+                            if (GUILayout.Button("Clear Winning Paylines"))
+                            {
+                                myTarget.ClearWinningPaylines();
+                                serializedObject.ApplyModifiedProperties();
+                                serializedObject.Update();
+                            }
                         }
-                        EditorGUILayout.LabelField(String.Format("Currently Showing winning Payline {0}", winning_payline_to_show));
-                        if (GUILayout.Button("Clear Winning Paylines"))
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("Evaluate Paylines"))
                         {
-                            myTarget.ClearWinningPaylines();
-                            serializedObject.ApplyModifiedProperties();
-                            serializedObject.Update();
+                            myTarget.EvaluateWinningSymbolsFromCurrentConfiguration();
                         }
                     }
                 }
-                else
-                {
-                    if (GUILayout.Button("Evaluate Paylines"))
-                    {
-                        myTarget.EvaluateWinningSymbolsFromCurrentConfiguration();
-                    }
-                }
+            }
+            else
+            {
+                EditorGUILayout.PropertyField(dynamic_paylines_evaluation);
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
@@ -137,8 +106,6 @@ namespace Slot_Engine.Matrix
     }
     public class PaylinesManager : MonoBehaviour
     {
-        [SerializeField]
-        public Payline[] paylines_supported_from_file;
         [SerializeField]
         internal WinningPayline[] winning_paylines;
         public int current_winning_payline_shown = -1;
@@ -180,37 +147,9 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private Matrix _matrix;
 
-        public int number_of_paylines = 0;
-        public suffix_tree_root_nodes dynamic_paylines;
+        public PaylinesEvaluationScriptableObject dynamic_paylines_evaluation;
 
         public Task cycle_paylines_task;
-        internal void SetPaylinesFromFile()
-        {
-            throw new Exception("Obsolete - use dynamic paylines");
-            ////Find File - Parse File - Fill Array of int[]
-            //TextAsset paylines = Resources.Load<TextAsset>("Data/99paylines_m3x5");
-            //Debug.Log(paylines.text);
-            //List<int> paylineListRaw = new List<int>();
-            //List<Payline> paylineListOutput = new List<Payline>();
-
-            //for (int i = 0; i < paylines.text.Length; i++)
-            //{
-            //    if (Char.IsDigit(paylines.text[i]))
-            //    {
-            //        Debug.Log(string.Format("Char {0} is {1}", i, Char.GetNumericValue(paylines.text[i])));
-            //        paylineListRaw.Add((int)Char.GetNumericValue(paylines.text[i]));
-            //        if (paylineListRaw.Count == 5)
-            //        {
-
-            //            paylineListOutput.Add(new Payline(paylineListRaw.ToArray()));
-            //            Debug.Log(paylineListRaw.ToArray().ToString());
-            //            paylineListRaw.Clear();
-            //        }
-            //    }
-            //}
-            //Debug.Log(paylineListOutput.ToArray().ToString());
-            //paylines_supported_from_file = paylineListOutput.ToArray();
-        }
 
         /// <summary>
         /// Gets the total amount from wininng paylines
@@ -231,24 +170,15 @@ namespace Slot_Engine.Matrix
             while (Reader.ReadLine() != null) { i++; }
             return i;
         }
-        /*
-        public void ShowPaylineFromFileRaw(int payline_to_show)
-        {
-            if (paylines_supported_from_file.Length > 0)
-            {
-                if (payline_to_show >= 0 && payline_to_show < paylines_supported_from_file.Length)
-                    payline_renderer_manager.ShowPayline(paylines_supported_from_file[payline_to_show]);
-            }
-        }*/
 
         private int GetSupportedGeneratedPaylines()
         {
-            int number_of_paylines = 0;
-            for (int i = 0; i < dynamic_paylines.root_nodes.Length; i++)
+            dynamic_paylines_evaluation.number_of_paylines = 0;
+            for (int i = 0; i < dynamic_paylines_evaluation.dynamic_paylines.root_nodes.Length; i++)
             {
-                number_of_paylines += GetPossiblePaylineCombinations(ref dynamic_paylines.root_nodes[i]);
+                dynamic_paylines_evaluation.number_of_paylines += GetPossiblePaylineCombinations(ref dynamic_paylines_evaluation.dynamic_paylines.root_nodes[i]);
             }
-            return number_of_paylines;
+            return dynamic_paylines_evaluation.number_of_paylines;
         }
 
         private int GetPossiblePaylineCombinations(ref suffix_tree_node suffix_tree_node)
@@ -337,13 +267,13 @@ namespace Slot_Engine.Matrix
         {
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();
-            for (int root_node = 0; root_node < dynamic_paylines.root_nodes.Length; root_node++)
+            for (int root_node = 0; root_node < dynamic_paylines_evaluation.dynamic_paylines.root_nodes.Length; root_node++)
             {
-                output_raw.AddRange(dynamic_paylines.root_nodes[root_node].InitializeAndCheckForWinningPaylines(ref symbols_configuration, ref special_symbols));
+                output_raw.AddRange(dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node].InitializeAndCheckForWinningPaylines(ref symbols_configuration, ref special_symbols));
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
-                Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,root_node, dynamic_paylines.root_nodes[root_node].node_info.Print()));
+                Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,root_node, dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node].node_info.Print()));
             }
             return output_filtered.ToArray();
 
@@ -495,7 +425,7 @@ namespace Slot_Engine.Matrix
         {
             //TODO Check Symbol Configuration Reels are length of payline
             symbols_in_row = new List<int>();
-            Payline currentPayline = paylines_supported_from_file.Length > 0 ? paylines_supported_from_file[payline] : dynamic_paylines.paylines_supported[payline];
+            Payline currentPayline = dynamic_paylines_evaluation.dynamic_paylines.paylines_supported[payline];
             if (currentPayline.payline_configuration.payline.Length != symbols_configuration.Length)
                 Debug.LogWarning(String.Format("currentPayline.payline.Length = {0} symbols_configuration.Length = {1}", currentPayline.payline_configuration.payline.Length, symbols_configuration.Length));
 
@@ -524,7 +454,7 @@ namespace Slot_Engine.Matrix
 
             //Check if Payline symbol configuration are already the list - keep highest winning payline
             
-            payline_won.Add(new WinningPayline(paylines_supported_from_file.Length > 0 ? paylines_supported_from_file[payline] : dynamic_paylines.paylines_supported[payline], matching_symbols_list.ToArray()));
+            payline_won.Add(new WinningPayline(dynamic_paylines_evaluation.dynamic_paylines.paylines_supported[payline], matching_symbols_list.ToArray()));
         }
         private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
         {
@@ -667,18 +597,18 @@ namespace Slot_Engine.Matrix
             List<suffix_tree_node> paylines = new List<suffix_tree_node>();
             List<suffix_tree_node> finished_list = new List<suffix_tree_node>();
 
-            number_of_paylines = 0;
-            dynamic_paylines.paylines_supported = new Payline[0];
+            dynamic_paylines_evaluation.number_of_paylines = 0;
+            dynamic_paylines_evaluation.dynamic_paylines.paylines_supported = new Payline[0];
 
-            dynamic_paylines.root_nodes = InitializeRootNodes(ref matrix.reel_strip_managers).ToArray();
+            dynamic_paylines_evaluation.dynamic_paylines.root_nodes = InitializeRootNodes(ref matrix.reel_strip_managers).ToArray();
             List<suffix_tree_node> to_finish_list = new List<suffix_tree_node>();
 
-            for (int root_node = 0; root_node < dynamic_paylines.root_nodes.Length; root_node++)
+            for (int root_node = 0; root_node < dynamic_paylines_evaluation.dynamic_paylines.root_nodes.Length; root_node++)
             {
                 //Start a new payline that is going to be printed per root node
                 List<int> payline = new List<int>();
                 //Build all paylines
-                BuildPayline(ref payline, ref dynamic_paylines.root_nodes[root_node], ref matrix.reel_strip_managers);
+                BuildPayline(ref payline, ref dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node], ref matrix.reel_strip_managers);
             }
         }
 
@@ -693,8 +623,8 @@ namespace Slot_Engine.Matrix
                 next_column < 0)
             {
                 Debug.Log("Reached end of payline");
-                dynamic_paylines.AddPaylineSupported(payline.ToArray(), node.left_right);
-                number_of_paylines += 1;
+                dynamic_paylines_evaluation.dynamic_paylines.AddPaylineSupported(payline.ToArray(), node.left_right);
+                dynamic_paylines_evaluation.number_of_paylines += 1;
             }
             else
             {
@@ -816,18 +746,13 @@ namespace Slot_Engine.Matrix
             return false;
         }
 
-        internal void ClearPaylinesSupportedFromFile()
-        {
-            paylines_supported_from_file = null;
-        }
-
         internal void ShowDynamicPaylineRaw(int payline_to_show)
         {
-            if (dynamic_paylines.root_nodes.Length > 0)
+            if (dynamic_paylines_evaluation.dynamic_paylines.root_nodes.Length > 0)
             {
                 if (payline_to_show >= 0 && payline_to_show < GetSupportedGeneratedPaylines()) // TODO have a number of valid paylines printed
                 {
-                    payline_renderer_manager.ShowPayline(dynamic_paylines.ReturnPayline(payline_to_show));
+                    payline_renderer_manager.ShowPayline(dynamic_paylines_evaluation.dynamic_paylines.ReturnPayline(payline_to_show));
                 }
             }
         }

@@ -70,6 +70,7 @@
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Templates\CEvent.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\StaticUtilities.cs" />
     <Compile Include="Assets\Scripts\StateMachine\BoomSportsStateMachine.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SymbolScriptableObject.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Managers\TransitionsManager.cs" />
     <Compile Include="Assets\Extensions\FlashLikeEvents\Events\Core\Events\EventDispatcherBase.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\MatrixTypes.cs" />
@@ -125,7 +126,9 @@
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripManager.cs" />
-    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SymbolScriptableObject.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripSpinParametersScriptableObject.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\EndConfigurationsScriptableObject.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\PaylinesEvaluationScriptableObject.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
