@@ -62,13 +62,6 @@ namespace Slot_Engine.Matrix
                 serializedObject.ApplyModifiedProperties();
                 myTarget.SetSpinSpeedTo(spin_speed.floatValue);
             }
-            EditorGUI.BeginChangeCheck();
-            spin_direction.vector3Value = EditorGUILayout.Vector3Field("Set Spin Direction", spin_direction.vector3Value);
-            if (EditorGUI.EndChangeCheck())
-            {
-                serializedObject.ApplyModifiedProperties();
-                myTarget.SetSpinDirectionTo(spin_direction.vector3Value);
-            }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("SpinManager Controls");
             if (Application.isPlaying)
@@ -452,14 +445,6 @@ namespace Slot_Engine.Matrix
             }
             else if (State == States.Spin_Outro)
             {
-            }
-        }
-
-        internal void SetSpinDirectionTo(Vector3 new_spin_direction)
-        {
-            for (int i = 0; i < matrix.reel_strip_managers.Length; i++)
-            {
-                matrix.reel_strip_managers[i].SetSpinDirectionTo(new_spin_direction);
             }
         }
 

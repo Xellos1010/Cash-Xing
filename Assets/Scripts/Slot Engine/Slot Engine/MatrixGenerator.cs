@@ -14,9 +14,6 @@ using UnityEditor;
 using UnityEditorInternal;
 #endif
 using System;
-using System.Collections;
-using System.Collections.Generic;
-
 
 //public string[] symbol_set_supported = new string[6] { "SF01", "SF02", "MA01" };//Want this list populated by whatever output brent is using. If we are unable to have access from a list then we should pull based on assets provided in skins folder. Read folder names of folders in Base Game/Symbols Directory
 namespace Slot_Engine.Matrix
@@ -342,7 +339,7 @@ namespace Slot_Engine.Matrix
         public int reel_start_padding_slot_objects = 1;
         //********
 
-        public ReelStripSpinParameters spin_parameters;
+        public ReelStripSpinParametersScriptableObject spin_parameters;
 
         //Associate the instance that gets updated with Generate Matrix
         public Matrix connected_matrix;
