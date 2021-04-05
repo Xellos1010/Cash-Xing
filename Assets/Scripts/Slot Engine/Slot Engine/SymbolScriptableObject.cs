@@ -10,18 +10,8 @@
 //
 using System;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
-[CreateAssetMenu(fileName = "ReelData", menuName = "ScriptableObjects/ReelParametersScriptableObject", order = 2)]
-public class ReelParametersScriptableObject : ScriptableObject
-{
-    public Vector3 spin_direction;
-    public float spin_speed_constant;
-}
-
-[CreateAssetMenu(fileName = "SymbolData", menuName = "ScriptableObjects/SymbolScriptableObject", order = 1)]
+[CreateAssetMenu(fileName = "SymbolData", menuName = "BoomSportsScriptableObjects/SymbolScriptableObject", order = 1)]
 public class SymbolScriptableObject : ScriptableObject
 {
     public SymbolObject[] symbols;
