@@ -75,7 +75,7 @@ namespace Slot_Engine.Matrix
             {
                 if (GUILayout.Button("Start Test Spin"))
                 {
-                    myTarget.StartCoroutine(myTarget.SetReelsSpinStatesTo(SpinStates.spin_start));
+                    myTarget.SetReelsSpinStatesTo(SpinStates.spin_start);
                 }
                 if (GUILayout.Button("Start Test Spin - Bonus Trigger"))
                 {
@@ -83,7 +83,7 @@ namespace Slot_Engine.Matrix
                 }
                 if (GUILayout.Button("End Test Spin"))
                 {
-                    myTarget.StartCoroutine(myTarget.SetReelsSpinStatesTo(SpinStates.spin_outro));
+                    myTarget.SetReelsSpinStatesTo(SpinStates.spin_outro);
                 }
             }
             base.OnInspectorGUI();
@@ -211,7 +211,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
-        internal IEnumerator SetReelsSpinStatesTo(SpinStates state)
+        internal async void SetReelsSpinStatesTo(SpinStates state)
         {
             //Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
@@ -221,7 +221,8 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_start:
                     StateManager.SetStateTo(States.Spin_Intro);
-                    yield return StartSpin();
+                    Debug.Log("Starting Spin");
+                    await StartSpin();
                     StateManager.SetStateTo(States.Spin_Idle);
                     break;
                 case SpinStates.spin_intro:
@@ -234,7 +235,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_outro:
                     ResetUseTimer();
-                    yield return StopReels();
+                    await StopReels();
                     Debug.Log("All reels have stopped - setting state to spin end");
                     StateManager.SetStateTo(States.Spin_End);
                     break;
@@ -277,19 +278,19 @@ namespace Slot_Engine.Matrix
         /// Start spinning the reels
         /// </summary>
         /// <returns></returns>
-        public IEnumerator StartSpin()
+        public async Task StartSpin()
         {
             //The end reel configuration is set when spin starts to the next item in the list
             ReelStripsStruct end_reel_configuration = matrix.slot_machine_managers.end_configuration_manager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
             matrix.slot_machine_managers.paylines_manager.EvaluateWinningSymbolsFromCurrentConfiguration();
 
-            yield return SpinReels(end_reel_configuration);
+            await SpinReels(end_reel_configuration);
         }
         /// <summary>
         /// Used to start spinning the reels
         /// </summary>
-        internal IEnumerator SpinReels(ReelStripsStruct end_reel_configuration)
+        internal async Task SpinReels(ReelStripsStruct end_reel_configuration)
         {
             //If we want to use ReelStrips for the spin loop we need to stitch the end_reel_configuration and display symbols together
             if (use_reelstrips_for_spin_loop)
@@ -304,14 +305,13 @@ namespace Slot_Engine.Matrix
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
                 i = spin_reels_starting_forward_back ? i+1:i-1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
-                yield return matrix.reel_strip_managers[i].SpinReel();
+                await matrix.reel_strip_managers[i].SpinReel();
             }
-            //TODO Update State Machine - TBD
         }
         /// <summary>
         /// Stop the reels - include display reel highlight if the feature is toggled
         /// </summary>
-        internal IEnumerator StopReels()
+        internal async Task StopReels()
         {
             //Get the end display configuration and set per reel
             ReelStripsStruct configuration_to_use = matrix.slot_machine_managers.end_configuration_manager.GetCurrentConfiguration();
@@ -323,7 +323,7 @@ namespace Slot_Engine.Matrix
                 //If reel strip delays are enabled wait between strips to stop
                 if (reel_spin_delay_end_enabled)
                 {
-                    yield return matrix.reel_strip_managers[i].StopReel(configuration_to_use.reelstrips[i]);//Only use for specific reel stop features
+                    await matrix.reel_strip_managers[i].StopReel(configuration_to_use.reelstrips[i]);//Only use for specific reel stop features
                 }
                 else
                 {
@@ -331,10 +331,10 @@ namespace Slot_Engine.Matrix
                 }
             }
             //Wait for all reels to be in spin.end state before continuing
-            yield return WaitForAllReelsToStop(matrix.reel_strip_managers);
+            await WaitForAllReelsToStop(matrix.reel_strip_managers);
         }
 
-        private IEnumerator WaitForAllReelsToStop(ReelStripManager[] reel_strip_managers)
+        private async Task WaitForAllReelsToStop(ReelStripManager[] reel_strip_managers)
         {
             bool lock_task = true;
             while (lock_task)
@@ -351,7 +351,7 @@ namespace Slot_Engine.Matrix
                     }
                     else 
                     {
-                        yield return new WaitForEndOfFrame();
+                        await Task.Delay(100);
                         break;
                     }
                 }
@@ -399,38 +399,38 @@ namespace Slot_Engine.Matrix
                 case States.Idle_Intro:
                     break;
                 case States.Idle_Idle:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.idle_idle));
+                    SetReelsSpinStatesTo(SpinStates.idle_idle);
                     break;
                 case States.Idle_Outro:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_start));
+                    SetReelsSpinStatesTo(SpinStates.spin_start);
                     break;
                 case States.Spin_Intro:
                     break;
                 case States.Spin_Idle:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_idle));
+                    SetReelsSpinStatesTo(SpinStates.spin_idle);
                     break;
                 case States.Spin_Outro:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_outro));
+                    SetReelsSpinStatesTo(SpinStates.spin_outro);
                     break;
                 case States.Spin_End:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.end));
+                    SetReelsSpinStatesTo(SpinStates.end);
                     break;
                 case States.bonus_idle_outro:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_start));
+                    SetReelsSpinStatesTo(SpinStates.spin_start);
                     break;
                 case States.bonus_idle_idle:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.idle_idle));
+                    SetReelsSpinStatesTo(SpinStates.idle_idle);
                     break;
                 case States.bonus_spin_intro:
                     break;
                 case States.bonus_spin_loop:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_idle));
+                    SetReelsSpinStatesTo(SpinStates.spin_idle);
                     break;
                 case States.bonus_spin_outro:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.spin_outro));
+                    SetReelsSpinStatesTo(SpinStates.spin_outro);
                     break;
                 case States.bonus_spin_end:
-                    StartCoroutine(SetReelsSpinStatesTo(SpinStates.end));
+                    SetReelsSpinStatesTo(SpinStates.end);
                     break;
                 case States.racking_start:
                     break;

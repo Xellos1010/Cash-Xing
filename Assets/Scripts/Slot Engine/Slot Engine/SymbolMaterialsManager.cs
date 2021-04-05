@@ -97,7 +97,7 @@ namespace Slot_Engine.Matrix
             for (int i = 0; i < supported_symbols.Length; i++)
             {
                 Debug.Log(string.Format("Getting symbol {0}", supported_symbols[i]));
-                _supported_symbols_materials[i] = Resources.Load<Material>("Materials/BaseGame/Symbols/" + supported_symbols[i]);
+                _supported_symbols_materials[i] = matrix.GetMaterialFromSymbol(i);
                 supported_symbols_map_materials[supported_symbols[i]] = _supported_symbols_materials[i];
             }
         }

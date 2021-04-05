@@ -13,6 +13,8 @@ namespace Slot_Engine.Matrix
     {
         PaylineRendererManager myTarget;
 
+        public int line_renderers_to_use = 1;
+
         public void OnEnable()
         {
             myTarget = (PaylineRendererManager)target;
@@ -90,7 +92,8 @@ namespace Slot_Engine.Matrix
                 return _matrix;
             }
         }
-        public Slot_Engine.Matrix.Matrix _matrix;
+        public Matrix _matrix;
+        public int line_renderers_to_use = 1;
 
         internal void SetWidth(float start, float end, ref PaylineRenderer payline_renderer)
         {
@@ -101,11 +104,18 @@ namespace Slot_Engine.Matrix
         {
             List<Vector3> linePositions;
             matrix.ReturnPositionsBasedOnPayline(ref paylines_supported, out linePositions);
-            for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end linePositions since your get 2 out for array range
+            if (line_renderers_to_use > 1)
             {
-                //Throws arguments out of range if line positions out of range
-                SetLineRendererPositions(linePositions.GetRange(i, 2), ref payline_renderers[i]);
-                SetWidth(standard_payline_width, standard_payline_width, ref payline_renderers[i]);
+                for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end linePositions since your get 2 out for array range
+                {
+                    //Throws arguments out of range if line positions out of range
+                    SetLineRendererPositions(linePositions.GetRange(i, 2), ref payline_renderers[i]);
+                    SetWidth(standard_payline_width, standard_payline_width, ref payline_renderers[i]);
+                }
+            }
+            else
+            {
+                SetLineRendererPositions(linePositions, ref payline_renderers[0]);
             }
         }
 
@@ -119,25 +129,38 @@ namespace Slot_Engine.Matrix
         /// <param name="payline_to_show">The Winning payline to show</param>
         internal void ShowWinningPayline(WinningPayline payline_to_show)
         {
+            
             ToggleRenderer(true);
             //initialize the line positions list and 
             List<Vector3> linePositions;
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
-            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline,out linePositions);
-            Debug.Log(String.Format("linePositions"));
-            int renderers_widths_set = 0;
+            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline, out linePositions);
+            if (line_renderers_to_use < 2)
+            {
+                //Solution for single line renderer
+                SetLineRendererPositions(linePositions, ref payline_renderers[0]);
+            }
+
+            else
+            {
+                throw new Exception("Multiple Line Renderers TBD");
+            }
+            //Solution to use multiple line renderers
+            /*int renderers_widths_set = 0;
             int payline_renderer_index_to_set = 0;
             int line_position_index = 0;
             int winning_symbols_set = 0;
             List<Vector3> linePositionsToUse;
-            for (int i = 0; i < linePositions.Count - 1; i++)
+            int linePositionCount;
+
+            for (linePositionCount = 0; linePositionCount < linePositions.Count - 2; linePositionCount++)
             {
                 Debug.Log("Setting Line positions");
                 linePositionsToUse = new List<Vector3>();
                 try
 
                 {
-                    line_position_index = ReturnIndexFirstLastFromList(payline_to_show.payline.left_right, i, linePositions.Count);
+                    line_position_index = ReturnIndexFirstLastFromList(payline_to_show.payline.left_right, linePositionCount, linePositions.Count);
                     if (line_position_index + 1 >= linePositions.Count && payline_to_show.payline.left_right)
                     {
                         Debug.Log(String.Format("Error here. cant get beyond positions of reel. linePositions.Count = {0}", linePositions.Count));
@@ -159,13 +182,13 @@ namespace Slot_Engine.Matrix
                 }
                 Debug.Log(String.Format("Showing payline {0}, configuration = {1}", payline_to_show.payline.left_right ? "Left" : "Right", payline_to_show.payline.PrintConfiguration()));
                 //Set line renderer either highlighting left to right or right to left
-                SetLineRendererPositions(linePositionsToUse, ref payline_renderers[i]);
+                SetLineRendererPositions(linePositionsToUse, ref payline_renderers[linePositionCount]);
             
                 
-                payline_renderer_index_to_set = i;
-                if (i >= payline_renderers.Length)
+                payline_renderer_index_to_set = linePositionCount;
+                if (linePositionCount >= payline_renderers.Length)
                 {
-                    if (i >= payline_renderers.Length)
+                    if (linePositionCount >= payline_renderers.Length)
                     {
                         payline_renderer_index_to_set = (payline_renderers.Length - 1) - renderers_widths_set;
                     }
@@ -184,6 +207,11 @@ namespace Slot_Engine.Matrix
                 }
             }
             //Disable any extra line renderers if positions < line renderers
+            while (linePositionCount < payline_renderers.Length)
+            {
+                payline_renderers[linePositionCount].ToggleRenderer(false);
+                linePositionCount += 1;
+            }
             if (payline_to_show.winning_symbols.Length < matrix.reel_strip_managers.Length)
             {
                 //for 5 symbols there are 4 line renderers. for 4 symbools you need to point to - 1 to disable the last line renderer on a 3x5 matrix
@@ -192,6 +220,7 @@ namespace Slot_Engine.Matrix
                     payline_renderers[i].ToggleRenderer(false);
                 }
             }
+            */
         }
 
         private int ReturnIndexFirstLastFromList(bool left_right, int i, int count)

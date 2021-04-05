@@ -45,6 +45,9 @@ namespace Slot_Engine.Matrix
 
     public class Matrix : MonoBehaviour
     {
+        /// <summary>
+        /// Holds the reference to all managers
+        /// </summary>
         public ManagersReferenceScript slot_machine_managers
         {
             get
@@ -56,8 +59,27 @@ namespace Slot_Engine.Matrix
         }
         [SerializeField]
         internal ManagersReferenceScript _slot_machine_managers;
+        /// <summary>
+        /// Symbol information for the matrix
+        /// </summary>
+        public SymbolScriptableObject symbols_in_matrix;
 
-        private ReelStripStructDisplayZones[] display_zones_per_reelstrip;
+        public WeightedDistribution.IntDistribution symbol_weights
+        {
+            get
+            {
+                if(_symbol_weights == null )
+                    _symbol_weights = transform.gameObject.AddComponent<WeightedDistribution.IntDistribution>();
+                for (int symbol = 0; symbol < symbols_in_matrix.symbols.Length; symbol++)
+                {
+                    WeightedDistribution.IntDistributionItem symbol_weight = symbols_in_matrix.symbols[symbol].symbol_weight_info;
+                    _symbol_weights.Add(symbol_weight.Value, symbol_weight.Weight);
+                }
+                
+                return _symbol_weights;
+            }
+        }
+        public WeightedDistribution.IntDistribution _symbol_weights;
         /// <summary>
         /// What is the size of the slot in pixels
         /// </summary>
@@ -69,18 +91,19 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// The padding between each reel
         /// </summary>
-        public Vector2 reel_slot_padding = new Vector2(0, 1); //TODO set from Matrix Generator
-        [SerializeField]
-        internal int reel_start_padding = 1;
-        internal int reel_ending_padding = 1;
 
         /// <summary>
         /// Controls how many slots to include in reel strip
         /// </summary>
         [SerializeField]
         internal int slots_per_strip_onSpinLoop = 50;
-
+        /// <summary>
+        /// Symbol Win Resolve Animator Override Controller
+        /// </summary>
         public AnimatorOverrideController symbol_win_resolve;
+        /// <summary>
+        /// Symbol Lose Resolve Animator Override Controller
+        /// </summary>
         public AnimatorOverrideController symbol_lose_resolve;
         /// <summary>
         /// Reel Strip Managers that make up the matrix - Generated with MatrixGenerator Script - Order determines reel strip spin delay and Symbol Evaluation Logic
@@ -106,19 +129,23 @@ namespace Slot_Engine.Matrix
                 return Enumerable.Reverse(reel_strip_managers).ToArray();
             }
         }
-        
+
+        internal Material GetMaterialFromSymbol(int symbol)
+        {
+            return symbols_in_matrix.symbols[symbol].symbol_material;
+        }
+
         public string[] supported_symbols
         {
             get
             {
                 Debug.Log("Getting supported symbols");
-                List<string> output = new List<string>();
-                List<WeightedDistribution.IntDistributionItem> distributionList = slot_machine_managers.symbols_weights.Items;
-                for (int i = 0; i < distributionList.Count; i++)
+                string[] names = new string[symbols_in_matrix.symbols.Length];
+                for (int i = 0; i < symbols_in_matrix.symbols.Length; i++)
                 {
-                    output.Add(distributionList[i].name);
+                    names[i] = symbols_in_matrix.symbols[i].symbol_name;
                 }
-                return output.ToArray();
+                return names;
             }
         }
         void Start()
@@ -414,6 +441,14 @@ namespace Slot_Engine.Matrix
             return reelstrip_managers;
         }
 
+        internal void RegenerateSlotObjects()
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].RegenerateSlotObjects();
+            }
+        }
+
         internal void SetSpinParametersTo(ReelStripSpinParameters spin_parameters)
         {
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
@@ -436,7 +471,7 @@ namespace Slot_Engine.Matrix
                 if (spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
                 {
                     //Generates reelstrip based on weights
-                    spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols = ReelStrip.GenerateReelStripStatic(slots_per_strip_onSpinLoop, slot_machine_managers.symbols_weights);
+                    spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols = ReelStrip.GenerateReelStripStatic(slots_per_strip_onSpinLoop, symbol_weights);
                 }
                 //Assign reelstrip to reel
                 reel_strip_managers[i].reelstrip_info.SetSpinConfigurationTo(spin_configuration_reelstrip.reelstrips[i]);

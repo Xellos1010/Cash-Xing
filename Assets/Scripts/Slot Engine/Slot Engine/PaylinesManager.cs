@@ -69,7 +69,7 @@ namespace Slot_Engine.Matrix
                 payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, paylines_supported_from_file.arraySize - 1);
                 if (GUILayout.Button("Show Payline"))
                 {
-                    myTarget.ShowPaylineFromFileRaw(payline_to_show);
+                    myTarget.ShowDynamicPaylineRaw(payline_to_show);
                 }
                 if (GUILayout.Button("Evaluate Payline"))
                 {
@@ -220,7 +220,7 @@ namespace Slot_Engine.Matrix
             float output = 0;
             for (int i = 0; i < winning_paylines.Length; i++)
             {
-                output += winning_paylines[i].GetTotalWin(matrix.slot_machine_managers.symbols_weights, matrix);
+                output += winning_paylines[i].GetTotalWin(matrix);
             }
             return output;
         }
@@ -231,7 +231,7 @@ namespace Slot_Engine.Matrix
             while (Reader.ReadLine() != null) { i++; }
             return i;
         }
-
+        /*
         public void ShowPaylineFromFileRaw(int payline_to_show)
         {
             if (paylines_supported_from_file.Length > 0)
@@ -239,7 +239,7 @@ namespace Slot_Engine.Matrix
                 if (payline_to_show >= 0 && payline_to_show < paylines_supported_from_file.Length)
                     payline_renderer_manager.ShowPayline(paylines_supported_from_file[payline_to_show]);
             }
-        }
+        }*/
 
         private int GetSupportedGeneratedPaylines()
         {
