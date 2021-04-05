@@ -43,7 +43,7 @@ namespace Slot_Engine.Matrix
             }
             if (GUILayout.Button("Generate Reelstrips"))
             {
-                await myTarget.GenerateMultipleEndReelStripsConfiguration(500);
+                await myTarget.GenerateMultipleEndReelStripsConfiguration(20);
                 serializedObject.ApplyModifiedProperties();
             }
             if(GUILayout.Button("Clear end_reelstrips_to_display_sequence"))

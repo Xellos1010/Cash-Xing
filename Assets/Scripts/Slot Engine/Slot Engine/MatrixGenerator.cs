@@ -235,6 +235,10 @@ namespace Slot_Engine.Matrix
                     {
                         myTarget.UpdateSlotObjectsPerReel();
                     }
+                    if (GUILayout.Button("Re-generate slot objects"))
+                    {
+                        myTarget.RegenerateSlotObjects();
+                    }
                 }
             }
         }
@@ -432,6 +436,11 @@ namespace Slot_Engine.Matrix
         internal void UpdateSpinParameters()
         {
             connected_matrix.SetSpinParametersTo(spin_parameters);
+        }
+
+        internal void RegenerateSlotObjects()
+        {
+            connected_matrix.RegenerateSlotObjects();
         }
         //******************
     }

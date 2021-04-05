@@ -44,6 +44,7 @@ public enum eEaseType
         SerializedProperty positions_in_path_v3;
         SerializedProperty use_ease_inOut_spin;
         SerializedProperty ending_symbols;
+        SerializedProperty current_spin_state;
 
         public void OnEnable()
         {
@@ -75,7 +76,7 @@ public enum eEaseType
             {
                 if (GUILayout.Button("Spin Reel Test"))
                 {
-                    my_target.SpinReel();
+                    my_target.SpinReelsNow();
                 }
                 
             }
@@ -215,14 +216,20 @@ public enum eEaseType
                 {
                     for (int slot = 0; slot <= slots_in_reel.Length; slot++)
                     {
-                        if (slot == slots_in_reel.Length)
+                        if (slot < slots_in_reel.Length)
                         {
-                            is_spinning = false;
-                            break;
-                        }
-                        if (slots_in_reel[slot].movement_enabled)
-                        {
-                            break;
+                            if (slots_in_reel[slot] != null)
+                            {
+                                if (slot == slots_in_reel.Length)
+                                {
+                                    is_spinning = false;
+                                    break;
+                                }
+                                if (slots_in_reel[slot].movement_enabled)
+                                {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -499,8 +506,21 @@ public enum eEaseType
             Vector3 slot_position_on_path = GetSlotPositionBasedOnReelPosition(slot_position_in_reel);
             SlotManager generated_slot = InstantiateSlotGameobject(slot_position_in_reel, this, slot_position_on_path, Vector3.one,new Quaternion(0,180,0,0));
             generated_slot.reel_parent = this;
+            //Generate a random symbol prefab
+            generated_slot.ShowRandomSymbol();
             positions_in_path_v3_local[slot_position_in_reel] = slot_position_on_path;
             return generated_slot;
+        }
+
+        internal void RegenerateSlotObjects()
+        {
+            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            {
+                Debug.Log(String.Format("Reel {0} deleteing slot {1}",reelstrip_info.reel_number, slot));
+                if(slots_in_reel[slot] != null)
+                    DestroyImmediate(slots_in_reel[slot].gameObject);
+                slots_in_reel[slot] = GenerateSlotObject(slot);
+            }
         }
 
         public void UpdatePositionInPathForDirection()
@@ -533,37 +553,56 @@ public enum eEaseType
         /// <returns>Slot Manager Reference</returns>
         internal SlotManager InstantiateSlotGameobject(int slot_number, ReelStripManager parent_reel, Vector3 start_position, Vector3 scale, Quaternion start_rotation)
         {
-            GameObject ReturnValue = Instantiate(Resources.Load("Prefabs/Slot")) as GameObject; // TODO Refactor to include custom sot container passable argument
+            GameObject ReturnValue = Instantiate(Resources.Load("Core/Prefabs/Slot-Container")) as GameObject; // TODO Refactor to include custom sot container passable argument
             ReturnValue.gameObject.name = String.Format("Slot_{0}",slot_number);
             ReturnValue.transform.parent = parent_reel.transform;
-            ReturnValue.transform.GetChild(0).localScale = scale;
+            SlotManager return_component = ReturnValue.GetComponent<SlotManager>();
+            //ReturnValue.transform.GetChild(0).localScale = scale;
             ReturnValue.transform.localPosition = start_position;
             ReturnValue.transform.localRotation = start_rotation;
-            return ReturnValue.GetComponent<SlotManager>();
+            return return_component;
         }
         /// <summary>
         /// Spin the Reels
         /// </summary>
         /// <returns>async task to track</returns>
-        public IEnumerator SpinReel()
+        public Task SpinReel()
         {
-            if (!is_reel_spinning)
+            Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
+            InitializeVarsForNewSpin();
+            //When reel is generated it's vector3[] path is generated for reference from slots
+            SetSpinStateTo(SpinStates.spin_start);
+            //TODO hooks for reel state machine
+            for (int i = 0; i < slots_in_reel.Length; i++)
             {
-                InitializeVarsForNewSpin();
-                //When reel is generated it's vector3[] path is generated for reference from slots
-                SetSpinStateTo(SpinStates.spin_start);
-                //TODO hooks for reel state machine
-                for (int i = 0; i < slots_in_reel.Length; i++)
-                {
-                    //Last slot needs to ease in and out to the "next position" but 
-                    slots_in_reel[i].StartSpin(); // Tween to the same position then evaluate
-                }
-                //Task.Delay(time_to_enter_loop);
-                //TODO Implement Ease In for Starting spin
-                //TODO refactor check for interupt state
-                SetSpinStateTo(SpinStates.spin_idle);
+                //Last slot needs to ease in and out to the "next position" but 
+                slots_in_reel[i].StartSpin(); // Tween to the same position then evaluate
             }
-            yield return 0;
+            //Task.Delay(time_to_enter_loop);
+            //TODO Implement Ease In for Starting spin
+            //TODO refactor check for interupt state
+            SetSpinStateTo(SpinStates.spin_idle);
+            return Task.CompletedTask;
+        }
+        /// <summary>
+        /// Spin the Reels
+        /// </summary>
+        /// <returns>async task to track</returns>
+        public void SpinReelsNow()
+        {
+            InitializeVarsForNewSpin();
+            //When reel is generated it's vector3[] path is generated for reference from slots
+            SetSpinStateTo(SpinStates.spin_start);
+            //TODO hooks for reel state machine
+            for (int i = 0; i < slots_in_reel.Length; i++)
+            {
+                //Last slot needs to ease in and out to the "next position" but 
+                slots_in_reel[i].StartSpin(); // Tween to the same position then evaluate
+            }
+            //Task.Delay(time_to_enter_loop);
+            //TODO Implement Ease In for Starting spin
+            //TODO refactor check for interupt state
+            SetSpinStateTo(SpinStates.spin_idle);
         }
         /// <summary>
         /// Sets the Spin State to state
@@ -612,13 +651,13 @@ public enum eEaseType
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public IEnumerator StopReel(ReelStripStruct reelStrip)
+        public async Task StopReel(ReelStripStruct reelStrip)
         {
             end_symbols_set_from_config = 0;
             //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
             //Waits until all slots have stopped spinning
-            yield return StopReel(reelStrip.spin_info.display_symbols); //This will control ho wfast the reel goes to stop spin
+            await StopReel(reelStrip.spin_info.display_symbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
 
@@ -626,21 +665,21 @@ public enum eEaseType
         /// Stop the reel and set ending symbols
         /// </summary>
         /// <param name="ending_symbols">the symbols to land on</param>
-        public IEnumerator StopReel(int[] ending_symbols)
+        public async Task StopReel(int[] ending_symbols)
         {
             SetEndingSymbolsTo(ending_symbols);
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
-            yield return AllSlotsStoppedSpinning();
+            await AllSlotsStoppedSpinning();
             Debug.Log(String.Format("All slots stopped spinning for reel {0}",transform.name));
         }
-        internal IEnumerator AllSlotsStoppedSpinning()
+        internal async Task AllSlotsStoppedSpinning()
         {
             bool task_lock = true;
             while (task_lock)
             {
                 if (are_slots_spinning)
-                    yield return new WaitForEndOfFrame();
+                    await Task.Delay(100);
                 else
                 {
                     task_lock = false;

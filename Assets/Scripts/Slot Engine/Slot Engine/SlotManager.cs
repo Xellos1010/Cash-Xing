@@ -23,7 +23,6 @@ namespace Slot_Engine.Matrix
     class SlotEditor : BoomSportsEditor
     {
         SlotManager myTarget;
-
         public void OnEnable()
         {
             myTarget = (SlotManager)target;
@@ -91,6 +90,9 @@ namespace Slot_Engine.Matrix
         }
         public SymbolPrefab symbol_prefab;
 
+        public Transform symbol_prefabs_container;
+        public Transform[] symbol_prefabs;
+
         public MeshRenderer meshRenderer
         {
             get
@@ -118,11 +120,11 @@ namespace Slot_Engine.Matrix
         /// <param name="to_symbol">the symbol name to look for</param>
         public void SetSlotGraphicTo(string to_symbol)
         {
-            //Debug.Log(String.Format("Settings {0} slot symbol to {1}",transform.name,to_symbol));
+            Debug.Log(String.Format("deprecataed...Settings {0} slot symbol to {1}",transform.name,to_symbol));
             //TODO add test cases for if to_graphic is present in directory
             //TODO Add State Dependant Graphics Loading
-            Material to_material = reel_parent.matrix.slot_machine_managers.symbol_materials_manager.ReturnSymbolMaterial(to_symbol);
-            SetMeshRendererMaterialTo(to_material);
+            //Material to_material = reel_parent.matrix.slot_machine_managers.symbol_materials_manager.ReturnSymbolMaterial(to_symbol);
+            //SetMeshRendererMaterialTo(to_material);
         }
 
         public void StartSpin()
@@ -242,16 +244,14 @@ namespace Slot_Engine.Matrix
                         if (reel_parent.reelstrip_info.spin_info.reel_spin_symbols.Length > 0)
                         {
                             int symbol = reel_parent.ReturnNextSymbolInStrip();
-                            SetSlotGraphicTo(ReturnSymbolNameFromInt(symbol));
-                            SetPresentationSymbolTo(symbol);
+                            SetDisplaySymbolTo(symbol);
                             symbol_set = true;
                         }
                     }
                     if (!symbol_set)
                     {
                         int symbol = reel_parent.matrix.slot_machine_managers.end_configuration_manager.GetRandomWeightedSymbol();
-                        SetSlotGraphicTo(ReturnSymbolNameFromInt(symbol));
-                        SetPresentationSymbolTo(symbol);
+                        SetDisplaySymbolTo(symbol);
                     }
                 }
             }
@@ -324,7 +324,7 @@ namespace Slot_Engine.Matrix
         {
             //Debug.Log(string.Format("Set Display symbol to {0}", v));
             SetPresentationSymbolTo(symbol_to_display);
-            SetSlotGraphicTo(presentation_symbol_name);
+            ShowSymbol(symbol_to_display);
         }
 
         private void SetPresentationSymbolTo(Symbol to_symbol)
@@ -379,6 +379,34 @@ namespace Slot_Engine.Matrix
         internal void ResetTrigger(supported_triggers slot_to_trigger)
         {
             state_machine.ResetTrigger(slot_to_trigger);
+        }
+
+        internal void ShowRandomSymbol()
+        {
+            ShowSymbol(reel_parent.matrix.symbol_weights.Draw());
+        }
+
+        private void ShowSymbol(int symbol_to_show)
+        {
+            if (symbol_prefabs?.Length != reel_parent.matrix.symbols_in_matrix.symbols.Length)
+            {
+                symbol_prefabs = new Transform[reel_parent.matrix.symbols_in_matrix.symbols.Length];
+                for (int symbol = 0; symbol < symbol_prefabs.Length; symbol++)
+                {
+                    symbol_prefabs[symbol] = Instantiate(reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_prefab) as Transform;
+                    symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_name);
+                    symbol_prefabs[symbol].parent = transform;
+                    symbol_prefabs[symbol].localPosition = Vector3.zero;
+                    symbol_prefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);
+                    symbol_prefabs[symbol].localScale = reel_parent.matrix.slot_size;
+                    symbol_prefabs[symbol].gameObject.SetActive(false);
+                }
+            }
+            for (int symbol_prefab = 0; symbol_prefab < symbol_prefabs.Length; symbol_prefab++)
+            {
+                symbol_prefabs[symbol_prefab].gameObject.SetActive(false);
+            }
+            symbol_prefabs[symbol_to_show].gameObject.SetActive(true);
         }
     }
 }

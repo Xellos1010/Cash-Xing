@@ -69,7 +69,7 @@ namespace Slot_Engine.Matrix
             get
             {
                 if(_symbol_weights == null )
-                    _symbol_weights = new WeightedDistribution.IntDistribution();
+                    _symbol_weights = transform.gameObject.AddComponent<WeightedDistribution.IntDistribution>();
                 for (int symbol = 0; symbol < symbols_in_matrix.symbols.Length; symbol++)
                 {
                     WeightedDistribution.IntDistributionItem symbol_weight = symbols_in_matrix.symbols[symbol].symbol_weight_info;
@@ -439,6 +439,14 @@ namespace Slot_Engine.Matrix
             //Load any reelstrip managers that are already initialized
             reelstrip_managers.AddRange(reel_strip_managers);
             return reelstrip_managers;
+        }
+
+        internal void RegenerateSlotObjects()
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].RegenerateSlotObjects();
+            }
         }
 
         internal void SetSpinParametersTo(ReelStripSpinParameters spin_parameters)
