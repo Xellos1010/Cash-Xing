@@ -247,7 +247,7 @@ namespace Slot_Engine.Matrix
             {
                 List<SlotManager> slots_decending_in_reel = reel_managers[reel].GetSlotsDecending();
                 int first_display_slot = reel_managers[reel].reelstrip_info.padding_before;
-                Debug.Log(String.Format("first_display_slot for reel {0} = {1}", reel, first_display_slot));
+                //Debug.Log(String.Format("first_display_slot for reel {0} = {1}", reel, first_display_slot));
                 for (int slot = first_display_slot; slot < slots_decending_in_reel.Count; slot++)
                 {
                     if (winning_symbols_added < winning_payline.payline.payline_configuration.payline.Length && !winning_slot_set)
@@ -255,7 +255,7 @@ namespace Slot_Engine.Matrix
                         int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].reelstrip_info.padding_before;
                         if (slot == winning_slot)
                         {
-                            Debug.Log(String.Format("Adding Winning Symbol on reel {0} slot {1}",reel, slot));
+                            //Debug.Log(String.Format("Adding Winning Symbol on reel {0} slot {1}",reel, slot));
                             winning_slots.Add(slots_decending_in_reel[slot]);
                             winning_symbols_added += 1;
                             winning_slot_set = true;

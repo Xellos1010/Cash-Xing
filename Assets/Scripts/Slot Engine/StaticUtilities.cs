@@ -138,7 +138,7 @@ public static class AnimatorStaticUtilites
     {
         for (int bool_to_check = 0; bool_to_check < (int)supported_bools.End; bool_to_check++) //Don't change spin resolve yet. will need to reset on spin idleidle
         {
-            Debug.Log(String.Format("Resetting bool {0}", ((supported_bools)bool_to_check).ToString()));
+            //Debug.Log(String.Format("Resetting bool {0}", ((supported_bools)bool_to_check).ToString()));
             SetBoolTo(ref animator, (supported_bools)bool_to_check, false);
         }
     }

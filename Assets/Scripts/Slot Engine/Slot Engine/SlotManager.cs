@@ -295,6 +295,11 @@ namespace Slot_Engine.Matrix
             sub_state_animator.Play("Resolve_Win_Idle",-1,0);
         }
 
+        void OnEnable()
+        {
+            Debug.Log(state_machine.sub_state_machines.Length);
+        }
+
         private void SetBoolTo(ref Animator sub_state_animator, supported_bools symbolResolve, bool value)
         {
             state_machine.SetBoolSubStateMachineTo(ref sub_state_animator, symbolResolve,value);
@@ -318,7 +323,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetSymbolResolveToLose()
         {
-            Animator sub_state_animator = GetComponentInChildren<Animator>();
+            Animator sub_state_animator = state_machine.sub_state_machines[presentation_symbol];
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
             if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
             {
@@ -459,7 +464,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetTriggerSubStatesTo(supported_triggers toTrigger)
         {
-            Debug.Log(String.Format("Setting sub states to trigger {0}",toTrigger.ToString()));
+            //Debug.Log(String.Format("Setting sub states to trigger {0}",toTrigger.ToString()));
             state_machine.SetTriggerSubStateMachinesTo(toTrigger);
         }
 
