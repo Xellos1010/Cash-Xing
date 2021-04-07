@@ -10,11 +10,13 @@ using UnityEditor;
 class AnimatorStateMachineManagerEditor : BoomSportsEditor
 {
     AnimatorStateMachineManager myTarget;
+    SerializedProperty animator_state_machines;
     public static States enCurrentState;
     public void OnEnable()
     {
         myTarget = (AnimatorStateMachineManager)target;
         StateManager.StateChangedTo += StateManager_StateChangedTo;
+        animator_state_machines = serializedObject.FindProperty("animator_state_machines");
     }
         
     private void OnDisable()
@@ -30,48 +32,101 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
         {
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Animator State Machine Manager Properties");
+        if (animator_state_machines?.type == null)
+        {
+            EditorGUILayout.LabelField("Please set State Machine Scriptable Object Reference");
+        }
+        else
+        {
+            EditorGUILayout.PropertyField(animator_state_machines);
 
-            EditorGUILayout.EnumPopup(StateManager.enCurrentState);
-
-            BoomEditorUtilities.DrawUILine(Color.white);
-            EditorGUILayout.LabelField("Animator State Machine Manager Controls");
+            if (GUILayout.Button("Set State machines by sub-animators"))
+            {
+                myTarget.SetStateMachinesBySubAnimators();
+                serializedObject.Update();
+            }
+        }
+        EditorGUILayout.LabelField("Current State of the State Manager");
+        EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+        BoomEditorUtilities.DrawUILine(Color.white);
+        EditorGUILayout.LabelField("Animator State Machine Manager properties");
             base.OnInspectorGUI();
         }
     }
 #endif
     public class AnimatorStateMachineManager : StateMachineManagerBase
 {
+    public AnimatorStateMachines animator_state_machines;
     public void SetRuntimeControllerTo(AnimatorOverrideController to_controller)
     {
-        state_machine.runtimeAnimatorController = to_controller;
+        throw new Exception("To Be Implemented - pass reference to aniamtor that needs override applied");
+        //state_machine.runtimeAnimatorController = to_controller;
     }
 
-    internal void SetSubStateMachinesTo(Animator[] animators)
+    internal void SetSubStateMachinesTo(ref Animator[] animators)
     {
-        _sub_state_machines = animators;
+        animator_state_machines.AddAnimatorsToSubList(transform.gameObject.name.Contains("Slot")?String.Format("{0}_{1}",transform.parent.gameObject.name, transform.gameObject.name):transform.gameObject.name, ref animators);
     }
 
-    internal void SetTriggerSubStateMachinesTo(supported_triggers trigger)
+    internal void SetStateMachinesTriggerTo(supported_triggers trigger)
     {
-        if(sub_state_machines.Length > 0)
+        if(animator_state_machines.state_machines_to_sync.Length > 0)
         {
-            for (int animator = 0; animator < sub_state_machines.Length; animator++)
+            for (int animator = 0; animator < animator_state_machines.state_machines_to_sync.Length; animator++)
             {
-                sub_state_machines[animator].SetTrigger(trigger.ToString());
+                animator_state_machines.state_machines_to_sync[animator].SetTrigger(trigger.ToString());
             }
         }
     }
 
-    internal void ResetTriggerSubStateMachines(supported_triggers triggerToReset)
+    internal void ResetTriggerStateMachines(supported_triggers triggerToReset)
     {
-        if (sub_state_machines == null)
+        for (int animator = 0; animator < animator_state_machines.state_machines_to_sync.Length; animator++)
         {
-
-        }
-        for (int animator = 0; animator < sub_state_machines.Length; animator++)
-        {
-            sub_state_machines[animator].ResetTrigger(triggerToReset.ToString());
+            animator_state_machines.state_machines_to_sync[animator].ResetTrigger(triggerToReset.ToString());
         }
         
+    }
+
+    internal void SetStateMachinesBySubAnimators()
+    {
+        Animator[] sub_states = transform.GetComponentsInChildren<Animator>(true).RemoveAt<Animator>(0);
+        SetSubStateMachinesTo(ref sub_states);
+    }
+
+    internal void SetBoolAllStateMachines(supported_bools bool_name, bool v)
+    {
+        Animator[] animators = animator_state_machines.state_machines_to_sync;
+        base.SetAllBoolStateMachinesTo(ref animators, bool_name,v);
+    }
+
+    internal void InitializeAnimator()
+    {
+        Animator[] animators = animator_state_machines.state_machines_to_sync;
+        base.InitializeAnimator(ref animators);
+    }
+
+    internal void SetAllTriggersTo(supported_triggers to_trigger)
+    {
+        Animator[] animators = animator_state_machines.state_machines_to_sync;
+        base.SetAllAnimatorTriggers(ref animators, to_trigger);
+    }
+
+    internal void ResetAllTrigger(supported_triggers trigger)
+    {
+        Animator[] animators = animator_state_machines.state_machines_to_sync;
+        base.ResetAllTrigger(ref animators, trigger);
+    }
+
+    internal void ClearStateMachinesBySubAnimators()
+    {
+        animator_state_machines.ClearValues();
+    }
+
+    internal void SetSubStateMachinesTo(string[] keys, AnimatorSubStateMachine[] values)
+    {
+        animator_state_machines.ClearValues();
+        animator_state_machines.sub_state_machines_keys = keys;
+        animator_state_machines.sub_state_machines_values.sub_state_machine = values;
     }
 }

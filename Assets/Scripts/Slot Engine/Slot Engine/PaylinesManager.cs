@@ -219,7 +219,7 @@ namespace Slot_Engine.Matrix
 
         public async void EvaluateWinningSymbolsFromCurrentConfiguration()
         {
-            Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
+            //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
             await EvaluateWinningSymbols(matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration);
             paylines_evaluated = true;
         }
@@ -273,7 +273,7 @@ namespace Slot_Engine.Matrix
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
-                Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,root_node, dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node].node_info.Print()));
+                //Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,root_node, dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node].node_info.Print()));
             }
             return output_filtered.ToArray();
 

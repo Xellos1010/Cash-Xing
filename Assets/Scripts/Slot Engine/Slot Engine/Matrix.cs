@@ -35,7 +35,19 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
-            if(GUILayout.Button("Set Reel Numbers"))
+            if (GUILayout.Button("Set Slot Container Animator sub states"))
+            {
+                myTarget.SetSubStatesAllSlotAnimatorStateMachines();
+            }
+            if (GUILayout.Button("Clear Slot Container Animator sub states"))
+            {
+                myTarget.ClearSubStatesAllSlotAnimatorStateMachines();
+            }
+            if (GUILayout.Button("Set Managers State Machine Sub States"))
+            {
+                myTarget.SetManagerStateMachineSubStates();
+            }
+            if (GUILayout.Button("Set Reel Numbers"))
             {
                 myTarget.SetReelInfoNumbers();
             }
@@ -156,6 +168,8 @@ namespace Slot_Engine.Matrix
         }
         void Start()
         {
+            //SetSubStatesAllSlotAnimatorStateMachines();
+            //SetManagerStateMachineSubStates();
             //Initialize Machine and Player  Information
             slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.supported_bet_amounts.Length - 1, 1, 0);
             //slot_machine_managers.end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
@@ -199,15 +213,15 @@ namespace Slot_Engine.Matrix
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
             SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
-            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
-            {
-                for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
-                {
-                    //Stop all animation co-routines
-                    reel_strip_managers[reel].slots_in_reel[slot].SetPingPong(false);
+            //for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            //{
+            //    for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+            //    {
+            //        //Stop all animation co-routines
+            //        reel_strip_managers[reel].slots_in_reel[slot].SetPingPong(false);
                     
-                }
-            }
+            //    }
+            //}
             yield return 0;
         }
         internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
@@ -300,7 +314,7 @@ namespace Slot_Engine.Matrix
 
         private void SetAllAnimatorsBoolTo(supported_bools bool_to_set, bool value)
         {
-            slot_machine_managers.animator_statemachine_master.SetBool(bool_to_set, value);
+            slot_machine_managers.animator_statemachine_master.SetBoolAllStateMachines(bool_to_set, value);
             SetSlotsAnimatorBoolTo(bool_to_set,value);
         }
 
@@ -662,12 +676,12 @@ namespace Slot_Engine.Matrix
         {
             if(v)
             {
-                slot_machine_managers.animator_statemachine_master.SetTrigger(trigger);
+                slot_machine_managers.animator_statemachine_master.SetAllTriggersTo(trigger);
                 SetSlotsAnimatorTriggerTo(trigger);
             }
             else
             {
-                slot_machine_managers.animator_statemachine_master.ResetTrigger(trigger);
+                slot_machine_managers.animator_statemachine_master.ResetAllTrigger(trigger);
                 ResetSlotsAnimatorTrigger(trigger);
             }
         }
@@ -734,6 +748,49 @@ namespace Slot_Engine.Matrix
                 temp.reel_number = reel;
                 reel_strip_managers[reel].reelstrip_info = temp;
             }
+        }
+
+        internal void SetSubStatesAllSlotAnimatorStateMachines()
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].SetAllSlotContainersSubAnimatorStates();
+            }
+        }
+
+        internal void ClearSubStatesAllSlotAnimatorStateMachines()
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].ClearAllSlotContainersSubAnimatorStates();
+            }
+        }
+
+        internal void SetManagerStateMachineSubStates()
+        {
+            string[] keys = GatherKeysFromSubStates();
+            AnimatorSubStateMachine[] values = GatherValuesFromSubStates();
+            _slot_machine_managers.animator_statemachine_master.SetSubStateMachinesTo(keys,values);
+        }
+
+        private AnimatorSubStateMachine[] GatherValuesFromSubStates()
+        {
+            List<AnimatorSubStateMachine> values = new List<AnimatorSubStateMachine>();
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                values.AddRange(reel_strip_managers[reel].ReturnAllValuesFromSubStates());
+            }
+            return values.ToArray();
+        }
+
+        private string[] GatherKeysFromSubStates()
+        {
+            List<string> keys = new List<string>();
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                keys.AddRange(reel_strip_managers[reel].ReturnAllKeysFromSubStates());
+            }
+            return keys.ToArray();
         }
     }
 }

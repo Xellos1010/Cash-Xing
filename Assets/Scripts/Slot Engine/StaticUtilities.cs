@@ -68,6 +68,26 @@ public static class StaticUtilities
         return dest;
     }
 
+    public static bool Contains<T>(this T[] source, T reference, out int index)
+    {
+        bool output = false;
+        index = 0;
+        if (source.Length > 0)
+        {
+            for (int i = 0; i < source.Length; i++)
+            {
+                if (source[i].Equals(reference))
+                {
+                    output = true;
+                    index = i;
+                    break;
+                }
+                index = i;
+            }
+        }
+        return output;
+    }
+
     public static string PrintElements<T>(this List<T> source)
     {
         return String.Join("|", source);
@@ -82,18 +102,34 @@ public static class StaticUtilities
 
     public static T[] AddAt<T>(this T[] source, int index, T value)
     {
-        T[] dest = new T[source.Length + 1];
-        //Copy the first part of the array until index to insert
-        if (index > 0)
-            Array.Copy(source, 0, dest, 0, index);
-        
-        //insert arr
-        if (index < dest.Length)
+        T[] dest;
+        if (source.Length == 0)
         {
-            dest[index] = value;
+            dest = new T[1] { value };
         }
-        if (index < source.Length)
-            Array.Copy(source, index, dest, index+1, source.Length - index);
+        else
+        {
+            dest = new T[source.Length + 1];
+            //Copy the first part of the array until index to insert
+            if (index > 0)
+                Array.Copy(source, 0, dest, 0, index);
+            //insert arr
+            if (index < dest.Length)
+            {
+                if (dest[index] != null)
+                    dest[index] = value;
+            }
+            if (index < source.Length)
+                Array.Copy(source, index, dest, index + 1, source.Length - index);
+        }
+        return dest;
+    }
+    public static T[] AddTo<T>(this T[] source, T value)
+    {
+            T[] dest = new T[source.Length + 1];
+            Array.Copy(source, 0, dest, 0, source.Length);
+        //Copy the first part of the array until index to insert
+        dest[source.Length] = value;
         return dest;
     }
 

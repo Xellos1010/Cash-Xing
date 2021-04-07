@@ -39,3 +39,4 @@ public class EndConfigurationsScriptableObject : ScriptableObject
         end_reelstrips_used.Add(current_reelstrip_configuration);
     }
 }
+

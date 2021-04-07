@@ -26,117 +26,69 @@ public enum supported_floats
 [RequireComponent(typeof(Animator))]
 public class StateMachineManagerBase : MonoBehaviour
 {
-    public Animator[] sub_state_machines
-    {
-        get
-        {
-            if(_sub_state_machines?.Length < 1)
-            {
-                _sub_state_machines = transform.GetComponentsInChildren<Animator>().RemoveAt<Animator>(0);
-            }
-            else if(_sub_state_machines == null)
-            {
-                _sub_state_machines = transform.GetComponentsInChildren<Animator>().RemoveAt<Animator>(0);
-            }
-            return _sub_state_machines;
-        }
-    }
-    public Animator[] _sub_state_machines;
 
-    [SerializeField]
-    private Animator _state_machine;
-
-    internal Animator state_machine
+    internal void ResetTrigger(ref Animator animator, supported_triggers trigger)
     {
-        get
-        {
-            if (_state_machine == null)
-                _state_machine = GetComponent<Animator>();
-            return _state_machine;
-        }
-    }
-
-    public void ResetAllTriggers()
-    {
-        Animator animator = state_machine;
-        AnimatorStaticUtilites.ResetAllTriggers(ref animator);
-    }
-
-    internal void ResetTrigger(supported_triggers trigger)
-    {
-        Animator animator = state_machine;
         AnimatorStaticUtilites.ResetTrigger(ref animator, trigger);
     }
 
-    public void SetStateTo(States to_state)
+    /// <summary>
+    /// Initialize Animators
+    /// </summary>
+    /// <param name="animators"></param>
+    internal void InitializeAnimator(ref Animator[] animators)
     {
-        StateManager.SetStateTo(to_state);
-    }
-
-    internal void InitializeAnimator()
-    {
-        Animator animator = state_machine;
-        AnimatorStaticUtilites.InitializeAnimator(ref animator);
-        InitializeAnimatorSubStates();
-    }
-
-    private void InitializeAnimatorSubStates()
-    {
-        if (_sub_state_machines?.Length > 0)
+        for (int i = 0; i < animators.Length; i++)
         {
-            for (int state_machine = 0; state_machine < sub_state_machines.Length; state_machine++)
-            {
-                AnimatorStaticUtilites.InitializeAnimator(ref sub_state_machines[state_machine]);
-            }
+            AnimatorStaticUtilites.InitializeAnimator(ref animators[i]);
+        }
+    }
+    /// <summary>
+    /// Resets all bools supported in all animators passed
+    /// </summary>
+    /// <param name="animators"></param>
+    internal void ResetAllBools(ref Animator[] animators)
+    {
+        for (int i = 0; i < animators.Length; i++)
+        {
+            AnimatorStaticUtilites.ResetAllBools(ref animators[i]);
         }
     }
 
-    internal void ResetAllBools()
+    internal void SetBool(ref Animator animator,supported_bools bool_name, bool value)
     {
-        Animator animator = state_machine;
-        AnimatorStaticUtilites.ResetAllBools(ref animator);
-        ResetAllBoolsSubStates();
-    }
-
-    private void ResetAllBoolsSubStates()
-    {
-        if(sub_state_machines?.Length > 0)
-        {
-            for (int state_machine = 0; state_machine < sub_state_machines.Length; state_machine++)
-            {
-                AnimatorStaticUtilites.ResetAllBools(ref sub_state_machines[state_machine]);
-            }
-        }
-    }
-
-    internal void SetBool(supported_bools bool_name, bool value)
-    {
-        Animator animator = state_machine;
         AnimatorStaticUtilites.SetBoolTo(ref animator, bool_name, value);
     }
-    internal void SetBoolSubStateMachineTo(ref Animator sub_state_machine, supported_bools bool_name, bool value)
+    internal void SetAllBoolStateMachinesTo(ref Animator[] animators, supported_bools bool_name, bool value)
     {
-        AnimatorStaticUtilites.SetBoolTo(ref sub_state_machine, bool_name, value);
-    }
-    internal void SetBoolSubStateMachinesTo(supported_bools bool_name, bool value)
-    {
-        if(sub_state_machines?.Length > 0)
+        for (int i = 0; i < animators.Length; i++)
         {
-            for (int state_machine = 0; state_machine < sub_state_machines.Length; state_machine++)
-            {
-                AnimatorStaticUtilites.SetBoolTo(ref sub_state_machines[state_machine], bool_name, value); 
-            }
+            AnimatorStaticUtilites.SetBoolTo(ref animators[i], bool_name, value); 
         }
     }
 
-    internal void SetTrigger(supported_triggers trigger_to_set)
+    internal void SetTrigger(ref Animator animator, supported_triggers trigger_to_set)
     {
-        Animator animator = state_machine;
         AnimatorStaticUtilites.SetTriggerTo(ref animator, trigger_to_set);
     }
-    internal void SetFloatTo(supported_floats float_to_set, float value)
+    internal void SetFloatTo(ref Animator animator, supported_floats float_to_set, float value)
     {
-        Animator animator = state_machine;
         AnimatorStaticUtilites.SetFloatTo(ref animator, float_to_set, value);
+    }
+
+    internal void SetAllAnimatorTriggers(ref Animator[] animators, supported_triggers to_trigger)
+    {
+        for (int animator = 0; animator < animators.Length; animator++)
+        {
+            SetTrigger(ref animators[animator],to_trigger);
+        }
+    }
+
+    internal void ResetAllTrigger(ref Animator[] animators, supported_triggers trigger)
+    {
+        for (int animator = 0; animator < animators.Length; animator++)
+        {
+            ResetTrigger(ref animators[animator],trigger);
+        }
     }
 }

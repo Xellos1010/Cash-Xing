@@ -107,30 +107,6 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        //Unity Default Functions
-
-        //*************
-        /// <summary>
-        /// Sets the material for the mesh renderer to new material
-        /// </summary>
-        /// <param name="to_material">material to set mesh renderer</param>
-        public void SetMeshRendererMaterialTo(Material to_material)
-        {
-            meshRenderer.material = to_material;
-        }
-        /// <summary>
-        /// Loads from Resources the symbol material
-        /// </summary>
-        /// <param name="to_symbol">the symbol name to look for</param>
-        public void SetSlotGraphicTo(string to_symbol)
-        {
-            Debug.Log(String.Format("deprecataed...Settings {0} slot symbol to {1}",transform.name,to_symbol));
-            //TODO add test cases for if to_graphic is present in directory
-            //TODO Add State Dependant Graphics Loading
-            //Material to_material = reel_parent.matrix.slot_machine_managers.symbol_materials_manager.ReturnSymbolMaterial(to_symbol);
-            //SetMeshRendererMaterialTo(to_material);
-        }
-
         public void StartSpin()
         {
             ResetAllVars();
@@ -173,36 +149,6 @@ namespace Slot_Engine.Matrix
                         ResetAllVars();
                     }
                 transform.localPosition = toPosition;
-            }
-            if(ping_pong)
-            {
-                if (up_down)
-                {
-                    new_percentage = completePercent + Time.deltaTime;
-                    if (new_percentage > 1)
-                    {
-                        completePercent = 1 - ((completePercent + new_percentage) - 1);
-                        up_down = false;
-                    }
-                    else
-                    {
-                        completePercent = new_percentage;
-                    }
-                }
-                else
-                {
-                    new_percentage = completePercent - Time.deltaTime;
-                    if (new_percentage < 0)
-                    {
-                        completePercent = 0 + Math.Abs(new_percentage);
-                        up_down = true;
-                    }
-                    else
-                    {
-                        completePercent = new_percentage;
-                    }
-                }
-                SetFloatMotionTimeTo(completePercent);
             }
         }
 
@@ -262,21 +208,6 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void SetPingPong(bool v)
-        {
-            ping_pong = v;
-            if (v)
-                completePercent = 0;
-            else
-            {
-                if (!state_machine.state_machine.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
-                {
-                    Debug.Log(String.Format("current state name != Resolve Intro"));
-                    state_machine.state_machine.PlayInFixedTime("Resolve_Intro", -1, 0);
-                }
-            }
-        }
-
         private string ReturnSymbolNameFromInt(int symbol)
         {
             return ((Symbol)symbol).ToString();
@@ -285,7 +216,7 @@ namespace Slot_Engine.Matrix
         internal async void SetSymbolResolveWin()
         {
             //Set the sub symbol Animator
-            Animator sub_state_animator = state_machine.sub_state_machines[presentation_symbol]; //may display wrong animator is out of order
+            Animator sub_state_animator = state_machine.animator_state_machines.state_machines_to_sync[presentation_symbol]; //may display wrong animator is out of order
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, true);
             SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
             //PingPong float
@@ -295,14 +226,9 @@ namespace Slot_Engine.Matrix
             sub_state_animator.Play("Resolve_Win_Idle",-1,0);
         }
 
-        void OnEnable()
+        private void SetBoolTo(ref Animator animator, supported_bools symbolResolve, bool value)
         {
-            Debug.Log(state_machine.sub_state_machines.Length);
-        }
-
-        private void SetBoolTo(ref Animator sub_state_animator, supported_bools symbolResolve, bool value)
-        {
-            state_machine.SetBoolSubStateMachineTo(ref sub_state_animator, symbolResolve,value);
+            state_machine.SetBool(ref animator, symbolResolve,value);
         }
 
         public bool ping_pong = false;
@@ -313,17 +239,20 @@ namespace Slot_Engine.Matrix
 
         private void SetFloatMotionTimeTo(float v)
         {
-            state_machine.SetFloatTo(supported_floats.MotionTime,0.0f);
+            Debug.Log("Setting Motion Time nOt implemented");
+            //state_machine.SetFloatTo(supported_floats.MotionTime,0.0f);
         }
 
         private void SetBoolTo(supported_bools bool_name, bool v)
         {
-            state_machine.SetBool(bool_name,v);
+            Debug.Log("Not Implemented SetBoolTo");
+            //state_machine.SetAllBoolStateMachinesTo(bool_name,v);
         }
 
         internal void SetSymbolResolveToLose()
         {
-            Animator sub_state_animator = state_machine.sub_state_machines[presentation_symbol];
+            Debug.Log(String.Format("presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
+            Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
             if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
             {
@@ -361,14 +290,14 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void SetSubStateMachineAnimators()
         {
+            Animator[] sub_states = transform.GetComponentsInChildren<Animator>(true).RemoveAt<Animator>(0);
             //Remove at 1st index because self reference
-            state_machine.SetSubStateMachinesTo(transform.GetComponentsInChildren<Animator>(true).RemoveAt<Animator>(0));
+            state_machine.SetSubStateMachinesTo(ref sub_states);
         }
 
         internal void SetBoolStateMachines(supported_bools bool_name, bool v)
         {
-            state_machine.SetBool(bool_name, v);
-            state_machine.SetBoolSubStateMachinesTo(bool_name,v);
+            state_machine.SetBoolAllStateMachines(bool_name, v);
         }
 
         /// <summary>
@@ -399,18 +328,18 @@ namespace Slot_Engine.Matrix
         internal void InitializeAnimatorToPresentWin()
         {
             state_machine.InitializeAnimator();
-            state_machine.SetBool(supported_bools.WinRacking, true);
+            state_machine.SetBoolAllStateMachines(supported_bools.WinRacking, true);
             
         }
 
         internal void SetTriggerTo(supported_triggers to_trigger)
         {
-            state_machine.SetTrigger(to_trigger);
+            state_machine.SetAllTriggersTo(to_trigger);
         }
 
         internal void ResetTrigger(supported_triggers slot_to_trigger)
         {
-            state_machine.ResetTrigger(slot_to_trigger);
+            state_machine.ResetAllTrigger(slot_to_trigger);
         }
 
         internal void ShowRandomSymbol()
@@ -465,12 +394,22 @@ namespace Slot_Engine.Matrix
         internal void SetTriggerSubStatesTo(supported_triggers toTrigger)
         {
             //Debug.Log(String.Format("Setting sub states to trigger {0}",toTrigger.ToString()));
-            state_machine.SetTriggerSubStateMachinesTo(toTrigger);
+            state_machine.SetStateMachinesTriggerTo(toTrigger);
         }
 
         internal void ResetTriggerSubStates(supported_triggers triggerToReset)
         {
-            state_machine.ResetTriggerSubStateMachines(triggerToReset);
+            state_machine.ResetTriggerStateMachines(triggerToReset);
+        }
+
+        internal void SetAllSubStateAnimators()
+        {
+            state_machine.SetStateMachinesBySubAnimators();
+        }
+
+        internal void ClearAllSubStateAnimators()
+        {
+            state_machine.ClearStateMachinesBySubAnimators();
         }
     }
 }

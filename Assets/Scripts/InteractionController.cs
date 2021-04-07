@@ -251,7 +251,7 @@ namespace Slot_Engine.Matrix
 
         private void SetTriggerTo(supported_triggers to_trigger)
         {
-            StateMachineController.SetTrigger(to_trigger);
+            StateMachineController.SetAllTriggersTo(to_trigger);
         }
 
         public void SlamSpin()

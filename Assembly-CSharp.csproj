@@ -129,6 +129,9 @@
     <Compile Include="Assets\Scripts\Slot Engine\States.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\eSpinDirection.cs" />
     <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\ReelStripManager.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\StateMachinesScriptableObject.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\SerializableDictionary.cs" />
+    <Compile Include="Assets\Scripts\Slot Engine\Slot Engine\DictionaryDrawer.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
