@@ -37,6 +37,10 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.SetSubStateMachineAnimators();
             }
+            if (GUILayout.Button("Set Animators To Sync State Machine"))
+            {
+                myTarget.SetStateMachineAnimators();
+            }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
             base.OnInspectorGUI();
@@ -410,6 +414,11 @@ namespace Slot_Engine.Matrix
         internal void ClearAllSubStateAnimators()
         {
             state_machine.ClearStateMachinesBySubAnimators();
+        }
+
+        internal void SetStateMachineAnimators()
+        {
+            state_machine.SetStateMachineSyncAnimators();
         }
     }
 }

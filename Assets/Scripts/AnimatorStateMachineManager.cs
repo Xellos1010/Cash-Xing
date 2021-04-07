@@ -129,4 +129,15 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
         animator_state_machines.sub_state_machines_keys = keys;
         animator_state_machines.sub_state_machines_values.sub_state_machine = values;
     }
+
+    internal void SetStateMachineSyncAnimators()
+    {
+        Animator[] states_to_sync = transform.GetComponentsInChildren<Animator>(true);
+        SetStateMachinesTo(ref states_to_sync);
+    }
+
+    private void SetStateMachinesTo(ref Animator[] states_to_sync)
+    {
+        animator_state_machines.state_machines_to_sync = states_to_sync;
+    }
 }

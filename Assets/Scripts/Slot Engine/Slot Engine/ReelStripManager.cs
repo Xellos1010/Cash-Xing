@@ -791,5 +791,13 @@ public enum eEaseType
             }
             return values.ToArray();
         }
+
+        internal void SetAllSlotContainersAnimatorSyncStates()
+        {
+            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            {
+                slots_in_reel[slot].SetStateMachineAnimators();
+            }
+        }
     }
 }

@@ -39,6 +39,10 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.SetSubStatesAllSlotAnimatorStateMachines();
             }
+            if (GUILayout.Button("Set Slot Container Animator Sync States"))
+            {
+                myTarget.SetAllSlotAnimatorSyncStates();
+            }
             if (GUILayout.Button("Clear Slot Container Animator sub states"))
             {
                 myTarget.ClearSubStatesAllSlotAnimatorStateMachines();
@@ -168,8 +172,10 @@ namespace Slot_Engine.Matrix
         }
         void Start()
         {
-            //SetSubStatesAllSlotAnimatorStateMachines();
-            //SetManagerStateMachineSubStates();
+            //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
+            SetAllSlotAnimatorSyncStates();
+            SetSubStatesAllSlotAnimatorStateMachines();
+            SetManagerStateMachineSubStates();
             //Initialize Machine and Player  Information
             slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.supported_bet_amounts.Length - 1, 1, 0);
             //slot_machine_managers.end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
@@ -791,6 +797,14 @@ namespace Slot_Engine.Matrix
                 keys.AddRange(reel_strip_managers[reel].ReturnAllKeysFromSubStates());
             }
             return keys.ToArray();
+        }
+
+        internal void SetAllSlotAnimatorSyncStates()
+        {
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].SetAllSlotContainersAnimatorSyncStates();
+            }
         }
     }
 }
