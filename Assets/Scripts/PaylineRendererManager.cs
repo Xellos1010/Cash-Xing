@@ -230,7 +230,7 @@ namespace Slot_Engine.Matrix
 
         internal void ToggleRenderer(bool on_off)
         {
-            Debug.Log(String.Format("Toggle Renderer {0}",on_off));
+            //Debug.Log(String.Format("Toggle Renderer {0}",on_off));
             for (int i = 0; i < payline_renderers.Length; i++)
             {
                 payline_renderers[i].line_renderer.enabled = on_off;

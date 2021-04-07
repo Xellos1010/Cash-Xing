@@ -198,12 +198,18 @@ namespace Slot_Engine.Matrix
             return paylines_supported;
         }
 
-        internal void CancelCycleWins()
+        internal async Task CancelCycleWins()
         {
             Debug.Log("Canceling Cycle Wins");
             cycle_paylines = false;
-            StopAllCoroutines();
+            await SymbolWinAnimatorsInResolveIntro();
         }
+
+        private async Task SymbolWinAnimatorsInResolveIntro()
+        {
+            await matrix.WaitForSymbolWinResolveToIntro();
+        }
+
         /// <summary>
         /// Renderes the line for winniing payline
         /// </summary>

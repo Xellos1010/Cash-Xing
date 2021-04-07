@@ -124,21 +124,21 @@ namespace Slot_Engine.Matrix
 
         private void SetBankTo(float new_bank_amount)
         {
-            Debug.Log(String.Format("Bank is being set to {0}",new_bank_amount));
+            //Debug.Log(String.Format("Bank is being set to {0}",new_bank_amount));
             bank = new_bank_amount;
             this.new_bank_amount?.Invoke(new_bank_amount);
         }
 
         internal void SetPlayerWalletTo(float new_player_wallet)
         {
-            Debug.Log(String.Format("Player Wallet is being set to {0}", new_player_wallet));
+            //Debug.Log(String.Format("Player Wallet is being set to {0}", new_player_wallet));
             player_wallet = new_player_wallet;
             new_player_wallet_amount?.Invoke(new_player_wallet);
         }
 
         private void SetBetAmountIndexTo(int new_bet_amount)
         {
-            Debug.Log(String.Format("Bet Amount is being set to {0}", new_bet_amount));
+            //Debug.Log(String.Format("Bet Amount is being set to {0}", new_bet_amount));
             current_bet_amount = new_bet_amount;
             this.new_bet_amount?.Invoke(supported_bet_amounts[new_bet_amount]);
         }
@@ -149,13 +149,13 @@ namespace Slot_Engine.Matrix
         /// <param name="to_multipler_value">The to value to set multiplier</param>
         public void SetMultiplierTo(float to_multipler_value)
         {
-            Debug.Log(String.Format("Multiplier set to {0}", to_multipler_value));
+            //Debug.Log(String.Format("Multiplier set to {0}", to_multipler_value));
             multiplier = to_multipler_value;
             new_multiplier_set?.Invoke(to_multipler_value);
         }
         internal void SetFreeSpinsTo(int new_free_spins)
         {
-            Debug.Log(String.Format("Free Spins is being set to {0}", new_free_spins));
+            //Debug.Log(String.Format("Free Spins is being set to {0}", new_free_spins));
             freespins = new_free_spins;
             this.new_freespin_amount?.Invoke(new_free_spins);
         }

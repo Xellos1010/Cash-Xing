@@ -90,7 +90,7 @@ namespace Slot_Engine.Matrix
         /// <param name="to_value">to value of TMP.text</param>
         private void SetTextMeshProTextTo(ref TextMeshPro tmp_element, string to_value)
         {
-            Debug.Log(String.Format("Setting {0}.text to {1}",tmp_element.gameObject.name,to_value));
+            //Debug.Log(String.Format("Setting {0}.text to {1}",tmp_element.gameObject.name,to_value));
             tmp_element.text = to_value;
         }
         /// <summary>

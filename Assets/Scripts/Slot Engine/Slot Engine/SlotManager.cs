@@ -232,6 +232,21 @@ namespace Slot_Engine.Matrix
             sub_state_animator.Play("Resolve_Win_Idle",-1,0);
         }
 
+        internal bool isAnimationFinished()
+        {
+            AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
+            Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName("Resolve_Intro")?"Resolve_Intro":"Something Else"));
+           if(state_info.IsName("Resolve_Intro"))
+            {
+                return true;
+            }
+           else
+            {
+                Debug.Log("Not Resolve Intro");
+                return false;
+            }
+        }
+
         private void SetBoolTo(ref Animator animator, supported_bools symbolResolve, bool value)
         {
             state_machine.SetBool(ref animator, symbolResolve,value);
@@ -257,7 +272,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetSymbolResolveToLose()
         {
-            Debug.Log(String.Format("Symbol Resolve Lose - presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
+            //Debug.Log(String.Format("Symbol Resolve Lose - presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
             Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
             if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))

@@ -211,6 +211,29 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal async Task WaitForSymbolWinResolveToIntro()
+        {
+            List<SlotManager> winning_slots, losing_slots;
+            ReturnWinLoseSlots(current_payline_displayed, out winning_slots, out losing_slots, ref reel_strip_managers);
+            bool is_all_animations_resolve_intro = false;
+            while(!is_all_animations_resolve_intro)
+            {
+                for (int slot = 0; slot < winning_slots.Count; slot++)
+                {
+                    if(!winning_slots[slot].isAnimationFinished())
+                    {
+                        await Task.Delay(100);
+                        break;
+                    }
+                    if (slot == winning_slots.Count - 1)
+                        is_all_animations_resolve_intro = true;
+                }
+            }
+            current_payline_displayed = null;
+            winning_slots = new List<SlotManager>();
+            losing_slots = new List<SlotManager>();
+        }
+
         private Vector3 ReturnPositionOnReelForPayline(ref ReelStripManager reel, int slot_in_reel)
         {
             return reel.transform.TransformPoint(reel.positions_in_path_v3_local[reel.reelstrip_info.padding_before+slot_in_reel] + (Vector3.back * 10));
@@ -230,12 +253,14 @@ namespace Slot_Engine.Matrix
             //}
             yield return 0;
         }
+        private WinningPayline current_payline_displayed;
+        List<SlotManager> winning_slots, losing_slots;
         internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
             Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",
                 String.Join(" ", winning_payline.payline.payline_configuration.ToString()), String.Join(" ",winning_payline.winning_symbols)));
             //Get Winning Slots and loosing slots
-            List<SlotManager> winning_slots,losing_slots;
+            current_payline_displayed = winning_payline;
             ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots, ref reel_strip_managers);
             SetWinningSlotsToResolveWinLose(ref winning_slots,true);
             SetWinningSlotsToResolveWinLose(ref losing_slots,false);
@@ -503,14 +528,14 @@ namespace Slot_Engine.Matrix
             return output_reelstrip_manager;
         }
 
-        internal void ResetAnimatorsSlots()
+        internal void InitializeAllAnimators()
         {
             slot_machine_managers.animator_statemachine_master.InitializeAnimator();
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
                 {
-                    reel_strip_managers[reel].slots_in_reel[slot].ResetAnimator();
+                    reel_strip_managers[reel].slots_in_reel[slot].state_machine.InitializeAnimator();
                 }
             }
         }
@@ -618,7 +643,7 @@ namespace Slot_Engine.Matrix
             {
                 case States.Idle_Intro:
                     //Reset the state of all slots to 
-                    ResetAnimatorsSlots();
+                    InitializeAllAnimators();
                     //Fall thru to Idle_Idle State - ATM the animator falls thru Idle_Intro
                     StateManager.SetStateTo(States.Idle_Idle);
                     break;
@@ -641,7 +666,7 @@ namespace Slot_Engine.Matrix
                     CycleWinningPaylinesMode();
                     break;
                 case States.Resolve_Outro:
-                    slot_machine_managers.paylines_manager.CancelCycleWins();
+                    await slot_machine_managers.paylines_manager.CancelCycleWins();
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
                     if (!bonus_game_triggered)

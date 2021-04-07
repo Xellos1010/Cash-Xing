@@ -183,7 +183,7 @@ public static class AnimatorStaticUtilites
     {
         for (int trigger_to_check = 0; trigger_to_check < (int)supported_triggers.End; trigger_to_check++) //Don't change spin resolve yet. will need to reset on spin idleidle
         {
-            Debug.Log(String.Format("Resetting trigger {0}", ((supported_triggers)trigger_to_check).ToString()));
+            //Debug.Log(String.Format("Resetting trigger {0}", ((supported_triggers)trigger_to_check).ToString()));
             ResetTrigger(ref animator, (supported_triggers)trigger_to_check);
         }
     }
