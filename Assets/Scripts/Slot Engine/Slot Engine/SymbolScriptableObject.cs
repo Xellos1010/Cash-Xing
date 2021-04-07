@@ -8,6 +8,7 @@
 //  @ Author : Evan McCall
 //
 //
+using Slot_Engine.Matrix;
 using System;
 using UnityEngine;
 
@@ -42,8 +43,25 @@ public struct SymbolObject
     [SerializeField]
     public int win_value;
     /// <summary>
+    /// Will this trigger a feature?
+    /// </summary>
+    [SerializeField]
+    public bool isFeatureSymbol;
+    [SerializeField]
+    public Features[] features;
+    /// <summary>
+    /// Will this trigger a feature?
+    /// </summary>
+    [SerializeField]
+    public bool isOverlaySymbol;
+    /// <summary>
     /// Symbol Weight Info
     /// </summary>
     [SerializeField]
     public WeightedDistribution.IntDistributionItem symbol_weight_info;
+    /// <summary>
+    /// Used to toggle wild feature
+    /// </summary>
+    [SerializeField]
+    internal bool isWildSymbol;
 }

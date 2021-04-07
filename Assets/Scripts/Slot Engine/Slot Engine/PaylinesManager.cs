@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
+using static Slot_Engine.Matrix.EndConfigurationManager;
 //************
 #if UNITY_EDITOR
 using UnityEditor;
@@ -232,32 +233,39 @@ namespace Slot_Engine.Matrix
 
         internal Task EvaluateWinningSymbols(ReelStripsStruct reelstrips_configuration)
         {
-            int[][] symbols_configuration = new int[reelstrips_configuration.reelstrips.Length][];
+            ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstrips_configuration.reelstrips.Length];
             for (int reel = 0; reel < reelstrips_configuration.reelstrips.Length; reel++)
             {
-                symbols_configuration[reel] = reelstrips_configuration.reelstrips[reel].spin_info.display_symbols;
+                symbols_configuration[reel].SetReelSymbolsTo(reelstrips_configuration.reelstrips[reel].spin_info.display_symbols);
             }
             EvaluateWinningSymbols(symbols_configuration);
             return Task.CompletedTask;
         }
+        [Serializable]
+        public struct ReelSymbolConfiguration
+        {
+            [SerializeField]
+            public SlotDisplaySymbol[] reel_slots;
 
-        public Task EvaluateWinningSymbols(int[][] symbols_configuration)
+            internal void SetReelSymbolsTo(SlotDisplaySymbol[] display_symbols)
+            {
+                reel_slots = display_symbols;
+            }
+        }
+
+        public Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
         {
             //Initialize variabled needed for caching
             List<int> matching_symbols_list;
             int primary_symbol_index;//index for machine_symbols_list with the symbol to check for in the payline.
             //TODO refactor and make settable by Unity Editor
-            Dictionary<Symbol, FeaturesStructSymbolEvaluation> special_symbols = new Dictionary<Symbol, FeaturesStructSymbolEvaluation>();
-            special_symbols[Symbol.SA01] = new FeaturesStructSymbolEvaluation(Features.freespin);
-            winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref special_symbols);
-            if (special_symbols[Symbol.SA01].appeared_on_node != null)
+            Dictionary<Features, int> feature_active_count = new Dictionary<Features, int>();
+            winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref feature_active_count);
+            foreach (KeyValuePair<Features, int> item in feature_active_count)
             {
-                Debug.Log(String.Format("Recognized {0} Scatter pay symbols", special_symbols[Symbol.SA01].appeared_on_node.Count));
-                if (special_symbols[Symbol.SA01].appeared_on_node.Count > 2)
-                {
-                    //Activate FreeSpins
-                    StateManager.SetFeatureActiveTo(Features.freespin, true);
-                }
+                if(item.Key == Features.freespin)
+                    if (item.Value > 2)
+                        StateManager.SetFeatureActiveTo(Features.freespin, true);
             }
             if (winning_paylines.Length > 0)
             {
@@ -269,7 +277,7 @@ namespace Slot_Engine.Matrix
             return Task.CompletedTask;
         }
 
-        private WinningPayline[] CheckForWinningPaylinesDynamic(ref int[][] symbols_configuration, ref Dictionary<Symbol, FeaturesStructSymbolEvaluation> special_symbols)
+        private WinningPayline[] CheckForWinningPaylinesDynamic(ref ReelSymbolConfiguration[] symbols_configuration, ref Dictionary<Features, int> special_symbols)
         {
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();

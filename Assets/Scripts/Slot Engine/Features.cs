@@ -19,6 +19,7 @@ namespace Slot_Engine.Matrix
 		None,
 		freespin,
 		wild,
+		multiplier,
 		Count
 	}
 

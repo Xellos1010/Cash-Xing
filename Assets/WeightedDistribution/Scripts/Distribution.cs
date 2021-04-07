@@ -33,6 +33,12 @@ namespace WeightedDistribution
         int nbItems = 0;
         float combinedWeight;
 
+        public void ClearItems()
+        {
+            items = new List<T_ITEM>();
+            OnItemsChange();
+        }
+        
         void OnItemsChange(bool addedItem = false)
         {
             // On Add Component

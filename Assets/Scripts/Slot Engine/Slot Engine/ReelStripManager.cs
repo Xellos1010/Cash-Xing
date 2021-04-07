@@ -20,8 +20,9 @@ namespace Slot_Engine.Matrix
 {
 #if UNITY_EDITOR
     using UnityEditor;
+    using static Slot_Engine.Matrix.EndConfigurationManager;
 
-public enum eEaseType
+    public enum eEaseType
 {
     constant,
     ease,
@@ -86,10 +87,6 @@ public enum eEaseType
             }
             else
             {
-                if (GUILayout.Button("Stop Reel Test"))
-                {
-                    my_target.StopReelTest();
-                }
                 if (GUILayout.Button("Enable Movement"))
                 {
                     my_target.SetSlotsMovementEnabled(true);
@@ -181,7 +178,7 @@ public enum eEaseType
         /// The Ending symbols to Set To 
         /// </summary>
         [SerializeField]
-        internal Symbol[] ending_symbols;
+        internal SlotDisplaySymbol[] ending_symbols;
         /// <summary>
         /// Enable you to change the symbol when slot exits matrix to weighted distribution symbol set
         /// </summary>
@@ -227,9 +224,9 @@ public enum eEaseType
         public int reel_strip_counter = 0;
         
 
-        internal int ReturnNextSymbolInStrip()
+        internal SlotDisplaySymbol ReturnNextSymbolInStrip()
         {
-            int output = (int)(Symbol)reelstrip_info.spin_info.reel_spin_symbols[reel_strip_counter];
+            SlotDisplaySymbol output = reelstrip_info.spin_info.reel_spin_symbols[reel_strip_counter];
             if(reel_strip_counter+1 >= reelstrip_info.spin_info.reel_spin_symbols.Length)
             {
                 reel_strip_counter = 0;
@@ -453,10 +450,10 @@ public enum eEaseType
         internal void SetSymbolCurrentDisplayTo(ReelStripStruct reelStripStruct)
         {
             SlotManager[] slots_decending_order = GetSlotsDecending().ToArray();
-            List<Symbol> symbols_to_display = new List<Symbol>();
+            List<SlotDisplaySymbol> symbols_to_display = new List<SlotDisplaySymbol>();
             for (int symbol = 0; symbol < reelStripStruct.spin_info.display_symbols.Length; symbol++)
             {
-                symbols_to_display.Add((Symbol)reelStripStruct.spin_info.display_symbols[symbol]);
+                symbols_to_display.Add(reelStripStruct.spin_info.display_symbols[symbol]);
             }
             SetEndingSymbolsTo(symbols_to_display.ToArray());
             for (int slot = 1; slot < slots_decending_order.Length; slot++)
@@ -626,13 +623,6 @@ public enum eEaseType
             }
         }
         /// <summary>
-        /// Set reel into end reel state Test only
-        /// </summary>
-        public void StopReelTest()
-        {
-            StopReel(new int[3] { 0,  1, 2 });
-        }
-        /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
         public async Task StopReel(ReelStripStruct reelStrip)
@@ -649,7 +639,7 @@ public enum eEaseType
         /// Stop the reel and set ending symbols
         /// </summary>
         /// <param name="ending_symbols">the symbols to land on</param>
-        public async Task StopReel(int[] ending_symbols)
+        public async Task StopReel(SlotDisplaySymbol[] ending_symbols)
         {
             SetEndingSymbolsTo(ending_symbols);
             //When reel is generated it's vector3[] path is generated for reference from slots
@@ -694,12 +684,7 @@ public enum eEaseType
         /// Set Ending Symbols variable
         /// </summary>
         /// <param name="ending_symbols">ending symbols for reelstrip</param>
-        private void SetEndingSymbolsTo(int[] ending_symbols)
-        {
-            this.ending_symbols = Array.ConvertAll(ending_symbols, value => (Symbol)value);
-        }
-
-        private void SetEndingSymbolsTo(Symbol[] ending_symbols)
+        private void SetEndingSymbolsTo(SlotDisplaySymbol[] ending_symbols)
         {
             this.ending_symbols = ending_symbols;
         }

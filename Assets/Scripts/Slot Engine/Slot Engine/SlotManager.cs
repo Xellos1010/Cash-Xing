@@ -13,6 +13,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using static Slot_Engine.Matrix.EndConfigurationManager;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -179,7 +180,7 @@ namespace Slot_Engine.Matrix
 
                 if (reel_parent.end_symbols_set_from_config < reel_parent.ending_symbols.Length)
                 {
-                    SetDisplaySymbolTo((int)reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1 - reel_parent.end_symbols_set_from_config]);
+                    SetDisplaySymbolTo(reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1 - reel_parent.end_symbols_set_from_config]);
                     reel_parent.end_symbols_set_from_config += 1;
                 }
                 else
@@ -198,14 +199,15 @@ namespace Slot_Engine.Matrix
                     {
                         if (reel_parent.reelstrip_info.spin_info.reel_spin_symbols.Length > 0)
                         {
-                            int symbol = reel_parent.ReturnNextSymbolInStrip();
+                            SlotDisplaySymbol symbol = reel_parent.ReturnNextSymbolInStrip();
                             SetDisplaySymbolTo(symbol);
                             symbol_set = true;
                         }
                     }
                     if (!symbol_set)
                     {
-                        int symbol = reel_parent.matrix.slot_machine_managers.end_configuration_manager.GetRandomWeightedSymbol();
+                        //Determines an overlay symbol
+                        SlotDisplaySymbol symbol = reel_parent.matrix.slot_machine_managers.end_configuration_manager.GetRandomWeightedSymbol();
                         SetDisplaySymbolTo(symbol);
                     }
                 }
@@ -232,19 +234,24 @@ namespace Slot_Engine.Matrix
             sub_state_animator.Play("Resolve_Win_Idle",-1,0);
         }
 
-        internal bool isAnimationFinished()
+        internal bool isAnimationFinished(string animation_to_check)
         {
-            AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
-            Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName("Resolve_Intro")?"Resolve_Intro":"Something Else"));
-           if(state_info.IsName("Resolve_Intro"))
+            if (presentation_symbol > 0)
             {
-                return true;
+                AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
+                Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
+                if (state_info.IsName(animation_to_check))
+                {
+                    return true;
+                }
+                else
+                {
+                    Debug.Log(String.Format("Not {0}", animation_to_check));
+                    return false;
+                }
             }
-           else
-            {
-                Debug.Log("Not Resolve Intro");
-                return false;
-            }
+            //Default return true if animator is not on matrix
+            return true;
         }
 
         private void SetBoolTo(ref Animator animator, supported_bools symbolResolve, bool value)
@@ -287,11 +294,21 @@ namespace Slot_Engine.Matrix
             state_machine.SetRuntimeControllerTo(animatorOverrideController);
         }
 
-        internal void SetDisplaySymbolTo(int symbol_to_display)
+        internal void SetDisplaySymbolTo(SlotDisplaySymbol symbol_to_display)
         {
             //Debug.Log(string.Format("Set Display symbol to {0}", v));
-            SetPresentationSymbolTo(symbol_to_display);
-            ShowSymbol(symbol_to_display);
+            SetPresentationSymbolTo(symbol_to_display.primary_symbol);
+            ShowSymbolRenderer(symbol_to_display.primary_symbol);
+            if(symbol_to_display.is_overlay)
+            {
+                //ShowSymbolOverlay();
+                ShowSymbolRenderer(symbol_to_display.overlay_symbol, false);
+            }
+        }
+
+        private void ShowSymbolOverlay()
+        {
+            //ShowSymbolRenderer(symbol_to_display.primary_symbol);
         }
 
         private void SetPresentationSymbolTo(Symbol to_symbol)
@@ -365,22 +382,31 @@ namespace Slot_Engine.Matrix
 
         internal void ShowRandomSymbol()
         {
-            ShowSymbol(reel_parent.matrix.symbol_weights.Draw());
+            ShowSymbolRenderer(reel_parent.matrix.symbol_weights.Draw());
         }
-
-        private void ShowSymbol(int symbol_to_show)
+        /// <summary>
+        /// Shows a symbols renderer
+        /// </summary>
+        /// <param name="symbol_to_show">which symbol</param>
+        /// <param name="force_hide_others">will force hide other symbol renderers defaulttrue</param>
+        private void ShowSymbolRenderer(int symbol_to_show, bool force_hide_others = true)
         {
-            if (symbol_prefabs?.Length != reel_parent.matrix.symbols_in_matrix.symbols.Length)
+            //Ensure Symbol Prefab Objects are instantiated
+            if (symbol_prefabs?.Length != reel_parent.matrix.symbols_data_for_matrix.symbols.Length)
             {
                 InstantiateSymbolPrefabs();
             }
+            MeshRenderer renderer;
             for (int symbol_prefab = 0; symbol_prefab < symbol_prefabs.Length; symbol_prefab++)
             {
                 if (symbol_prefabs[symbol_prefab].gameObject.activeSelf == false)
                     symbol_prefabs[symbol_prefab].gameObject.SetActive(true);
-                MeshRenderer renderer = symbol_prefabs[symbol_prefab].GetChild(0).GetComponent<MeshRenderer>();
-                if(renderer.enabled && symbol_prefab != symbol_to_show)
-                    renderer.enabled = false;
+                if (force_hide_others)
+                {
+                    renderer = symbol_prefabs[symbol_prefab].GetChild(0).GetComponent<MeshRenderer>();
+                    if (renderer.enabled && symbol_prefab != symbol_to_show)
+                        renderer.enabled = false;
+                }
             }
             symbol_prefabs[symbol_to_show].GetChild(0).GetComponent<MeshRenderer>().enabled = true;
         }
@@ -398,11 +424,11 @@ namespace Slot_Engine.Matrix
         private void InstantiateSymbolPrefabs()
         {
 #if UNITY_EDITOR
-            symbol_prefabs = new Transform[reel_parent.matrix.symbols_in_matrix.symbols.Length];
+            symbol_prefabs = new Transform[reel_parent.matrix.symbols_data_for_matrix.symbols.Length];
             for (int symbol = 0; symbol < symbol_prefabs.Length; symbol++)
             {
-                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_prefab) as Transform;
-                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_in_matrix.symbols[symbol].symbol_name);
+                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbol_prefab) as Transform;
+                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbol_name);
                 symbol_prefabs[symbol].parent = transform;
                 symbol_prefabs[symbol].localPosition = Vector3.zero;
                 symbol_prefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);

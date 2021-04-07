@@ -192,9 +192,9 @@ namespace Slot_Engine.Matrix
             return Task.FromResult<ReelStripsStruct>(output);
         }
 
-        private int[] GenerateEndingReelStrip(ref ReelStripManager reelStripManager)
+        private SlotDisplaySymbol[] GenerateEndingReelStrip(ref ReelStripManager reelStripManager)
         {
-            List<int> output = new List<int>();
+            List<SlotDisplaySymbol> output = new List<SlotDisplaySymbol>();
             //Generate a symbol for each display zone slot
             for (int i = 0; i < reelStripManager.reelstrip_info.total_display_slots; i++)
             {
@@ -206,15 +206,85 @@ namespace Slot_Engine.Matrix
         /// Generate a random symbol based on weights defined
         /// </summary>
         /// <returns></returns>
-        public int GetRandomWeightedSymbol()
+        public SlotDisplaySymbol GetRandomWeightedSymbol()
         {
-#if UNITY_EDITOR
-            int output = matrix.symbol_weights.Draw();
-#else
-            int output = UnityEngine.Random.Range(0,((int)(Symbol.End))-2);
-#endif
+            SlotDisplaySymbol output = new SlotDisplaySymbol();
+            int symbol = matrix.symbol_weights.Draw();
+            if(matrix.isSymbolOverlay(symbol))
+            {
+                output.SetOverlaySymbolTo(symbol);
+                while (matrix.isSymbolOverlay(symbol))
+                {
+                    symbol = matrix.symbol_weights.Draw();
+                }
+            }
+            if (matrix.isFeatureSymbol(symbol))
+            {
+                output.SetFeatureTo(matrix.GetSymbolFeatures(symbol));
+            }
+            if (matrix.isWildSymbol(symbol))
+            {
+                output.SetWildTo(symbol);
+            }
+            output.primary_symbol = symbol;
             //Debug.Log(String.Format("Symbol Generated form Weighted Distribution is {0}", ((Symbol)output).ToString()));
             return output;
+        }
+        /// <summary>
+        /// Holds the display information for slot symbol
+        /// </summary>
+        [Serializable]
+        public struct SlotDisplaySymbol
+        {
+            [SerializeField]
+            internal int primary_symbol;
+            [SerializeField]
+            internal int overlay_symbol;
+            [SerializeField]
+            internal bool is_overlay;
+            /// <summary>
+            /// Feature associated
+            /// </summary>
+            [SerializeField]
+            internal Features[] features;
+            /// <summary>
+            /// Is this a feature
+            /// </summary>
+            [SerializeField]
+            internal bool is_feature;
+            /// <summary>
+            /// The index for the wild symbol
+            /// </summary>
+            [SerializeField]
+            internal int wild_symbol;
+            /// <summary>
+            /// is wild active
+            /// </summary>
+            [SerializeField]
+            internal bool is_wild;
+
+            public SlotDisplaySymbol(int primary_symbol) : this()
+            {
+                this.primary_symbol = primary_symbol;
+            }
+
+            internal void SetOverlaySymbolTo(int symbol)
+            {
+                overlay_symbol = symbol;
+                is_overlay = true;
+            }
+
+            internal void SetFeatureTo(Features[] features)
+            {
+                this.features = features;
+                is_feature = true;
+            }
+
+            internal void SetWildTo(int symbol)
+            {
+                this.wild_symbol = symbol;
+                is_wild = true;
+            }
         }
 
         internal ReelStripsStruct UseNextConfigurationInList()
@@ -259,7 +329,13 @@ namespace Slot_Engine.Matrix
                     configuration.reelstrips = new ReelStripStruct[matrix.reel_strip_managers.Length];
                     for (int i = 0; i < configuration.reelstrips.Length; i++)
                     {
-                        configuration.reelstrips[i].spin_info.display_symbols = new int[3] { i % 2 == 0 ? (int)Symbol.SA01 : (int)Symbol.RO03, (int)Symbol.RO01, (int)Symbol.RO02 };
+                        configuration.reelstrips[i].spin_info.display_symbols = new SlotDisplaySymbol[3] 
+                        { 
+                            new SlotDisplaySymbol(i % 2 == 0 
+                        ? (int)Symbol.SA01 : (int)Symbol.RO03),
+                            new SlotDisplaySymbol((int)Symbol.RO01),
+                            new SlotDisplaySymbol((int)Symbol.RO02)
+                        };
                     }
                     break;
                 default:

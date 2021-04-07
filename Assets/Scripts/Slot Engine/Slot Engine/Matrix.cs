@@ -58,6 +58,7 @@ namespace Slot_Engine.Matrix
             if(GUILayout.Button("Set Weights from symbols data"))
             {
                 Debug.Log(myTarget.symbol_weights);
+                myTarget.EnsureWeightsAreCorrect();
             }
             base.OnInspectorGUI();
         }
@@ -83,7 +84,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Symbol information for the matrix
         /// </summary>
-        public SymbolScriptableObject symbols_in_matrix;
+        public SymbolScriptableObject symbols_data_for_matrix;
 
         public WeightedDistribution.IntDistribution symbol_weights
         {
@@ -91,10 +92,13 @@ namespace Slot_Engine.Matrix
             {
                 if (_symbol_weights == null)
                 {
-                    _symbol_weights = transform.gameObject.AddComponent<WeightedDistribution.IntDistribution>();
-                    for (int symbol = 0; symbol < symbols_in_matrix.symbols.Length; symbol++)
+                    _symbol_weights = transform.gameObject.GetComponent<WeightedDistribution.IntDistribution>();
+                    if (_symbol_weights == null)
+                        _symbol_weights = transform.gameObject.AddComponent<WeightedDistribution.IntDistribution>();
+                    _symbol_weights.ClearItems();
+                    for (int symbol = 0; symbol < symbols_data_for_matrix.symbols.Length; symbol++)
                     {
-                        WeightedDistribution.IntDistributionItem symbol_weight = symbols_in_matrix.symbols[symbol].symbol_weight_info;
+                        WeightedDistribution.IntDistributionItem symbol_weight = symbols_data_for_matrix.symbols[symbol].symbol_weight_info;
                         _symbol_weights.Add(symbol_weight.Value, symbol_weight.Weight);
                     }
                 }
@@ -154,7 +158,7 @@ namespace Slot_Engine.Matrix
 
         internal Material GetMaterialFromSymbol(int symbol)
         {
-            return symbols_in_matrix.symbols[symbol].symbol_material;
+            return symbols_data_for_matrix.symbols[symbol].symbol_material;
         }
 
         public string[] supported_symbols
@@ -162,10 +166,10 @@ namespace Slot_Engine.Matrix
             get
             {
                 Debug.Log("Getting supported symbols");
-                string[] names = new string[symbols_in_matrix.symbols.Length];
-                for (int i = 0; i < symbols_in_matrix.symbols.Length; i++)
+                string[] names = new string[symbols_data_for_matrix.symbols.Length];
+                for (int i = 0; i < symbols_data_for_matrix.symbols.Length; i++)
                 {
-                    names[i] = symbols_in_matrix.symbols[i].symbol_name;
+                    names[i] = symbols_data_for_matrix.symbols[i].symbol_name;
                 }
                 return names;
             }
@@ -211,6 +215,16 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal bool isSymbolOverlay(int symbol)
+        {
+            return symbols_data_for_matrix.symbols[symbol].isOverlaySymbol;
+        }
+
+        internal bool isWildSymbol(int symbol)
+        {
+            return symbols_data_for_matrix.symbols[symbol].isWildSymbol;
+        }
+
         internal async Task WaitForSymbolWinResolveToIntro()
         {
             List<SlotManager> winning_slots, losing_slots;
@@ -220,7 +234,7 @@ namespace Slot_Engine.Matrix
             {
                 for (int slot = 0; slot < winning_slots.Count; slot++)
                 {
-                    if(!winning_slots[slot].isAnimationFinished())
+                    if(!winning_slots[slot].isAnimationFinished("Resolve_Intro"))
                     {
                         await Task.Delay(100);
                         break;
@@ -232,6 +246,16 @@ namespace Slot_Engine.Matrix
             current_payline_displayed = null;
             winning_slots = new List<SlotManager>();
             losing_slots = new List<SlotManager>();
+        }
+
+        internal bool isFeatureSymbol(int symbol)
+        {
+            return symbols_data_for_matrix.symbols[symbol].isFeatureSymbol;
+        }
+
+        internal Features[] GetSymbolFeatures(int symbol)
+        {
+            return symbols_data_for_matrix.symbols[symbol].features;
         }
 
         private Vector3 ReturnPositionOnReelForPayline(ref ReelStripManager reel, int slot_in_reel)
@@ -507,13 +531,15 @@ namespace Slot_Engine.Matrix
 
         private void GenerateReelStripsFor(ref ReelStripManager[] reel_strip_managers, ref ReelStripsStruct spin_configuration_reelstrip, int slots_per_strip_onSpinLoop)
         {
+            EndConfigurationManager temp;
+            temp = slot_machine_managers.end_configuration_manager;
             //Loop over each reelstrip and assign reel strip
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
                 if (spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
                 {
                     //Generates reelstrip based on weights
-                    spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols = ReelStrip.GenerateReelStripStatic(slots_per_strip_onSpinLoop, symbol_weights);
+                    spin_configuration_reelstrip.reelstrips[i].spin_info.reel_spin_symbols = ReelStrip.GenerateReelStripStatic(slots_per_strip_onSpinLoop, ref temp);
                 }
                 //Assign reelstrip to reel
                 reel_strip_managers[i].reelstrip_info.SetSpinConfigurationTo(spin_configuration_reelstrip.reelstrips[i]);
@@ -669,6 +695,8 @@ namespace Slot_Engine.Matrix
                     await slot_machine_managers.paylines_manager.CancelCycleWins();
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
+                    //Hardcoded - state dependant - high risk
+                    await isAllAnimatorsReady("Resolve_Intro");
                     if (!bonus_game_triggered)
                     {                        //TODO wait for all animators to go thru idle_intro state
                         StateManager.SetStateTo(States.Idle_Intro);
@@ -687,6 +715,28 @@ namespace Slot_Engine.Matrix
                     ReduceFreeSpinBy(1);
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     break;
+            }
+        }
+
+        private async Task isAllAnimatorsReady(string state)
+        {
+            //Check all animators are on given state before continuing
+            bool is_all_animators_resolved = false;
+            while (!is_all_animators_resolved)
+            {
+                for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+                {
+                    for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                    {
+                        if (!reel_strip_managers[reel].slots_in_reel[slot].isAnimationFinished(state))
+                        {
+                            await Task.Delay(100);
+                            break;
+                        }
+                    }
+                    if (reel == reel_strip_managers.Length - 1)
+                        is_all_animators_resolved = true;
+                }
             }
         }
 
@@ -829,6 +879,17 @@ namespace Slot_Engine.Matrix
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 reel_strip_managers[reel].SetAllSlotContainersAnimatorSyncStates();
+            }
+        }
+
+        internal void EnsureWeightsAreCorrect()
+        {
+            symbol_weights.ClearItems();
+            for (int symbol = 0; symbol < symbols_data_for_matrix.symbols.Length; symbol++)
+            {
+                WeightedDistribution.IntDistributionItem symbol_weight = symbols_data_for_matrix.symbols[symbol].symbol_weight_info;
+
+                _symbol_weights.Add(symbol_weight.Value, symbol_weight.Weight);
             }
         }
     }
