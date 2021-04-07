@@ -220,7 +220,9 @@ namespace Slot_Engine.Matrix
         internal async void SetSymbolResolveWin()
         {
             //Set the sub symbol Animator
-            Animator sub_state_animator = state_machine.animator_state_machines.state_machines_to_sync[presentation_symbol]; //may display wrong animator is out of order
+            Debug.Log(String.Format("Setting {0} to symbol win for {1}",String.Join("_",transform.gameObject.name,transform.parent.gameObject.name),presentation_symbol));
+            Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol]; //may display wrong animator is out of order
+            Debug.Log(String.Format("Symbol Set to win = {0}", sub_state_animator.transform.name));
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, true);
             SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
             //PingPong float
@@ -255,7 +257,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetSymbolResolveToLose()
         {
-            Debug.Log(String.Format("presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
+            Debug.Log(String.Format("Symbol Resolve Lose - presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
             Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
             if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
