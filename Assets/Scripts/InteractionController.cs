@@ -132,7 +132,7 @@ namespace Slot_Engine.Matrix
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
                     Debug.Log("Trigger for spin/slam pressed");
-                    CheckForSpinSlam();
+                    CheckStateToSpinSlam();
                 }
 
 
@@ -149,13 +149,13 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void CheckForSpinSlam()
+        internal void CheckStateToSpinSlam()
         {
             if (StateManager.enCurrentState == States.Idle_Idle || StateManager.enCurrentState == States.bonus_idle_idle)
             {
                 StartSpin();
             }
-            else if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro || StateManager.enCurrentState == States.Spin_Idle)
+            else if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro || StateManager.enCurrentState == States.Spin_Idle || StateManager.enCurrentState == States.bonus_idle_outro || StateManager.enCurrentState == States.bonus_spin_intro || StateManager.enCurrentState == States.bonus_spin_loop)
             {
                 SlamSpin();
             }
@@ -179,6 +179,11 @@ namespace Slot_Engine.Matrix
                 SetStateDisableInteraction(States.Idle_Outro);
             else if (StateManager.enCurrentState == States.bonus_idle_idle)
                 SetStateDisableInteraction(States.bonus_idle_outro);
+        }
+        
+        public void DisableSlam()
+        {
+            can_spin_slam = false;
         }
 
         private void SetStateDisableInteraction(States to_state)
@@ -228,7 +233,7 @@ namespace Slot_Engine.Matrix
                 }
                 else if (hit_info.collider.gameObject.tag == "Spin")
                 {
-                    CheckForSpinSlam();
+                    CheckStateToSpinSlam();
                 }
             }
         }

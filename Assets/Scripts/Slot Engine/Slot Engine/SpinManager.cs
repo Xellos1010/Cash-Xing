@@ -155,7 +155,8 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         internal bool use_reelstrips_for_spin_loop = true;
-        
+        [SerializeField]
+        internal bool isInterrupted = false;
 
         void Update()
         {
@@ -184,12 +185,19 @@ namespace Slot_Engine.Matrix
                     {
                         ResetUseTimer();
                         controller.SlamSpin();
+                        StateManager.SetStateTo(States.Spin_Outro);//matrix.bonus_game_triggered ? States.bonus_spin_outro : States.Spin_Outro);
                     }
                 }
                 else
                 {
                     if (time_counter > 0)
                         time_counter = 0;
+                    if(isInterrupted)
+                    {
+                        ResetUseTimer();
+                        controller.SlamSpin();
+                        StateManager.SetStateTo(States.Spin_Outro);//matrix.bonus_game_triggered ? States.bonus_spin_outro : States.Spin_Outro);
+                    }
                 }
             }
         }
@@ -206,6 +214,8 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         internal async void SetReelsSpinStatesTo(SpinStates state)
         {
+            Debug.Log(String.Format("current state = {0}",state));
+            current_state = state;
             //Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
             {
@@ -216,11 +226,15 @@ namespace Slot_Engine.Matrix
                     StateManager.SetStateTo(States.Spin_Intro);
                     Debug.Log("Starting Spin");
                     await StartSpin();
-                    StateManager.SetStateTo(States.Spin_Idle);
+                    if(!isInterrupted)
+                        StateManager.SetStateTo(States.Spin_Idle);
+                    else
+                        StateManager.SetStateTo(States.Spin_Outro);
                     break;
                 case SpinStates.spin_intro:
                     break;
                 case SpinStates.spin_idle:
+                    Debug.Log("Using Timer");
                     use_timer = true;
                     break;
                 case SpinStates.spin_interrupt:
@@ -228,12 +242,13 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_outro:
                     ResetUseTimer();
+                    isInterrupted = false;
                     await StopReels();
                     Debug.Log("All reels have stopped - setting state to spin end");
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
-                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart,false);
+                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,true);
                     if (CheckForWin())
                     {
                         StateManager.SetStateTo(States.Resolve_Intro);
@@ -253,7 +268,6 @@ namespace Slot_Engine.Matrix
                 default:
                     break;
             }
-            current_state = state;
         }
 
         private bool CheckForWin()
@@ -378,7 +392,7 @@ namespace Slot_Engine.Matrix
 
         //***********
 
-        private void StateManager_StateChangedTo(States State)
+        private async void StateManager_StateChangedTo(States State)
         {
             //Debug.Log(String.Format("Checking for state dependant logic for SpinManager via state {0}",State.ToString()));
             switch (State)
@@ -392,10 +406,18 @@ namespace Slot_Engine.Matrix
                 case States.Idle_Intro:
                     break;
                 case States.Idle_Idle:
+                    isInterrupted = false;
                     SetReelsSpinStatesTo(SpinStates.idle_idle);
                     break;
                 case States.Idle_Outro:
+                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
+                    //Set all animators triggers to spin start again
+                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     SetReelsSpinStatesTo(SpinStates.spin_start);
+                    break;
+                case States.Spin_Interrupt:
+                    isInterrupted = true;
+                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinSlam, true);
                     break;
                 case States.Spin_Intro:
                     break;
@@ -406,12 +428,16 @@ namespace Slot_Engine.Matrix
                     SetReelsSpinStatesTo(SpinStates.spin_outro);
                     break;
                 case States.Spin_End:
+                    isInterrupted = false;
                     SetReelsSpinStatesTo(SpinStates.end);
                     break;
                 case States.bonus_idle_outro:
+                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
+                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     SetReelsSpinStatesTo(SpinStates.spin_start);
                     break;
                 case States.bonus_idle_idle:
+                    isInterrupted = false;
                     SetReelsSpinStatesTo(SpinStates.idle_idle);
                     break;
                 case States.bonus_spin_intro:
@@ -423,6 +449,7 @@ namespace Slot_Engine.Matrix
                     SetReelsSpinStatesTo(SpinStates.spin_outro);
                     break;
                 case States.bonus_spin_end:
+                    isInterrupted = false;
                     SetReelsSpinStatesTo(SpinStates.end);
                     break;
                 case States.racking_start:
@@ -447,7 +474,7 @@ namespace Slot_Engine.Matrix
             //Add configuration to the sequence to trigger feature
             matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(feature);
             //Go through interaction controller to disable slamming during transition to idle_outro
-            matrix.slot_machine_managers.interaction_controller.CheckForSpinSlam();
+            matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
         }
     }
 }

@@ -260,8 +260,11 @@ namespace Slot_Engine.Matrix
             //TODO refactor and make settable by Unity Editor
             Dictionary<Features, List<suffix_tree_node_info>> feature_active_count = new Dictionary<Features, List<suffix_tree_node_info>>();
             winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref feature_active_count);
+            Debug.Log(String.Format("feature_active_count.keys = {0}", feature_active_count.Keys.Count));
+            Debug.Log(String.Format("Looking for features that activated"));
             foreach (KeyValuePair<Features, List<suffix_tree_node_info>> item in feature_active_count)
             {
+                Debug.Log(String.Format("Feature name = {0}, counter = {1}",item.Key.ToString(), item.Value.Count));
                 if(item.Key == Features.freespin)
                     if (item.Value.Count > 2)
                         StateManager.SetFeatureActiveTo(Features.freespin, true);

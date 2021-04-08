@@ -282,6 +282,7 @@ namespace Slot_Engine.Matrix
                             new SlotDisplaySymbol((int)Symbol.RO01),
                             new SlotDisplaySymbol((int)Symbol.RO02)
                         };
+                        configuration.reelstrips[i].spin_info.display_symbols[0].AddFeature(Features.freespin);
                     }
                     break;
                 default:

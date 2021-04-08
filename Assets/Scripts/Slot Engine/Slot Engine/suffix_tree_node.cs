@@ -88,6 +88,7 @@ namespace Slot_Engine.Matrix
 
         private void CheckForFeatureAddToList(SlotDisplaySymbol linewin_symbol, ref Dictionary<Features, List<suffix_tree_node_info>> special_symbols, ref List<SymbolWinStruct> winning_symbols, ref suffix_tree_node_info suffix_tree_node)
         {
+            Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
             if (linewin_symbol.is_feature)
             {
                 //Check for features to activate with the first symbol and add the first symbol to the line win
@@ -109,20 +110,25 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Checks a symbol for any win conditions within special symbols
         /// </summary>
-        /// <param name="primary_linewin_symbol">the symbol that won</param>
+        /// <param name="linewin_symbol">the symbol that won</param>
         /// <param name="special_symbols">The special symbols conditions</param>
-        private void CheckFeatureConditions(SlotDisplaySymbol primary_linewin_symbol, ref Dictionary<Features, List<suffix_tree_node_info>> special_symbols, ref suffix_tree_node_info node_info)
+        private void CheckFeatureConditions(SlotDisplaySymbol linewin_symbol, ref Dictionary<Features, List<suffix_tree_node_info>> special_symbols, ref suffix_tree_node_info node_info)
         {
-            if (primary_linewin_symbol.features.Length > 0)
+            Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
+            if (linewin_symbol.features != null)
             {
-                for (int feature = 0; feature < primary_linewin_symbol.features.Length; feature++)
+                Debug.Log(String.Format("linewin_symbol.features.Count", linewin_symbol.features.Count));
+                if (linewin_symbol.features?.Count > 0)
                 {
-                    if(!special_symbols.ContainsKey(primary_linewin_symbol.features[feature]))
-                        special_symbols[primary_linewin_symbol.features[feature]] = new List<suffix_tree_node_info>();
-                    if (!special_symbols[primary_linewin_symbol.features[feature]].Contains(node_info))
+                    for (int feature = 0; feature < linewin_symbol.features.Count; feature++)
                     {
-                        Debug.Log(String.Format("Adding Node {0} to features list {1}",node_info.Print(), primary_linewin_symbol.features[feature].ToString()));
-                        special_symbols[primary_linewin_symbol.features[feature]].Add(node_info);
+                        if (!special_symbols.ContainsKey(linewin_symbol.features[feature]))
+                            special_symbols[linewin_symbol.features[feature]] = new List<suffix_tree_node_info>();
+                        if (!special_symbols[linewin_symbol.features[feature]].Contains(node_info))
+                        {
+                            Debug.Log(String.Format("Adding Node {0} to features list {1}", node_info.Print(), linewin_symbol.features[feature].ToString()));
+                            special_symbols[linewin_symbol.features[feature]].Add(node_info);
+                        }
                     }
                 }
             }

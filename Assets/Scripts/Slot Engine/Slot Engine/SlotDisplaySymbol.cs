@@ -1,6 +1,7 @@
 ﻿//  @ Project : Slot Engine
 //  @ Author : Evan McCall
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Slot_Engine.Matrix
@@ -21,7 +22,7 @@ namespace Slot_Engine.Matrix
         /// Feature associated
         /// </summary>
         [SerializeField]
-        internal Features[] features;
+        internal List<Features> features;
         /// <summary>
         /// Is this a feature
         /// </summary>
@@ -48,25 +49,25 @@ namespace Slot_Engine.Matrix
             overlay_symbol = symbol;
             is_overlay = true;
         }
-        internal void AddFeature(Features feature, int index)
+        internal void AddFeature(Features feature)
         {
             if (features == null)
-                features = new Features[0];
-            features = features.AddTo<Features>(feature);
+                features = new List<Features>();
+            features.Add(feature);
             is_feature = true;
         }
 
         internal void AddFeaturesTo(Features[] features)
         {
             if (this.features == null)
-                this.features = new Features[0];
+                this.features = new List<Features>();
             int index_contain_out = -1;
             for (int feature = 0; feature < features.Length; feature++)
             {
-                if(!this.features.Contains<Features>(features[feature],out index_contain_out))
+                if(!this.features.Contains(features[feature]))
                 {
-                    Debug.Log(String.Format("{0} not", features[feature].ToString()));
-                    this.features = this.features.AddTo<Features>(features[feature]);
+                    Debug.Log(String.Format("{0} Adding Feature Counter", features[feature].ToString()));
+                    this.features.Add(features[feature]);
                 }
             }
             is_feature = true;
