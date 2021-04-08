@@ -20,6 +20,7 @@ namespace Slot_Engine.Matrix
 		freespin,
 		wild,
 		multiplier,
+		overlay,
 		Count
 	}
 

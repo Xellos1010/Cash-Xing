@@ -28,8 +28,10 @@ public static class StateManager
     public delegate void SpinStateChangedTo(SpinStates spinState);
     public static event SpinDelegate spin_activated_event;
     public static event SpinStateChangedTo spin_state_changed;
-    public delegate void FeatureDelegate(Features feature, bool active_inactive);
-    public static event FeatureDelegate FeatureTransition;
+    public delegate void FeatureActiveDelegate(Features feature, bool active_inactive);
+    public static event FeatureActiveDelegate FeatureTransition;
+    public delegate void MultiplierFeatureDelegate(int multiplier);
+    public static event MultiplierFeatureDelegate add_to_multiplier;
 
     //*************
 
@@ -45,12 +47,22 @@ public static class StateManager
         if(StateChangedTo != null)
             StateChangedTo.Invoke(State);
 	}
-
+    /// <summary>
+    /// Sets a feature to being active or deactive
+    /// </summary>
+    /// <param name="feature"></param>
+    /// <param name="active_inactive"></param>
     internal static void SetFeatureActiveTo(Features feature, bool active_inactive)
     {
-        StaticUtilities.DebugLog(string.Format("State switched to {0}", feature.ToString()));
+        StaticUtilities.DebugLog(string.Format("feature {0} active set to {1}", feature.ToString(),active_inactive));
         current_feature_active = active_inactive ? feature : Features.None;
         if (FeatureTransition != null)
             FeatureTransition.Invoke(feature, active_inactive);
+    }
+    internal static void AddToMultiplier(int amount)
+    {
+        StaticUtilities.DebugLog(string.Format("Multiplier Set to {0}", amount));
+        if (add_to_multiplier != null)
+            add_to_multiplier.Invoke(amount);
     }
 }

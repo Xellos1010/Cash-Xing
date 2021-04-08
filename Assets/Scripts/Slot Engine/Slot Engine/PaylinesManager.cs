@@ -252,32 +252,34 @@ namespace Slot_Engine.Matrix
                 reel_slots = display_symbols;
             }
         }
-
         public Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
         {
             //Initialize variabled needed for caching
             List<int> matching_symbols_list;
             int primary_symbol_index;//index for machine_symbols_list with the symbol to check for in the payline.
             //TODO refactor and make settable by Unity Editor
-            Dictionary<Features, int> feature_active_count = new Dictionary<Features, int>();
+            Dictionary<Features, List<suffix_tree_node_info>> feature_active_count = new Dictionary<Features, List<suffix_tree_node_info>>();
             winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref feature_active_count);
-            foreach (KeyValuePair<Features, int> item in feature_active_count)
+            foreach (KeyValuePair<Features, List<suffix_tree_node_info>> item in feature_active_count)
             {
                 if(item.Key == Features.freespin)
-                    if (item.Value > 2)
+                    if (item.Value.Count > 2)
                         StateManager.SetFeatureActiveTo(Features.freespin, true);
+                if (item.Key == Features.multiplier)
+                {
+                    StateManager.SetFeatureActiveTo(Features.freespin, true);
+                    StateManager.AddToMultiplier(item.Value.Count);
+                }
             }
             if (winning_paylines.Length > 0)
             {
-                //TODO Implement isWinningConfiguration Event
-                //StateManager.IsWinningConfiguration(true);
                 matrix.SetSystemToPresentWin();
             }
             paylines_evaluated = true;
             return Task.CompletedTask;
         }
 
-        private WinningPayline[] CheckForWinningPaylinesDynamic(ref ReelSymbolConfiguration[] symbols_configuration, ref Dictionary<Features, int> special_symbols)
+        private WinningPayline[] CheckForWinningPaylinesDynamic(ref ReelSymbolConfiguration[] symbols_configuration, ref Dictionary<Features, List<suffix_tree_node_info>> special_symbols)
         {
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();

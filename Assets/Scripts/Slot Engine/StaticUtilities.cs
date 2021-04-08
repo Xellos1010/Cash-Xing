@@ -72,7 +72,7 @@ public static class StaticUtilities
     {
         bool output = false;
         index = 0;
-        if (source.Length > 0)
+        if (source?.Length > 0)
         {
             for (int i = 0; i < source.Length; i++)
             {

@@ -189,7 +189,15 @@ namespace Slot_Engine.Matrix
         void OnEnable()
         {
             StateManager.FeatureTransition += StateManager_FeatureTransition;
+            StateManager.add_to_multiplier += StateManager_add_to_multiplier;
         }
+
+        private void StateManager_add_to_multiplier(int multiplier)
+        {
+            Debug.Log(String.Format("Setting Multiplier to ", this.multiplier + multiplier));
+            SetMultiplierTo(this.multiplier + multiplier);
+        }
+
         /// <summary>
         /// Pull information based on feature being active
         /// </summary>
@@ -220,6 +228,7 @@ namespace Slot_Engine.Matrix
         void OnDisable()
         {
             StateManager.FeatureTransition += StateManager_FeatureTransition;
+            StateManager.add_to_multiplier -= StateManager_add_to_multiplier;
         }
     }
 }
