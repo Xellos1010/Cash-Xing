@@ -65,3 +65,9 @@ public struct SymbolObject
     [SerializeField]
     internal bool isWildSymbol;
 }
+
+public struct symbol_weight_states
+{
+    public GameStates game_state;
+    public WeightedDistribution.IntDistributionItem symbol_weight_info;
+}

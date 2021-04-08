@@ -721,11 +721,14 @@ namespace Slot_Engine.Matrix
             //Check all animators are on given state before continuing
             bool is_all_animators_resolved = false;
             AnimatorStateInfo state_info;
+            AnimatorStateInfo next_state_info;
             bool wait = true;
             while (!is_all_animators_resolved)
             {
                 for (int state_machine = 0; state_machine < _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync.Length; state_machine++)
                 {
+                    state_info = _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync[state_machine].GetCurrentAnimatorStateInfo(0);
+
                     while (wait)
                     {
                         state_info = _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync[state_machine].GetCurrentAnimatorStateInfo(0);
