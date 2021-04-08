@@ -145,82 +145,6 @@ namespace Slot_Engine.Matrix
             {
                 throw new Exception("Multiple Line Renderers TBD");
             }
-            //Solution to use multiple line renderers
-            /*int renderers_widths_set = 0;
-            int payline_renderer_index_to_set = 0;
-            int line_position_index = 0;
-            int winning_symbols_set = 0;
-            List<Vector3> linePositionsToUse;
-            int linePositionCount;
-
-            for (linePositionCount = 0; linePositionCount < linePositions.Count - 2; linePositionCount++)
-            {
-                Debug.Log("Setting Line positions");
-                linePositionsToUse = new List<Vector3>();
-                try
-
-                {
-                    line_position_index = ReturnIndexFirstLastFromList(payline_to_show.payline.left_right, linePositionCount, linePositions.Count);
-                    if (line_position_index + 1 >= linePositions.Count && payline_to_show.payline.left_right)
-                    {
-                        Debug.Log(String.Format("Error here. cant get beyond positions of reel. linePositions.Count = {0}", linePositions.Count));
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError(String.Format("Setting LineRenderer Positions failed to get range of linePositions[{0}] error message is outside of range. linePositions.Length = {1}. exception message = {2}", line_position_index, linePositions.Count.ToString(), e.Message));
-                }
-                linePositionsToUse.Add(linePositions[line_position_index]);
-                if (line_position_index + 1 < linePositions.Count)
-                    linePositionsToUse.Add(linePositions[payline_to_show.payline.left_right ? line_position_index + 1 : line_position_index - 1]);
-                else
-                {
-                    //Temporary Fix
-                    //Debug.Log("Temp Fix");
-                    if (!payline_to_show.payline.left_right)
-                        linePositionsToUse.Insert(0, linePositions[line_position_index - 1]);
-                }
-                Debug.Log(String.Format("Showing payline {0}, configuration = {1}", payline_to_show.payline.left_right ? "Left" : "Right", payline_to_show.payline.PrintConfiguration()));
-                //Set line renderer either highlighting left to right or right to left
-                SetLineRendererPositions(linePositionsToUse, ref payline_renderers[linePositionCount]);
-            
-                
-                payline_renderer_index_to_set = linePositionCount;
-                if (linePositionCount >= payline_renderers.Length)
-                {
-                    if (linePositionCount >= payline_renderers.Length)
-                    {
-                        payline_renderer_index_to_set = (payline_renderers.Length - 1) - renderers_widths_set;
-                    }
-                }
-                if (winning_symbols_set < payline_to_show.winning_symbols.Length)
-                {
-                    winning_symbols_set += 1;
-                        //Need to refactor in the future - there will be an issue regarding getting the correct payline_renderer when going right to left payline evaluation
-                    SetWidth(highlight_win_width, highlight_win_width, ref payline_renderers[payline_renderer_index_to_set]);
-                    renderers_widths_set += 1;
-                }
-                else
-                {
-                    SetWidth(standard_payline_width, standard_payline_width, ref payline_renderers[payline_renderer_index_to_set]);
-                    renderers_widths_set += 1;
-                }
-            }
-            //Disable any extra line renderers if positions < line renderers
-            while (linePositionCount < payline_renderers.Length)
-            {
-                payline_renderers[linePositionCount].ToggleRenderer(false);
-                linePositionCount += 1;
-            }
-            if (payline_to_show.winning_symbols.Length < matrix.reel_strip_managers.Length)
-            {
-                //for 5 symbols there are 4 line renderers. for 4 symbools you need to point to - 1 to disable the last line renderer on a 3x5 matrix
-                for (int i = payline_to_show.winning_symbols.Length -1 ; i < payline_renderers.Length; i++)
-                {
-                    payline_renderers[i].ToggleRenderer(false);
-                }
-            }
-            */
         }
 
         private int ReturnIndexFirstLastFromList(bool left_right, int i, int count)
@@ -260,7 +184,7 @@ namespace Slot_Engine.Matrix
             switch (state)
             {
                 case States.Resolve_Intro:
-                    ToggleRenderer(true);
+                    
                     break;
                 default:
                     ToggleRenderer(false);

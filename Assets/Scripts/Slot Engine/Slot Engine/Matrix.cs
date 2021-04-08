@@ -684,7 +684,7 @@ namespace Slot_Engine.Matrix
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     break;
                 case States.Resolve_Intro:
-                    await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
+                    await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
                     Debug.Log("Playing resolve Intro");
                     slot_machine_managers.racking_manager.StartRacking();
                     CycleWinningPaylinesMode(); // Current high level bug point. need to wait for all animators to be in spin Outro before cycling this in bonus game

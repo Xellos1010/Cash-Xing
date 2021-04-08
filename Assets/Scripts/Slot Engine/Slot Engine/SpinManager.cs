@@ -248,7 +248,11 @@ namespace Slot_Engine.Matrix
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
-                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,true);
+                    //Go from Spin Idle to Spin End
+                    if (!isInterrupted)
+                    {
+                        matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                    }
                     if (CheckForWin())
                     {
                         StateManager.SetStateTo(States.Resolve_Intro);

@@ -231,7 +231,7 @@ namespace Slot_Engine.Matrix
             //StartCoroutine(PingPongAnimation());
             //SetPingPong(true);
             //SetFloatMotionTimeTo(0);
-            //sub_state_animator.Play("Resolve_Win_Idle",-1,0);
+            sub_state_animator.Play("Resolve_Win_Idle", -1, 0);
         }
 
 
@@ -284,11 +284,11 @@ namespace Slot_Engine.Matrix
             //Debug.Log(String.Format("Symbol Resolve Lose - presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
             Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
-            //if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
-            //{
-            //    Debug.Log(String.Format("current state name != Resolve Intro"));
-            //    sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
-            //}
+            if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+            {
+                Debug.Log(String.Format("current state name != Resolve Intro"));
+                sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
+            }
         }
 
         internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)
