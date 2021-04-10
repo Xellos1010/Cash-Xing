@@ -292,7 +292,7 @@ namespace Slot_Engine.Matrix
         public async Task StartSpin()
         {
             //The end reel configuration is set when spin starts to the next item in the list
-            ReelStripsStruct end_reel_configuration = matrix.slot_machine_managers.end_configuration_manager.UseNextConfigurationInList();
+            ReelStripSpinStruct[] end_reel_configuration = matrix.slot_machine_managers.end_configuration_manager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
             matrix.slot_machine_managers.paylines_manager.EvaluateWinningSymbolsFromCurrentConfiguration();
 
@@ -301,13 +301,13 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Used to start spinning the reels
         /// </summary>
-        internal async Task SpinReels(ReelStripsStruct end_reel_configuration)
+        internal async Task SpinReels(ReelStripSpinStruct[] end_reel_configuration)
         {
             //If we want to use ReelStrips for the spin loop we need to stitch the end_reel_configuration and display symbols together
             if (use_reelstrips_for_spin_loop)
             {
                 //Generate Reel strips if none are present
-                matrix.GenerateReelStripsToSpinThru(ref end_reel_configuration);
+                matrix.GenerateReelStripsToLoop(ref end_reel_configuration);
                 //TODO Set each reelstripmanager to spin thru the strip
                 //TODO Insert end_reelstrips_to_display into generated reelstrips
             }
@@ -325,7 +325,7 @@ namespace Slot_Engine.Matrix
         internal async Task StopReels()
         {
             //Get the end display configuration and set per reel
-            ReelStripsStruct configuration_to_use = matrix.slot_machine_managers.end_configuration_manager.GetCurrentConfiguration();
+            ReelStripSpinStruct[] configuration_to_use = matrix.slot_machine_managers.end_configuration_manager.GetCurrentConfiguration();
             //Determine whether to stop reels forwards or backwards.
             for (int i = spin_reels_starting_forward_back ? 0 : matrix.reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
@@ -334,11 +334,11 @@ namespace Slot_Engine.Matrix
                 //If reel strip delays are enabled wait between strips to stop
                 if (reel_spin_delay_end_enabled)
                 {
-                    await matrix.reel_strip_managers[i].StopReel(configuration_to_use.reelstrips[i]);//Only use for specific reel stop features
+                    await matrix.reel_strip_managers[i].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
                 }
                 else
                 {
-                    matrix.reel_strip_managers[i].StopReel(configuration_to_use.reelstrips[i]);//Only use for specific reel stop features
+                    matrix.reel_strip_managers[i].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
                 }
             }
             //Wait for all reels to be in spin.end state before continuing

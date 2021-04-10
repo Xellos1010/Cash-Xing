@@ -23,11 +23,9 @@ public enum SpinStates
 
 public enum GameStates
 {
-    preload,
-    demoattract,
     baseGame,
-    bonusgame,
-    freespin,
+    overlaySpin,
+    freeSpin,
 }
 
 public enum States {

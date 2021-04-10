@@ -216,7 +216,8 @@ namespace Slot_Engine.Matrix
                         SetFreeSpinsTo(10);
                     }
                     break;
-                case Features.wild:
+                case Features.overlay:
+                    SetFreeSpinsTo(3);
                     break;
                 case Features.Count:
                     break;

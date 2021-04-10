@@ -231,12 +231,12 @@ namespace Slot_Engine.Matrix
             paylines_evaluated = true;
         }
 
-        internal Task EvaluateWinningSymbols(ReelStripsStruct reelstrips_configuration)
+        internal Task EvaluateWinningSymbols(ReelStripSpinStruct[] reelstrips_configuration)
         {
-            ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstrips_configuration.reelstrips.Length];
-            for (int reel = 0; reel < reelstrips_configuration.reelstrips.Length; reel++)
+            ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstrips_configuration.Length];
+            for (int reel = 0; reel < reelstrips_configuration.Length; reel++)
             {
-                symbols_configuration[reel].SetReelSymbolsTo(reelstrips_configuration.reelstrips[reel].spin_info.display_symbols);
+                symbols_configuration[reel].SetReelSymbolsTo(reelstrips_configuration[reel].display_symbols);
             }
             EvaluateWinningSymbols(symbols_configuration);
             return Task.CompletedTask;
@@ -264,15 +264,18 @@ namespace Slot_Engine.Matrix
             Debug.Log(String.Format("Looking for features that activated"));
             foreach (KeyValuePair<Features, List<suffix_tree_node_info>> item in feature_active_count)
             {
+                //Multiplier calculated first then mode is applied
                 Debug.Log(String.Format("Feature name = {0}, counter = {1}",item.Key.ToString(), item.Value.Count));
-                if(item.Key == Features.freespin)
-                    if (item.Value.Count > 2)
-                        StateManager.SetFeatureActiveTo(Features.freespin, true);
                 if (item.Key == Features.multiplier)
                 {
-                    StateManager.SetFeatureActiveTo(Features.freespin, true);
+                    StateManager.SetFeatureActiveTo(Features.multiplier, true);
                     StateManager.AddToMultiplier(item.Value.Count);
                 }
+                if (item.Key == Features.freespin)
+                    if (item.Value.Count > 2)
+                    {
+                        StateManager.SetFeatureActiveTo(Features.freespin, true);
+                    }
             }
             if (winning_paylines.Length > 0)
             {

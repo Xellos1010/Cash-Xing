@@ -13,7 +13,7 @@ namespace Slot_Engine.Matrix
 {
 	public class FeaturesManager
 	{
-		public Features feaActivatedFeatures;
+		public Features activatedFeatures;
 		
 		/// <summary>
 		/// Sets the options for the game to activate a specific feature

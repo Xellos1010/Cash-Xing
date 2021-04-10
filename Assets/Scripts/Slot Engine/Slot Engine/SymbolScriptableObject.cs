@@ -58,16 +58,24 @@ public struct SymbolObject
     /// Symbol Weight Info
     /// </summary>
     [SerializeField]
-    public WeightedDistribution.IntDistributionItem symbol_weight_info;
+    public symbol_weight_state[] symbol_weights;
     /// <summary>
     /// Used to toggle wild feature
     /// </summary>
     [SerializeField]
     internal bool isWildSymbol;
 }
-
-public struct symbol_weight_states
+[Serializable]
+public struct symbol_weight_state
 {
+    /// <summary>
+    /// Game state of to apply weights
+    /// </summary>
+    [SerializeField]
     public GameStates game_state;
-    public WeightedDistribution.IntDistributionItem symbol_weight_info;
+    /// <summary>
+    /// Symbol weight info
+    /// </summary>
+    [SerializeField]
+    public float symbol_weight_info;
 }

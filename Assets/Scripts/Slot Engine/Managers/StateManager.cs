@@ -15,12 +15,14 @@ using System;
 public static class StateManager
 {
     public static States enCurrentState;
-    public static States enCurrentMode;
+    public static GameStates enCurrentMode;
     /// <summary>
     /// the current active feature reference for the game
     /// </summary>
     public static Features current_feature_active;
     //State Switching Variables
+    public delegate void GameModeDelegate(GameStates modeActivated);
+    public static event GameModeDelegate GameModeActivated;
     public delegate void StateDelegate(States State);
     public static event StateDelegate StateChangedTo;
     public static event StateDelegate StateSwitched;
@@ -47,6 +49,11 @@ public static class StateManager
         if(StateChangedTo != null)
             StateChangedTo.Invoke(State);
 	}
+    public static void SetGameModeActiveTo(GameStates state)
+    {
+        enCurrentMode = state;
+        GameModeActivated?.Invoke(state);
+    }
     /// <summary>
     /// Sets a feature to being active or deactive
     /// </summary>
@@ -56,8 +63,22 @@ public static class StateManager
     {
         StaticUtilities.DebugLog(string.Format("feature {0} active set to {1}", feature.ToString(),active_inactive));
         current_feature_active = active_inactive ? feature : Features.None;
-        if (FeatureTransition != null)
-            FeatureTransition.Invoke(feature, active_inactive);
+        switch (feature)
+        {
+            case Features.freespin:
+                SetGameModeActiveTo(GameStates.freeSpin);
+                break;
+            case Features.multiplier:
+                SetGameModeActiveTo(GameStates.overlaySpin);
+                break;
+            case Features.overlay:
+                SetGameModeActiveTo(GameStates.overlaySpin);
+                break;
+            default:
+                SetGameModeActiveTo(GameStates.baseGame);
+                break;
+        }
+        FeatureTransition?.Invoke(feature, active_inactive);
     }
     internal static void AddToMultiplier(int amount)
     {

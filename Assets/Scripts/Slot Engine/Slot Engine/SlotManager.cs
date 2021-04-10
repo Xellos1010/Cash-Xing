@@ -207,7 +207,7 @@ namespace Slot_Engine.Matrix
                     if (!symbol_set)
                     {
                         //Determines an overlay symbol
-                        SlotDisplaySymbol symbol = reel_parent.matrix.slot_machine_managers.end_configuration_manager.GetRandomWeightedSymbol();
+                        SlotDisplaySymbol symbol = reel_parent.matrix.slot_machine_managers.end_configuration_manager.GetRandomWeightedSymbol(StateManager.enCurrentMode);
                         SetDisplaySymbolTo(symbol);
                     }
                 }
@@ -384,7 +384,7 @@ namespace Slot_Engine.Matrix
 
         internal void ShowRandomSymbol()
         {
-            ShowSymbolRenderer(reel_parent.matrix.symbol_weights.Draw());
+            ShowSymbolRenderer(reel_parent.matrix.symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw());
         }
         /// <summary>
         /// Shows a symbols renderer

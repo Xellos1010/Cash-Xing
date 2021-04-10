@@ -13,24 +13,14 @@ namespace Slot_Engine.Matrix
     {
         [UnityEngine.SerializeField]
         public ReelStripStruct reelStrip;
-        public ReelStrip(SlotDisplaySymbol[] display_symbols)
-        {
-            reelStrip.spin_info.display_symbols = display_symbols;
-        }
 
-        internal void GenerateReelStrip(int slots_per_strip_onSpinLoop, ref EndConfigurationManager endConfigurationManager)
+        internal static SlotDisplaySymbol[] GenerateReelStripStatic(GameStates currentMode, int slotsPerStrip, ref EndConfigurationManager endConfigurationManager)
         {
             //Generate new reel symbols array and assign based on weighted distribution - then add the display symbols at the end for now
-            reelStrip.spin_info.reel_spin_symbols = GenerateReelStripStatic(slots_per_strip_onSpinLoop, ref endConfigurationManager);
-        }
-
-        internal static SlotDisplaySymbol[] GenerateReelStripStatic(int slots_per_strip_onSpinLoop, ref EndConfigurationManager endConfigurationManager)
-        {
-            //Generate new reel symbols array and assign based on weighted distribution - then add the display symbols at the end for now
-            SlotDisplaySymbol[] reel_spin_symbols = new SlotDisplaySymbol[slots_per_strip_onSpinLoop];
-            for (int i = 0; i < slots_per_strip_onSpinLoop; i++)
+            SlotDisplaySymbol[] reel_spin_symbols = new SlotDisplaySymbol[slotsPerStrip];
+            for (int i = 0; i < slotsPerStrip; i++)
             {
-                reel_spin_symbols[i] = endConfigurationManager.GetRandomWeightedSymbol();
+                reel_spin_symbols[i] = endConfigurationManager.GetRandomWeightedSymbol(currentMode);
             }
             return reel_spin_symbols;
         }
@@ -149,9 +139,9 @@ namespace Slot_Engine.Matrix
             this.padding_after = display_zone.padding_after;
         }
 
-        internal void SetSpinConfigurationTo(ReelStripStruct reelStripStruct)
+        internal void SetSpinConfigurationTo(ReelStripSpinStruct reelStripStruct)
         {
-            spin_info = reelStripStruct.spin_info;
+            spin_info = reelStripStruct;
         }
 
         internal void SetSpinParametersTo(ReelStripSpinParametersScriptableObject spin_parameters)
@@ -180,5 +170,10 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [UnityEngine.SerializeField]
         public int[] display_symbol_range;
+
+        public ReelStripSpinStruct(SlotDisplaySymbol[] slotDisplaySymbols) : this()
+        {
+            display_symbols = slotDisplaySymbols;
+        }
     }
 }
