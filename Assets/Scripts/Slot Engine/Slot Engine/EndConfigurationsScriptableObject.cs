@@ -13,6 +13,20 @@ using Slot_Engine.Matrix;
 using System.Collections.Generic;
 using System;
 
+[Serializable]
+public class SpinConfigurationStorage : SerializableDictionary.Storage<ReelStripSpinStruct[]>
+{
+    public SpinConfigurationStorage(ReelStripSpinStruct[] result)
+    {
+         data = result;
+    }
+}
+[Serializable]
+public class GameStateConfigurationStorage : SerializableDictionary.Storage<List<SpinConfigurationStorage>> { }
+[Serializable]
+public class GameStateConfigurationDictionary : SerializableDictionary<GameStates, GameStateConfigurationStorage> { }
+[Serializable]
+public class GameStateDistributionDictionary : SerializableDictionary<GameStates, WeightsDistributionScriptableObject> { }
 /// <summary>
 /// Creates the scriptable object for end configurations to be stored
 /// </summary>
@@ -22,20 +36,20 @@ public class EndConfigurationsScriptableObject : ScriptableObject
     /// <summary>
     /// Current end reelstrip configuration in use
     /// </summary>
-    public ReelStripsStruct current_reelstrip_configuration;
+    public ReelStripSpinStruct[] currentReelstripConfiguration;
     /// <summary>
     /// end reelstrips to display in sequence
     /// </summary>
-    public List<ReelStripsStruct> end_reelstrips_to_display_sequence;
+    public GameStateConfigurationDictionary endReelstripsPerState;
     /// <summary>
     /// reelstrips that have been used
     /// </summary>
-    public List<ReelStripsStruct> end_reelstrips_used;
+    public List<ReelStripSpinStruct[]> end_reelstrips_used;
 
-    internal void AddReelstripToUsedList(ReelStripsStruct current_reelstrip_configuration)
+    internal void AddReelstripToUsedList(ReelStripSpinStruct[] current_reelstrip_configuration)
     {
         if (end_reelstrips_used == null)
-            end_reelstrips_used = new List<ReelStripsStruct>();
+            end_reelstrips_used = new List<ReelStripSpinStruct[]>();
         end_reelstrips_used.Add(current_reelstrip_configuration);
     }
 }

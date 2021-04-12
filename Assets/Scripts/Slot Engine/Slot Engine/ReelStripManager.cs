@@ -447,18 +447,19 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        internal void SetSymbolCurrentDisplayTo(ReelStripStruct reelStripStruct)
+        internal void SetSymbolCurrentDisplayTo(ReelStripSpinStruct reelStripStruct)
         {
             SlotManager[] slots_decending_order = GetSlotsDecending().ToArray();
             List<SlotDisplaySymbol> symbols_to_display = new List<SlotDisplaySymbol>();
-            for (int symbol = 0; symbol < reelStripStruct.spin_info.display_symbols.Length; symbol++)
+            for (int symbol = 0; symbol < reelStripStruct.display_symbols.Length; symbol++)
             {
-                symbols_to_display.Add(reelStripStruct.spin_info.display_symbols[symbol]);
+                symbols_to_display.Add(reelStripStruct.display_symbols[symbol]);
             }
             SetEndingSymbolsTo(symbols_to_display.ToArray());
+            //The top slots are always before the matrix. TBD Refactor for any amount of cushion slots
             for (int slot = 1; slot < slots_decending_order.Length; slot++)
             {
-                slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.spin_info.display_symbols[slot-1]);
+                slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.display_symbols[slot-1]);
                 end_symbols_set_from_config += 1;
             }
         }
@@ -547,7 +548,7 @@ namespace Slot_Engine.Matrix
         /// <returns>async task to track</returns>
         public Task SpinReel()
         {
-            Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
+            //Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
             InitializeVarsForNewSpin();
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSpinStateTo(SpinStates.spin_start);
@@ -625,13 +626,13 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public async Task StopReel(ReelStripStruct reelStrip)
+        public async Task StopReel(ReelStripSpinStruct reelStrip)
         {
             end_symbols_set_from_config = 0;
             //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
             //Waits until all slots have stopped spinning
-            await StopReel(reelStrip.spin_info.display_symbols); //This will control ho wfast the reel goes to stop spin
+            await StopReel(reelStrip.display_symbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
 

@@ -23,8 +23,7 @@ namespace WeightedDistribution
         public T Value { get { return value; } set { this.value = value; } }
     }
 
-    public abstract class Distribution<T, T_ITEM> : MonoBehaviour
-        where T_ITEM : DistributionItem<T>, new()
+    public abstract class Distribution<T, T_ITEM> where T_ITEM : DistributionItem<T>, new()
     {
         [SerializeField]
         List<T_ITEM> items;
@@ -103,6 +102,7 @@ namespace WeightedDistribution
         {
             if (items == null)
                 items = new List<T_ITEM>();
+            Debug.Log(string.Format("Adding Value {0} with weight {1}",value,weight));
             items.Add(new T_ITEM { Value = value, Weight = weight });
             OnItemsChange(true);
         }

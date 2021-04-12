@@ -1,6 +1,6 @@
 ﻿using System;
 using UnityEngine;
-
+using UnityEditorInternal;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -57,6 +57,7 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
     public class AnimatorStateMachineManager : StateMachineManagerBase
 {
     public AnimatorStateMachines animator_state_machines;
+
     public void SetRuntimeControllerTo(AnimatorOverrideController to_controller)
     {
         throw new Exception("To Be Implemented - pass reference to aniamtor that needs override applied");

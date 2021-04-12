@@ -79,10 +79,10 @@ namespace Slot_Engine.Matrix
             StateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
-        private void Setplayer_walletTo(float to_value)
+        private void OffsetPlayerWalletBy(float amount)
         {
             //This will fire an event and the UI manager will auto set the text based on new player amount
-            matrix.SetPlayerWalletTo(to_value);
+            matrix.OffetPlayerWalletBy(amount);
         }
 
         private void StateManager_StateChangedTo(States State)
@@ -120,7 +120,10 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void StartRacking()
         {
-            SetCreditAmountToRack(matrix.slot_machine_managers.paylines_manager.GetTotalWinAmount());
+            if(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
+                SetCreditAmountToRack(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+            else
+                SetCreditAmountToRack(matrix.slot_machine_managers.paylines_manager.GetTotalWinAmount());
         }
         /// <summary>
         /// Set the total amount to rack
@@ -128,10 +131,11 @@ namespace Slot_Engine.Matrix
         /// <param name="win_amount">the amount won to rack</param>
         private void SetCreditAmountToRack(float win_amount)
         {
-            Debug.Log(String.Format("Setting Credit amount to rack to {0}",win_amount));
+            //Debug.Log(String.Format("Setting Credit amount to rack to {0}",win_amount));
+            //need to see if win is big enough to present final win amount
             if(set_instantly)
             {
-                Setplayer_walletTo(matrix.slot_machine_managers.machine_info_manager.player_wallet + win_amount);
+                OffsetPlayerWalletBy(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.player_wallet + win_amount);
             }
             else
             {
@@ -170,7 +174,14 @@ namespace Slot_Engine.Matrix
         private void UpdateCreditRackingRemaining(float amount_to_rack)
         {
             bank_rack_remaining -= amount_to_rack;
-            Setplayer_walletTo(matrix.slot_machine_managers.machine_info_manager.player_wallet + amount_to_rack);
+            if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
+                OffsetPlayerBankBy(-amount_to_rack);
+            OffsetPlayerWalletBy(amount_to_rack);
+        }
+
+        private void OffsetPlayerBankBy(float v)
+        {
+            matrix.slot_machine_managers.machine_info_manager.OffsetBankBy(v);
         }
 
         /// <summary>

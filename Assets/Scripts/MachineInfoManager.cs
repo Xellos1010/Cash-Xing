@@ -23,13 +23,12 @@ namespace Slot_Engine.Matrix
         {
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("MachineInfoManager Properties");
-            EditorGUILayout.LabelField("Initialize Machine Properties");
             
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("MachineInfoManager Controls");
             if (GUILayout.Button("Initialize Machine with test values"))
             {
-                myTarget.InitializeTestMachineValues(10000.0f, 0.0f, myTarget.supported_bet_amounts.Length-1, 1, 0);
+                myTarget.InitializeTestMachineValues(10000.0f, 0.0f, myTarget.machineInfoScriptableObject.supported_bet_amounts.Length-1, 1, 0);
             }
             if (GUILayout.Button("Use Stock Player Information"))
             {
@@ -49,69 +48,38 @@ namespace Slot_Engine.Matrix
     {
         public delegate void FloatValueSet(float new_float_value);
         public delegate void IntValueSet(int new_int_value);
-        public event FloatValueSet new_multiplier_set;
-        public event FloatValueSet new_bet_amount;
-        public event FloatValueSet new_bank_amount;
-        public event FloatValueSet new_player_wallet_amount;
+        public event FloatValueSet newMultiplier;
+        public event FloatValueSet newBetAmount;
+        public event FloatValueSet newBankAmount;
+        public event FloatValueSet newPlayerWalletAmount;
+        public event IntValueSet newFreespinAmount;
+        public MachineInfoScriptableObject machineInfoScriptableObject;
 
         internal void DecreaseBetAmount()
         {
-            if(current_bet_amount != 0)
+            if(machineInfoScriptableObject.current_bet_amount != 0)
             {
-                SetBetAmountIndexTo(current_bet_amount - 1);
+                SetBetAmountIndexTo(machineInfoScriptableObject.current_bet_amount - 1);
             }
         }
-
-        public event IntValueSet new_freespin_amount;
 
         internal void IncreaseBetAmount()
         {
-            if (current_bet_amount < supported_bet_amounts.Length-1)
+            if (machineInfoScriptableObject.current_bet_amount < machineInfoScriptableObject.supported_bet_amounts.Length-1)
             {
-                SetBetAmountIndexTo(current_bet_amount + 1);
+                SetBetAmountIndexTo(machineInfoScriptableObject.current_bet_amount + 1);
             }
         }
 
-        /// <summary>
-        /// What bet amounts are supported for this game - Multiply bet amount by symbol value to get amount won - 100 credits are $1.00
-        /// </summary>
-        [SerializeField]
-        internal float[] supported_bet_amounts = new float[10] { .01f, .05f, .25f, .50f, 1.0f, 5.0f, 10.0f, 25.0f, 50.0f, 100.0f};
-        public int current_bet_amount = 4;
-        /// <summary>
-        /// Machine stored values to coin_in/coin_out
-        /// </summary>
-        public float bank = 0, player_wallet = 0;
-        /// <summary>
-        /// bet_amount starts at 1.0f
-        /// </summary>
-        public float bet_amount
-        {
-            get
-            {
-                return supported_bet_amounts[current_bet_amount];
-            }
-        }
-        /// <summary>
-        /// Multiplier to apply to the win evaluation. (bet_amount * symbol_value) * multiplier = win total
-        /// </summary>
-        public float multiplier = 1;
-        /// <summary>
-        /// Free Spins Remaining
-        /// </summary>
-        public int freespins;
-        /// <summary>
-        /// Current player that is loaded into machine
-        /// </summary>
-        public PlayerInformation current_player_information;
+        
         /// <summary>
         /// This is a test class to implement player info - Player info will be loaded from server config file
         /// </summary>
         public void SetPlayerInformationTo(float player_wallet)
         {
-            current_player_information = new PlayerInformation();
-            current_player_information.player_wallet = player_wallet;
-            SetPlayerInformationFrom(ref current_player_information);
+            machineInfoScriptableObject.current_player_information = new PlayerInformation();
+            machineInfoScriptableObject.current_player_information.player_wallet = player_wallet;
+            SetPlayerInformationFrom(ref machineInfoScriptableObject.current_player_information);
         }
         /// <summary>
         /// Sets the player_wallet and bank roll from player info
@@ -121,26 +89,30 @@ namespace Slot_Engine.Matrix
         {
             SetPlayerWalletTo(current_player_information.player_wallet);
         }
+        internal void OffsetBankBy(float amount)
+        {
+            SetBankTo(machineInfoScriptableObject.bank + amount);
+        }
 
-        private void SetBankTo(float new_bank_amount)
+        internal void SetBankTo(float new_bank_amount)
         {
             //Debug.Log(String.Format("Bank is being set to {0}",new_bank_amount));
-            bank = new_bank_amount;
-            this.new_bank_amount?.Invoke(new_bank_amount);
+            machineInfoScriptableObject.bank = new_bank_amount;
+            this.newBankAmount?.Invoke(new_bank_amount);
         }
 
         internal void SetPlayerWalletTo(float new_player_wallet)
         {
             //Debug.Log(String.Format("Player Wallet is being set to {0}", new_player_wallet));
-            player_wallet = new_player_wallet;
-            new_player_wallet_amount?.Invoke(new_player_wallet);
+            machineInfoScriptableObject.player_wallet = new_player_wallet;
+            newPlayerWalletAmount?.Invoke(new_player_wallet);
         }
 
         private void SetBetAmountIndexTo(int new_bet_amount)
         {
             //Debug.Log(String.Format("Bet Amount is being set to {0}", new_bet_amount));
-            current_bet_amount = new_bet_amount;
-            this.new_bet_amount?.Invoke(supported_bet_amounts[new_bet_amount]);
+            machineInfoScriptableObject.current_bet_amount = new_bet_amount;
+            this.newBetAmount?.Invoke(machineInfoScriptableObject.supported_bet_amounts[new_bet_amount]);
         }
 
         /// <summary>
@@ -150,14 +122,14 @@ namespace Slot_Engine.Matrix
         public void SetMultiplierTo(float to_multipler_value)
         {
             //Debug.Log(String.Format("Multiplier set to {0}", to_multipler_value));
-            multiplier = to_multipler_value;
-            new_multiplier_set?.Invoke(to_multipler_value);
+            machineInfoScriptableObject.multiplier = to_multipler_value;
+            newMultiplier?.Invoke(to_multipler_value);
         }
         internal void SetFreeSpinsTo(int new_free_spins)
         {
             //Debug.Log(String.Format("Free Spins is being set to {0}", new_free_spins));
-            freespins = new_free_spins;
-            this.new_freespin_amount?.Invoke(new_free_spins);
+            machineInfoScriptableObject.freespins = new_free_spins;
+            this.newFreespinAmount?.Invoke(new_free_spins);
         }
 
         /// <summary>
@@ -183,19 +155,19 @@ namespace Slot_Engine.Matrix
         internal void OffsetPlayerAmountBy(float amount)
         {
             //Add the amount to wallet and Update Text on machine
-            SetPlayerWalletTo(player_wallet + amount);
+            SetPlayerWalletTo(machineInfoScriptableObject.player_wallet + amount);
         }
 
         void OnEnable()
         {
-            StateManager.FeatureTransition += StateManager_FeatureTransition;
+            StateManager.featureTransition += StateManager_FeatureTransition;
             StateManager.add_to_multiplier += StateManager_add_to_multiplier;
         }
 
         private void StateManager_add_to_multiplier(int multiplier)
         {
-            Debug.Log(String.Format("Setting Multiplier to ", this.multiplier + multiplier));
-            SetMultiplierTo(this.multiplier + multiplier);
+            Debug.Log(String.Format("Setting Multiplier to ", this.machineInfoScriptableObject.multiplier + multiplier));
+            SetMultiplierTo(this.machineInfoScriptableObject.multiplier + multiplier);
         }
 
         /// <summary>
@@ -216,7 +188,11 @@ namespace Slot_Engine.Matrix
                         SetFreeSpinsTo(10);
                     }
                     break;
-                case Features.wild:
+                case Features.multiplier:
+                    if (active_inactive)
+                    {
+                        SetFreeSpinsTo(3);
+                    }
                     break;
                 case Features.Count:
                     break;
@@ -227,7 +203,7 @@ namespace Slot_Engine.Matrix
 
         void OnDisable()
         {
-            StateManager.FeatureTransition += StateManager_FeatureTransition;
+            StateManager.featureTransition += StateManager_FeatureTransition;
             StateManager.add_to_multiplier -= StateManager_add_to_multiplier;
         }
     }

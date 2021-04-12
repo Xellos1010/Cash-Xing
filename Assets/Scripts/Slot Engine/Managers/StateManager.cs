@@ -15,12 +15,14 @@ using System;
 public static class StateManager
 {
     public static States enCurrentState;
-    public static States enCurrentMode;
+    public static GameStates enCurrentMode;
     /// <summary>
     /// the current active feature reference for the game
     /// </summary>
     public static Features current_feature_active;
     //State Switching Variables
+    public delegate void GameModeDelegate(GameStates modeActivated);
+    public static event GameModeDelegate GameModeActivated;
     public delegate void StateDelegate(States State);
     public static event StateDelegate StateChangedTo;
     public static event StateDelegate StateSwitched;
@@ -29,7 +31,7 @@ public static class StateManager
     public static event SpinDelegate spin_activated_event;
     public static event SpinStateChangedTo spin_state_changed;
     public delegate void FeatureActiveDelegate(Features feature, bool active_inactive);
-    public static event FeatureActiveDelegate FeatureTransition;
+    public static event FeatureActiveDelegate featureTransition;
     public delegate void MultiplierFeatureDelegate(int multiplier);
     public static event MultiplierFeatureDelegate add_to_multiplier;
 
@@ -47,6 +49,11 @@ public static class StateManager
         if(StateChangedTo != null)
             StateChangedTo.Invoke(State);
 	}
+    public static void SetGameModeActiveTo(GameStates state)
+    {
+        enCurrentMode = state;
+        GameModeActivated?.Invoke(state);
+    }
     /// <summary>
     /// Sets a feature to being active or deactive
     /// </summary>
@@ -56,8 +63,31 @@ public static class StateManager
     {
         StaticUtilities.DebugLog(string.Format("feature {0} active set to {1}", feature.ToString(),active_inactive));
         current_feature_active = active_inactive ? feature : Features.None;
-        if (FeatureTransition != null)
-            FeatureTransition.Invoke(feature, active_inactive);
+        switch (feature)
+        {
+            case Features.freespin:
+                if(active_inactive)
+                    SetGameModeActiveTo(GameStates.freeSpin);
+                else
+                    SetGameModeActiveTo(GameStates.baseGame);
+                break;
+            case Features.multiplier:
+                if(active_inactive)
+                    SetGameModeActiveTo(GameStates.overlaySpin);
+                else
+                    SetGameModeActiveTo(GameStates.baseGame);
+                break;
+            case Features.overlay:
+                if(active_inactive)
+                    SetGameModeActiveTo(GameStates.overlaySpin);
+                else
+                    SetGameModeActiveTo(GameStates.baseGame);
+                break;
+            default:
+                SetGameModeActiveTo(GameStates.baseGame);
+                break;
+        }
+        featureTransition?.Invoke(feature, active_inactive);
     }
     internal static void AddToMultiplier(int amount)
     {
