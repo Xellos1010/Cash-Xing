@@ -276,9 +276,13 @@ namespace Slot_Engine.Matrix
                             new SlotDisplaySymbol((int)Symbol.RO01),
                             new SlotDisplaySymbol((int)Symbol.RO02)
                         };
-                        configuration[i].display_symbols[0].AddFeature(Features.freespin);
+
+                        if (i % 2 == 0)
+                        {
+                            configuration[i].display_symbols[0].AddFeature(Features.freespin);
+                        }   
                     }
-                    AddConfigurationToSequence(GameStates.freeSpin,configuration);
+                    AddConfigurationToSequence(GameStates.baseGame,configuration);
                     break;
                 case Features.overlay:
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
@@ -287,13 +291,19 @@ namespace Slot_Engine.Matrix
                         configuration[i].display_symbols = new SlotDisplaySymbol[3]
                         {
                             new SlotDisplaySymbol(i % 2 == 0
-                        ? (int)Symbol.SA01 : (int)Symbol.RO03),
+                        ? (int)Symbol.SA02 : (int)Symbol.RO03),
                             new SlotDisplaySymbol((int)Symbol.RO01),
                             new SlotDisplaySymbol((int)Symbol.RO02)
                         };
-                        configuration[i].display_symbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
+                        if (i % 2 == 0)
+                        {
+                            configuration[i].display_symbols[0].primary_symbol = (int)Symbol.RO03;
+                            configuration[i].display_symbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
+                            configuration[i].display_symbols[0].AddFeature(Features.overlay);
+                            configuration[i].display_symbols[0].is_overlay = true;
+                        }
                     }
-                    AddConfigurationToSequence(GameStates.overlaySpin, configuration);
+                    AddConfigurationToSequence(GameStates.baseGame, configuration);
                     break;
                 default:
                     break;

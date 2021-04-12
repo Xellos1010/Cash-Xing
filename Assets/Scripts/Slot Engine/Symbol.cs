@@ -11,6 +11,8 @@
 
 
 public enum Symbol {
+
+	SA01, 
 	MA01,
 	MI01,
 	MI02,
@@ -19,6 +21,5 @@ public enum Symbol {
 	RO02,
 	RO03,
 	SA02,
-	SA01,
 	End
 }

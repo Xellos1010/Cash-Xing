@@ -456,6 +456,7 @@ namespace Slot_Engine.Matrix
                 symbols_to_display.Add(reelStripStruct.display_symbols[symbol]);
             }
             SetEndingSymbolsTo(symbols_to_display.ToArray());
+            //The top slots are always before the matrix. TBD Refactor for any amount of cushion slots
             for (int slot = 1; slot < slots_decending_order.Length; slot++)
             {
                 slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.display_symbols[slot-1]);
@@ -547,7 +548,7 @@ namespace Slot_Engine.Matrix
         /// <returns>async task to track</returns>
         public Task SpinReel()
         {
-            Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
+            //Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
             InitializeVarsForNewSpin();
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSpinStateTo(SpinStates.spin_start);

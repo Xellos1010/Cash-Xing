@@ -266,10 +266,11 @@ namespace Slot_Engine.Matrix
             {
                 //Multiplier calculated first then mode is applied
                 Debug.Log(String.Format("Feature name = {0}, counter = {1}",item.Key.ToString(), item.Value.Count));
-                if (item.Key == Features.multiplier)
+                if (item.Key == Features.overlay)
                 {
                     StateManager.SetFeatureActiveTo(Features.multiplier, true);
                     StateManager.AddToMultiplier(item.Value.Count);
+
                 }
                 if (item.Key == Features.freespin)
                     if (item.Value.Count > 2)
@@ -343,7 +344,7 @@ namespace Slot_Engine.Matrix
             {
                 left_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnLeftRootNodeFromFullLineWin();
                 right_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnRightRootNodeFromFullLineWin();
-                Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
+                //Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
                 if(left_root_node_winning_payline == left_root_node_new_winning_payline && right_root_node_new_winning_payline == right_root_node_winning_payline)
                 {
                     return true;

@@ -88,7 +88,7 @@ namespace Slot_Engine.Matrix
 
         private void CheckForFeatureAddToList(SlotDisplaySymbol linewin_symbol, ref Dictionary<Features, List<suffix_tree_node_info>> special_symbols, ref List<SymbolWinStruct> winning_symbols, ref suffix_tree_node_info suffix_tree_node)
         {
-            Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
+            //Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
             if (linewin_symbol.is_feature)
             {
                 //Check for features to activate with the first symbol and add the first symbol to the line win
@@ -114,10 +114,10 @@ namespace Slot_Engine.Matrix
         /// <param name="special_symbols">The special symbols conditions</param>
         private void CheckFeatureConditions(SlotDisplaySymbol linewin_symbol, ref Dictionary<Features, List<suffix_tree_node_info>> special_symbols, ref suffix_tree_node_info node_info)
         {
-            Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
+            //Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
             if (linewin_symbol.features != null)
             {
-                Debug.Log(String.Format("linewin_symbol.features.Count", linewin_symbol.features.Count));
+                //Debug.Log(String.Format("linewin_symbol.features.Count", linewin_symbol.features.Count));
                 if (linewin_symbol.features?.Count > 0)
                 {
                     for (int feature = 0; feature < linewin_symbol.features.Count; feature++)
@@ -126,7 +126,7 @@ namespace Slot_Engine.Matrix
                             special_symbols[linewin_symbol.features[feature]] = new List<suffix_tree_node_info>();
                         if (!special_symbols[linewin_symbol.features[feature]].Contains(node_info))
                         {
-                            Debug.Log(String.Format("Adding Node {0} to features list {1}", node_info.Print(), linewin_symbol.features[feature].ToString()));
+                            //Debug.Log(String.Format("Adding Node {0} to features list {1}", node_info.Print(), linewin_symbol.features[feature].ToString()));
                             special_symbols[linewin_symbol.features[feature]].Add(node_info);
                         }
                     }
@@ -171,7 +171,7 @@ namespace Slot_Engine.Matrix
                     symbol_to_check_for = current_display_symbol;
                     isWild = true;
                 }
-                Debug.Log(String.Format("current_display_symbol.primary_symbol = {0} symbol_to_check_for.primary_symbol = {1}", current_display_symbol.primary_symbol, symbol_to_check_for.primary_symbol));
+                //Debug.Log(String.Format("current_display_symbol.primary_symbol = {0} symbol_to_check_for.primary_symbol = {1}", current_display_symbol.primary_symbol, symbol_to_check_for.primary_symbol));
                 AddWinningSymbol(current_display_symbol.primary_symbol, ref winning_symbols, ref suffix_tree_node.node_info);
 
                 //Current payline index

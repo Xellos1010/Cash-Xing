@@ -31,7 +31,7 @@ public static class StateManager
     public static event SpinDelegate spin_activated_event;
     public static event SpinStateChangedTo spin_state_changed;
     public delegate void FeatureActiveDelegate(Features feature, bool active_inactive);
-    public static event FeatureActiveDelegate FeatureTransition;
+    public static event FeatureActiveDelegate featureTransition;
     public delegate void MultiplierFeatureDelegate(int multiplier);
     public static event MultiplierFeatureDelegate add_to_multiplier;
 
@@ -66,19 +66,28 @@ public static class StateManager
         switch (feature)
         {
             case Features.freespin:
-                SetGameModeActiveTo(GameStates.freeSpin);
+                if(active_inactive)
+                    SetGameModeActiveTo(GameStates.freeSpin);
+                else
+                    SetGameModeActiveTo(GameStates.baseGame);
                 break;
             case Features.multiplier:
-                SetGameModeActiveTo(GameStates.overlaySpin);
+                if(active_inactive)
+                    SetGameModeActiveTo(GameStates.overlaySpin);
+                else
+                    SetGameModeActiveTo(GameStates.baseGame);
                 break;
             case Features.overlay:
-                SetGameModeActiveTo(GameStates.overlaySpin);
+                if(active_inactive)
+                    SetGameModeActiveTo(GameStates.overlaySpin);
+                else
+                    SetGameModeActiveTo(GameStates.baseGame);
                 break;
             default:
                 SetGameModeActiveTo(GameStates.baseGame);
                 break;
         }
-        FeatureTransition?.Invoke(feature, active_inactive);
+        featureTransition?.Invoke(feature, active_inactive);
     }
     internal static void AddToMultiplier(int amount)
     {

@@ -11,12 +11,6 @@
 using UnityEngine;
 using WeightedDistribution;
 
-[CreateAssetMenu(fileName = "MachineGraphics", menuName = "BoomSportsScriptableObjects/MachineGraphicsScriptableObject", order = 6)]
-public class MachineGraphicsScriptableObject : ScriptableObject
-{
-
-}
-
 [CreateAssetMenu(fileName = "WeightsDistribution", menuName = "BoomSportsScriptableObjects/WeightsDistributionScriptableObject", order = 5)]
 public class WeightsDistributionScriptableObject : ScriptableObject
 {

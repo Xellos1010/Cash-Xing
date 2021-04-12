@@ -240,7 +240,7 @@ namespace Slot_Engine.Matrix
             if (presentation_symbol > 0)
             {
                 AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
-                Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
+                //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
                 
                 if (state_info.IsName(animation_to_check))
                 {
@@ -248,7 +248,7 @@ namespace Slot_Engine.Matrix
                 }
                 else
                 {
-                    Debug.Log(String.Format("Not {0}", animation_to_check));
+                    //Debug.Log(String.Format("Not {0}", animation_to_check));
                     return false;
                 }
             }
@@ -282,12 +282,16 @@ namespace Slot_Engine.Matrix
         internal void SetSymbolResolveToLose()
         {
             //Debug.Log(String.Format("Symbol Resolve Lose - presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
-            Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];
-            SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
-            if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+            if (Application.isPlaying)
             {
-                Debug.Log(String.Format("current state name != Resolve Intro"));
-                sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
+                Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];
+                SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
+                //SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
+                if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+                {
+                    Debug.Log(String.Format("current state name != Resolve Intro"));
+                    sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
+                }
             }
         }
 
@@ -298,12 +302,11 @@ namespace Slot_Engine.Matrix
 
         internal void SetDisplaySymbolTo(SlotDisplaySymbol symbol_to_display)
         {
-            //Debug.Log(string.Format("Set Display symbol to {0}", v));
+            //Debug.Log(string.Format("Set Display symbol to {0} in reel {1} Slot {2}", symbol_to_display.primary_symbol,reel_parent.gameObject.name, gameObject.name));
             SetPresentationSymbolTo(symbol_to_display.primary_symbol);
             ShowSymbolRenderer(symbol_to_display.primary_symbol);
             if(symbol_to_display.is_overlay)
             {
-                //ShowSymbolOverlay();
                 ShowSymbolRenderer(symbol_to_display.overlay_symbol, false);
             }
         }
@@ -393,6 +396,7 @@ namespace Slot_Engine.Matrix
         /// <param name="force_hide_others">will force hide other symbol renderers defaulttrue</param>
         private void ShowSymbolRenderer(int symbol_to_show, bool force_hide_others = true)
         {
+            //Debug.Log(String.Format("Enabling symbol_prefabs[{0}] = {1}", symbol_to_show, symbol_prefabs[symbol_to_show].gameObject.ToString()));
             //Ensure Symbol Prefab Objects are instantiated
             if (symbol_prefabs?.Length != reel_parent.matrix.symbols_data_for_matrix.symbols.Length)
             {

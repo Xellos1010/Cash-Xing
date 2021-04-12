@@ -74,6 +74,10 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.TriggerFeatureWithSpin(Features.freespin);
                 }
+                if (GUILayout.Button("Start Test Spin - Overlay Trigger"))
+                {
+                    myTarget.TriggerFeatureWithSpin(Features.overlay);
+                }
                 if (GUILayout.Button("End Test Spin"))
                 {
                     myTarget.SetReelsSpinStatesTo(SpinStates.spin_outro);
@@ -401,14 +405,6 @@ namespace Slot_Engine.Matrix
             //Debug.Log(String.Format("Checking for state dependant logic for SpinManager via state {0}",State.ToString()));
             switch (State)
             {
-                case States.preloading:
-                    break;
-                case States.Coin_In:
-                    break;
-                case States.Coin_Out:
-                    break;
-                case States.Idle_Intro:
-                    break;
                 case States.Idle_Idle:
                     isInterrupted = false;
                     SetReelsSpinStatesTo(SpinStates.idle_idle);
@@ -455,18 +451,6 @@ namespace Slot_Engine.Matrix
                 case States.bonus_spin_end:
                     isInterrupted = false;
                     SetReelsSpinStatesTo(SpinStates.end);
-                    break;
-                case States.racking_start:
-                    break;
-                case States.racking_loop:
-                    break;
-                case States.racking_end:
-                    break;
-                case States.feature_transition_out:
-                    break;
-                case States.feature_transition_in:
-                    break;
-                case States.total_win_presentation:
                     break;
                 default:
                     break;
