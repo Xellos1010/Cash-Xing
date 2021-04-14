@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
-using UnityEditorInternal;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditorInternal;
 #endif
 #if UNITY_EDITOR
 

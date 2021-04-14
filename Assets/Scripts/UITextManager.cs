@@ -65,7 +65,7 @@ namespace Slot_Engine.Matrix
         {
             SetTextMeshProTextTo(ref freespin_info, String.Format("{0} Free Spin{1} Remaining", value, value > 1 ? "s" : ""));
             //Testing Purposes Only - To be animated
-            freespin_info.enabled = value > 0 ? true : false;
+            //freespin_info.enabled = value > 0 ? true : false;
         }
         /// <summary>
         /// Sets the player wallet text to ${0:n}
@@ -103,6 +103,32 @@ namespace Slot_Engine.Matrix
             matrix.slot_machine_managers.machine_info_manager.newBankAmount += Machine_information_manager_new_bank_amount;
             matrix.slot_machine_managers.machine_info_manager.newPlayerWalletAmount += Machine_information_manager_new_player_wallet_amount;
             matrix.slot_machine_managers.machine_info_manager.newFreespinAmount += Machine_information_manager_new_freespin_amount;
+            StateManager.StateChangedTo += StateManager_StateChangedTo;
+        }
+
+        private void StateManager_StateChangedTo(States State)
+        {
+            switch (State)
+            {
+                case States.Idle_Intro:
+                    if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
+                    {
+                        freespin_info.enabled = false;
+                    }
+                    break;
+                case States.bonus_idle_outro:
+                    if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
+                    {
+                        freespin_info.enabled = false;
+                    }
+                    break;
+                case States.Resolve_Intro:
+                    if(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
+                    {
+                        freespin_info.enabled = true;
+                    }
+                    break;
+            }
         }
 
         private void Machine_information_manager_new_freespin_amount(int new_freespin_value)

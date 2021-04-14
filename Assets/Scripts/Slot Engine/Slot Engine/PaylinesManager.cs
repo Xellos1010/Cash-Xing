@@ -252,8 +252,10 @@ namespace Slot_Engine.Matrix
                 reel_slots = display_symbols;
             }
         }
+        public List<suffix_tree_node_info> overlaySymbols;
         public Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
         {
+            overlaySymbols = new List<suffix_tree_node_info>();
             //Initialize variabled needed for caching
             List<int> matching_symbols_list;
             int primary_symbol_index;//index for machine_symbols_list with the symbol to check for in the payline.
@@ -270,7 +272,7 @@ namespace Slot_Engine.Matrix
                 {
                     StateManager.SetFeatureActiveTo(Features.multiplier, true);
                     StateManager.AddToMultiplier(item.Value.Count);
-
+                    overlaySymbols = item.Value;
                 }
                 if (item.Key == Features.freespin)
                     if (item.Value.Count > 2)
@@ -353,17 +355,6 @@ namespace Slot_Engine.Matrix
             return false;
         }
 
-        /// <summary>
-        /// Compares 2 paylines and returns shortest one
-        /// </summary>
-        /// <param name="payline1"></param>
-        /// <param name="payline2"></param>
-        /// <returns></returns>
-        private int[] CompareReturnShortestPayline(Payline payline1, Payline payline2)
-        {
-            return payline1.payline_configuration.payline.Length > payline2.payline_configuration.payline.Length ? payline2.payline_configuration.payline : payline1.payline_configuration.payline;
-        }
-
         internal void PlayCycleWins()
         {
             cycle_paylines = true;
@@ -415,102 +406,6 @@ namespace Slot_Engine.Matrix
             return Task.CompletedTask;
         }
 
-        private void CheckSymbolsMatchLeftRight(bool left_right, ref List<int> symbols_in_row, ref List<int> symbols_list, ref int primary_symbol_index, ref int payline, ref List<WinningPayline> payline_won)
-        {
-            for (int symbol = left_right ? 1 : symbols_in_row.Count - 2;
-                left_right ? symbol < symbols_in_row.Count : symbol >= 0;
-                symbol += left_right ? 1 : -1)
-            {
-                if (!CheckSymbolsMatch(symbols_in_row[primary_symbol_index], symbols_in_row[symbol]))
-                {
-                    break;
-                }
-                else
-                {
-
-                    if ((Symbol)symbols_in_row[primary_symbol_index] == Symbol.SA01)
-                    {
-                        if ((Symbol)symbols_in_row[symbol] != Symbol.SA01)
-                        {
-                            primary_symbol_index = symbol;
-                        }
-                    }
-                    symbols_list.Add(symbols_in_row[symbol]);
-                }
-            }
-            if (symbols_list.Count > 2)
-            {
-                AddFileWinningPayline(payline, symbols_list, left_right, ref payline_won);
-            }
-        }
-
-        private void GetSymbolsOnPayline(int payline, ref int[][] symbols_configuration, out List<int> symbols_in_row)
-        {
-            //TODO Check Symbol Configuration Reels are length of payline
-            symbols_in_row = new List<int>();
-            Payline currentPayline = dynamic_paylines_evaluation.dynamic_paylines.paylines_supported[payline];
-            if (currentPayline.payline_configuration.payline.Length != symbols_configuration.Length)
-                Debug.LogWarning(String.Format("currentPayline.payline.Length = {0} symbols_configuration.Length = {1}", currentPayline.payline_configuration.payline.Length, symbols_configuration.Length));
-
-            for (int reel = 0; reel < symbols_configuration.Length; reel++)
-            {
-                try
-                {
-                    //Get Symbol on payline 
-                    symbols_in_row.Add(symbols_configuration[reel][currentPayline.payline_configuration.payline[reel]]);
-                }
-                catch (Exception e)
-                {
-                    Debug.Log(e.Message);
-                }
-            }
-        }
-
-        internal void AddFileWinningPayline(int payline, List<int> matching_symbols_list, bool left_right, ref List<WinningPayline> payline_won)
-        {
-            List<string> symbol_names = new List<string>();
-            for (int i = 0; i < matching_symbols_list.Count; i++)
-            {
-                symbol_names.Add(((Symbol)matching_symbols_list[i]).ToString());
-            }
-            Debug.Log(String.Format("a match was found on payline {0}, {1} symbols match {2}", payline, left_right ? "left" : "right", String.Join(" ", symbol_names)));
-
-            //Check if Payline symbol configuration are already the list - keep highest winning payline
-            
-            payline_won.Add(new WinningPayline(dynamic_paylines_evaluation.dynamic_paylines.paylines_supported[payline], matching_symbols_list.ToArray()));
-        }
-        private bool CheckSymbolsMatch(int primary_symbol, int symbol_to_check)
-        {
-            //Now see if the next symbol is a wild or the same as the primary symbol. check false condition first
-            if (symbol_to_check == (int)Symbol.SA01 || primary_symbol == (int)Symbol.SA01 || primary_symbol == symbol_to_check) // Wild symbol - look to match next symbol to wild or set symbol 
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        private bool CheckNextSymbolWild(int v1, int v2)
-        {
-            if (v1 == (int)Symbol.SA01)
-            {
-                if (v2 != (int)Symbol.SA01)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private void InitializeMachingSymbolsVars(int primary_symbol_index, int symbol_to_match, out List<int> matching_symbols_list, out int primary_symbol_index_out)
-        {
-            matching_symbols_list = new List<int>();
-            matching_symbols_list.Add(symbol_to_match);
-            primary_symbol_index_out = primary_symbol_index;
-        }
-
         internal void ClearWinningPaylines()
         {
             winning_paylines = new WinningPayline[0];
@@ -526,46 +421,10 @@ namespace Slot_Engine.Matrix
         {
             switch (state)
             {
-                case States.None:
-                    break;
-                case States.preloading:
-                    break;
-                case States.Coin_In:
-                    break;
-                case States.Coin_Out:
-                    break;
                 case States.Idle_Intro:
                     payline_renderer_manager.ToggleRenderer(false);
                     cycle_paylines = false;
                     ClearWinningPaylines();
-                    break;
-                case States.Idle_Idle:
-                    break;
-                case States.Idle_Outro:
-                    break;
-                case States.Spin_Intro:
-                    break;
-                case States.Spin_Idle:
-                    break;
-                case States.Spin_End:
-                    break;
-                case States.Resolve_Intro:
-                    break;
-                case States.win_presentation:
-                    break;
-                case States.racking_start:
-                    break;
-                case States.racking_loop:
-                    break;
-                case States.racking_end:
-                    break;
-                case States.feature_transition_out:
-                    break;
-                case States.feature_transition_in:
-                    break;
-                case States.total_win_presentation:
-                    break;
-                default:
                     break;
             }
         }

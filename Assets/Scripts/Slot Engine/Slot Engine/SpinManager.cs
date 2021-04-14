@@ -5,6 +5,7 @@ using System;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Slot_Engine.Matrix
 {
@@ -252,7 +253,13 @@ namespace Slot_Engine.Matrix
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
-                    //Go from Spin Idle to Spin End
+                    //This is the main logic for setting the game to resolve or idle
+                    //If there is an overlay wait for the overlay animation to play and state for symbolaffected to be on normalized time >= 1 for FeatureOutro
+                    if(matrix.slot_machine_managers.paylines_manager.overlaySymbols.Count > 0)
+                    {
+                        await matrix.PlayFeatureAnimation(matrix.slot_machine_managers.paylines_manager.overlaySymbols);
+                        Debug.Log("All Overlay Animators are finished");
+                    }
                     if (!isInterrupted)
                     {
                         matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
@@ -271,7 +278,6 @@ namespace Slot_Engine.Matrix
                         else
                             StateManager.SetStateTo(States.Idle_Intro);
                     }
-                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve,true);
                     break;
                 default:
                     break;

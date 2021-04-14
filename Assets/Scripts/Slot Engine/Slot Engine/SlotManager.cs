@@ -79,6 +79,11 @@ namespace Slot_Engine.Matrix
 
         public MeshRenderer _meshRenderer;
 
+        public bool ping_pong = false;
+        public bool up_down = true;
+        public float new_percentage = 0;
+
+        public float completePercent = 0;
         public AnimatorStateMachineManager state_machine
         {
             get
@@ -256,27 +261,10 @@ namespace Slot_Engine.Matrix
             return true;
         }
 
-        private void SetBoolTo(ref Animator animator, supported_bools symbolResolve, bool value)
+        private void SetBoolTo(ref Animator animator, supported_bools supportedBool, bool value)
         {
-            state_machine.SetBool(ref animator, symbolResolve,value);
-        }
-
-        public bool ping_pong = false;
-        public bool up_down = true;
-        public float new_percentage = 0;
-
-        public float completePercent = 0;
-
-        private void SetFloatMotionTimeTo(float v)
-        {
-            Debug.Log("Setting Motion Time nOt implemented");
-            //state_machine.SetFloatTo(supported_floats.MotionTime,0.0f);
-        }
-
-        private void SetBoolTo(supported_bools bool_name, bool v)
-        {
-            Debug.Log("Not Implemented SetBoolTo");
-            //state_machine.SetAllBoolStateMachinesTo(bool_name,v);
+            Debug.Log(String.Format("{0} bool {1} is {2}", animator.gameObject.name, supportedBool.ToString(), value));
+            state_machine.SetBool(ref animator, supportedBool,value);
         }
 
         internal void SetSymbolResolveToLose()
@@ -311,15 +299,6 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void ShowSymbolOverlay()
-        {
-            //ShowSymbolRenderer(symbol_to_display.primary_symbol);
-        }
-
-        private void SetPresentationSymbolTo(Symbol to_symbol)
-        {
-            SetPresentationSymbolTo((int)to_symbol);
-        }
         private void SetPresentationSymbolTo(int to_symbol)
         {
             if (to_symbol < 0)
@@ -328,6 +307,24 @@ namespace Slot_Engine.Matrix
                 presentation_symbol_name = ReturnSymbolNameFromInt(to_symbol);
             presentation_symbol = to_symbol;
         }
+
+        internal Animator SetOverlayAnimatorToFeatureAndGet()
+        {
+            Animator output;
+            //Compare to Symbols
+            for (int i = 0; i < reel_parent.matrix.symbols_data_for_matrix.symbols.Length; i++)
+            {
+                if (reel_parent.matrix.symbols_data_for_matrix.symbols[i].isOverlaySymbol)
+                {
+                    output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[i];
+                    Debug.Log(String.Format("{0}.{1}",output.transform.parent.parent.name, output.transform.parent.name));
+                    SetBoolTo(ref output, supported_bools.FeatureTrigger, true);
+                    return output;
+                }
+            }
+            return null;
+        }
+
         /// <summary>
         /// Sets the sub-state machine references to the symbol animators
         /// </summary>
