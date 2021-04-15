@@ -75,7 +75,7 @@ namespace Slot_Engine.Matrix
         {
             if (Input.GetMouseButtonDown(0))
             {
-                Debug.Log(String.Format("Mouse position = {0}", Input.mousePosition));
+                //Debug.Log(String.Format("Mouse position = {0}", Input.mousePosition));
                 RaycastForUIFromPosition(Input.mousePosition);
             }
             //Modify Bet Amount
@@ -215,12 +215,12 @@ namespace Slot_Engine.Matrix
 
         private void RaycastForUIFromPosition(Vector3 position)
         {
-            Debug.Log(String.Format("testing position = {0} for raycast hit", position));
+            //Debug.Log(String.Format("testing position = {0} for raycast hit", position));
             RaycastHit hit_info;
             Ray ray_to_use = Camera.main.ScreenPointToRay(position);
             Physics.Raycast(ray_to_use, out hit_info, 1000f);
             EnableDrawLineGizmo(ray_to_use);
-            Debug.Log(hit_info.transform?.gameObject.name);
+            //Debug.Log(hit_info.transform?.gameObject.name);
             if (hit_info.collider != null)
             {
                 if (hit_info.collider.gameObject.tag == "BetUp")

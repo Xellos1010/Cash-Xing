@@ -79,6 +79,14 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.TriggerFeatureWithSpin(Features.overlay);
                 }
+                if (GUILayout.Button("Start Test Spin - MI01 MI02 5 each"))
+                {
+                    myTarget.TriggerSpinWin(new int[2] { (int)Symbol.MI01, (int)Symbol.MI02},3);
+                }
+                if (GUILayout.Button("Test Spin - Last Spin Configuration"))
+                {
+                    myTarget.SetReelsLastConfigurationAndSpin();
+                }
                 if (GUILayout.Button("End Test Spin"))
                 {
                     myTarget.SetReelsSpinStatesTo(SpinStates.spin_outro);
@@ -219,7 +227,7 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         internal async void SetReelsSpinStatesTo(SpinStates state)
         {
-            Debug.Log(String.Format("current state = {0}",state));
+            //Debug.Log(String.Format("current state = {0}",state));
             current_state = state;
             //Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
@@ -229,7 +237,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_start:
                     StateManager.SetStateTo(States.Spin_Intro);
-                    Debug.Log("Starting Spin");
+                    //Debug.Log("Starting Spin");
                     await StartSpin();
                     if(!isInterrupted)
                         StateManager.SetStateTo(States.Spin_Idle);
@@ -239,7 +247,7 @@ namespace Slot_Engine.Matrix
                 case SpinStates.spin_intro:
                     break;
                 case SpinStates.spin_idle:
-                    Debug.Log("Using Timer");
+                    //Debug.Log("Using Timer");
                     use_timer = true;
                     break;
                 case SpinStates.spin_interrupt:
@@ -249,7 +257,7 @@ namespace Slot_Engine.Matrix
                     ResetUseTimer();
                     isInterrupted = false;
                     await StopReels();
-                    Debug.Log("All reels have stopped - setting state to spin end");
+                    //Debug.Log("All reels have stopped - setting state to spin end");
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
@@ -326,7 +334,7 @@ namespace Slot_Engine.Matrix
                 spin_reels_starting_forward_back ? i < matrix.reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
                 i = spin_reels_starting_forward_back ? i+1:i-1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
-                await matrix.reel_strip_managers[i].SpinReel();
+                await matrix.reel_strip_managers[i].StartSpin();
             }
         }
         /// <summary>
@@ -469,6 +477,32 @@ namespace Slot_Engine.Matrix
             matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(feature);
             //Go through interaction controller to disable slamming during transition to idle_outro
             matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+        }
+
+        internal void SetReelsLastConfigurationAndSpin()
+        {
+            //Add configuration to the sequence to trigger feature
+            matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(GameStates.baseGame,matrix.slot_machine_managers.end_configuration_manager.endConfigurationsScriptableObject.currentReelstripConfiguration);
+            //Go through interaction controller to disable slamming during transition to idle_outro
+            matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+        }
+
+        internal void TriggerSpinWin(int[] symbols, int numberOfSymbols)
+        {
+            ReelStripSpinStruct[] configuration = new ReelStripSpinStruct[0];
+            configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
+            for (int i = 0; i < configuration.Length; i++)
+            {
+                configuration[i].display_symbols = new SlotDisplaySymbol[3]
+                {
+                            new SlotDisplaySymbol(symbols[0]),
+                            new SlotDisplaySymbol(symbols[1]),
+                            new SlotDisplaySymbol(UnityEngine.Random.Range(0,9))
+                };
+            }
+                matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(GameStates.baseGame, configuration);
+            matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+
         }
     }
 }

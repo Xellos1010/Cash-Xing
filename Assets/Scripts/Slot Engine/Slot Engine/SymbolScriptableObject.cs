@@ -26,22 +26,27 @@ public struct SymbolObject
     /// Name of the Symbol
     /// </summary>
     [SerializeField]
-    public string symbol_name;
+    public string symbolName;
     /// <summary>
     /// Symbol Prefab
     /// </summary>
     [SerializeField]
-    public Transform symbol_prefab;
+    public Transform symbolPrefab;
     /// <summary>
-    /// Symbol material
+    /// The win sound to play when symbol wins
     /// </summary>
     [SerializeField]
-    public Material symbol_material;
+    public AudioClip winAudioClip;
+    /// <summary>
+    /// Used for overlay move and collect sounds - other sounds will apply
+    /// </summary>
+    [SerializeField]
+    public AudioClip[] featureSounds;
     /// <summary>
     /// Win value of the Symbol
     /// </summary>
     [SerializeField]
-    public int win_value;
+    public int winValue;
     /// <summary>
     /// Will this trigger a feature?
     /// </summary>
@@ -58,7 +63,7 @@ public struct SymbolObject
     /// Symbol Weight Info
     /// </summary>
     [SerializeField]
-    public symbol_weight_state[] symbol_weights;
+    public symbol_weight_state[] symbolWeights;
     /// <summary>
     /// Used to toggle wild feature
     /// </summary>
@@ -72,10 +77,10 @@ public struct symbol_weight_state
     /// Game state of to apply weights
     /// </summary>
     [SerializeField]
-    public GameStates game_state;
+    public GameStates gameState;
     /// <summary>
     /// Symbol weight info
     /// </summary>
     [SerializeField]
-    public float symbol_weight_info;
+    public float symbolWeightInfo;
 }

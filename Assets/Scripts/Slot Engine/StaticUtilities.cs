@@ -141,7 +141,7 @@ public static class StaticUtilities
     public static void DebugLog(string message)
     {
 #if DebugLogOn
-        Debug.Log(message);
+        //Debug.Log(message);
 #endif
     }
 

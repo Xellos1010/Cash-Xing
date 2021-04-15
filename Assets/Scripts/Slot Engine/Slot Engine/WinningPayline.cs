@@ -21,7 +21,7 @@ public class WinningPayline
         float output = 0;
         for (int i = 0; i < winning_symbols.Length; i++)
         {
-            output += CalculateTotalWin(matrix.symbols_data_for_matrix.symbols[i].win_value,ref matrix);
+            output += CalculateTotalWin(matrix.symbols_data_for_matrix.symbols[i].winValue,ref matrix);
         }
         return output;
     }
@@ -57,5 +57,11 @@ public class WinningPayline
             }
         }
         return output;
+    }
+
+    internal int GetWinningWymbol()
+    {
+        //Default to the first - need to add check if wild and provide override logic
+        return winning_symbols[0];
     }
 }

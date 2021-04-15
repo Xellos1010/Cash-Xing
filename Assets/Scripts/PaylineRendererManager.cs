@@ -129,7 +129,6 @@ namespace Slot_Engine.Matrix
         /// <param name="payline_to_show">The Winning payline to show</param>
         internal void ShowWinningPayline(WinningPayline payline_to_show)
         {
-            
             ToggleRenderer(true);
             //initialize the line positions list and 
             List<Vector3> linePositions;
@@ -140,7 +139,6 @@ namespace Slot_Engine.Matrix
                 //Solution for single line renderer
                 SetLineRendererPositions(linePositions, ref payline_renderers[0]);
             }
-
             else
             {
                 throw new Exception("Multiple Line Renderers TBD");

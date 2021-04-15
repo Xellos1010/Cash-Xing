@@ -29,6 +29,10 @@ namespace Slot_Engine.Matrix
 #endif
     public class RackingManager : MonoBehaviour
     {
+        public delegate void RackStart(float amountToRack);
+        public delegate void RackEnd();
+        public event RackStart rackStart;
+        public event RackEnd rackEnd;
         [SerializeField]
         private UITextManager ui_text_manager;
         [SerializeField]
@@ -82,6 +86,7 @@ namespace Slot_Engine.Matrix
         private void OffsetPlayerWalletBy(float amount)
         {
             //This will fire an event and the UI manager will auto set the text based on new player amount
+            Debug.Log("Player wallet offset by " + amount);
             matrix.OffetPlayerWalletBy(amount);
         }
 
@@ -120,6 +125,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void StartRacking()
         {
+            Debug.Log("Starting Rack");
             if(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
                 SetCreditAmountToRack(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
             else
@@ -135,11 +141,17 @@ namespace Slot_Engine.Matrix
             //need to see if win is big enough to present final win amount
             if(set_instantly)
             {
-                OffsetPlayerWalletBy(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.player_wallet + win_amount);
+                SetCreditsToRackAtSpeed(win_amount, credit_rack_speed);
+                FinalizeRacking();
             }
             else
             {
+                Debug.Log(win_amount + " Amount won");
+                OffsetPlayerBankBy(win_amount);
+                //Set Credits to rack
                 SetCreditsToRackAtSpeed(win_amount, credit_rack_speed);
+                //Send Event that credits are racking
+                rackStart?.Invoke(win_amount);
             }
         }
         /// <summary>
@@ -177,6 +189,8 @@ namespace Slot_Engine.Matrix
             if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
                 OffsetPlayerBankBy(-amount_to_rack);
             OffsetPlayerWalletBy(amount_to_rack);
+            if(bank_rack_remaining == 0)
+                rackEnd?.Invoke();
         }
 
         private void OffsetPlayerBankBy(float v)

@@ -13,15 +13,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Collections;
 using System;
 
 namespace Slot_Engine.Matrix
 {
 #if UNITY_EDITOR
     using UnityEditor;
-    using static Slot_Engine.Matrix.EndConfigurationManager;
-
     public enum eEaseType
 {
     constant,
@@ -109,6 +106,9 @@ namespace Slot_Engine.Matrix
 #endif
     public class ReelStripManager : MonoBehaviour
     {
+        public delegate void ReelEvent(int reelNumber);
+        public event ReelEvent reelStartSpin;
+        public event ReelEvent reelStopSpin;
         [SerializeField]
         internal SpinStates current_spin_state;
         //the matrix associated with the reel_strip
@@ -546,8 +546,9 @@ namespace Slot_Engine.Matrix
         /// Spin the Reels
         /// </summary>
         /// <returns>async task to track</returns>
-        public Task SpinReel()
+        public Task StartSpin()
         {
+            reelStartSpin?.Invoke(reelstrip_info.reel_number);
             //Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
             InitializeVarsForNewSpin();
             //When reel is generated it's vector3[] path is generated for reference from slots
@@ -643,10 +644,10 @@ namespace Slot_Engine.Matrix
         public async Task StopReel(SlotDisplaySymbol[] ending_symbols)
         {
             SetEndingSymbolsTo(ending_symbols);
-            //When reel is generated it's vector3[] path is generated for reference from slots
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
             await AllSlotsStoppedSpinning();
-            Debug.Log(String.Format("All slots stopped spinning for reel {0}",transform.name));
+            reelStopSpin?.Invoke(reelstrip_info.reel_number);
+            //Debug.Log(String.Format("All slots stopped spinning for reel {0}",transform.name));
         }
         internal async Task AllSlotsStoppedSpinning()
         {

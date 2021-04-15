@@ -227,9 +227,9 @@ namespace Slot_Engine.Matrix
         internal async void SetSymbolResolveWin()
         {
             //Set the sub symbol Animator
-            Debug.Log(String.Format("Setting {0} to symbol win for {1}",String.Join("_",transform.gameObject.name,transform.parent.gameObject.name),presentation_symbol));
+            //Debug.Log(String.Format("Setting {0} to symbol win for {1}",String.Join("_",transform.gameObject.name,transform.parent.gameObject.name),presentation_symbol));
             Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol]; //may display wrong animator is out of order
-            Debug.Log(String.Format("Symbol Set to win = {0}", sub_state_animator.transform.name));
+            //Debug.Log(String.Format("Symbol Set to win = {0}", sub_state_animator.transform.name));
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, true);
             SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
             //PingPong float
@@ -263,7 +263,7 @@ namespace Slot_Engine.Matrix
 
         private void SetBoolTo(ref Animator animator, supported_bools supportedBool, bool value)
         {
-            Debug.Log(String.Format("{0} bool {1} is {2}", animator.gameObject.name, supportedBool.ToString(), value));
+            //Debug.Log(String.Format("{0} bool {1} is {2}", animator.gameObject.name, supportedBool.ToString(), value));
             state_machine.SetBool(ref animator, supportedBool,value);
         }
 
@@ -430,8 +430,8 @@ namespace Slot_Engine.Matrix
             symbol_prefabs = new Transform[reel_parent.matrix.symbols_data_for_matrix.symbols.Length];
             for (int symbol = 0; symbol < symbol_prefabs.Length; symbol++)
             {
-                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbol_prefab) as Transform;
-                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbol_name);
+                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbolPrefab) as Transform;
+                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbolName);
                 symbol_prefabs[symbol].parent = transform;
                 symbol_prefabs[symbol].localPosition = Vector3.zero;
                 symbol_prefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);

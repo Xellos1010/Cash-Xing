@@ -91,6 +91,7 @@ namespace Slot_Engine.Matrix
         }
         internal void OffsetBankBy(float amount)
         {
+            Debug.Log(String.Format("Offsetting bank by {0}",amount));
             SetBankTo(machineInfoScriptableObject.bank + amount);
         }
 

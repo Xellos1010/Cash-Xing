@@ -9,7 +9,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-using WeightedDistribution;
 
 namespace Slot_Engine.Matrix
 {
@@ -110,14 +109,14 @@ namespace Slot_Engine.Matrix
             Dictionary<GameStates, List<float>> symboWeightsByState = new Dictionary<GameStates, List<float>>();
             for (int symbol = 0; symbol < symbols_data_for_matrix.symbols.Length; symbol++)
             {
-                for (int weight_state = 0; weight_state < symbols_data_for_matrix.symbols[symbol].symbol_weights.Length; weight_state++)
+                for (int weight_state = 0; weight_state < symbols_data_for_matrix.symbols[symbol].symbolWeights.Length; weight_state++)
                 {
-                    temp = symbols_data_for_matrix.symbols[symbol].symbol_weights[weight_state];
-                    if (!symboWeightsByState.ContainsKey(temp.game_state))
+                    temp = symbols_data_for_matrix.symbols[symbol].symbolWeights[weight_state];
+                    if (!symboWeightsByState.ContainsKey(temp.gameState))
                     {
-                        symboWeightsByState[temp.game_state] = new List<float>();
+                        symboWeightsByState[temp.gameState] = new List<float>();
                     }
-                    symboWeightsByState[temp.game_state].Add(temp.symbol_weight_info);
+                    symboWeightsByState[temp.gameState].Add(temp.symbolWeightInfo);
                 }
             }
             AddSymbolStateWeightToDict(symboWeightsByState);
@@ -160,7 +159,7 @@ namespace Slot_Engine.Matrix
 
         private WeightsDistributionScriptableObject FindDistributionFromResources(GameStates key)
         {
-            return Resources.Load(String.Format("Core/Weights/{0}",key.ToString())) as WeightsDistributionScriptableObject;
+            return Resources.Load(String.Format("Core/ScriptableObjects/Weights/{0}", key.ToString())) as WeightsDistributionScriptableObject;
         }
 
         [SerializeField]
@@ -216,10 +215,6 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal Material GetMaterialFromSymbol(int symbol)
-        {
-            return symbols_data_for_matrix.symbols[symbol].symbol_material;
-        }
 
         public string[] supported_symbols
         {
@@ -229,7 +224,7 @@ namespace Slot_Engine.Matrix
                 string[] names = new string[symbols_data_for_matrix.symbols.Length];
                 for (int i = 0; i < symbols_data_for_matrix.symbols.Length; i++)
                 {
-                    names[i] = symbols_data_for_matrix.symbols[i].symbol_name;
+                    names[i] = symbols_data_for_matrix.symbols[i].symbolName;
                 }
                 return names;
             }
@@ -243,10 +238,7 @@ namespace Slot_Engine.Matrix
             SetManagerStateMachineSubStates();
             //Initialize Machine and Player  Information
             slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length - 1, 1, 0);
-            //slot_machine_managers.end_configuration_manager.GenerateMultipleEndReelStripsConfiguration(20);
-            ReelStripSpinStruct[] stripInitial = slot_machine_managers.end_configuration_manager.pop_end_reelstrips_to_display_sequence;
-            string print_string = PrintSpinSymbols(ref stripInitial);
-            Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
+            //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
         }
@@ -414,8 +406,7 @@ namespace Slot_Engine.Matrix
         List<SlotManager> winning_slots, losing_slots;
         internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline)
         {
-            Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",
-                String.Join(" ", winning_payline.payline.payline_configuration.ToString()), String.Join(" ",winning_payline.winning_symbols)));
+            //Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",String.Join(" ", winning_payline.payline.payline_configuration.ToString()), String.Join(" ",winning_payline.winning_symbols)));
             //Get Winning Slots and loosing slots
             current_payline_displayed = winning_payline;
             ReturnWinLoseSlots(winning_payline, out winning_slots, out losing_slots, ref reel_strip_managers);
@@ -496,7 +487,7 @@ namespace Slot_Engine.Matrix
         /// <param name="onOff"></param>
         internal void ToggleFreeSpinActive(bool onOff)
         {
-            Debug.Log("Bonus Active");
+            Debug.Log("Bonus Active = " + onOff);
             bonus_game_triggered = onOff;
             SetAllAnimatorsBoolTo(supported_bools.BonusActive, onOff);
             if (!onOff)
@@ -524,7 +515,7 @@ namespace Slot_Engine.Matrix
 
         private void SetSlotsAnimatorBoolTo(supported_bools bool_name, bool v)
         {
-            Debug.Log(String.Format("Setting Slot Animator {0} to {1}",bool_name.ToString(),v));
+            //Debug.Log(String.Format("Setting Slot Animator {0} to {1}",bool_name.ToString(),v));
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
@@ -766,7 +757,7 @@ namespace Slot_Engine.Matrix
         /// <param name="active_inactive">state</param>
         private void StateManager_FeatureTransition(Features feature, bool active_inactive)
         {
-            Debug.Log(String.Format("Feature Transition for matrix = ",feature.ToString()));
+            //Debug.Log(String.Format("Feature Transition for matrix = ",feature.ToString()));
             switch (feature)
             {
                 case Features.freespin:
@@ -815,7 +806,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Resolve_Intro:
                     await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
-                    Debug.Log("Playing resolve Intro on Matrix");
+                    //Debug.Log("Playing resolve Intro on Matrix");
                     //If the player activated bonus trigger then increase player bank amount 
                     if (!bonus_game_triggered)
                         slot_machine_managers.racking_manager.StartRacking(); //This is to resolve wins in resolve intro
@@ -1085,6 +1076,26 @@ namespace Slot_Engine.Matrix
         internal void EnsureWeightsAreCorrect()
         {
             //TBD
+        }
+
+        internal int GetRollupIndexFromAmountToRack(float amountToRack)
+        {
+            float betAmount = slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts[slot_machine_managers.machine_info_manager.machineInfoScriptableObject.current_bet_amount];
+            int index = 0;
+            while(amountToRack > betAmount)
+            {
+                index += 1;
+                amountToRack -= betAmount;
+                //Big win if we are over the total rollups present
+                if (index == slot_machine_managers.soundManager.machineSoundsReference.rollups.Length -1)
+                    break;
+            }
+            return index;
+        }
+
+        internal AudioClip ReturnSymbolSound(int winningSymbol)
+        {
+            return symbols_data_for_matrix.symbols[winningSymbol].winAudioClip;
         }
     }
 }

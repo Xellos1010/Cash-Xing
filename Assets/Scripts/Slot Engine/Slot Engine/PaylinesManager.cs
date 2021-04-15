@@ -220,6 +220,7 @@ namespace Slot_Engine.Matrix
         public Task RenderWinningPayline(WinningPayline payline_to_show)
         {
             payline_renderer_manager.ShowWinningPayline(payline_to_show);
+            matrix.slot_machine_managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
             matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
             return Task.CompletedTask;
         }
@@ -262,12 +263,12 @@ namespace Slot_Engine.Matrix
             //TODO refactor and make settable by Unity Editor
             Dictionary<Features, List<suffix_tree_node_info>> feature_active_count = new Dictionary<Features, List<suffix_tree_node_info>>();
             winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref feature_active_count);
-            Debug.Log(String.Format("feature_active_count.keys = {0}", feature_active_count.Keys.Count));
-            Debug.Log(String.Format("Looking for features that activated"));
+            //Debug.Log(String.Format("feature_active_count.keys = {0}", feature_active_count.Keys.Count));
+            //Debug.Log(String.Format("Looking for features that activated"));
             foreach (KeyValuePair<Features, List<suffix_tree_node_info>> item in feature_active_count)
             {
                 //Multiplier calculated first then mode is applied
-                Debug.Log(String.Format("Feature name = {0}, counter = {1}",item.Key.ToString(), item.Value.Count));
+                //Debug.Log(String.Format("Feature name = {0}, counter = {1}",item.Key.ToString(), item.Value.Count));
                 if (item.Key == Features.overlay)
                 {
                     StateManager.SetFeatureActiveTo(Features.multiplier, true);
@@ -319,7 +320,7 @@ namespace Slot_Engine.Matrix
                     {
                         duplicate_paylines.Add(raw_payline);
                         //I can either keep the first one or second one at this point
-                        Debug.Log("Entry was removed ");
+                        //Debug.Log("Entry was removed ");
                     }
                 }
             }
@@ -383,13 +384,13 @@ namespace Slot_Engine.Matrix
         {
             //matrix.InitializeSymbolsForWinConfigurationDisplay();
             int payline_to_show = current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0;
-            Debug.Log(String.Format("Showing Payline {0}", payline_to_show));
+            //Debug.Log(String.Format("Showing Payline {0}", payline_to_show));
             yield return ShowWinningPayline(payline_to_show);
-            Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
+            //Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
             yield return new WaitForSeconds(wininng_payline_highlight_time);
-            Debug.Log("Hiding Payline");
+            //Debug.Log("Hiding Payline");
             yield return HideWinningPayline();
-            Debug.Log(String.Format("Delaying for {0} seconds", delay_between_wininng_payline));
+            //Debug.Log(String.Format("Delaying for {0} seconds", delay_between_wininng_payline));
             yield return new WaitForSeconds(delay_between_wininng_payline);
         }
 
@@ -401,7 +402,7 @@ namespace Slot_Engine.Matrix
         internal Task ShowWinningPayline(int v)
         {
             current_winning_payline_shown = v;
-            Debug.Log(String.Format("Current wining payline shown = {0}", v));
+            //Debug.Log(String.Format("Current wining payline shown = {0}", v));
             RenderWinningPayline(winning_paylines[current_winning_payline_shown]);
             return Task.CompletedTask;
         }

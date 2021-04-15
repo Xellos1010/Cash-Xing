@@ -66,7 +66,7 @@ namespace Slot_Engine.Matrix
             {
                 if(!this.features.Contains(features[feature]))
                 {
-                    Debug.Log(String.Format("{0} Adding Feature Counter", features[feature].ToString()));
+                    //Debug.Log(String.Format("{0} Adding Feature Counter", features[feature].ToString()));
                     this.features.Add(features[feature]);
                 }
             }
