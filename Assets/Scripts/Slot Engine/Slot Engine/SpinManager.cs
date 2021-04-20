@@ -47,15 +47,6 @@ namespace Slot_Engine.Matrix
             {
                 serializedObject.ApplyModifiedProperties();
             }
-            //EditorGUI.BeginChangeCheck();
-            //if (reel_spin_delay_start_enabled.boolValue || reel_spin_delay_end_enabled.boolValue)
-            //{
-            //    reel_spin_delay_ms.intValue = EditorGUILayout.IntSlider("Delay between reels star spin ms", reel_spin_delay_ms.intValue, 0, 2000);
-            //}
-            //if (EditorGUI.EndChangeCheck())
-            //{
-            //    serializedObject.ApplyModifiedProperties();
-            //}
             EditorGUI.BeginChangeCheck();
             spin_speed.floatValue = EditorGUILayout.Slider("Set Spin Speed", spin_speed.floatValue,-1000,1000);
             if (EditorGUI.EndChangeCheck())
@@ -69,7 +60,7 @@ namespace Slot_Engine.Matrix
             {
                 if (GUILayout.Button("Start Test Spin"))
                 {
-                    myTarget.SetReelsSpinStatesTo(SpinStates.spin_start);
+                    myTarget.SetSpinStateTo(SpinStates.spin_start);
                 }
                 if (GUILayout.Button("Start Test Spin - Bonus Trigger"))
                 {
@@ -89,7 +80,7 @@ namespace Slot_Engine.Matrix
                 }
                 if (GUILayout.Button("End Test Spin"))
                 {
-                    myTarget.SetReelsSpinStatesTo(SpinStates.spin_outro);
+                    myTarget.SetSpinStateTo(SpinStates.spin_outro);
                 }
             }
             base.OnInspectorGUI();
@@ -225,7 +216,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
-        internal async void SetReelsSpinStatesTo(SpinStates state)
+        internal async void SetSpinStateTo(SpinStates state)
         {
             //Debug.Log(String.Format("current state = {0}",state));
             current_state = state;
@@ -237,8 +228,8 @@ namespace Slot_Engine.Matrix
                     break;
                 case SpinStates.spin_start:
                     StateManager.SetStateTo(States.Spin_Intro);
-                    //Debug.Log("Starting Spin");
-                    await StartSpin();
+                    //Start the reels spinning
+                    await StartSpinReels();
                     if(!isInterrupted)
                         StateManager.SetStateTo(States.Spin_Idle);
                     else
@@ -256,45 +247,15 @@ namespace Slot_Engine.Matrix
                 case SpinStates.spin_outro:
                     ResetUseTimer();
                     isInterrupted = false;
-                    await StopReels();
+                    await StopReelsSpinning();
                     //Debug.Log("All reels have stopped - setting state to spin end");
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
-                    //This is the main logic for setting the game to resolve or idle
-                    //If there is an overlay wait for the overlay animation to play and state for symbolaffected to be on normalized time >= 1 for FeatureOutro
-                    if(matrix.slot_machine_managers.paylines_manager.overlaySymbols.Count > 0)
-                    {
-                        await matrix.PlayFeatureAnimation(matrix.slot_machine_managers.paylines_manager.overlaySymbols);
-                        Debug.Log("All Overlay Animators are finished");
-                    }
-                    if (!isInterrupted)
-                    {
-                        matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
-                    }
-                    if (CheckForWin())
-                    {
-                        StateManager.SetStateTo(States.Resolve_Intro);
-                        // Set Trigger for state machine to SymbolResolve and WinRacking to false
-                    }
-                    else
-                    {
-                        // Set Trigger for state machine to SymbolResolve and WinRacking to false
-                        //yield return ResetMachine();
-                        if(matrix.bonus_game_triggered)
-                            StateManager.SetStateTo(States.bonus_idle_intro);
-                        else
-                            StateManager.SetStateTo(States.Idle_Intro);
-                    }
                     break;
                 default:
                     break;
             }
-        }
-
-        private bool CheckForWin()
-        {
-            return matrix.slot_machine_managers.paylines_manager.winning_paylines.Length > 0 ? true : false;
         }
 
         internal void InterruptSpin()
@@ -307,7 +268,7 @@ namespace Slot_Engine.Matrix
         /// Start spinning the reels
         /// </summary>
         /// <returns></returns>
-        public async Task StartSpin()
+        public async Task StartSpinReels()
         {
             //The end reel configuration is set when spin starts to the next item in the list
             ReelStripSpinStruct[] end_reel_configuration = matrix.slot_machine_managers.end_configuration_manager.UseNextConfigurationInList();
@@ -340,7 +301,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Stop the reels - include display reel highlight if the feature is toggled
         /// </summary>
-        internal async Task StopReels()
+        internal async Task StopReelsSpinning()
         {
             //Get the end display configuration and set per reel
             ReelStripSpinStruct[] configuration_to_use = matrix.slot_machine_managers.end_configuration_manager.GetCurrentConfiguration();
@@ -421,13 +382,13 @@ namespace Slot_Engine.Matrix
             {
                 case States.Idle_Idle:
                     isInterrupted = false;
-                    SetReelsSpinStatesTo(SpinStates.idle_idle);
+                    SetSpinStateTo(SpinStates.idle_idle);
                     break;
                 case States.Idle_Outro:
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
                     //Set all animators triggers to spin start again
                     matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
-                    SetReelsSpinStatesTo(SpinStates.spin_start);
+                    SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.Spin_Interrupt:
                     isInterrupted = true;
@@ -436,35 +397,35 @@ namespace Slot_Engine.Matrix
                 case States.Spin_Intro:
                     break;
                 case States.Spin_Idle:
-                    SetReelsSpinStatesTo(SpinStates.spin_idle);
+                    SetSpinStateTo(SpinStates.spin_idle);
                     break;
                 case States.Spin_Outro:
-                    SetReelsSpinStatesTo(SpinStates.spin_outro);
+                    SetSpinStateTo(SpinStates.spin_outro);
                     break;
                 case States.Spin_End:
                     isInterrupted = false;
-                    SetReelsSpinStatesTo(SpinStates.end);
+                    SetSpinStateTo(SpinStates.end);
                     break;
                 case States.bonus_idle_outro:
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
                     matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
-                    SetReelsSpinStatesTo(SpinStates.spin_start);
+                    SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.bonus_idle_idle:
                     isInterrupted = false;
-                    SetReelsSpinStatesTo(SpinStates.idle_idle);
+                    SetSpinStateTo(SpinStates.idle_idle);
                     break;
                 case States.bonus_spin_intro:
                     break;
                 case States.bonus_spin_loop:
-                    SetReelsSpinStatesTo(SpinStates.spin_idle);
+                    SetSpinStateTo(SpinStates.spin_idle);
                     break;
                 case States.bonus_spin_outro:
-                    SetReelsSpinStatesTo(SpinStates.spin_outro);
+                    SetSpinStateTo(SpinStates.spin_outro);
                     break;
                 case States.bonus_spin_end:
                     isInterrupted = false;
-                    SetReelsSpinStatesTo(SpinStates.end);
+                    SetSpinStateTo(SpinStates.end);
                     break;
                 default:
                     break;

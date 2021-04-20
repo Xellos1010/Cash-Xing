@@ -181,9 +181,6 @@ namespace Slot_Engine.Matrix
         {
             switch (state)
             {
-                case States.Resolve_Intro:
-                    
-                    break;
                 default:
                     ToggleRenderer(false);
                     break;

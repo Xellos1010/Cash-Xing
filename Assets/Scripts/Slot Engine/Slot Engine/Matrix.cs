@@ -237,7 +237,7 @@ namespace Slot_Engine.Matrix
             SetSubStatesAllSlotAnimatorStateMachines();
             SetManagerStateMachineSubStates();
             //Initialize Machine and Player  Information
-            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length - 1, 1, 0);
+            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 -1, 1, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
@@ -796,12 +796,36 @@ namespace Slot_Engine.Matrix
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     break;
                 case States.Spin_End:
+                    //If the spin has ended and there are no wining paylines or freespins left then disable freespin mode
                     if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0 && slot_machine_managers.paylines_manager.winning_paylines.Length <= 0)
                     {
                         StateManager.SetFeatureActiveTo(Features.freespin, false);
                     }
+                    if (slot_machine_managers.paylines_manager.overlaySymbols.Count > 0)
+                    {
+                        await PlayFeatureAnimation(slot_machine_managers.paylines_manager.overlaySymbols);
+                        Debug.Log("All Overlay Animators are finished");
+                    }
+                    if (!slot_machine_managers.spin_manager.isInterrupted)
+                    {
+                        SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                    }
+                    if (CheckForWin())
+                    {
+                        StateManager.SetStateTo(States.Resolve_Intro);
+                        // Set Trigger for state machine to SymbolResolve and WinRacking to false
+                    }
+                    else
+                    {
+                        // Set Trigger for state machine to SymbolResolve and WinRacking to false
+                        if (bonus_game_triggered)
+                            StateManager.SetStateTo(States.bonus_idle_intro);
+                        else
+                            StateManager.SetStateTo(States.Idle_Intro);
+                    }
+
                     //Check here for overlay symbols and put thru feature then on feature outro hang until movement complete and animation controller is at end on animation
-                    if (!bonus_game_triggered && slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
+                    if (!bonus_game_triggered && slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0 && slot_machine_managers.paylines_manager.winning_paylines.Length < 1)
                         slot_machine_managers.racking_manager.StartRacking(); //Thsi resolves racking if freespin = 0 and you didn't win
                     break;
                 case States.Resolve_Intro:
@@ -809,7 +833,12 @@ namespace Slot_Engine.Matrix
                     //Debug.Log("Playing resolve Intro on Matrix");
                     //If the player activated bonus trigger then increase player bank amount 
                     if (!bonus_game_triggered)
+                    {
+                        //First offset bank by win then rack
+                        //TODO have offset occur when winning payline is animated to bank
+                        slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
                         slot_machine_managers.racking_manager.StartRacking(); //This is to resolve wins in resolve intro
+                    }
                     else
                     {
                         slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
@@ -842,6 +871,10 @@ namespace Slot_Engine.Matrix
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
                     break;
             }
+        }
+        internal bool CheckForWin()
+        {
+            return slot_machine_managers.paylines_manager.winning_paylines.Length > 0 ? true : false;
         }
         internal async Task isAllAnimatorsThruState(string state)
         {

@@ -269,7 +269,6 @@ namespace Slot_Engine.Matrix
 
         internal void SetSymbolResolveToLose()
         {
-            //Debug.Log(String.Format("Symbol Resolve Lose - presentation_symbol = {0} state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators = {1}", presentation_symbol, state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators.Length));
             if (Application.isPlaying)
             {
                 Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];

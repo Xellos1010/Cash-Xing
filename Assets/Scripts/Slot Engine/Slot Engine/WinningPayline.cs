@@ -1,13 +1,22 @@
 ﻿//For Parsing Purposes
+using Slot_Engine.Matrix;
 using System;
-
+using UnityEngine;
+//[Serializable]
+//public struct PaylineNode
+//{
+//    [SerializeField]
+//    public suffix_tree_node_info nodeInfo;
+//    [SerializeField]
+//    public int symbol;
+//}
 [System.Serializable]
 public class WinningPayline
 {
     public Payline payline;
-    public int[] winning_symbols;
+    public PaylineNode[] winning_symbols;
 
-    public WinningPayline(Payline payline, int[] winning_symbols)
+    public WinningPayline(Payline payline, PaylineNode[] winning_symbols)
     {
         this.payline = payline;
         this.winning_symbols = winning_symbols;
@@ -16,7 +25,7 @@ public class WinningPayline
     /// Calculates total win of payline then returns final value
     /// </summary>
     /// <returns></returns>
-    internal float GetTotalWin(Slot_Engine.Matrix.Matrix matrix)
+    internal float GetTotalWin(Matrix matrix)
     {
         float output = 0;
         for (int i = 0; i < winning_symbols.Length; i++)
@@ -32,7 +41,7 @@ public class WinningPayline
         return (win_value * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount) * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier;
     }
 
-    internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, int symbol_to_check)
+    internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, PaylineNode symbol_to_check)
     {
         //Check Winning slot at reel 
         if (payline.payline_configuration.payline[reel]+reel_start_padding==slot && IsSymbolWinningSymbol(symbol_to_check))
@@ -45,12 +54,12 @@ public class WinningPayline
         }
     }
 
-    private bool IsSymbolWinningSymbol(int symbol_to_check)
+    private bool IsSymbolWinningSymbol(PaylineNode symbol_to_check)
     {
         bool output = false;
         for (int i = 0; i < winning_symbols.Length; i++)
         {
-            if(winning_symbols[i] == symbol_to_check)
+            if(winning_symbols[i].symbol == symbol_to_check.symbol)
             {
                 output = true;
                 break;
@@ -59,7 +68,7 @@ public class WinningPayline
         return output;
     }
 
-    internal int GetWinningWymbol()
+    internal PaylineNode GetWinningWymbol()
     {
         //Default to the first - need to add check if wild and provide override logic
         return winning_symbols[0];

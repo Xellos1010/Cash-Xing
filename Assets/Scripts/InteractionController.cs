@@ -155,10 +155,16 @@ namespace Slot_Engine.Matrix
             {
                 StartSpin();
             }
-            else if (StateManager.enCurrentState == States.Idle_Outro || StateManager.enCurrentState == States.Spin_Intro || StateManager.enCurrentState == States.Spin_Idle || StateManager.enCurrentState == States.bonus_idle_outro || StateManager.enCurrentState == States.bonus_spin_intro || StateManager.enCurrentState == States.bonus_spin_loop)
+            else if (StateManager.enCurrentState == States.Idle_Outro || 
+                StateManager.enCurrentState == States.Spin_Intro || 
+                StateManager.enCurrentState == States.Spin_Idle || 
+                StateManager.enCurrentState == States.bonus_idle_outro || 
+                StateManager.enCurrentState == States.bonus_spin_intro || 
+                StateManager.enCurrentState == States.bonus_spin_loop)
             {
                 SlamSpin();
             }
+            //TODO Have this based off game mode
             else if (StateManager.enCurrentState == States.Resolve_Intro)
             {
                 SlamLoopingPaylines();
@@ -176,9 +182,10 @@ namespace Slot_Engine.Matrix
         private void StartSpin()
         {
             if(StateManager.enCurrentState == States.Idle_Idle)
-                SetStateDisableInteraction(States.Idle_Outro);
+                DisableInteractionAndSetStateTo(States.Idle_Outro);
+            //TODO have this based off game mode
             else if (StateManager.enCurrentState == States.bonus_idle_idle)
-                SetStateDisableInteraction(States.bonus_idle_outro);
+                DisableInteractionAndSetStateTo(States.bonus_idle_outro);
         }
         
         public void DisableSlam()
@@ -186,7 +193,7 @@ namespace Slot_Engine.Matrix
             can_spin_slam = false;
         }
 
-        private void SetStateDisableInteraction(States to_state)
+        private void DisableInteractionAndSetStateTo(States to_state)
         {
             can_spin_slam = false;
             //Set state to idle outro then in idle outro set trigger for StartSpin
@@ -246,12 +253,14 @@ namespace Slot_Engine.Matrix
 
         private void IncreaseBetAmount()
         {
-            matrix.slot_machine_managers.machine_info_manager.IncreaseBetAmount();
+            if (StateManager.enCurrentState == States.Idle_Idle)
+                matrix.slot_machine_managers.machine_info_manager.IncreaseBetAmount();
         }
 
         private void DecreaseBetAmount()
         {
-            matrix.slot_machine_managers.machine_info_manager.DecreaseBetAmount();
+            if(StateManager.enCurrentState == States.Idle_Idle)
+                matrix.slot_machine_managers.machine_info_manager.DecreaseBetAmount();
         }
 
         private void SetTriggerTo(supported_triggers to_trigger)
@@ -261,7 +270,7 @@ namespace Slot_Engine.Matrix
 
         public void SlamSpin()
         {
-            SetStateDisableInteraction(States.Spin_Interrupt);
+            DisableInteractionAndSetStateTo(States.Spin_Interrupt);
         }
 
         void OnEnable()
@@ -282,6 +291,7 @@ namespace Slot_Engine.Matrix
                     can_spin_slam = true;
                     break;
                 case States.Idle_Outro:
+                    //Can slam even if Idle_Outro Animations haven't played. Disable Slam until Resolve_Intro or Idle_Idle
                     can_spin_slam = true;
                     break;
                 case States.Resolve_Intro:

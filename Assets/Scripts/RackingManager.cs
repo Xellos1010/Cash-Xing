@@ -147,7 +147,7 @@ namespace Slot_Engine.Matrix
             else
             {
                 Debug.Log(win_amount + " Amount won");
-                OffsetPlayerBankBy(win_amount);
+                //OffsetPlayerBankBy(win_amount);
                 //Set Credits to rack
                 SetCreditsToRackAtSpeed(win_amount, credit_rack_speed);
                 //Send Event that credits are racking

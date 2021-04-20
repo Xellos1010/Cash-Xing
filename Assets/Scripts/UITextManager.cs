@@ -64,8 +64,9 @@ namespace Slot_Engine.Matrix
         public void SetFreeSpinRemainingTo(int value)
         {
             SetTextMeshProTextTo(ref freespin_info, String.Format("{0} Free Spin{1} Remaining", value, value > 1 ? "s" : ""));
-            //Testing Purposes Only - To be animated
-            //freespin_info.enabled = value > 0 ? true : false;
+            //3 is overlay spin count and 
+            if(value != 3 && value != 10)
+                freespin_info.enabled = value > 0 ? true : false;
         }
         /// <summary>
         /// Sets the player wallet text to ${0:n}

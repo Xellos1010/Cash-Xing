@@ -219,6 +219,7 @@ namespace Slot_Engine.Matrix
         [ExecuteInEditMode]
         public Task RenderWinningPayline(WinningPayline payline_to_show)
         {
+            //If first time thru then lerp money to bank
             payline_renderer_manager.ShowWinningPayline(payline_to_show);
             matrix.slot_machine_managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
             matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
@@ -257,20 +258,19 @@ namespace Slot_Engine.Matrix
         public Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
         {
             overlaySymbols = new List<suffix_tree_node_info>();
-            //Initialize variabled needed for caching
-            List<int> matching_symbols_list;
             int primary_symbol_index;//index for machine_symbols_list with the symbol to check for in the payline.
             //TODO refactor and make settable by Unity Editor
             Dictionary<Features, List<suffix_tree_node_info>> feature_active_count = new Dictionary<Features, List<suffix_tree_node_info>>();
             winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref feature_active_count);
-            //Debug.Log(String.Format("feature_active_count.keys = {0}", feature_active_count.Keys.Count));
+            Debug.Log(String.Format("feature_active_count.keys = {0}", feature_active_count.Keys.Count));
             //Debug.Log(String.Format("Looking for features that activated"));
             foreach (KeyValuePair<Features, List<suffix_tree_node_info>> item in feature_active_count)
             {
                 //Multiplier calculated first then mode is applied
-                //Debug.Log(String.Format("Feature name = {0}, counter = {1}",item.Key.ToString(), item.Value.Count));
-                if (item.Key == Features.overlay)
+                Debug.Log(String.Format("Feature name = {0}, counter = {1}", item.Key.ToString(), item.Value.Count));
+                if (item.Key == Features.multiplier)
                 {
+                    Debug.Log("Overlay Symbol Found in Winning Paylines");
                     StateManager.SetFeatureActiveTo(Features.multiplier, true);
                     StateManager.AddToMultiplier(item.Value.Count);
                     overlaySymbols = item.Value;
@@ -289,17 +289,49 @@ namespace Slot_Engine.Matrix
             return Task.CompletedTask;
         }
 
-        private WinningPayline[] CheckForWinningPaylinesDynamic(ref ReelSymbolConfiguration[] symbols_configuration, ref Dictionary<Features, List<suffix_tree_node_info>> special_symbols)
+        private WinningPayline[] CheckForWinningPaylinesDynamic(ref ReelSymbolConfiguration[] symbols_configuration, ref Dictionary<Features, List<suffix_tree_node_info>> feature_active_count)
         {
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();
             for (int root_node = 0; root_node < dynamic_paylines_evaluation.dynamic_paylines.root_nodes.Length; root_node++)
             {
-                output_raw.AddRange(dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node].InitializeAndCheckForWinningPaylines(ref symbols_configuration, ref special_symbols));
+                output_raw.AddRange(dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node].InitializeAndCheckForWinningPaylines(ref symbols_configuration, ref feature_active_count));
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
                 //Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,root_node, dynamic_paylines_evaluation.dynamic_paylines.root_nodes[root_node].node_info.Print()));
+            }
+            //Features[] temp = new Features[feature_active_count.Keys.Count];
+            //feature_active_count.Keys.CopyTo(temp,0);
+            //for (int key = 0; key < temp.Length; key++)
+            //{
+            //    feature_active_count.Keys.CopyTo(temp, key);
+            //    Debug.Log(temp[key].ToString());
+            //}
+            if (feature_active_count.ContainsKey(Features.multiplier))
+            {
+                feature_active_count[Features.multiplier].Clear();
+                SlotDisplaySymbol linewin_symbol;
+                //Verify multiplier is apart of winning payline
+                PaylineNode symbolObject;
+                //Debug.Log("Checking Multiplier has only winning payline nodes");
+                for (int winning_payline = 0; winning_payline < output_filtered.Count; winning_payline++)
+                {
+                    //Debug.Log(String.Format("Checking Winning Payline {0}", output_filtered[winning_payline].payline.PrintConfiguration()));
+
+                    for (int symbol = 0; symbol < output_filtered[winning_payline].winning_symbols.Length; symbol++)
+                    {
+                        symbolObject = output_filtered[winning_payline].winning_symbols[symbol];
+                        linewin_symbol = symbols_configuration[symbolObject.suffix_tree_node_info.column].reel_slots[symbolObject.suffix_tree_node_info.row];
+                        //Debug.Log(String.Format("Checking Winning Payline {0}, Node = {1} Symbol = {2} isOverlay = {3}", output_filtered[winning_payline].payline.PrintConfiguration(), symbolObject.suffix_tree_node_info.Print(), linewin_symbol.primary_symbol,linewin_symbol.is_overlay));
+                        if(!feature_active_count[Features.multiplier].Contains(symbolObject.suffix_tree_node_info) && linewin_symbol.is_overlay)
+                        {
+                            feature_active_count[Features.multiplier].Add(symbolObject.suffix_tree_node_info);
+                        }
+                    }
+                }
+                if (feature_active_count[Features.multiplier].Count == 0)
+                    feature_active_count.Remove(Features.multiplier);
             }
             return output_filtered.ToArray();
 
@@ -319,8 +351,6 @@ namespace Slot_Engine.Matrix
                     if(IsFullLineWinInList(raw_payline,ref output_filtered))
                     {
                         duplicate_paylines.Add(raw_payline);
-                        //I can either keep the first one or second one at this point
-                        //Debug.Log("Entry was removed ");
                     }
                 }
             }
@@ -636,21 +666,6 @@ namespace Slot_Engine.Matrix
                 {
                     payline_renderer_manager.ShowPayline(dynamic_paylines_evaluation.dynamic_paylines.ReturnPayline(payline_to_show));
                 }
-            }
-        }
-
-        [Serializable]
-        public struct SymbolWinStruct
-        {
-            [SerializeField]
-            internal suffix_tree_node_info suffix_tree_node_info;
-            [SerializeField]
-            internal int symbol;
-
-            public SymbolWinStruct(suffix_tree_node_info suffix_tree_node_info, int symbol) : this()
-            {
-                this.suffix_tree_node_info = suffix_tree_node_info;
-                this.symbol = symbol;
             }
         }
     }

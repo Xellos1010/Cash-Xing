@@ -68,7 +68,7 @@ namespace Slot_Engine.Matrix
 
         internal void PlayAudioForWinningPayline(WinningPayline winningPayline)
         {
-            int winningSymbol = winningPayline.GetWinningWymbol();
+            int winningSymbol = winningPayline.GetWinningWymbol().symbol;
             audioSource.PlayOneShot(matrix.ReturnSymbolSound(winningSymbol));
         }
     }
