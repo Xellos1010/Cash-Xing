@@ -71,7 +71,7 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
 
     internal void SetStateMachinesTriggerTo(supported_triggers trigger)
     {
-        if(animator_state_machines.state_machines_to_sync.Length > 0)
+        if (animator_state_machines.state_machines_to_sync.Length > 0)
         {
             for (int animator = 0; animator < animator_state_machines.state_machines_to_sync.Length; animator++)
             {
@@ -128,7 +128,7 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
     {
         animator_state_machines.ClearValues();
         animator_state_machines.sub_state_machines_keys = keys;
-        animator_state_machines.sub_state_machines_values.sub_state_machine = values;
+        animator_state_machines.sub_state_machines_values.sub_state_machines = values;
     }
 
     internal void SetStateMachineSyncAnimators()
@@ -140,5 +140,16 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
     private void SetStateMachinesTo(ref Animator[] states_to_sync)
     {
         animator_state_machines.state_machines_to_sync = states_to_sync;
+    }
+
+    internal void SetSubStateMachinesTriggerTo(int subStateIndex,supported_triggers toTrigger)
+    {
+        if(animator_state_machines.sub_state_machines_values.sub_state_machines[subStateIndex].sub_state_animators.Length > 0)
+        {
+            for (int animator = 0; animator < animator_state_machines.sub_state_machines_values.sub_state_machines[subStateIndex].sub_state_animators.Length; animator++)
+            {
+                animator_state_machines.sub_state_machines_values.sub_state_machines[subStateIndex].sub_state_animators[animator].SetTrigger(toTrigger.ToString());
+            }
+        }
     }
 }

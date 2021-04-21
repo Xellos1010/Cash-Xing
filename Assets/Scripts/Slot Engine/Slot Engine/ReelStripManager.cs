@@ -551,7 +551,7 @@ namespace Slot_Engine.Matrix
             reelStartSpin?.Invoke(reelstrip_info.reel_number);
             //Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
             InitializeVarsForNewSpin();
-            //When reel is generated it's vector3[] path is generated for reference from slots
+
             SetSpinStateTo(SpinStates.spin_start);
             reel_spin_speed_current = reelstrip_info.spin_parameters.spin_speed_constant;
 
@@ -774,7 +774,7 @@ namespace Slot_Engine.Matrix
             List<AnimatorSubStateMachine> values = new List<AnimatorSubStateMachine>();
             for (int slot = 0; slot < slots_in_reel.Length; slot++)
             {
-                values.AddRange(slots_in_reel[slot].state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine);
+                values.AddRange(slots_in_reel[slot].state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines);
             }
             return values.ToArray();
         }

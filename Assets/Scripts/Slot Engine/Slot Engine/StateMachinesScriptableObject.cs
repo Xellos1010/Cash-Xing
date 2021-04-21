@@ -25,7 +25,7 @@ public class StateMachinesScriptableObject : ScriptableObject
 public struct AnimatorSubStateMachines
 {
     [SerializeField]
-    public AnimatorSubStateMachine[] sub_state_machine;
+    public AnimatorSubStateMachine[] sub_state_machines;
 }
 [Serializable]
 public struct AnimatorSubStateMachine
@@ -86,19 +86,19 @@ public struct AnimatorStateMachines
             sub_state_machines_keys = sub_state_machines_keys.AddAt<string>(index, animator_state_machine);
             AnimatorSubStateMachine subStateMachine = new AnimatorSubStateMachine();
             subStateMachine.sub_state_animators = animators;
-            sub_state_machines_values.sub_state_machine = sub_state_machines_values.sub_state_machine.AddTo<AnimatorSubStateMachine>(subStateMachine);
+            sub_state_machines_values.sub_state_machines = sub_state_machines_values.sub_state_machines.AddTo<AnimatorSubStateMachine>(subStateMachine);
         }
         else
         {
-            if (sub_state_machines_values.sub_state_machine.Length > index)
+            if (sub_state_machines_values.sub_state_machines.Length > index)
             {
-                sub_state_machines_values.sub_state_machine[index].sub_state_animators = animators;
+                sub_state_machines_values.sub_state_machines[index].sub_state_animators = animators;
             }
             else
             {
                 AnimatorSubStateMachine subStateMachine = new AnimatorSubStateMachine();
                 subStateMachine.sub_state_animators = animators;
-                sub_state_machines_values.sub_state_machine = sub_state_machines_values.sub_state_machine.AddTo<AnimatorSubStateMachine>(subStateMachine);
+                sub_state_machines_values.sub_state_machines = sub_state_machines_values.sub_state_machines.AddTo<AnimatorSubStateMachine>(subStateMachine);
             }
         }
         
@@ -108,6 +108,6 @@ public struct AnimatorStateMachines
     {
         sub_state_machines_keys = new string[0];
         sub_state_machines_values = new AnimatorSubStateMachines();
-        sub_state_machines_values.sub_state_machine = new AnimatorSubStateMachine[0];
+        sub_state_machines_values.sub_state_machines = new AnimatorSubStateMachine[0];
     }
 }

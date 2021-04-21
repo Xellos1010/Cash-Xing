@@ -46,7 +46,8 @@ namespace Slot_Engine.Matrix
                 return _matrix;
             }
         }
-        private Matrix _matrix;
+        [SerializeField]
+        internal Matrix _matrix;
         public TextMeshPro bank, multiplier, freespin_info, player_wallet, bet_amount;
         public void SetBankTo(float value)
         {
