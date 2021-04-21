@@ -180,8 +180,6 @@ namespace Slot_Engine.Matrix
         {
             switch (feature)
             {
-                case Features.None:
-                    break;
                 case Features.freespin:
                     if (active_inactive)
                     {

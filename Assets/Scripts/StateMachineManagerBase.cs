@@ -61,6 +61,7 @@ public class StateMachineManagerBase : MonoBehaviour
     }
     internal void SetAllBoolStateMachinesTo(ref Animator[] animators, supported_bools bool_name, bool value)
     {
+        Debug.Log(String.Format("Setting Bool {0} to {1}",bool_name.ToString(),value));
         for (int i = 0; i < animators.Length; i++)
         {
             AnimatorStaticUtilites.SetBoolTo(ref animators[i], bool_name, value); 

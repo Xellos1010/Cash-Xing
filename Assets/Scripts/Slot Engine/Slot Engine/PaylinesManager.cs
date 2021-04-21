@@ -284,10 +284,6 @@ namespace Slot_Engine.Matrix
                         StateManager.SetFeatureActiveTo(Features.freespin, true);
                     }
             }
-            if (winning_paylines.Length > 0)
-            {
-                matrix.SetSystemToPresentWin();
-            }
             paylines_evaluated = true;
             return Task.CompletedTask;
         }

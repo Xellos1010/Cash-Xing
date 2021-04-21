@@ -374,7 +374,6 @@ namespace Slot_Engine.Matrix
         internal void InitializeAnimatorToPresentWin()
         {
             state_machine.InitializeAnimator();
-            state_machine.SetBoolAllStateMachines(supported_bools.WinRacking, true);
             
         }
 
@@ -471,6 +470,30 @@ namespace Slot_Engine.Matrix
         internal void SetStateMachineAnimators()
         {
             state_machine.SetStateMachineSyncAnimators();
+        }
+
+        internal bool isAllAnimatorsFinished(string animation_to_check)
+        {
+            bool output = false;
+            for (int subStateMachine = 0; subStateMachine < state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length; subStateMachine++)
+            {
+                for (int animator = 0; animator < state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length; animator++)
+                {
+                    AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator].GetCurrentAnimatorStateInfo(0);
+                    //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
+
+                    if (state_info.IsName(animation_to_check) && state_info.normalizedTime >= 1)
+                    {
+                        output = true;
+                    }
+                    else
+                    {
+                        //Debug.Log(String.Format("Not {0}", animation_to_check));
+                        break;
+                    }
+                }
+            }
+            return output;
         }
     }
 }
