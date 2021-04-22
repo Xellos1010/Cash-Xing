@@ -37,8 +37,14 @@ public class WinningPayline
 
     private float CalculateTotalWin(int win_value, ref Slot_Engine.Matrix.Matrix matrix)
     {
-        //Total win = (Bet Amount * win_value) * multiplier
-        return (win_value * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount) * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier;
+        if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
+        {
+            return (win_value * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount) * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier;
+        }
+        else
+        {
+            return (win_value * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount);
+        }
     }
 
     internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, PaylineNode symbol_to_check)

@@ -117,7 +117,12 @@ namespace Slot_Engine.Matrix.Managers
                 }
                 else if (StateManager.enCurrentState == States.bonus_idle_idle)
                 {
-                    //Insert Auto Spin for freespin mode
+                    time_counter += Time.deltaTime;
+                    if (time_counter > 1)
+                    {
+                        ResetUseTimer();
+                        matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+                    }
                 }
                 else
                 {
@@ -237,10 +242,12 @@ namespace Slot_Engine.Matrix.Managers
                 case States.bonus_idle_outro:
                     //Wait for animator to play all idle outro animations then continue with spin.
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
+                    ResetUseTimer();
                     //SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.bonus_idle_idle:
                     SetSpinStateTo(SpinStates.idle_idle);
+                    use_timer = true;
                     break;
                 case States.bonus_spin_intro:
                     break;

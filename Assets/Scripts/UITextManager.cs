@@ -59,7 +59,7 @@ namespace Slot_Engine.Matrix
         {
             SetTextMeshProTextTo(ref multiplier, String.Format("{0}x", value));
             //Testing Purposes Only - To be animated
-            multiplier.enabled = value <= 1  ? false : true;
+            multiplier.enabled = value < 1  ? false : true;
         }
 
         public void SetFreeSpinRemainingTo(int value)

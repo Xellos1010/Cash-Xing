@@ -254,7 +254,7 @@ namespace Slot_Engine.Matrix
             SetSubStatesAllSlotAnimatorStateMachines();
             SetManagerStateMachineSubStates();
             //Initialize Machine and Player  Information
-            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 -1, 1, 0);
+            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 -1, 0, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
@@ -578,7 +578,7 @@ namespace Slot_Engine.Matrix
             bonus_game_triggered = onOff;
             SetAllAnimatorsBoolTo(supported_bools.BonusActive, onOff);
             if (!onOff)
-                slot_machine_managers.machine_info_manager.SetMultiplierTo(1);
+                slot_machine_managers.machine_info_manager.SetMultiplierTo(0);
         }
 
         private void SetAllAnimatorsBoolTo(supported_bools bool_to_set, bool value)
@@ -918,6 +918,8 @@ namespace Slot_Engine.Matrix
                             //Rack win to bank and continue to next spin
                             Debug.Log("There is a win and bonus game triggeres");
                             slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
+                            freespinText.text = String.Format("{0:C2} Total Win Amount", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+                            freespinText.enabled = true;
                             SetAllAnimatorsBoolTo(supported_bools.WinRacking, false); // dont rack wins
                             if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
                             {
@@ -1000,15 +1002,22 @@ namespace Slot_Engine.Matrix
                 case States.Resolve_Outro:
                     await slot_machine_managers.paylines_manager.CancelCycleWins();
                     //TODO Refactor hack
-                    freespinText.text = "";
-                    freespinText.enabled = false;
+                    if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins < 1)
+                    {
+                        freespinText.text = "";
+                        freespinText.enabled = false;
+                    }
+                    else
+                    {
+                        slot_machine_managers.machine_info_manager.SetFreeSpinsTo(slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins);
+                    }
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
                     if(StateManager.enCurrentMode == GameStates.baseGame)
                     {
                         SetAllAnimatorsBoolTo(supported_bools.BonusActive, false);
                         //ensure multiplier set to 0
-                        slot_machine_managers.machine_info_manager.SetMultiplierTo(1);
+                        slot_machine_managers.machine_info_manager.SetMultiplierTo(0);
                     }
                     //PlayAnimationOnAllSlots("Resolve_Outro");
                     await isAllAnimatorsThruStateAndAtPauseState("Resolve_Outro");
