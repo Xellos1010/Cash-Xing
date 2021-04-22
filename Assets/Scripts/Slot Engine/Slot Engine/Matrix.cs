@@ -163,6 +163,7 @@ namespace Slot_Engine.Matrix
 
         private WeightsDistributionScriptableObject FindDistributionFromResources(GameStates key)
         {
+            Debug.Log(String.Format("Loading Resources/Core/ScriptableObjects/Weights/{0}", key.ToString()));
             return Resources.Load(String.Format("Core/ScriptableObjects/Weights/{0}", key.ToString())) as WeightsDistributionScriptableObject;
         }
 
@@ -1003,7 +1004,9 @@ namespace Slot_Engine.Matrix
                         slot_machine_managers.machine_info_manager.SetMultiplierTo(1);
                     }
                     //PlayAnimationOnAllSlots("Resolve_Outro");
+                    await isAllAnimatorsThruStateAndAtPauseState("Resolve_Outro");
                     await isAllSlotAnimatorsReady("Resolve_Outro");
+                    SetAllAnimatorsTriggerTo(supported_triggers.ResolveEnd,true);
                     if (!bonus_game_triggered)
                     {                        //TODO wait for all animators to go thru idle_intro state
                         StateManager.SetStateTo(States.Idle_Intro);
@@ -1328,12 +1331,14 @@ namespace Slot_Engine.Matrix
 
         internal void CreateEmptyAnimationContainer()
         {
+#if UNITY_EDITOR
             AnimationClip clip = new AnimationClip();
             clip.name = name;
             AnimationCurve curve = AnimationCurve.Linear(0.0F, 1.0F, .0001F, 1.0F); // Unity won't let me use 0 length, so use a very small length instead
             EditorCurveBinding binding = EditorCurveBinding.FloatCurve(string.Empty, typeof(UnityEngine.Animator), "ThisIsAnEmptyAnimationClip"); // Just dummy data
             AnimationUtility.SetEditorCurve(clip, binding, curve);
             AssetDatabase.CreateAsset(clip, "Assets/" + name + ".anim");
+#endif
         }
     }
 }

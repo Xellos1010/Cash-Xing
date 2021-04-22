@@ -74,6 +74,7 @@ namespace Slot_Engine.Matrix
         public Vector2 position_on_began;
         private bool draw_line_gizmo;
         private Ray camera_ray_out;
+        public Animator spin_btn_animator;
 
         void OnDrawGizmos()
         {
@@ -211,7 +212,7 @@ namespace Slot_Engine.Matrix
         {
             Debug.Log("Slamming Paylines Cycling");
             can_spin_slam = false;
-            //Matrix needs to reset animators for slots and state machine needs to be set to Resolve_Outro
+            spin_btn_animator.SetBool(supported_bools.WinRacking.ToString(),false);
             matrix.SlamLoopingPaylines();
         }
 

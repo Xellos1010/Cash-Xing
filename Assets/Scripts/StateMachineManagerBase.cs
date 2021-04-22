@@ -5,6 +5,7 @@ public enum supported_triggers
     SpinStart,
     SpinSlam,
     SpinResolve,
+    ResolveEnd,
     End
 }
 public enum supported_bools
