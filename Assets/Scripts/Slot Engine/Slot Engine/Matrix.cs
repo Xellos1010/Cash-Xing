@@ -989,6 +989,9 @@ namespace Slot_Engine.Matrix
         public Animator background;
         public AnimatorOverrideController[] backgroundACO;
         public TMPro.TextMeshPro freespinText;
+
+        public Animator rackingRollupAnimator;
+        public TMPro.TextMeshPro rackingRollupText;
         /// <summary>
         /// Matrix State Machine
         /// </summary>
@@ -1083,6 +1086,7 @@ namespace Slot_Engine.Matrix
                         await Task.Delay(20);
                         SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
                         SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                        rackingRollupAnimator.SetBool(supported_bools.WinRacking.ToString(), true);
                         await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
                         await isAllSlotSubAnimatorsReady("Resolve_Intro");
                         StateManager.SetStateTo(States.Resolve_Intro);
@@ -1110,6 +1114,14 @@ namespace Slot_Engine.Matrix
                         //TODO Refactor hack
                         freespinText.text = String.Format("{0:C2} Total Win Amount", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
                         freespinText.enabled = true;
+                        if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+                        {
+                            //Determine if free spins or overlay amount won surpasses 9x
+                            rackingRollupAnimator.SetBool(supported_bools.LoopPaylineWins.ToString(), true);
+                            rackingRollupAnimator.SetBool(supported_bools.SymbolResolve.ToString(), true);
+                            rackingRollupText.text = String.Format("{0:C2}",slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+                        }
+
                         slot_machine_managers.racking_manager.StartRacking(); //This is to resolve wins in resolve intro
                     }
                     if (slot_machine_managers.paylines_manager.winning_paylines.Length > 0)
@@ -1134,7 +1146,11 @@ namespace Slot_Engine.Matrix
                     }
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
-                    if(StateManager.enCurrentMode == GameStates.baseGame)
+                    //Determine if free spins or overlay amount won surpasses 9x
+                    rackingRollupAnimator.SetBool(supported_bools.LoopPaylineWins.ToString(), false);
+                    rackingRollupAnimator.SetBool(supported_bools.WinRacking.ToString(), false);
+                    rackingRollupAnimator.SetBool(supported_bools.SymbolResolve.ToString(), false);
+                    if (StateManager.enCurrentMode == GameStates.baseGame)
                     {
                         SetAllAnimatorsBoolTo(supported_bools.BonusActive, false);
                         //ensure multiplier set to 0
