@@ -271,7 +271,8 @@ namespace Slot_Engine.Matrix
                 if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode != GameStates.freeSpin)
                 {
                     Debug.Log("Overlay Symbol Found in Winning Paylines");
-                    StateManager.SetFeatureActiveTo(Features.multiplier, true);
+                    if(StateManager.enCurrentMode == GameStates.baseGame)
+                        StateManager.SetFeatureActiveTo(Features.multiplier, true);
                     overlaySymbols = item.Value;
                 }
                 else if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode == GameStates.freeSpin)

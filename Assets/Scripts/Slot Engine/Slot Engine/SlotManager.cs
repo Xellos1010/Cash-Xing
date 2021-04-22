@@ -281,11 +281,11 @@ namespace Slot_Engine.Matrix
                 Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol];
                 SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
                 //SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
-                if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
-                {
-                    Debug.Log(String.Format("current state name != Resolve Intro"));
-                    sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
-                }
+                //if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+                //{
+                //    Debug.Log(String.Format("current state name != Resolve Intro"));
+                //    sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
+                //}
             }
         }
 
@@ -323,7 +323,6 @@ namespace Slot_Engine.Matrix
                 if (reel_parent.matrix.symbols_data_for_matrix.symbols[i].isOverlaySymbol)
                 {
                     output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
-                    Debug.Log(String.Format("{0}.{1}",output.transform.parent.parent.name, output.transform.parent.name));
                     SetBoolTo(ref output, supported_bools.FeatureTrigger, true);
                     return output;
                 }
@@ -482,7 +481,7 @@ namespace Slot_Engine.Matrix
                     AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator].GetCurrentAnimatorStateInfo(0);
                     //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
 
-                    if (state_info.IsName(animation_to_check) && state_info.normalizedTime >= 1)
+                    if (state_info.IsName(animation_to_check) && state_info.normalizedTime >= 1 && (subStateMachine == state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length -1 )&&(animator == state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length))
                     {
                         output = true;
                     }

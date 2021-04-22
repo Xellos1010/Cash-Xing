@@ -344,7 +344,7 @@ namespace Slot_Engine.Matrix
                     locked = false;
                     can_spin_slam = true;
                     break;
-                case States.Idle_Outro:
+                case States.Spin_Intro:
                     //Can slam even if Idle_Outro Animations haven't played. Disable Slam until Resolve_Intro or Idle_Idle
                     locked = false;
                     can_spin_slam = true;
@@ -357,7 +357,7 @@ namespace Slot_Engine.Matrix
                     locked = false;
                     can_spin_slam = true;
                     break;
-                case States.bonus_idle_outro:
+                case States.bonus_spin_intro:
                     locked = false;
                     can_spin_slam = true;
                     break;

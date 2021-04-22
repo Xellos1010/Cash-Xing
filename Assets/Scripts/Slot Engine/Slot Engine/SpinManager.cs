@@ -26,6 +26,8 @@ namespace Slot_Engine.Matrix.Managers
             EditorGUILayout.LabelField("SpinManager Properties");
 
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+            EditorGUILayout.EnumPopup(StateManager.enCurrentMode);
+            EditorGUILayout.EnumPopup(StateManager.current_feature_active);
 
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("SpinManager Controls");
@@ -129,9 +131,11 @@ namespace Slot_Engine.Matrix.Managers
         /// <summary>
         /// Interrupts the spin and sets to spin outro state
         /// </summary>
-        internal void InterruptSpin()
+        internal async void InterruptSpin()
         {
             matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinSlam, true);
+            await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
+            await matrix.isAllSlotAnimatorsReady("Spin_Outro");
             StateManager.SetStateTo(States.Spin_Outro);
         }
 
@@ -229,7 +233,7 @@ namespace Slot_Engine.Matrix.Managers
                 case States.bonus_idle_outro:
                     //Wait for animator to play all idle outro animations then continue with spin.
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
-                    SetSpinStateTo(SpinStates.spin_start);
+                    //SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.bonus_idle_idle:
                     SetSpinStateTo(SpinStates.idle_idle);
@@ -267,13 +271,14 @@ namespace Slot_Engine.Matrix.Managers
                     spin_enabled = true;
                     break;
                 case SpinStates.spin_start:
+                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
+                    await matrix.isAllAnimatorsThruState("Spin_Intro");
+                    await matrix.isAllSlotAnimatorsReady("Spin_Intro");
                     StateManager.SetStateTo(States.Spin_Intro);
                     //Start the reels spinning
                     await StartSpinReels();
                     if (!StateManager.isInterupt)
                         StateManager.SetStateTo(States.Spin_Idle);
-                    else
-                        StateManager.SetStateTo(States.Spin_Outro);
                     break;
                 case SpinStates.spin_intro:
                     break;
