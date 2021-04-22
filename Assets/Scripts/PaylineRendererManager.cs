@@ -134,6 +134,11 @@ namespace Slot_Engine.Matrix
             List<Vector3> linePositions;
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
             matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline, out linePositions);
+            //Is this even or odd? use middle position if odd - use lerp half for even
+            Vector3 position = linePositions.Count % 2 == 0 ?
+                Vector3.Lerp(linePositions[((int)linePositions.Count / 2)-1], linePositions[(int)linePositions.Count / 2], .5f) : //If line win is even
+                linePositions[(int)linePositions.Count / 2];                                  //If line win is odd
+            SetWinningAmountDisplay(position,payline_to_show.GetTotalWin(matrix));
             if (line_renderers_to_use < 2)
             {
                 //Solution for single line renderer
@@ -143,6 +148,12 @@ namespace Slot_Engine.Matrix
             {
                 throw new Exception("Multiple Line Renderers TBD");
             }
+        }
+        public TMPro.TextMeshPro winingPaylineText;
+        private void SetWinningAmountDisplay(Vector3 vector3, float v)
+        {
+            winingPaylineText.transform.position = vector3 + (/*(Vector3.right * 200) + (Vector3.up * 60) + */(Vector3.back * 5));
+            winingPaylineText.text = String.Format("{0:C2}",v);
         }
 
         private int ReturnIndexFirstLastFromList(bool left_right, int i, int count)
@@ -157,6 +168,7 @@ namespace Slot_Engine.Matrix
             {
                 payline_renderers[i].line_renderer.enabled = on_off;
             }
+            winingPaylineText.enabled = on_off;
         }
 
         internal void SetWidth(int v1, int v2)

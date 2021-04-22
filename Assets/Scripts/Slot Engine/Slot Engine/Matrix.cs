@@ -487,15 +487,6 @@ namespace Slot_Engine.Matrix
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
             SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
-            //for (int reel = 0; reel < reel_strip_managers.Length; reel++)
-            //{
-            //    for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
-            //    {
-            //        //Stop all animation co-routines
-            //        reel_strip_managers[reel].slots_in_reel[slot].SetPingPong(false);
-                    
-            //    }
-            //}
             yield return 0;
         }
         private WinningPayline current_payline_displayed;
@@ -988,10 +979,13 @@ namespace Slot_Engine.Matrix
                         slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
                         slot_machine_managers.racking_manager.StartRacking(); //This is to resolve wins in resolve intro
                     }
-                    if(StateManager.enCurrentMode != GameStates.freeSpin)
-                        CycleWinningPaylinesMode(); // Current high level bug point. need to wait for all animators to be in spin Outro before cycling this in bonus game
-                    else if(StateManager.enCurrentMode == GameStates.freeSpin && (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
-                        CycleWinningPaylinesMode(); // Current high level bug point. need to wait for all animators to be in spin Outro before cycling this in bonus game
+                    if (slot_machine_managers.paylines_manager.winning_paylines.Length > 0)
+                    {
+                        if (StateManager.enCurrentMode != GameStates.freeSpin)
+                            CycleWinningPaylinesMode();
+                        else if (StateManager.enCurrentMode == GameStates.freeSpin && (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
+                            CycleWinningPaylinesMode();
+                    }
                     break;
                 case States.Resolve_Outro:
                     await slot_machine_managers.paylines_manager.CancelCycleWins();
