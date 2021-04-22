@@ -864,6 +864,9 @@ namespace Slot_Engine.Matrix
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
             StateManager.featureTransition -= StateManager_FeatureTransition;
         }
+
+        public AnimatorOverrideController[] characterTier;
+        public Animator character;
         /// <summary>
         /// Matrix State Machine
         /// </summary>
@@ -940,8 +943,6 @@ namespace Slot_Engine.Matrix
                         else if (!bonus_game_triggered && slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
                         {
                             Debug.Log(String.Format("Bonus game ended and bank has amount to rack = {0}", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank));
-                            SetAllAnimatorsBoolTo(supported_bools.WinRacking, true); // dont rack wins
-                                                                                     //StateManager.SetStateTo(States.Resolve_Intro);
                             resolve_intro = true;                        
                         }
                         else
@@ -951,16 +952,21 @@ namespace Slot_Engine.Matrix
                     }
                     await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
                     await isAllSlotSubAnimatorsReady("Spin_Outro");
-                    SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                    
                     if (resolve_intro)
                     {
+                        SetOverridesBasedOnTiers();
+                        await Task.Delay(20);
+                        SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
+                        SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
                         await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
                         await isAllSlotSubAnimatorsReady("Resolve_Intro");
                         StateManager.SetStateTo(States.Resolve_Intro);
                     }
                     else
                     {
-                        if(bonus_game_triggered)
+                        SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                        if (bonus_game_triggered)
                             StateManager.SetStateTo(States.bonus_idle_intro);
                         else
                         {
@@ -1019,6 +1025,33 @@ namespace Slot_Engine.Matrix
                     await StartAnimatorSpinAndSpinState();
                     break;
             }
+        }
+
+        private void SetOverridesBasedOnTiers()
+        {
+            Debug.Log(String.Format("slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank  = {0} slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 = {1} slot_machine_managers.paylines_manager.GetTotalWinAmount() = {2}", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9, slot_machine_managers.paylines_manager.GetTotalWinAmount()));
+            if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
+                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+            {
+                Debug.Log("Present Big Win First");
+                SetAnimatorOverrideControllerTo(ref character, 2);
+            }
+            else if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
+                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
+            {
+                Debug.Log("Presenting Medium win");
+                SetAnimatorOverrideControllerTo(ref character,1);
+            }
+            else
+            {
+                Debug.Log("Presenting Small win");
+                SetAnimatorOverrideControllerTo(ref character, 0);
+            }
+        }
+
+        private void SetAnimatorOverrideControllerTo(ref Animator character, int v)
+        {
+            character.runtimeAnimatorController = characterTier[v];
         }
 
         private void PlayAnimationOnAllSlots(string v)
