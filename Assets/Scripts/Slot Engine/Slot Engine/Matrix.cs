@@ -107,7 +107,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void AddSymbolStateWeightToDict()
+        internal async Task AddSymbolStateWeightToDict()
         {
             symbol_weight_state temp;
             Dictionary<GameStates, List<float>> symboWeightsByState = new Dictionary<GameStates, List<float>>();
@@ -123,10 +123,10 @@ namespace Slot_Engine.Matrix
                     symboWeightsByState[temp.gameState].Add(temp.symbolWeightInfo);
                 }
             }
-            AddSymbolStateWeightToDict(symboWeightsByState);
+            await AddSymbolStateWeightToDict(symboWeightsByState);
         }
 
-        private async void AddSymbolStateWeightToDict(Dictionary<GameStates, List<float>> symbol_weight_state)
+        private async Task AddSymbolStateWeightToDict(Dictionary<GameStates, List<float>> symbol_weight_state)
         {
 #if UNITY_EDITOR
             EditorUtility.SetDirty(this);
@@ -234,9 +234,20 @@ namespace Slot_Engine.Matrix
                 return names;
             }
         }
-        void Start()
+        async void Start()
         {
             StateManager.SetGameModeActiveTo(GameStates.baseGame);
+            int symbol_weight_pass_check = -1;
+            try
+            {
+                symbol_weight_pass_check= symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+            }
+            catch
+            {
+                await AddSymbolStateWeightToDict();
+                symbol_weight_pass_check = symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+                Debug.Log("Weights are in");
+            }
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
             SetAllSlotAnimatorSyncStates();
             SetSubStatesAllSlotAnimatorStateMachines();
