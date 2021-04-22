@@ -836,7 +836,56 @@ namespace Slot_Engine.Matrix
         {
             StateManager.StateChangedTo += StateManager_StateChangedTo;
             StateManager.featureTransition += StateManager_FeatureTransition;
+            //StateManager.add_to_multiplier += StateManager_add_to_multiplierAsync;
         }
+
+        private async void StateManager_add_to_multiplierAsync(int multiplier)
+        {
+            if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
+                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+            {
+                Debug.Log("Present Big Win First");
+                SetAnimatorOverrideControllerTo(ref this.multiplier, ref multiplierTier, 2);
+            }
+            else if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
+                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
+            {
+                Debug.Log("Presenting Medium win");
+                SetAnimatorOverrideControllerTo(ref this.multiplier, ref multiplierTier, 1);
+
+            }
+            else
+            {
+                Debug.Log("Presenting Small win");
+                SetAnimatorOverrideControllerTo(ref this.multiplier, ref multiplierTier, 0);
+            }
+            this.multiplier.SetBool(supported_bools.FeatureTrigger.ToString(), true);
+            await isAnimatorThruState(this.multiplier, "Feature_Outro");
+            this.multiplier.SetBool(supported_bools.FeatureTrigger.ToString(), false);
+        }
+
+        private async Task isAnimatorThruState(Animator multiplier, string state)
+        {
+            bool is_all_animators_resolved = false;
+            AnimatorStateInfo state_info;
+            bool wait = true;
+            while (wait)
+            {
+                state_info = multiplier.GetCurrentAnimatorStateInfo(0);
+
+            Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
+                //Check if time has gone thru
+                if (!state_info.IsName(state))
+                {
+                    wait = false;
+                }
+                else
+                {
+                    await Task.Delay(300);
+                }
+            }
+        }
+
         /// <summary>
         /// Used to receive and execute functions based on feature active or inactive
         /// </summary>
@@ -863,10 +912,13 @@ namespace Slot_Engine.Matrix
         {
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
             StateManager.featureTransition -= StateManager_FeatureTransition;
+            StateManager.add_to_multiplier -= StateManager_add_to_multiplierAsync;
         }
 
         public AnimatorOverrideController[] characterTier;
         public Animator character;
+        public AnimatorOverrideController[] multiplierTier;
+        public Animator multiplier;
         public TMPro.TextMeshPro freespinText;
         /// <summary>
         /// Matrix State Machine
@@ -1050,22 +1102,23 @@ namespace Slot_Engine.Matrix
                 slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
             {
                 Debug.Log("Present Big Win First");
-                SetAnimatorOverrideControllerTo(ref character, 2);
+                SetAnimatorOverrideControllerTo(ref character, ref characterTier,2);
             }
             else if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
                 slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
             {
                 Debug.Log("Presenting Medium win");
-                SetAnimatorOverrideControllerTo(ref character,1);
+                SetAnimatorOverrideControllerTo(ref character, ref characterTier, 1);
+
             }
             else
             {
                 Debug.Log("Presenting Small win");
-                SetAnimatorOverrideControllerTo(ref character, 0);
+                SetAnimatorOverrideControllerTo(ref character, ref characterTier, 0);
             }
         }
 
-        private void SetAnimatorOverrideControllerTo(ref Animator character, int v)
+        private void SetAnimatorOverrideControllerTo(ref Animator character, ref AnimatorOverrideController[] characterTier, int v)
         {
             character.runtimeAnimatorController = characterTier[v];
         }
