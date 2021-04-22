@@ -115,6 +115,10 @@ namespace Slot_Engine.Matrix.Managers
                         InterruptSpin();
                     }
                 }
+                else if (StateManager.enCurrentState == States.bonus_idle_idle)
+                {
+                    //Insert Auto Spin for freespin mode
+                }
                 else
                 {
                     if (time_counter > 0)

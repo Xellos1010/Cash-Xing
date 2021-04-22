@@ -867,6 +867,7 @@ namespace Slot_Engine.Matrix
 
         public AnimatorOverrideController[] characterTier;
         public Animator character;
+        public TMPro.TextMeshPro freespinText;
         /// <summary>
         /// Matrix State Machine
         /// </summary>
@@ -983,6 +984,9 @@ namespace Slot_Engine.Matrix
                         //First offset bank by win then rack
                         //TODO have offset occur when winning payline is animated to bank
                         slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
+                        //TODO Refactor hack
+                        freespinText.text = String.Format("{0:C2} Total Win Amount", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+                        freespinText.enabled = true;
                         slot_machine_managers.racking_manager.StartRacking(); //This is to resolve wins in resolve intro
                     }
                     if (slot_machine_managers.paylines_manager.winning_paylines.Length > 0)
@@ -995,6 +999,9 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Resolve_Outro:
                     await slot_machine_managers.paylines_manager.CancelCycleWins();
+                    //TODO Refactor hack
+                    freespinText.text = "";
+                    freespinText.enabled = false;
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
                     if(StateManager.enCurrentMode == GameStates.baseGame)
