@@ -61,7 +61,7 @@ namespace Slot_Engine.Matrix
             }
             if(GUILayout.Button("Set Weights from symbols data"))
             {
-                Debug.Log(myTarget.symbol_weights_per_state == null ? "No object returned" : "Ensuring weights");
+                Debug.Log(myTarget.symbol_weights_per_state_dictionary == null ? "No object returned" : "Ensuring weights");
                 myTarget.AddSymbolStateWeightToDict();
                 //myTarget.EnsureWeightsAreCorrect();
             }
@@ -95,6 +95,8 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public CorePrefabsReferencesScriptableObject core_prefabs;
         [SerializeField]
+        public Dictionary<GameStates, WeightsDistributionScriptableObject> symbol_weights_per_state_dictionary;
+        [SerializeField]
         public GameStateDistributionDictionary symbol_weights_per_state
         {
             get
@@ -126,38 +128,92 @@ namespace Slot_Engine.Matrix
             await AddSymbolStateWeightToDict(symboWeightsByState);
         }
 
+        public WeightsDistributionScriptableObject[] weightObjects;
+
         private async Task AddSymbolStateWeightToDict(Dictionary<GameStates, List<float>> symbol_weight_state)
         {
-#if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
-#endif
+            int counter = -1;
             foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
             {
-                symbol_weights_per_state[item.Key] = FindDistributionFromResources(item.Key);
+                if (symbol_weights_per_state_dictionary == null)
+                    symbol_weights_per_state_dictionary = new Dictionary<GameStates, WeightsDistributionScriptableObject>();
+                counter++;
+                symbol_weights_per_state_dictionary[item.Key] = weightObjects[counter];
                 await Task.Delay(20);
-                if (symbol_weights_per_state[item.Key]?.intDistribution != null)
+                if (symbol_weights_per_state_dictionary[item.Key]?.intDistribution != null)
                 {
                     //Clear and re-add
-                    for (int i = symbol_weights_per_state[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
+                    for (int i = symbol_weights_per_state_dictionary[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
                     {
-                        symbol_weights_per_state[item.Key].intDistribution.RemoveAt(i);
+                        symbol_weights_per_state_dictionary[item.Key].intDistribution.RemoveAt(i);
                         await Task.Delay(10);
                     }
                 }
-                
+
                 for (int i = 0; i < item.Value.Count; i++)
                 {
                     //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
                     //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
                     await Task.Delay(20);
-                    symbol_weights_per_state[item.Key].intDistribution.Add(i, item.Value[i]);
+                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Add(i, item.Value[i]);
                     await Task.Delay(20);
-                    symbol_weights_per_state[item.Key].intDistribution.Items[i].Weight = item.Value[i];
+                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Items[i].Weight = item.Value[i];
                 }
-#if UNITY_EDITOR
-                PrefabUtility.RecordPrefabInstancePropertyModifications(this);
-#endif
             }
+//#if UNITY_EDITOR
+//            EditorUtility.SetDirty(this);
+//            foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
+//            {
+//                symbol_weights_per_state[item.Key] = FindDistributionFromResources(item.Key);
+//                await Task.Delay(20);
+//                if (symbol_weights_per_state[item.Key]?.intDistribution != null)
+//                {
+//                    //Clear and re-add
+//                    for (int i = symbol_weights_per_state[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
+//                    {
+//                        symbol_weights_per_state[item.Key].intDistribution.RemoveAt(i);
+//                        await Task.Delay(10);
+//                    }
+//                }
+
+//                for (int i = 0; i < item.Value.Count; i++)
+//                {
+//                    //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
+//                    //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state[item.Key].intDistribution.Add(i, item.Value[i]);
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state[item.Key].intDistribution.Items[i].Weight = item.Value[i];
+//                }
+//                PrefabUtility.RecordPrefabInstancePropertyModifications(this);
+//            }
+//#else
+//            foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
+//            {
+//                symbol_weights_per_state_dictionary[item.Key] = FindDistributionFromResources(item.Key);
+//                await Task.Delay(20);
+//                if (symbol_weights_per_state_dictionary[item.Key]?.intDistribution != null)
+//                {
+//                    //Clear and re-add
+//                    for (int i = symbol_weights_per_state_dictionary[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
+//                    {
+//                        symbol_weights_per_state_dictionary[item.Key].intDistribution.RemoveAt(i);
+//                        await Task.Delay(10);
+//                    }
+//                }
+
+//                for (int i = 0; i < item.Value.Count; i++)
+//                {
+//                    //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
+//                    //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Add(i, item.Value[i]);
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Items[i].Weight = item.Value[i];
+//                }
+//            }
+//#endif
+
 
         }
 
@@ -241,12 +297,12 @@ namespace Slot_Engine.Matrix
             int symbol_weight_pass_check = -1;
             try
             {
-                symbol_weight_pass_check= symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+                symbol_weight_pass_check = symbol_weights_per_state_dictionary[GameStates.baseGame].intDistribution.Draw();//symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
             }
             catch
             {
                 await AddSymbolStateWeightToDict();
-                symbol_weight_pass_check = symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+                symbol_weight_pass_check = symbol_weights_per_state_dictionary[GameStates.baseGame].intDistribution.Draw();//symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
                 Debug.Log("Weights are in");
             }
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
@@ -898,9 +954,19 @@ namespace Slot_Engine.Matrix
             {
                 case Features.freespin:
                     ToggleFreeSpinActive(active_inactive);
+                    if(active_inactive)
+                    {
+                        background.runtimeAnimatorController = backgroundACO[0];
+                        background.SetBool(supported_bools.BonusActive.ToString(),true);
+                    }
+                    else
+                    {
+                        background.SetBool(supported_bools.BonusActive.ToString(), false);
+                    }
                     break;
                 case Features.multiplier:
                     ToggleFreeSpinActive(active_inactive);
+                    background.runtimeAnimatorController = backgroundACO[1];
                     break;
                 default:
                     bonus_game_triggered = false;
@@ -919,6 +985,9 @@ namespace Slot_Engine.Matrix
         public Animator character;
         public AnimatorOverrideController[] multiplierTier;
         public Animator multiplier;
+
+        public Animator background;
+        public AnimatorOverrideController[] backgroundACO;
         public TMPro.TextMeshPro freespinText;
         /// <summary>
         /// Matrix State Machine

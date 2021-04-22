@@ -388,7 +388,7 @@ namespace Slot_Engine.Matrix
 
         internal void ShowRandomSymbol()
         {
-            ShowSymbolRenderer(reel_parent.matrix.symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw());
+            ShowSymbolRenderer(reel_parent.matrix.symbol_weights_per_state_dictionary[StateManager.enCurrentMode].intDistribution.Draw());//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw());
         }
         /// <summary>
         /// Shows a symbols renderer
