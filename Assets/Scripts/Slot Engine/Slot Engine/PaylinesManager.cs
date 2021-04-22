@@ -267,23 +267,23 @@ namespace Slot_Engine.Matrix
             foreach (KeyValuePair<Features, List<suffix_tree_node_info>> item in feature_active_count)
             {
                 //Multiplier calculated first then mode is applied
-                Debug.Log(String.Format("Feature name = {0}, counter = {1}", item.Key.ToString(), item.Value.Count));
-                if (item.Key == Features.multiplier)
+                Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
+                if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode != GameStates.freeSpin)
                 {
                     Debug.Log("Overlay Symbol Found in Winning Paylines");
-                    StateManager.SetFeatureActiveTo(Features.multiplier, true);
-                    StateManager.AddToMultiplier(item.Value.Count);
+                    if(StateManager.enCurrentMode == GameStates.baseGame)
+                        StateManager.SetFeatureActiveTo(Features.multiplier, true);
                     overlaySymbols = item.Value;
+                }
+                else if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode == GameStates.freeSpin)
+                {
+                    StateManager.AddToMultiplier(item.Value.Count);
                 }
                 if (item.Key == Features.freespin)
                     if (item.Value.Count > 2)
                     {
                         StateManager.SetFeatureActiveTo(Features.freespin, true);
                     }
-            }
-            if (winning_paylines.Length > 0)
-            {
-                matrix.SetSystemToPresentWin();
             }
             paylines_evaluated = true;
             return Task.CompletedTask;
@@ -431,9 +431,12 @@ namespace Slot_Engine.Matrix
 
         internal Task ShowWinningPayline(int v)
         {
-            current_winning_payline_shown = v;
-            //Debug.Log(String.Format("Current wining payline shown = {0}", v));
-            RenderWinningPayline(winning_paylines[current_winning_payline_shown]);
+            if (v < winning_paylines.Length)
+            {
+                current_winning_payline_shown = v;
+                //Debug.Log(String.Format("Current wining payline shown = {0}", v));
+                RenderWinningPayline(winning_paylines[current_winning_payline_shown]);
+            }
             return Task.CompletedTask;
         }
 

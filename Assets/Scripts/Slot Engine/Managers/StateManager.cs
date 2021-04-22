@@ -20,6 +20,8 @@ public static class StateManager
     /// the current active feature reference for the game
     /// </summary>
     public static Features current_feature_active;
+    internal static bool isInterupt;
+
     //State Switching Variables
     public delegate void GameModeDelegate(GameStates modeActivated);
     public static event GameModeDelegate GameModeActivated;
@@ -44,7 +46,7 @@ public static class StateManager
     //State Manager Functions
     public static void SetStateTo(States State)
     {
-        StaticUtilities.DebugLog(string.Format("State switched to {0}",State.ToString()));
+        UnityEngine.Debug.Log(string.Format("State switched to {0}",State.ToString()));
         enCurrentState = State;
         if(StateChangedTo != null)
             StateChangedTo.Invoke(State);

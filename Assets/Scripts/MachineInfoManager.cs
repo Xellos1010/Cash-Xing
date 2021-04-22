@@ -168,7 +168,7 @@ namespace Slot_Engine.Matrix
         private void StateManager_add_to_multiplier(int multiplier)
         {
             Debug.Log(String.Format("(Obsolete) Setting Multiplier to ", this.machineInfoScriptableObject.multiplier + multiplier));
-            //SetMultiplierTo(this.machineInfoScriptableObject.multiplier + multiplier);
+            SetMultiplierTo(this.machineInfoScriptableObject.multiplier + multiplier);
         }
 
         /// <summary>
@@ -180,8 +180,6 @@ namespace Slot_Engine.Matrix
         {
             switch (feature)
             {
-                case Features.None:
-                    break;
                 case Features.freespin:
                     if (active_inactive)
                     {

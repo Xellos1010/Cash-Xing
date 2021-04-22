@@ -20,6 +20,7 @@ using UnityEditor;
 namespace Slot_Engine.Matrix
 {
 #if UNITY_EDITOR
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(SlotManager))]
     class SlotEditor : BoomSportsEditor
     {
@@ -121,8 +122,8 @@ namespace Slot_Engine.Matrix
         {
             ResetAllVars();
             SetSlotMovementEnabledTo(true);
-            SetTriggerTo(supported_triggers.SpinStart);
-            SetTriggerSubStatesTo(supported_triggers.SpinStart);
+            //SetTriggerTo(supported_triggers.SpinStart);
+            //SetTriggerSubStatesTo(supported_triggers.SpinStart);
         }
 
         Vector3 GeneratePositionUpdateSpeed(Vector3 amount_to_add) //Needs to be positive to move forwards and negative to move backwards
@@ -228,7 +229,7 @@ namespace Slot_Engine.Matrix
         {
             //Set the sub symbol Animator
             //Debug.Log(String.Format("Setting {0} to symbol win for {1}",String.Join("_",transform.gameObject.name,transform.parent.gameObject.name),presentation_symbol));
-            Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol]; //may display wrong animator is out of order
+            Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol]; //may display wrong animator is out of order
             //Debug.Log(String.Format("Symbol Set to win = {0}", sub_state_animator.transform.name));
             SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, true);
             SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
@@ -236,7 +237,13 @@ namespace Slot_Engine.Matrix
             //StartCoroutine(PingPongAnimation());
             //SetPingPong(true);
             //SetFloatMotionTimeTo(0);
-            sub_state_animator.Play("Resolve_Win_Idle", -1, 0);
+            //sub_state_animator.Play("Resolve_Win_Idle", -1, 0);
+        }
+
+        internal async void PlayAnimationOnPresentationSymbol(string animation)
+        {
+            Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol]; //may display wrong animator is out of order
+            sub_state_animator.Play(animation, -1, 0);
         }
 
 
@@ -244,7 +251,7 @@ namespace Slot_Engine.Matrix
         {
             if (presentation_symbol > 0)
             {
-                AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
+                AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
                 //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
                 
                 if (state_info.IsName(animation_to_check))
@@ -271,14 +278,14 @@ namespace Slot_Engine.Matrix
         {
             if (Application.isPlaying)
             {
-                Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[presentation_symbol];
+                Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol];
                 SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
                 //SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
-                if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
-                {
-                    Debug.Log(String.Format("current state name != Resolve Intro"));
-                    sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
-                }
+                //if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
+                //{
+                //    Debug.Log(String.Format("current state name != Resolve Intro"));
+                //    sub_state_animator.PlayInFixedTime("Resolve_Intro", -1, 0);
+                //}
             }
         }
 
@@ -315,8 +322,7 @@ namespace Slot_Engine.Matrix
             {
                 if (reel_parent.matrix.symbols_data_for_matrix.symbols[i].isOverlaySymbol)
                 {
-                    output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machine[0].sub_state_animators[i];
-                    Debug.Log(String.Format("{0}.{1}",output.transform.parent.parent.name, output.transform.parent.name));
+                    output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
                     SetBoolTo(ref output, supported_bools.FeatureTrigger, true);
                     return output;
                 }
@@ -367,7 +373,6 @@ namespace Slot_Engine.Matrix
         internal void InitializeAnimatorToPresentWin()
         {
             state_machine.InitializeAnimator();
-            state_machine.SetBoolAllStateMachines(supported_bools.WinRacking, true);
             
         }
 
@@ -443,7 +448,7 @@ namespace Slot_Engine.Matrix
         internal void SetTriggerSubStatesTo(supported_triggers toTrigger)
         {
             //Debug.Log(String.Format("Setting sub states to trigger {0}",toTrigger.ToString()));
-            state_machine.SetStateMachinesTriggerTo(toTrigger);
+            state_machine.SetSubStateMachinesTriggerTo(0,toTrigger);
         }
 
         internal void ResetTriggerSubStates(supported_triggers triggerToReset)
@@ -464,6 +469,30 @@ namespace Slot_Engine.Matrix
         internal void SetStateMachineAnimators()
         {
             state_machine.SetStateMachineSyncAnimators();
+        }
+
+        internal bool isAllAnimatorsFinished(string animation_to_check)
+        {
+            bool output = false;
+            for (int subStateMachine = 0; subStateMachine < state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length; subStateMachine++)
+            {
+                for (int animator = 0; animator < state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length; animator++)
+                {
+                    AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator].GetCurrentAnimatorStateInfo(0);
+                    //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
+
+                    if (state_info.IsName(animation_to_check) && state_info.normalizedTime >= 1 && (subStateMachine == state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length -1 )&&(animator == state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length))
+                    {
+                        output = true;
+                    }
+                    else
+                    {
+                        //Debug.Log(String.Format("Not {0}", animation_to_check));
+                        break;
+                    }
+                }
+            }
+            return output;
         }
     }
 }

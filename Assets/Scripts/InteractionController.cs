@@ -55,8 +55,19 @@ namespace Slot_Engine.Matrix
                 return _matrix;
             }
         }
+
+        public enum Actions {
+            DecreaseBet,
+            IncreaseBet,
+            PlaceBet,
+            Spin,
+            Slam
+        }
+
         private Matrix _matrix;
         public bool can_spin_slam = false;
+
+        public bool locked = false;
 
         public float distance_to_invoke_swipe_event = 50.0f;
         public float distance_to_invoke_tap_event = 5.0f;
@@ -73,15 +84,16 @@ namespace Slot_Engine.Matrix
         // Update is called once per frame
         void Update()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (!locked)
             {
-                //Debug.Log(String.Format("Mouse position = {0}", Input.mousePosition));
-                RaycastForUIFromPosition(Input.mousePosition);
-            }
-            //Modify Bet Amount
-            if (StateManager.enCurrentState == States.Idle_Idle)
-            {
-
+                if (Input.GetMouseButtonDown(0))
+                {
+                    //Debug.Log(String.Format("Mouse position = {0}", Input.mousePosition));
+                    RaycastForUIFromPosition(Input.mousePosition);
+                }
+                //Modify Bet Amount
+                if (StateManager.enCurrentState == States.Idle_Idle)
+                {
 #if UNITY_ANDROID
                 //#if UNITY_ANDROID
                 if (Input.touchCount > 0)
@@ -107,45 +119,69 @@ namespace Slot_Engine.Matrix
                         {
                             if (temp.position.x > position_on_began.x)
                             {
-                                IncreaseBetAmount();
+                                PerformAction(Actions.IncreaseBet);
                             }
                             else
                             {
-                                DecreaseBetAmount();
+                                PerformAction(Actions.DecreaseBet);
                             }
                         }
                     }
                 }
 #endif
-                //#endif
-                if (Input.GetKeyDown(KeyCode.LeftArrow))
+                    if (Input.GetKeyDown(KeyCode.LeftArrow))
+                    {
+                        PerformAction(Actions.DecreaseBet);
+                    }
+                    if (Input.GetKeyDown(KeyCode.RightArrow))
+                    {
+                        PerformAction(Actions.IncreaseBet);
+                    }
+                    if (Input.GetKeyDown(KeyCode.Space) && can_spin_slam)
+                    {
+                        //If Idle_Idle then can place bet
+                        PerformAction(Actions.PlaceBet);
+                    }
+                }
+                else if(StateManager.enCurrentState == States.bonus_idle_idle)
                 {
+                    //ToDO this needs to be built a more safe reference
+                    if (Input.GetKeyDown(KeyCode.Space) && can_spin_slam)
+                    {
+                        PerformAction(Actions.Spin);
+                    }
+                }
+                else
+                {
+                    //ToDO this needs to be built a more safe reference
+                    if (Input.GetKeyDown(KeyCode.Space) && can_spin_slam)
+                    {
+                        PerformAction(Actions.Slam);
+                    }
+                }
+            }
+        }
+
+        private void PerformAction(Actions action)
+        {
+            locked = true;
+            switch (action)
+            {
+                case Actions.DecreaseBet:
                     DecreaseBetAmount();
-                }
-                if (Input.GetKeyDown(KeyCode.RightArrow))
-                {
+                    break;
+                case Actions.IncreaseBet:
                     IncreaseBetAmount();
-                }
-            }
-            if (can_spin_slam)
-            {
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    Debug.Log("Trigger for spin/slam pressed");
+                    break;
+                case Actions.PlaceBet:
                     CheckStateToSpinSlam();
-                }
-
-
-#if UNITY_ANDROID
-            if (Input.touchCount > 0)
-            {
-                Touch temp = Input.touches[0];
-                if (temp.phase == TouchPhase.Began)
-                {
-                    //CheckForSpinSlam();
-                }
-            }
-#endif
+                    break;
+                case Actions.Spin:
+                    CheckStateToSpinSlam();
+                    break;
+                case Actions.Slam:
+                    CheckStateToSpinSlam();
+                    break;
             }
         }
 
@@ -230,17 +266,34 @@ namespace Slot_Engine.Matrix
             //Debug.Log(hit_info.transform?.gameObject.name);
             if (hit_info.collider != null)
             {
-                if (hit_info.collider.gameObject.tag == "BetUp")
+                if (StateManager.enCurrentState == States.Idle_Idle)
                 {
-                    IncreaseBetAmount();
+                    if (hit_info.collider.gameObject.tag == "BetUp")
+                    {
+                        PerformAction(Actions.IncreaseBet);
+                    }
+                    else if (hit_info.collider.gameObject.tag == "BetDown")
+                    {
+                        PerformAction(Actions.DecreaseBet);
+                    }
+                    else if (hit_info.collider.gameObject.tag == "Spin" && can_spin_slam)
+                    {
+                        PerformAction(Actions.PlaceBet);
+                    }
                 }
-                else if (hit_info.collider.gameObject.tag == "BetDown")
+                else if(StateManager.enCurrentState == States.bonus_idle_idle)
                 {
-                    DecreaseBetAmount();
+                    if (hit_info.collider.gameObject.tag == "Spin" && can_spin_slam)
+                    {
+                        PerformAction(Actions.Spin);
+                    }
                 }
-                else if (hit_info.collider.gameObject.tag == "Spin")
+                else
                 {
-                    CheckStateToSpinSlam();
+                    if (hit_info.collider.gameObject.tag == "Spin" && can_spin_slam)
+                    {
+                        PerformAction(Actions.Slam);
+                    }
                 }
             }
         }
@@ -288,19 +341,24 @@ namespace Slot_Engine.Matrix
             switch (State)
             {
                 case States.Idle_Idle:
+                    locked = false;
                     can_spin_slam = true;
                     break;
-                case States.Idle_Outro:
+                case States.Spin_Intro:
                     //Can slam even if Idle_Outro Animations haven't played. Disable Slam until Resolve_Intro or Idle_Idle
+                    locked = false;
                     can_spin_slam = true;
                     break;
                 case States.Resolve_Intro:
+                    locked = false;
                     can_spin_slam = true;
                     break;
                 case States.bonus_idle_idle:
+                    locked = false;
                     can_spin_slam = true;
                     break;
-                case States.bonus_idle_outro:
+                case States.bonus_spin_intro:
+                    locked = false;
                     can_spin_slam = true;
                     break;
                 default:
