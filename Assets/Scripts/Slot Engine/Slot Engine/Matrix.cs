@@ -1087,7 +1087,7 @@ namespace Slot_Engine.Matrix
                     while (wait)
                     {
                         state_info = _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync[state_machine].GetCurrentAnimatorStateInfo(0);
-                        //Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
+                        Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
                         //Check if time has gone thru
                         if (!state_info.IsName(state))
                         {
@@ -1098,7 +1098,7 @@ namespace Slot_Engine.Matrix
                             await Task.Delay(300);
                         }
                     }
-                    //Debug.Log("All States Resolved");
+                    Debug.Log("All States Resolved");
                     if (state_machine == _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync.Length - 1)
                         is_all_animators_resolved = true;
                 }

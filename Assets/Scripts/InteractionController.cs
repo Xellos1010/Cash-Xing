@@ -341,30 +341,30 @@ namespace Slot_Engine.Matrix
             switch (State)
             {
                 case States.Idle_Idle:
-                    locked = false;
-                    can_spin_slam = true;
+                    UnlockSlamSpin();
                     break;
-                case States.Spin_Intro:
-                    //Can slam even if Idle_Outro Animations haven't played. Disable Slam until Resolve_Intro or Idle_Idle
-                    locked = false;
-                    can_spin_slam = true;
+                case States.Spin_Idle:
+                    UnlockSlamSpin();
                     break;
                 case States.Resolve_Intro:
-                    locked = false;
-                    can_spin_slam = true;
+                    UnlockSlamSpin();
                     break;
                 case States.bonus_idle_idle:
-                    locked = false;
-                    can_spin_slam = true;
+                    UnlockSlamSpin();
                     break;
-                case States.bonus_spin_intro:
-                    locked = false;
-                    can_spin_slam = true;
+                case States.bonus_spin_loop:
+                    UnlockSlamSpin();
                     break;
                 default:
                     break;
             }
         }
 
+        private void UnlockSlamSpin()
+        {
+            Debug.Log("Unlock Slam Spin");
+            locked = false;
+            can_spin_slam = true;
+        }
     }
 }
