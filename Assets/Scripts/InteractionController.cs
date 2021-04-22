@@ -336,11 +336,12 @@ namespace Slot_Engine.Matrix
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
         }
 
-        private void StateManager_StateChangedTo(States State)
+        private async void StateManager_StateChangedTo(States State)
         {
             switch (State)
             {
                 case States.Idle_Idle:
+                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
                     UnlockSlamSpin();
                     break;
                 case States.Spin_Idle:
@@ -350,6 +351,7 @@ namespace Slot_Engine.Matrix
                     UnlockSlamSpin();
                     break;
                 case States.bonus_idle_idle:
+                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
                     UnlockSlamSpin();
                     break;
                 case States.bonus_spin_loop:

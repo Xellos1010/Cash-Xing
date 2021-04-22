@@ -275,8 +275,8 @@ namespace Slot_Engine.Matrix.Managers
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
                     Debug.Log("Setting Animation Trigger");
                     matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
-                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Idle");
-                    await matrix.isAllSlotAnimatorsReady("Spin_Idle");
+                    await matrix.isAllAnimatorsThruState("Idle_Outro");
+                    await matrix.isAllSlotAnimatorsReady("Spin_Intro");
                     StateManager.SetStateTo(States.Spin_Intro);
                     //Start the reels spinning
                     await StartSpinReels();
