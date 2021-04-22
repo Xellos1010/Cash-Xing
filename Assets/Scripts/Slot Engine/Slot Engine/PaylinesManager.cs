@@ -431,9 +431,12 @@ namespace Slot_Engine.Matrix
 
         internal Task ShowWinningPayline(int v)
         {
-            current_winning_payline_shown = v;
-            //Debug.Log(String.Format("Current wining payline shown = {0}", v));
-            RenderWinningPayline(winning_paylines[current_winning_payline_shown]);
+            if (v < winning_paylines.Length)
+            {
+                current_winning_payline_shown = v;
+                //Debug.Log(String.Format("Current wining payline shown = {0}", v));
+                RenderWinningPayline(winning_paylines[current_winning_payline_shown]);
+            }
             return Task.CompletedTask;
         }
 

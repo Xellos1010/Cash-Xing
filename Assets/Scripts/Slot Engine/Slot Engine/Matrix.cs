@@ -888,7 +888,7 @@ namespace Slot_Engine.Matrix
                         Debug.Log("All Overlay Animators are finished");
                     }
                     //If the spin has ended and there are no wining paylines or freespins left then disable freespin mode
-                    if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0 && slot_machine_managers.paylines_manager.winning_paylines.Length <= 0)
+                    if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
                     {
                         Debug.Log("Setting Freespins Inactive");
                         StateManager.SetFeatureActiveTo(Features.freespin, false);
@@ -909,6 +909,7 @@ namespace Slot_Engine.Matrix
                         else
                         {
                             //Rack win to bank and continue to next spin
+                            Debug.Log("There is a win and bonus game triggeres");
                             slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
                             SetAllAnimatorsBoolTo(supported_bools.WinRacking, false); // dont rack wins
                             if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
@@ -943,16 +944,15 @@ namespace Slot_Engine.Matrix
                         else
                         {
                             Debug.Log(String.Format("Base Game no win", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank));
-                            //StateManager.SetStateTo(States.Idle_Intro);
                         }
                     }
                     await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
                     await isAllSlotSubAnimatorsReady("Spin_Outro");
                     SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
-                    await isAllAnimatorsThruState("Resolve_Intro");
-                    await isAllSlotSubAnimatorsReady("Resolve_Intro");
                     if (resolve_intro)
                     {
+                        await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
+                        await isAllSlotSubAnimatorsReady("Resolve_Intro");
                         StateManager.SetStateTo(States.Resolve_Intro);
                     }
                     else
