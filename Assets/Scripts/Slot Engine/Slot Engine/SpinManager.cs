@@ -121,6 +121,7 @@ namespace Slot_Engine.Matrix.Managers
                     if (time_counter > 1)
                     {
                         ResetUseTimer();
+                        matrix.slot_machine_managers.interaction_controller.LockInteractions();
                         matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
                     }
                 }
@@ -305,8 +306,11 @@ namespace Slot_Engine.Matrix.Managers
                     break;
                 case SpinStates.spin_outro:
                     ResetUseTimer();
+                    Debug.Log("Timer Reset");
                     await ReelsStopSpinning();
+                    Debug.Log("All reels Stopped Spinning");
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
+                    Debug.Log("All Animators resolved spin_outro stateSpinning");
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:
