@@ -49,9 +49,9 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal Matrix _matrix;
         public TextMeshPro bank, multiplier, freespin_info, player_wallet, bet_amount;
-        public void SetBankTo(float value)
+        public void SetBankTo(double value)
         {
-            SetTextMeshProTextTo(ref bank, String.Format("${0:n}", value));
+            SetTextMeshProTextTo(ref bank, String.Format("{0:C2}", value));
             //Testing Purposes Only - To be animated
             bank.enabled = value > 0 ? true : false;
         }
@@ -73,9 +73,9 @@ namespace Slot_Engine.Matrix
         /// Sets the player wallet text to ${0:n}
         /// </summary>
         /// <param name="to_value">new player wallet value</param>
-        public void Set_Player_Wallet_To(float to_value)
+        public void Set_Player_Wallet_To(double to_value)
         {
-            SetTextMeshProTextTo(ref player_wallet, String.Format("${0:n}", to_value));
+            SetTextMeshProTextTo(ref player_wallet, String.Format("{0:C2}", to_value));
         }
         /// <summary>
         /// Sets the bet amount text to ${0:n}
@@ -83,7 +83,7 @@ namespace Slot_Engine.Matrix
         /// <param name="to_value">new bet amount value</param>
         public void SetBetAmountTo(float to_value)
         {
-            SetTextMeshProTextTo(ref bet_amount, String.Format("${0:n}", to_value));
+            SetTextMeshProTextTo(ref bet_amount, String.Format("{0:C2}", to_value));
         }
         /// <summary>
         /// Sets a TextMeshPro text field to value
@@ -150,12 +150,12 @@ namespace Slot_Engine.Matrix
         /// Handles new float value setting for player wallet
         /// </summary>
         /// <param name="new_player_wallet_amount"></param>
-        private void Machine_information_manager_new_player_wallet_amount(float new_player_wallet_amount)
+        private void Machine_information_manager_new_player_wallet_amount(double new_player_wallet_amount)
         {
             Set_Player_Wallet_To(new_player_wallet_amount);
         }
 
-        private void Machine_information_manager_new_bank_amount(float new_bank_amount)
+        private void Machine_information_manager_new_bank_amount(double new_bank_amount)
         {
             SetBankTo(new_bank_amount);
         }

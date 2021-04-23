@@ -309,12 +309,14 @@ namespace Slot_Engine.Matrix
         {
             if (StateManager.enCurrentState == States.Idle_Idle)
                 matrix.slot_machine_managers.machine_info_manager.IncreaseBetAmount();
+            locked = false;
         }
 
         private void DecreaseBetAmount()
         {
             if(StateManager.enCurrentState == States.Idle_Idle)
                 matrix.slot_machine_managers.machine_info_manager.DecreaseBetAmount();
+            locked = false;
         }
 
         private void SetTriggerTo(supported_triggers to_trigger)

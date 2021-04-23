@@ -47,11 +47,12 @@ namespace Slot_Engine.Matrix
     public class MachineInfoManager : MonoBehaviour
     {
         public delegate void FloatValueSet(float new_float_value);
+        public delegate void DoubleValueSet(double new_double_value);
         public delegate void IntValueSet(int new_int_value);
         public event FloatValueSet newMultiplier;
         public event FloatValueSet newBetAmount;
-        public event FloatValueSet newBankAmount;
-        public event FloatValueSet newPlayerWalletAmount;
+        public event DoubleValueSet newBankAmount;
+        public event DoubleValueSet newPlayerWalletAmount;
         public event IntValueSet newFreespinAmount;
         public MachineInfoScriptableObject machineInfoScriptableObject;
 
@@ -89,20 +90,20 @@ namespace Slot_Engine.Matrix
         {
             SetPlayerWalletTo(current_player_information.player_wallet);
         }
-        internal void OffsetBankBy(float amount)
+        internal void OffsetBankBy(double amount)
         {
             Debug.Log(String.Format("Offsetting bank by {0}",amount));
             SetBankTo(machineInfoScriptableObject.bank + amount);
         }
 
-        internal void SetBankTo(float new_bank_amount)
+        internal void SetBankTo(double new_bank_amount)
         {
             //Debug.Log(String.Format("Bank is being set to {0}",new_bank_amount));
             machineInfoScriptableObject.bank = new_bank_amount;
             this.newBankAmount?.Invoke(new_bank_amount);
         }
 
-        internal void SetPlayerWalletTo(float new_player_wallet)
+        internal void SetPlayerWalletTo(double new_player_wallet)
         {
             //Debug.Log(String.Format("Player Wallet is being set to {0}", new_player_wallet));
             machineInfoScriptableObject.player_wallet = new_player_wallet;
@@ -153,7 +154,7 @@ namespace Slot_Engine.Matrix
             SetFreeSpinsTo(freespins);
         }
 
-        internal void OffsetPlayerAmountBy(float amount)
+        internal void OffsetPlayerAmountBy(double amount)
         {
             //Add the amount to wallet and Update Text on machine
             SetPlayerWalletTo(machineInfoScriptableObject.player_wallet + amount);
@@ -204,6 +205,11 @@ namespace Slot_Engine.Matrix
         {
             StateManager.featureTransition += StateManager_FeatureTransition;
             StateManager.add_to_multiplier -= StateManager_add_to_multiplier;
+        }
+
+        internal void ResetMultiplier()
+        {
+            SetMultiplierTo(0);
         }
     }
 }
