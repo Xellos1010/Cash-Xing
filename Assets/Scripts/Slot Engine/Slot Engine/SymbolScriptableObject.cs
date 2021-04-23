@@ -46,7 +46,7 @@ public struct SymbolObject
     /// Win value of the Symbol
     /// </summary>
     [SerializeField]
-    public int winValue;
+    public int winValue; // Calculkate win value as base amount until Resolve Intro
     /// <summary>
     /// Will this trigger a feature?
     /// </summary>

@@ -48,12 +48,14 @@ namespace Slot_Engine.Matrix
         }
         [SerializeField]
         internal Matrix _matrix;
-        public TextMeshPro bank, multiplier, freespin_info, player_wallet, bet_amount;
+        public TextMeshPro bank, bigWin, multiplier, freespin_info, player_wallet, bet_amount;
         public void SetBankTo(double value)
         {
+            //Set the bank text
             SetTextMeshProTextTo(ref bank, String.Format("{0:C2}", value));
-            //Testing Purposes Only - To be animated
-            bank.enabled = value > 0 ? true : false;
+            bank.enabled = value > 0 && StateManager.enCurrentMode != GameStates.baseGame? true : false;
+
+            SetTextMeshProTextTo(ref bigWin, String.Format("{0:C2}", value));
         }
         public void SetMultiplierTo(float value)
         {

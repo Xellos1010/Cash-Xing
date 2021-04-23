@@ -11,6 +11,13 @@ public class Payline
     public PaylineConfiguration payline_configuration;
     [UnityEngine.SerializeField]
     public bool left_right;
+
+    public Payline(Payline payline)
+    {
+        left_right = payline.left_right;
+        payline_configuration = payline.payline_configuration;
+    }
+
     public Payline(int[] vs, bool left_right)
     {
         payline_configuration.payline = vs;

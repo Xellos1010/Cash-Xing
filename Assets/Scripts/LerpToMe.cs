@@ -59,7 +59,7 @@ public class LerpToMe : MonoBehaviour
                 if (percentComplete > 1)
                     percentComplete = 1;
                 //So the symbol moves above the hiding symbol object set z depth to top layer
-                newPosition = Vector3.Lerp(startPositionCache + (Vector3.back * 10),transform.position, percentComplete);
+                newPosition = Vector3.Lerp(startPositionCache + (Vector3.back * 30),transform.position, percentComplete);
                 objectToLerp.transform.position = newPosition;
             }
             if (percentComplete == 1)
