@@ -1096,6 +1096,8 @@ namespace Slot_Engine.Matrix
                     else
                     {
                         SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                        await isAllSlotSubAnimatorsReady("Idle_Intro");
+                        await isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
                         if (bonus_game_triggered)
                             StateManager.SetStateTo(States.bonus_idle_intro);
                         else

@@ -163,6 +163,11 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void LockInteractions()
+        {
+            locked = true;
+        }
+
         private void PerformAction(Actions action)
         {
             locked = true;
@@ -355,7 +360,8 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.bonus_idle_idle:
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
-                    UnlockSlamSpin();
+                    if(locked)
+                        UnlockSlamSpin();
                     break;
                 case States.bonus_spin_loop:
                     UnlockSlamSpin();
