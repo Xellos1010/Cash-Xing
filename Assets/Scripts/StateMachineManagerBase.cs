@@ -1,15 +1,15 @@
 ﻿using System;
 using UnityEngine;
-public enum supported_triggers
+public enum supportedAnimatorTriggers
 {
-    SpinStart,
     SpinSlam,
     SpinResolve,
     ResolveEnd,
     End
 }
-public enum supported_bools
+public enum supportedAnimatorBools
 {
+    SpinStart,
     WinRacking,
     BonusActive,
     FeatureTrigger,
@@ -28,7 +28,7 @@ public enum supported_floats
 public class StateMachineManagerBase : MonoBehaviour
 {
 
-    internal void ResetTrigger(ref Animator animator, supported_triggers trigger)
+    internal void ResetTrigger(ref Animator animator, supportedAnimatorTriggers trigger)
     {
         AnimatorStaticUtilites.ResetTrigger(ref animator, trigger);
     }
@@ -56,11 +56,11 @@ public class StateMachineManagerBase : MonoBehaviour
         }
     }
 
-    internal void SetBool(ref Animator animator,supported_bools bool_name, bool value)
+    internal void SetBool(ref Animator animator,supportedAnimatorBools bool_name, bool value)
     {
         AnimatorStaticUtilites.SetBoolTo(ref animator, bool_name, value);
     }
-    internal void SetAllBoolStateMachinesTo(ref Animator[] animators, supported_bools bool_name, bool value)
+    internal void SetAllBoolStateMachinesTo(ref Animator[] animators, supportedAnimatorBools bool_name, bool value)
     {
         //Debug.Log(String.Format("Setting Bool {0} to {1}",bool_name.ToString(),value));
         for (int i = 0; i < animators.Length; i++)
@@ -69,7 +69,7 @@ public class StateMachineManagerBase : MonoBehaviour
         }
     }
 
-    internal void SetTrigger(ref Animator animator, supported_triggers trigger_to_set)
+    internal void SetTrigger(ref Animator animator, supportedAnimatorTriggers trigger_to_set)
     {
         AnimatorStaticUtilites.SetTriggerTo(ref animator, trigger_to_set);
     }
@@ -78,7 +78,7 @@ public class StateMachineManagerBase : MonoBehaviour
         AnimatorStaticUtilites.SetFloatTo(ref animator, float_to_set, value);
     }
 
-    internal void SetAllAnimatorTriggers(ref Animator[] animators, supported_triggers to_trigger)
+    internal void SetAllAnimatorTriggers(ref Animator[] animators, supportedAnimatorTriggers to_trigger)
     {
         for (int animator = 0; animator < animators.Length; animator++)
         {
@@ -86,7 +86,15 @@ public class StateMachineManagerBase : MonoBehaviour
         }
     }
 
-    internal void ResetAllTrigger(ref Animator[] animators, supported_triggers trigger)
+    internal void SetAllAnimatorBoolTo(ref Animator[] animators, supportedAnimatorBools toBool, bool value)
+    {
+        for (int animator = 0; animator < animators.Length; animator++)
+        {
+            SetBool(ref animators[animator], toBool, value);
+        }
+    }
+
+    internal void ResetAllTrigger(ref Animator[] animators, supportedAnimatorTriggers trigger)
     {
         for (int animator = 0; animator < animators.Length; animator++)
         {

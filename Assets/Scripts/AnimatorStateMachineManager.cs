@@ -69,7 +69,7 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
         animator_state_machines.AddAnimatorsToSubList(transform.gameObject.name.Contains("Slot")?String.Format("{0}_{1}",transform.parent.gameObject.name, transform.gameObject.name):transform.gameObject.name, ref animators);
     }
 
-    internal void SetStateMachinesTriggerTo(supported_triggers trigger)
+    internal void SetStateMachinesTriggerTo(supportedAnimatorTriggers trigger)
     {
         if (animator_state_machines.state_machines_to_sync.Length > 0)
         {
@@ -80,7 +80,7 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
         }
     }
 
-    internal void ResetTriggerStateMachines(supported_triggers triggerToReset)
+    internal void ResetTriggerStateMachines(supportedAnimatorTriggers triggerToReset)
     {
         for (int animator = 0; animator < animator_state_machines.state_machines_to_sync.Length; animator++)
         {
@@ -95,7 +95,7 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
         SetSubStateMachinesTo(ref sub_states);
     }
 
-    internal void SetBoolAllStateMachines(supported_bools bool_name, bool v)
+    internal void SetBoolAllStateMachines(supportedAnimatorBools bool_name, bool v)
     {
         Animator[] animators = animator_state_machines.state_machines_to_sync;
         base.SetAllBoolStateMachinesTo(ref animators, bool_name,v);
@@ -107,13 +107,19 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
         base.InitializeAnimator(ref animators);
     }
 
-    internal void SetAllTriggersTo(supported_triggers to_trigger)
+    internal void SetAllTriggersTo(supportedAnimatorTriggers to_trigger)
     {
         Animator[] animators = animator_state_machines.state_machines_to_sync;
         base.SetAllAnimatorTriggers(ref animators, to_trigger);
     }
 
-    internal void ResetAllTrigger(supported_triggers trigger)
+    internal void SetAllBoolTo(supportedAnimatorBools toBool, bool value)
+    {
+        Animator[] animators = animator_state_machines.state_machines_to_sync;
+        base.SetAllAnimatorBoolTo(ref animators, toBool, value);
+    }
+
+    internal void ResetAllTrigger(supportedAnimatorTriggers trigger)
     {
         Animator[] animators = animator_state_machines.state_machines_to_sync;
         base.ResetAllTrigger(ref animators, trigger);
@@ -142,7 +148,7 @@ class AnimatorStateMachineManagerEditor : BoomSportsEditor
         animator_state_machines.state_machines_to_sync = states_to_sync;
     }
 
-    internal void SetSubStateMachinesTriggerTo(int subStateIndex,supported_triggers toTrigger)
+    internal void SetSubStateMachinesTriggerTo(int subStateIndex,supportedAnimatorTriggers toTrigger)
     {
         if(animator_state_machines.sub_state_machines_values.sub_state_machines[subStateIndex].sub_state_animators.Length > 0)
         {

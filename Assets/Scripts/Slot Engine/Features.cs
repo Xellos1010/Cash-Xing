@@ -19,7 +19,7 @@ namespace Slot_Engine.Matrix
 		None,
 		freespin,
 		wild,
-		multiplier,
+		multiplier, //ATM overlays trigger a feature - overlay triggers multiplier in instaspins - maybe freespins somewhere else
 		overlay,
 		Count
 	}

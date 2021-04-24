@@ -143,7 +143,7 @@ namespace Slot_Engine.Matrix.Managers
         /// </summary>
         internal async void InterruptSpin()
         {
-            matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinSlam, true);
+            matrix.SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinSlam, true);
             await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
             await matrix.isAllSlotAnimatorsReady("Spin_Outro");
             StateManager.SetStateTo(States.Spin_Outro);
@@ -285,8 +285,8 @@ namespace Slot_Engine.Matrix.Managers
                 case SpinStates.spin_start:
                     Debug.Log("Starting Spin - waiting for Idle_Outro");
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
-                    Debug.Log("Setting Animation Trigger");
-                    matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
+                    Debug.Log("Setting Animation Controller to SpinStart");
+                    matrix.SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, true);
                     await matrix.isAllAnimatorsThruState("Idle_Outro");
                     await matrix.isAllSlotAnimatorsReady("Spin_Intro");
                     StateManager.SetStateTo(States.Spin_Intro);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Slot_Engine.Matrix.ScriptableObjects;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 //For Parsing Purposes
@@ -14,7 +15,7 @@ using UnityEditor;
 /// This holds all payline information. Paylines are processed in the Slot Engine Script by cycling through the iPayLines and comparing whether symbols match on those paylines.
 /// </summary>
 
-namespace Slot_Engine.Matrix
+namespace Slot_Engine.Matrix.Managers
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(PaylinesManager))]
@@ -148,7 +149,6 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private Matrix _matrix;
 
-        public PaylinesEvaluationScriptableObject dynamic_paylines_evaluation;
 
         public Task cycle_paylines_task;
 
@@ -174,12 +174,7 @@ namespace Slot_Engine.Matrix
 
         private int GetSupportedGeneratedPaylines()
         {
-            dynamic_paylines_evaluation.number_of_paylines = 0;
-            for (int i = 0; i < dynamic_paylines_evaluation.dynamic_paylines.root_nodes.Length; i++)
-            {
-                dynamic_paylines_evaluation.number_of_paylines += GetPossiblePaylineCombinations(ref dynamic_paylines_evaluation.dynamic_paylines.root_nodes[i]);
-            }
-            return dynamic_paylines_evaluation.number_of_paylines;
+            return matrix.slot_machine_managers.evaluationManagger.coreEvaluationObject.ReturnEvaluationObjectSupportedRootCount();
         }
 
         private int GetPossiblePaylineCombinations(ref suffix_tree_node suffix_tree_node)
@@ -243,54 +238,10 @@ namespace Slot_Engine.Matrix
             EvaluateWinningSymbols(symbols_configuration);
             return Task.CompletedTask;
         }
-        [Serializable]
-        public struct ReelSymbolConfiguration
-        {
-            [SerializeField]
-            public SlotDisplaySymbol[] reel_slots;
-
-            internal void SetReelSymbolsTo(SlotDisplaySymbol[] display_symbols)
-            {
-                reel_slots = display_symbols;
-            }
-        }
-        public List<suffix_tree_node_info> overlaySymbols;
-        public Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
-        {
-            overlaySymbols = new List<suffix_tree_node_info>();
-            int primary_symbol_index;//index for machine_symbols_list with the symbol to check for in the payline.
-            //TODO refactor and make settable by Unity Editor
-            Dictionary<Features, List<suffix_tree_node_info>> feature_active_count = new Dictionary<Features, List<suffix_tree_node_info>>();
-            winning_paylines = CheckForWinningPaylinesDynamic(ref symbols_configuration, ref feature_active_count);
-            Debug.Log(String.Format("feature_active_count.keys = {0}", feature_active_count.Keys.Count));
-            //Debug.Log(String.Format("Looking for features that activated"));
-            foreach (KeyValuePair<Features, List<suffix_tree_node_info>> item in feature_active_count)
-            {
-                //Multiplier calculated first then mode is applied
-                Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
-                if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode != GameStates.freeSpin)
-                {
-                    Debug.Log("Overlay Symbol Found in Winning Paylines");
-                    if(StateManager.enCurrentMode == GameStates.baseGame)
-                        StateManager.SetFeatureActiveTo(Features.multiplier, true);
-                    overlaySymbols = item.Value;
-                }
-                else if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode == GameStates.freeSpin)
-                {
-                    StateManager.AddToMultiplier(item.Value.Count);
-                }
-                if (item.Key == Features.freespin)
-                    if (item.Value.Count > 2)
-                    {
-                        StateManager.SetFeatureActiveTo(Features.freespin, true);
-                    }
-            }
-            paylines_evaluated = true;
-            return Task.CompletedTask;
-        }
-
         private WinningPayline[] CheckForWinningPaylinesDynamic(ref ReelSymbolConfiguration[] symbols_configuration, ref Dictionary<Features, List<suffix_tree_node_info>> feature_active_count)
         {
+            //Cast the core Scriptable object to the paylines evaluation scriptable object and continue
+            PaylinesEvaluationScriptableObject dynamic_paylines_evaluation = (PaylinesEvaluationScriptableObject)matrix.slot_machine_managers.evaluationManagger.coreEvaluationObject; 
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();
             for (int root_node = 0; root_node < dynamic_paylines_evaluation.dynamic_paylines.root_nodes.Length; root_node++)
@@ -324,7 +275,7 @@ namespace Slot_Engine.Matrix
                         symbolObject = output_filtered[winning_payline].winning_symbols[symbol];
                         linewin_symbol = symbols_configuration[symbolObject.suffix_tree_node_info.column].reel_slots[symbolObject.suffix_tree_node_info.row];
                         //Debug.Log(String.Format("Checking Winning Payline {0}, Node = {1} Symbol = {2} isOverlay = {3}", output_filtered[winning_payline].payline.PrintConfiguration(), symbolObject.suffix_tree_node_info.Print(), linewin_symbol.primary_symbol,linewin_symbol.is_overlay));
-                        if(!feature_active_count[Features.multiplier].Contains(symbolObject.suffix_tree_node_info) && linewin_symbol.is_overlay)
+                        if (!feature_active_count[Features.multiplier].Contains(symbolObject.suffix_tree_node_info) && linewin_symbol.is_overlay)
                         {
                             feature_active_count[Features.multiplier].Add(symbolObject.suffix_tree_node_info);
                         }
@@ -335,6 +286,12 @@ namespace Slot_Engine.Matrix
             }
             return output_filtered.ToArray();
 
+        }
+
+        public async Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
+        {
+            winning_paylines = await matrix.slot_machine_managers.evaluationManagger.EvaluateSymbolConfigurationForWinningPaylines(symbols_configuration);
+            paylines_evaluated = true;
         }
 
         private void FilterRawOutputForDuplicateRootNodeEntries(ref List<WinningPayline> output_filtered, ref List<WinningPayline> output_raw)

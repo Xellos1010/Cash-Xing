@@ -9,24 +9,58 @@
 //
 //
 using UnityEngine;
-using Slot_Engine.Matrix;
+using Slot_Engine.Matrix.Managers;
 using System.Collections.Generic;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
-/// <summary>
-/// Creates the scriptable object for paylines evaluation information to be stored
-/// </summary>
-[CreateAssetMenu(fileName = "PaylinesEvaluationObject", menuName = "BoomSportsScriptableObjects/PaylinesEvaluationScriptableObject", order = 4)]
-public class PaylinesEvaluationScriptableObject : ScriptableObject
+namespace Slot_Engine.Matrix.ScriptableObjects
 {
     /// <summary>
-    /// number of paylines supported
+    /// Creates the scriptable object for Wild Paylines Evaluation information to be stored
     /// </summary>
-    public int number_of_paylines = 0;
+    [CreateAssetMenu(fileName = "WildEvaluationObject", menuName = "BoomSportsScriptableObjects/WildEvaluationScriptableObject", order = 4)]
+    public class WildScriptableObject : SlotEvaluationScriptableObject
+    {
+        
+        public override object EvaluatePaylines(ReelSymbolConfiguration[] symbols_configuration)
+        {
+            //Called at high level and take symbol names and return feature activating
+            WinningPayline[] output = new WinningPayline[0];
+            return output;
+        }
+
+        public override int? ReturnEvaluationObjectSupportedRootCount()
+        {
+            return symbolsActivatingEvaluationConditions?.Count;
+        }
+    }
+}
+
+namespace Slot_Engine.Matrix.ScriptableObjects
+{
     /// <summary>
-    /// The roote nodes for dynamic paylines using a suffix tree
+    /// Paylines Evaluation Scriptable Object - Holds nodes and conditions to build nodes and store information
     /// </summary>
-    public suffix_tree_root_nodes dynamic_paylines;
+    [CreateAssetMenu(fileName = "PaylinesEvaluationObject", menuName = "BoomSportsScriptableObjects/PaylinesEvaluationScriptableObject", order = 4)]
+    public class PaylinesEvaluationScriptableObject : EvaluationScriptableObject
+    {
+        /// <summary>
+        /// number of paylines supported - pre-generated in editor mode
+        /// </summary>
+        public int number_of_paylines = 0;
+        /// <summary>
+        /// The root nodes for dynamic paylines using a suffix tree
+        /// </summary>
+        public suffix_tree_root_nodes dynamic_paylines;
+
+        public override object EvaluatePaylines(ReelSymbolConfiguration[] symbols_configuration)
+        {
+            WinningPayline[] winningPaylines = new WinningPayline[0];
+            return winningPaylines;
+        }
+
+        public override int? ReturnEvaluationObjectSupportedRootCount()
+        {
+            return number_of_paylines;
+        }
+    }
 }

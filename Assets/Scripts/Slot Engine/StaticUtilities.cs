@@ -159,7 +159,7 @@ public static class StaticUtilities
 
 public static class AnimatorStaticUtilites
 {
-    public static void SetTriggerTo(ref Animator animator, supported_triggers to_trigger)
+    public static void SetTriggerTo(ref Animator animator, supportedAnimatorTriggers to_trigger)
     {
         animator.SetTrigger(to_trigger.ToString());
     }
@@ -172,28 +172,28 @@ public static class AnimatorStaticUtilites
 
     internal static void ResetAllBools(ref Animator animator)
     {
-        for (int bool_to_check = 0; bool_to_check < (int)supported_bools.End; bool_to_check++) //Don't change spin resolve yet. will need to reset on spin idleidle
+        for (int bool_to_check = 0; bool_to_check < (int)supportedAnimatorBools.End; bool_to_check++) //Don't change spin resolve yet. will need to reset on spin idleidle
         {
             //Debug.Log(String.Format("Resetting bool {0}", ((supported_bools)bool_to_check).ToString()));
-            SetBoolTo(ref animator, (supported_bools)bool_to_check, false);
+            SetBoolTo(ref animator, (supportedAnimatorBools)bool_to_check, false);
         }
     }
 
     internal static void ResetAllTriggers(ref Animator animator)
     {
-        for (int trigger_to_check = 0; trigger_to_check < (int)supported_triggers.End; trigger_to_check++) //Don't change spin resolve yet. will need to reset on spin idleidle
+        for (int trigger_to_check = 0; trigger_to_check < (int)supportedAnimatorTriggers.End; trigger_to_check++) //Don't change spin resolve yet. will need to reset on spin idleidle
         {
             //Debug.Log(String.Format("Resetting trigger {0}", ((supported_triggers)trigger_to_check).ToString()));
-            ResetTrigger(ref animator, (supported_triggers)trigger_to_check);
+            ResetTrigger(ref animator, (supportedAnimatorTriggers)trigger_to_check);
         }
     }
 
-    internal static void ResetTrigger(ref Animator animator, supported_triggers trigger)
+    internal static void ResetTrigger(ref Animator animator, supportedAnimatorTriggers trigger)
     {
         animator.ResetTrigger(trigger.ToString());
     }
 
-    internal static void SetBoolTo(ref Animator animator, supported_bools bool_name, bool value)
+    internal static void SetBoolTo(ref Animator animator, supportedAnimatorBools bool_name, bool value)
     {
         animator.SetBool(bool_name.ToString(), value);
     }

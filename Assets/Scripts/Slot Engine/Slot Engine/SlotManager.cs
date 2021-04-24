@@ -231,8 +231,8 @@ namespace Slot_Engine.Matrix
             //Debug.Log(String.Format("Setting {0} to symbol win for {1}",String.Join("_",transform.gameObject.name,transform.parent.gameObject.name),presentation_symbol));
             Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol]; //may display wrong animator is out of order
             //Debug.Log(String.Format("Symbol Set to win = {0}", sub_state_animator.transform.name));
-            SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, true);
-            SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
+            SetBoolTo(ref sub_state_animator, supportedAnimatorBools.SymbolResolve, true);
+            SetBoolTo(ref sub_state_animator, supportedAnimatorBools.LoopPaylineWins, true);
             //PingPong float
             //StartCoroutine(PingPongAnimation());
             //SetPingPong(true);
@@ -268,7 +268,7 @@ namespace Slot_Engine.Matrix
             return true;
         }
 
-        private void SetBoolTo(ref Animator animator, supported_bools supportedBool, bool value)
+        private void SetBoolTo(ref Animator animator, supportedAnimatorBools supportedBool, bool value)
         {
             //Debug.Log(String.Format("{0} bool {1} is {2}", animator.gameObject.name, supportedBool.ToString(), value));
             state_machine.SetBool(ref animator, supportedBool,value);
@@ -279,7 +279,7 @@ namespace Slot_Engine.Matrix
             if (Application.isPlaying)
             {
                 Animator sub_state_animator = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol];
-                SetBoolTo(ref sub_state_animator, supported_bools.SymbolResolve, false);
+                SetBoolTo(ref sub_state_animator, supportedAnimatorBools.SymbolResolve, false);
                 //SetBoolTo(ref sub_state_animator, supported_bools.LoopPaylineWins, true);
                 //if (!sub_state_animator.GetCurrentAnimatorStateInfo(0).IsName("Resolve_Intro"))
                 //{
@@ -323,7 +323,7 @@ namespace Slot_Engine.Matrix
                 if (reel_parent.matrix.symbols_data_for_matrix.symbols[i].isOverlaySymbol)
                 {
                     output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
-                    SetBoolTo(ref output, supported_bools.FeatureTrigger, true);
+                    SetBoolTo(ref output, supportedAnimatorBools.FeatureTrigger, true);
                     return output;
                 }
             }
@@ -340,7 +340,7 @@ namespace Slot_Engine.Matrix
             state_machine.SetSubStateMachinesTo(ref sub_states);
         }
 
-        internal void SetBoolStateMachines(supported_bools bool_name, bool v)
+        internal void SetBoolStateMachines(supportedAnimatorBools bool_name, bool v)
         {
             state_machine.SetBoolAllStateMachines(bool_name, v);
         }
@@ -376,12 +376,12 @@ namespace Slot_Engine.Matrix
             
         }
 
-        internal void SetTriggerTo(supported_triggers to_trigger)
+        internal void SetTriggerTo(supportedAnimatorTriggers to_trigger)
         {
             state_machine.SetAllTriggersTo(to_trigger);
         }
 
-        internal void ResetTrigger(supported_triggers slot_to_trigger)
+        internal void ResetTrigger(supportedAnimatorTriggers slot_to_trigger)
         {
             state_machine.ResetAllTrigger(slot_to_trigger);
         }
@@ -445,13 +445,13 @@ namespace Slot_Engine.Matrix
 #endif
         }
 
-        internal void SetTriggerSubStatesTo(supported_triggers toTrigger)
+        internal void SetTriggerSubStatesTo(supportedAnimatorTriggers toTrigger)
         {
             //Debug.Log(String.Format("Setting sub states to trigger {0}",toTrigger.ToString()));
             state_machine.SetSubStateMachinesTriggerTo(0,toTrigger);
         }
 
-        internal void ResetTriggerSubStates(supported_triggers triggerToReset)
+        internal void ResetTriggerSubStates(supportedAnimatorTriggers triggerToReset)
         {
             state_machine.ResetTriggerStateMachines(triggerToReset);
         }

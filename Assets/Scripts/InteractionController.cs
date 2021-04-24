@@ -217,7 +217,6 @@ namespace Slot_Engine.Matrix
         {
             Debug.Log("Slamming Paylines Cycling");
             can_spin_slam = false;
-            spin_btn_animator.SetBool(supported_bools.WinRacking.ToString(),false);
             matrix.SlamLoopingPaylines();
         }
 
@@ -324,7 +323,7 @@ namespace Slot_Engine.Matrix
             locked = false;
         }
 
-        private void SetTriggerTo(supported_triggers to_trigger)
+        private void SetTriggerTo(supportedAnimatorTriggers to_trigger)
         {
             StateMachineController.SetAllTriggersTo(to_trigger);
         }
