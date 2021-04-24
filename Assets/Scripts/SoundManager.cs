@@ -41,7 +41,7 @@ namespace Slot_Engine.Matrix
             audioSource.PlayOneShot(machineSoundsReference.rollupEnd);
         }
 
-        private void Racking_manager_rackStart(float amountToRack)
+        private void Racking_manager_rackStart(double amountToRack)
         {
             audioSource.loop = true;
             audioSource.clip = machineSoundsReference.rollups[matrix.GetRollupIndexFromAmountToRack(amountToRack)];

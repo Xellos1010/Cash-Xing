@@ -115,6 +115,16 @@ namespace Slot_Engine.Matrix.Managers
                         InterruptSpin();
                     }
                 }
+                else if (StateManager.enCurrentState == States.bonus_idle_idle)
+                {
+                    time_counter += Time.deltaTime;
+                    if (time_counter > 1)
+                    {
+                        ResetUseTimer();
+                        matrix.slot_machine_managers.interaction_controller.LockInteractions();
+                        matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+                    }
+                }
                 else
                 {
                     if (time_counter > 0)
@@ -233,10 +243,12 @@ namespace Slot_Engine.Matrix.Managers
                 case States.bonus_idle_outro:
                     //Wait for animator to play all idle outro animations then continue with spin.
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
+                    ResetUseTimer();
                     //SetSpinStateTo(SpinStates.spin_start);
                     break;
                 case States.bonus_idle_idle:
                     SetSpinStateTo(SpinStates.idle_idle);
+                    use_timer = true;
                     break;
                 case States.bonus_spin_intro:
                     break;
@@ -271,8 +283,11 @@ namespace Slot_Engine.Matrix.Managers
                     spin_enabled = true;
                     break;
                 case SpinStates.spin_start:
+                    Debug.Log("Starting Spin - waiting for Idle_Outro");
+                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
+                    Debug.Log("Setting Animation Trigger");
                     matrix.SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
-                    await matrix.isAllAnimatorsThruState("Spin_Intro");
+                    await matrix.isAllAnimatorsThruState("Idle_Outro");
                     await matrix.isAllSlotAnimatorsReady("Spin_Intro");
                     StateManager.SetStateTo(States.Spin_Intro);
                     //Start the reels spinning
@@ -291,8 +306,11 @@ namespace Slot_Engine.Matrix.Managers
                     break;
                 case SpinStates.spin_outro:
                     ResetUseTimer();
+                    Debug.Log("Timer Reset");
                     await ReelsStopSpinning();
+                    Debug.Log("All reels Stopped Spinning");
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
+                    Debug.Log("All Animators resolved spin_outro stateSpinning");
                     StateManager.SetStateTo(States.Spin_End);
                     break;
                 case SpinStates.end:

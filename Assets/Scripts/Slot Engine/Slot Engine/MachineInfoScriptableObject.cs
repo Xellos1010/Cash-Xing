@@ -22,7 +22,7 @@ public class MachineInfoScriptableObject : ScriptableObject
     /// <summary>
     /// Machine stored values to coin_in/coin_out
     /// </summary>
-    public float bank = 0, player_wallet = 0;
+    public double bank = 0, player_wallet = 0;
     /// <summary>
     /// bet_amount starts at 1.0f
     /// </summary>

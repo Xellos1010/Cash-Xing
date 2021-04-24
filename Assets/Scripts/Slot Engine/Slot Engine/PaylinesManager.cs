@@ -412,10 +412,11 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         private IEnumerator CycleWinningPaylines()
         {
+            //On First Pass thru
             //matrix.InitializeSymbolsForWinConfigurationDisplay();
             int payline_to_show = current_winning_payline_shown + 1 < winning_paylines.Length ? current_winning_payline_shown + 1 : 0;
             //Debug.Log(String.Format("Showing Payline {0}", payline_to_show));
-            yield return ShowWinningPayline(payline_to_show);
+            ShowWinningPayline(payline_to_show);
             //Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
             yield return new WaitForSeconds(wininng_payline_highlight_time);
             //Debug.Log("Hiding Payline");

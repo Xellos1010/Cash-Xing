@@ -132,8 +132,28 @@ namespace Slot_Engine.Matrix
             ToggleRenderer(true);
             //initialize the line positions list and 
             List<Vector3> linePositions;
+            Payline toShowPayline = new Payline(payline_to_show.payline);
+            if(payline_to_show.payline.payline_configuration.payline.Length < matrix.reel_strip_managers.Length)
+            {
+                List<int> paylineTemp = new List<int>();
+                paylineTemp.AddRange(toShowPayline.payline_configuration.payline);
+                int newNumber = paylineTemp[paylineTemp.Count-1];
+                for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.reel_strip_managers.Length; paylineNode++)
+                {
+                    paylineTemp.Add(newNumber);
+                }
+                toShowPayline.payline_configuration.payline = paylineTemp.ToArray();
+            }
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
-            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline, out linePositions);
+            matrix.ReturnPositionsBasedOnPayline(ref toShowPayline, out linePositions);
+            Vector3[] winningSymbolPositions = new Vector3[payline_to_show.payline.payline_configuration.payline.Length];
+            linePositions.CopyTo(0,winningSymbolPositions,0, winningSymbolPositions.Length);
+            //Is this even or odd? use middle position if odd - use lerp half for even
+            Vector3 position = winningSymbolPositions.Length % 2 == 0 ?
+                Vector3.Lerp(winningSymbolPositions[((int)winningSymbolPositions.Length / 2)-1], winningSymbolPositions[(int)winningSymbolPositions.Length / 2], .5f) : //If line win is even
+                winningSymbolPositions[(int)winningSymbolPositions.Length / 2];                                  //If line win is odd
+            //Sets the winning amount text
+            SetWinningAmountDisplay(position,payline_to_show.GetTotalWin(matrix));
             if (line_renderers_to_use < 2)
             {
                 //Solution for single line renderer
@@ -143,6 +163,12 @@ namespace Slot_Engine.Matrix
             {
                 throw new Exception("Multiple Line Renderers TBD");
             }
+        }
+        public TMPro.TextMeshPro winingPaylineText;
+        private void SetWinningAmountDisplay(Vector3 vector3, float v)
+        {
+            winingPaylineText.transform.position = vector3 + (/*(Vector3.right * 200) + (Vector3.up * 60) + */(Vector3.back * 5));
+            winingPaylineText.text = String.Format("{0:C2}",v);
         }
 
         private int ReturnIndexFirstLastFromList(bool left_right, int i, int count)
@@ -157,6 +183,7 @@ namespace Slot_Engine.Matrix
             {
                 payline_renderers[i].line_renderer.enabled = on_off;
             }
+            winingPaylineText.enabled = on_off;
         }
 
         internal void SetWidth(int v1, int v2)

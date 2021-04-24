@@ -61,7 +61,7 @@ namespace Slot_Engine.Matrix
             }
             if(GUILayout.Button("Set Weights from symbols data"))
             {
-                Debug.Log(myTarget.symbol_weights_per_state == null ? "No object returned" : "Ensuring weights");
+                Debug.Log(myTarget.symbol_weights_per_state_dictionary == null ? "No object returned" : "Ensuring weights");
                 myTarget.AddSymbolStateWeightToDict();
                 //myTarget.EnsureWeightsAreCorrect();
             }
@@ -95,6 +95,8 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public CorePrefabsReferencesScriptableObject core_prefabs;
         [SerializeField]
+        public Dictionary<GameStates, WeightsDistributionScriptableObject> symbol_weights_per_state_dictionary;
+        [SerializeField]
         public GameStateDistributionDictionary symbol_weights_per_state
         {
             get
@@ -107,7 +109,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void AddSymbolStateWeightToDict()
+        internal async Task AddSymbolStateWeightToDict()
         {
             symbol_weight_state temp;
             Dictionary<GameStates, List<float>> symboWeightsByState = new Dictionary<GameStates, List<float>>();
@@ -123,46 +125,101 @@ namespace Slot_Engine.Matrix
                     symboWeightsByState[temp.gameState].Add(temp.symbolWeightInfo);
                 }
             }
-            AddSymbolStateWeightToDict(symboWeightsByState);
+            await AddSymbolStateWeightToDict(symboWeightsByState);
         }
 
-        private async void AddSymbolStateWeightToDict(Dictionary<GameStates, List<float>> symbol_weight_state)
+        public WeightsDistributionScriptableObject[] weightObjects;
+
+        private async Task AddSymbolStateWeightToDict(Dictionary<GameStates, List<float>> symbol_weight_state)
         {
-#if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
-#endif
+            int counter = -1;
             foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
             {
-                symbol_weights_per_state[item.Key] = FindDistributionFromResources(item.Key);
+                if (symbol_weights_per_state_dictionary == null)
+                    symbol_weights_per_state_dictionary = new Dictionary<GameStates, WeightsDistributionScriptableObject>();
+                counter++;
+                symbol_weights_per_state_dictionary[item.Key] = weightObjects[counter];
                 await Task.Delay(20);
-                if (symbol_weights_per_state[item.Key]?.intDistribution != null)
+                if (symbol_weights_per_state_dictionary[item.Key]?.intDistribution != null)
                 {
                     //Clear and re-add
-                    for (int i = symbol_weights_per_state[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
+                    for (int i = symbol_weights_per_state_dictionary[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
                     {
-                        symbol_weights_per_state[item.Key].intDistribution.RemoveAt(i);
+                        symbol_weights_per_state_dictionary[item.Key].intDistribution.RemoveAt(i);
                         await Task.Delay(10);
                     }
                 }
-                
+
                 for (int i = 0; i < item.Value.Count; i++)
                 {
                     //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
                     //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
                     await Task.Delay(20);
-                    symbol_weights_per_state[item.Key].intDistribution.Add(i, item.Value[i]);
+                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Add(i, item.Value[i]);
                     await Task.Delay(20);
-                    symbol_weights_per_state[item.Key].intDistribution.Items[i].Weight = item.Value[i];
+                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Items[i].Weight = item.Value[i];
                 }
-#if UNITY_EDITOR
-                PrefabUtility.RecordPrefabInstancePropertyModifications(this);
-#endif
             }
+//#if UNITY_EDITOR
+//            EditorUtility.SetDirty(this);
+//            foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
+//            {
+//                symbol_weights_per_state[item.Key] = FindDistributionFromResources(item.Key);
+//                await Task.Delay(20);
+//                if (symbol_weights_per_state[item.Key]?.intDistribution != null)
+//                {
+//                    //Clear and re-add
+//                    for (int i = symbol_weights_per_state[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
+//                    {
+//                        symbol_weights_per_state[item.Key].intDistribution.RemoveAt(i);
+//                        await Task.Delay(10);
+//                    }
+//                }
+
+//                for (int i = 0; i < item.Value.Count; i++)
+//                {
+//                    //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
+//                    //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state[item.Key].intDistribution.Add(i, item.Value[i]);
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state[item.Key].intDistribution.Items[i].Weight = item.Value[i];
+//                }
+//                PrefabUtility.RecordPrefabInstancePropertyModifications(this);
+//            }
+//#else
+//            foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
+//            {
+//                symbol_weights_per_state_dictionary[item.Key] = FindDistributionFromResources(item.Key);
+//                await Task.Delay(20);
+//                if (symbol_weights_per_state_dictionary[item.Key]?.intDistribution != null)
+//                {
+//                    //Clear and re-add
+//                    for (int i = symbol_weights_per_state_dictionary[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
+//                    {
+//                        symbol_weights_per_state_dictionary[item.Key].intDistribution.RemoveAt(i);
+//                        await Task.Delay(10);
+//                    }
+//                }
+
+//                for (int i = 0; i < item.Value.Count; i++)
+//                {
+//                    //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
+//                    //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Add(i, item.Value[i]);
+//                    await Task.Delay(20);
+//                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Items[i].Weight = item.Value[i];
+//                }
+//            }
+//#endif
+
 
         }
 
         private WeightsDistributionScriptableObject FindDistributionFromResources(GameStates key)
         {
+            Debug.Log(String.Format("Loading Resources/Core/ScriptableObjects/Weights/{0}", key.ToString()));
             return Resources.Load(String.Format("Core/ScriptableObjects/Weights/{0}", key.ToString())) as WeightsDistributionScriptableObject;
         }
 
@@ -234,15 +291,26 @@ namespace Slot_Engine.Matrix
                 return names;
             }
         }
-        void Start()
+        async void Start()
         {
             StateManager.SetGameModeActiveTo(GameStates.baseGame);
+            int symbol_weight_pass_check = -1;
+            try
+            {
+                symbol_weight_pass_check = symbol_weights_per_state_dictionary[GameStates.baseGame].intDistribution.Draw();//symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+            }
+            catch
+            {
+                await AddSymbolStateWeightToDict();
+                symbol_weight_pass_check = symbol_weights_per_state_dictionary[GameStates.baseGame].intDistribution.Draw();//symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+                Debug.Log("Weights are in");
+            }
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
             SetAllSlotAnimatorSyncStates();
             SetSubStatesAllSlotAnimatorStateMachines();
             SetManagerStateMachineSubStates();
             //Initialize Machine and Player  Information
-            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 -1, 1, 0);
+            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 -1, 0, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
@@ -475,15 +543,6 @@ namespace Slot_Engine.Matrix
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
             SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
-            //for (int reel = 0; reel < reel_strip_managers.Length; reel++)
-            //{
-            //    for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
-            //    {
-            //        //Stop all animation co-routines
-            //        reel_strip_managers[reel].slots_in_reel[slot].SetPingPong(false);
-                    
-            //    }
-            //}
             yield return 0;
         }
         private WinningPayline current_payline_displayed;
@@ -553,6 +612,8 @@ namespace Slot_Engine.Matrix
         
         internal void SlamLoopingPaylines()
         {
+            //Pause and interrupt racking before continue
+            slot_machine_managers.racking_manager.PauseRackingOnInterrupt();
             StateManager.SetStateTo(States.Resolve_Outro);
         }
 
@@ -575,7 +636,7 @@ namespace Slot_Engine.Matrix
             bonus_game_triggered = onOff;
             SetAllAnimatorsBoolTo(supported_bools.BonusActive, onOff);
             if (!onOff)
-                slot_machine_managers.machine_info_manager.SetMultiplierTo(1);
+                slot_machine_managers.machine_info_manager.SetMultiplierTo(0);
         }
 
         private void SetAllAnimatorsBoolTo(supported_bools bool_to_set, bool value)
@@ -809,7 +870,7 @@ namespace Slot_Engine.Matrix
             OffetPlayerWalletBy(-amount);
         }
 
-        internal void OffetPlayerWalletBy(float amount)
+        internal void OffetPlayerWalletBy(double amount)
         {
             slot_machine_managers.machine_info_manager.OffsetPlayerAmountBy(amount);
         }
@@ -833,7 +894,36 @@ namespace Slot_Engine.Matrix
         {
             StateManager.StateChangedTo += StateManager_StateChangedTo;
             StateManager.featureTransition += StateManager_FeatureTransition;
+            //StateManager.add_to_multiplier += StateManager_add_to_multiplierAsync;
         }
+
+        private async void StateManager_add_to_multiplierAsync(int multiplier)
+        {
+            
+        }
+
+        private async Task isAnimatorThruState(Animator multiplier, string state)
+        {
+            bool is_all_animators_resolved = false;
+            AnimatorStateInfo state_info;
+            bool wait = true;
+            while (wait)
+            {
+                state_info = multiplier.GetCurrentAnimatorStateInfo(0);
+
+            Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
+                //Check if time has gone thru
+                if (!state_info.IsName(state))
+                {
+                    wait = false;
+                }
+                else
+                {
+                    await Task.Delay(300);
+                }
+            }
+        }
+
         /// <summary>
         /// Used to receive and execute functions based on feature active or inactive
         /// </summary>
@@ -846,9 +936,19 @@ namespace Slot_Engine.Matrix
             {
                 case Features.freespin:
                     ToggleFreeSpinActive(active_inactive);
+                    if(active_inactive)
+                    {
+                        background.runtimeAnimatorController = backgroundACO[0];
+                        background.SetBool(supported_bools.BonusActive.ToString(),true);
+                    }
+                    else
+                    {
+                        background.SetBool(supported_bools.BonusActive.ToString(), false);
+                    }
                     break;
                 case Features.multiplier:
                     ToggleFreeSpinActive(active_inactive);
+                    background.runtimeAnimatorController = backgroundACO[1];
                     break;
                 default:
                     bonus_game_triggered = false;
@@ -860,7 +960,20 @@ namespace Slot_Engine.Matrix
         {
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
             StateManager.featureTransition -= StateManager_FeatureTransition;
+            //StateManager.add_to_multiplier -= StateManager_add_to_multiplierAsync;
         }
+
+        public AnimatorOverrideController[] characterTier;
+        public Animator character;
+        public AnimatorOverrideController[] multiplierTier;
+        public Animator multiplier;
+
+        public Animator background;
+        public AnimatorOverrideController[] backgroundACO;
+        public TMPro.TextMeshPro freespinText;
+
+        public Animator rackingRollupAnimator;
+        public TMPro.TextMeshPro rackingRollupText;
         /// <summary>
         /// Matrix State Machine
         /// </summary>
@@ -884,7 +997,28 @@ namespace Slot_Engine.Matrix
                     bool resolve_intro = false;
                     if (slot_machine_managers.paylines_manager.overlaySymbols.Count > 0)
                     {
+                        if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
+                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+                        {
+                            Debug.Log("Present Big Win First");
+                            SetAnimatorOverrideControllerTo(ref this.multiplier, ref multiplierTier, 2);
+                        }
+                        else if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
+                            slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
+                        {
+                            Debug.Log("Presenting Medium win");
+                            SetAnimatorOverrideControllerTo(ref this.multiplier, ref multiplierTier, 1);
+
+                        }
+                        else
+                        {
+                            Debug.Log("Presenting Small win");
+                            SetAnimatorOverrideControllerTo(ref this.multiplier, ref multiplierTier, 0);
+                        }
+                        this.multiplier.SetBool(supported_bools.FeatureTrigger.ToString(), true);
                         await PlayFeatureAnimation(slot_machine_managers.paylines_manager.overlaySymbols);
+                        await isAnimatorThruStateAndAtPauseState(this.multiplier, "Feature_Outro");
+                        this.multiplier.SetBool(supported_bools.FeatureTrigger.ToString(), false);
                         Debug.Log("All Overlay Animators are finished");
                     }
                     //If the spin has ended and there are no wining paylines or freespins left then disable freespin mode
@@ -911,6 +1045,8 @@ namespace Slot_Engine.Matrix
                             //Rack win to bank and continue to next spin
                             Debug.Log("There is a win and bonus game triggeres");
                             slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
+                            freespinText.text = String.Format("{0:C2} Total Win Amount", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+                            freespinText.enabled = true;
                             SetAllAnimatorsBoolTo(supported_bools.WinRacking, false); // dont rack wins
                             if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
                             {
@@ -937,8 +1073,6 @@ namespace Slot_Engine.Matrix
                         else if (!bonus_game_triggered && slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
                         {
                             Debug.Log(String.Format("Bonus game ended and bank has amount to rack = {0}", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank));
-                            SetAllAnimatorsBoolTo(supported_bools.WinRacking, true); // dont rack wins
-                                                                                     //StateManager.SetStateTo(States.Resolve_Intro);
                             resolve_intro = true;                        
                         }
                         else
@@ -948,16 +1082,23 @@ namespace Slot_Engine.Matrix
                     }
                     await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
                     await isAllSlotSubAnimatorsReady("Spin_Outro");
-                    SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                    
                     if (resolve_intro)
                     {
+                        SetOverridesBasedOnTiers();
+                        await Task.Delay(20);
+                        SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
+                        SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
                         await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
                         await isAllSlotSubAnimatorsReady("Resolve_Intro");
                         StateManager.SetStateTo(States.Resolve_Intro);
                     }
                     else
                     {
-                        if(bonus_game_triggered)
+                        SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                        await isAllSlotSubAnimatorsReady("Idle_Intro");
+                        await isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
+                        if (bonus_game_triggered)
                             StateManager.SetStateTo(States.bonus_idle_intro);
                         else
                         {
@@ -974,25 +1115,57 @@ namespace Slot_Engine.Matrix
                         //First offset bank by win then rack
                         //TODO have offset occur when winning payline is animated to bank
                         slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
+                        //TODO Refactor hack
+                        freespinText.text = String.Format("{0:C2} Total Win Amount", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+                        freespinText.enabled = true;
+                        if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+                        {
+                            //Determine if free spins or overlay amount won surpasses 9x
+                            //Will drop animator intro symbol win resolve state on resolve intro load
+                            rackingRollupAnimator.SetBool(supported_bools.LoopPaylineWins.ToString(), true);
+                            rackingRollupAnimator.SetBool(supported_bools.SymbolResolve.ToString(), true);
+                            rackingRollupText.text = String.Format("{0:C2}",slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+                        }
+                        slot_machine_managers.racking_manager.rackEnd += CloseBigWinDisplay;
                         slot_machine_managers.racking_manager.StartRacking(); //This is to resolve wins in resolve intro
                     }
-                    if(StateManager.enCurrentMode != GameStates.freeSpin)
-                        CycleWinningPaylinesMode(); // Current high level bug point. need to wait for all animators to be in spin Outro before cycling this in bonus game
-                    else if(StateManager.enCurrentMode == GameStates.freeSpin && (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
-                        CycleWinningPaylinesMode(); // Current high level bug point. need to wait for all animators to be in spin Outro before cycling this in bonus game
+                    if (slot_machine_managers.paylines_manager.winning_paylines.Length > 0)
+                    {
+                        if (StateManager.enCurrentMode != GameStates.freeSpin)
+                            CycleWinningPaylinesMode();
+                        else if (StateManager.enCurrentMode == GameStates.freeSpin && (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
+                            CycleWinningPaylinesMode();
+                    }
                     break;
                 case States.Resolve_Outro:
                     await slot_machine_managers.paylines_manager.CancelCycleWins();
+                    //TODO Refactor hack
+                    if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins < 1)
+                    {
+                        freespinText.text = "";
+                        freespinText.enabled = false;
+                    }
+                    else
+                    {
+                        slot_machine_managers.machine_info_manager.SetFreeSpinsTo(slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins);
+                    }
+                    //Set animator to Resolve_Outro State
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
-                    if(StateManager.enCurrentMode == GameStates.baseGame)
+                    //If going back to base game initialize vars for next bonus trigger
+                    if (StateManager.enCurrentMode == GameStates.baseGame)
                     {
                         SetAllAnimatorsBoolTo(supported_bools.BonusActive, false);
                         //ensure multiplier set to 0
-                        slot_machine_managers.machine_info_manager.SetMultiplierTo(1);
+                        slot_machine_managers.machine_info_manager.ResetMultiplier();
                     }
-                    //PlayAnimationOnAllSlots("Resolve_Outro");
+                    //Wait for animator to play all resolve outro animations
+                    await isAllAnimatorsThruStateAndAtPauseState("Resolve_Outro");
                     await isAllSlotAnimatorsReady("Resolve_Outro");
+                    //Need to refactor to integrate
+                    await isAnimatorThruStateAndAtPauseState(this.multiplier,"Resolve_Outro");
+                    SetAllAnimatorsTriggerTo(supported_triggers.ResolveEnd,true);
+                    this.multiplier.SetTrigger(supported_triggers.ResolveEnd.ToString());
                     if (!bonus_game_triggered)
                     {                        //TODO wait for all animators to go thru idle_intro state
                         StateManager.SetStateTo(States.Idle_Intro);
@@ -1011,6 +1184,62 @@ namespace Slot_Engine.Matrix
                     await StartAnimatorSpinAndSpinState();
                     break;
             }
+        }
+
+        private void CloseBigWinDisplay()
+        {
+            rackingRollupAnimator.SetBool(supported_bools.LoopPaylineWins.ToString(), false);
+            rackingRollupAnimator.SetBool(supported_bools.SymbolResolve.ToString(), false);
+            slot_machine_managers.racking_manager.rackEnd -= CloseBigWinDisplay;
+        }
+
+        internal async Task isAnimatorThruStateAndAtPauseState(Animator multiplier, string state)
+        {
+            AnimatorStateInfo state_info;
+            bool wait = true;
+            while (wait)
+            {
+                state_info = multiplier.GetCurrentAnimatorStateInfo(0);
+
+                Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
+                //Check if time has gone thru
+                if (state_info.IsName(state) && state_info.normalizedTime >= 1)
+                {
+                    wait = false;
+                }
+                else
+                {
+                    await Task.Delay(300);
+                }
+            }
+        }
+
+        private void SetOverridesBasedOnTiers()
+        {
+            Debug.Log(String.Format("slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank  = {0} slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 = {1} slot_machine_managers.paylines_manager.GetTotalWinAmount() = {2}", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9, slot_machine_managers.paylines_manager.GetTotalWinAmount()));
+            if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
+                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+            {
+                Debug.Log("Present Big Win First");
+                SetAnimatorOverrideControllerTo(ref character, ref characterTier,2);
+            }
+            else if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
+                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
+            {
+                Debug.Log("Presenting Medium win");
+                SetAnimatorOverrideControllerTo(ref character, ref characterTier, 1);
+
+            }
+            else
+            {
+                Debug.Log("Presenting Small win");
+                SetAnimatorOverrideControllerTo(ref character, ref characterTier, 0);
+            }
+        }
+
+        private void SetAnimatorOverrideControllerTo(ref Animator character, ref AnimatorOverrideController[] characterTier, int v)
+        {
+            character.runtimeAnimatorController = characterTier[v];
         }
 
         private void PlayAnimationOnAllSlots(string v)
@@ -1076,7 +1305,7 @@ namespace Slot_Engine.Matrix
                     while (wait)
                     {
                         state_info = _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync[state_machine].GetCurrentAnimatorStateInfo(0);
-                        //Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
+                        Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
                         //Check if time has gone thru
                         if (!state_info.IsName(state))
                         {
@@ -1087,7 +1316,7 @@ namespace Slot_Engine.Matrix
                             await Task.Delay(300);
                         }
                     }
-                    //Debug.Log("All States Resolved");
+                    Debug.Log("All States Resolved");
                     if (state_machine == _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync.Length - 1)
                         is_all_animators_resolved = true;
                 }
@@ -1295,7 +1524,7 @@ namespace Slot_Engine.Matrix
             //TBD
         }
 
-        internal int GetRollupIndexFromAmountToRack(float amountToRack)
+        internal int GetRollupIndexFromAmountToRack(double amountToRack)
         {
             float betAmount = slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts[slot_machine_managers.machine_info_manager.machineInfoScriptableObject.current_bet_amount];
             int index = 0;
@@ -1317,12 +1546,14 @@ namespace Slot_Engine.Matrix
 
         internal void CreateEmptyAnimationContainer()
         {
+#if UNITY_EDITOR
             AnimationClip clip = new AnimationClip();
             clip.name = name;
             AnimationCurve curve = AnimationCurve.Linear(0.0F, 1.0F, .0001F, 1.0F); // Unity won't let me use 0 length, so use a very small length instead
             EditorCurveBinding binding = EditorCurveBinding.FloatCurve(string.Empty, typeof(UnityEngine.Animator), "ThisIsAnEmptyAnimationClip"); // Just dummy data
             AnimationUtility.SetEditorCurve(clip, binding, curve);
             AssetDatabase.CreateAsset(clip, "Assets/" + name + ".anim");
+#endif
         }
     }
 }

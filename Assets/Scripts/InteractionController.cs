@@ -74,6 +74,7 @@ namespace Slot_Engine.Matrix
         public Vector2 position_on_began;
         private bool draw_line_gizmo;
         private Ray camera_ray_out;
+        public Animator spin_btn_animator;
 
         void OnDrawGizmos()
         {
@@ -162,6 +163,11 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void LockInteractions()
+        {
+            locked = true;
+        }
+
         private void PerformAction(Actions action)
         {
             locked = true;
@@ -211,7 +217,7 @@ namespace Slot_Engine.Matrix
         {
             Debug.Log("Slamming Paylines Cycling");
             can_spin_slam = false;
-            //Matrix needs to reset animators for slots and state machine needs to be set to Resolve_Outro
+            spin_btn_animator.SetBool(supported_bools.WinRacking.ToString(),false);
             matrix.SlamLoopingPaylines();
         }
 
@@ -308,12 +314,14 @@ namespace Slot_Engine.Matrix
         {
             if (StateManager.enCurrentState == States.Idle_Idle)
                 matrix.slot_machine_managers.machine_info_manager.IncreaseBetAmount();
+            locked = false;
         }
 
         private void DecreaseBetAmount()
         {
             if(StateManager.enCurrentState == States.Idle_Idle)
                 matrix.slot_machine_managers.machine_info_manager.DecreaseBetAmount();
+            locked = false;
         }
 
         private void SetTriggerTo(supported_triggers to_trigger)
@@ -336,35 +344,38 @@ namespace Slot_Engine.Matrix
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
         }
 
-        private void StateManager_StateChangedTo(States State)
+        private async void StateManager_StateChangedTo(States State)
         {
             switch (State)
             {
                 case States.Idle_Idle:
-                    locked = false;
-                    can_spin_slam = true;
+                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
+                    UnlockSlamSpin();
                     break;
-                case States.Spin_Intro:
-                    //Can slam even if Idle_Outro Animations haven't played. Disable Slam until Resolve_Intro or Idle_Idle
-                    locked = false;
-                    can_spin_slam = true;
+                case States.Spin_Idle:
+                    UnlockSlamSpin();
                     break;
                 case States.Resolve_Intro:
-                    locked = false;
-                    can_spin_slam = true;
+                    UnlockSlamSpin();
                     break;
                 case States.bonus_idle_idle:
-                    locked = false;
-                    can_spin_slam = true;
+                    await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
+                    if(locked)
+                        UnlockSlamSpin();
                     break;
-                case States.bonus_spin_intro:
-                    locked = false;
-                    can_spin_slam = true;
+                case States.bonus_spin_loop:
+                    UnlockSlamSpin();
                     break;
                 default:
                     break;
             }
         }
 
+        private void UnlockSlamSpin()
+        {
+            Debug.Log("Unlock Slam Spin");
+            locked = false;
+            can_spin_slam = true;
+        }
     }
 }
