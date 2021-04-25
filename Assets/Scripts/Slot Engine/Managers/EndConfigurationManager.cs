@@ -101,7 +101,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// The current reelstrip display configuration
         /// </summary>
-        internal ReelStripSpinStruct[] current_reelstrip_configuration
+        internal ReelStripSpinStruct[] currentReelstripConfiguration
         {
             get
             {
@@ -139,8 +139,8 @@ namespace Slot_Engine.Matrix
                 GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode,v);
             }
             //Save the strip used into the backlog
-            if (current_reelstrip_configuration?.Length > 0) ;
-                SaveReelstripUsed(current_reelstrip_configuration);
+            if (currentReelstripConfiguration?.Length > 0) ;
+                SaveReelstripUsed(currentReelstripConfiguration);
             //TODO Validate Data in Reel Strip then Generate if no valid data found
             SetCurrentConfigurationTo(endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data[v].data);
             endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data.RemoveAt(v);
@@ -153,7 +153,7 @@ namespace Slot_Engine.Matrix
 
         private void SetCurrentConfigurationTo(ReelStripSpinStruct[] reelstrips)
         {
-            current_reelstrip_configuration = reelstrips;
+            currentReelstripConfiguration = reelstrips;
         }
         
         private void SetEndingReelStripToDisplay(ReelStripSpinStruct[] reelstrips_to_display)
@@ -244,12 +244,12 @@ namespace Slot_Engine.Matrix
             //{
             //    return current_reelstrip_configuration;
             //}
-            return current_reelstrip_configuration;
+            return currentReelstripConfiguration;
         }
 
         internal void SetMatrixToReelConfiguration()
         {
-            matrix.SetSymbolsToDisplayOnMatrixTo(current_reelstrip_configuration);
+            matrix.SetSymbolsToDisplayOnMatrixTo(currentReelstripConfiguration);
         }
 
         internal void AddConfigurationToSequence(GameStates gameState,ReelStripSpinStruct[] configuration)
@@ -269,7 +269,7 @@ namespace Slot_Engine.Matrix
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
-                        configuration[i].display_symbols = new SlotDisplaySymbol[3] 
+                        configuration[i].displaySymbols = new SlotDisplaySymbol[3] 
                         { 
                             new SlotDisplaySymbol(i % 2 == 0 
                         ? (int)Symbol.SA01 : (int)Symbol.RO03),
@@ -279,7 +279,7 @@ namespace Slot_Engine.Matrix
 
                         if (i % 2 == 0)
                         {
-                            configuration[i].display_symbols[0].AddFeature(Features.freespin);
+                            configuration[i].displaySymbols[0].AddFeature(Features.freespin);
                         }   
                     }
                     AddConfigurationToSequence(GameStates.baseGame,configuration);
@@ -288,7 +288,7 @@ namespace Slot_Engine.Matrix
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
-                        configuration[i].display_symbols = new SlotDisplaySymbol[3]
+                        configuration[i].displaySymbols = new SlotDisplaySymbol[3]
                         {
                             new SlotDisplaySymbol(i % 2 == 0
                         ? (int)Symbol.SA02 : (int)Symbol.RO03),
@@ -297,10 +297,10 @@ namespace Slot_Engine.Matrix
                         };
                         if (i % 2 == 0)
                         {
-                            configuration[i].display_symbols[0].primary_symbol = (int)Symbol.RO03;
-                            configuration[i].display_symbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
-                            configuration[i].display_symbols[0].AddFeature(Features.overlay);
-                            configuration[i].display_symbols[0].is_overlay = true;
+                            configuration[i].displaySymbols[0].primary_symbol = (int)Symbol.RO03;
+                            configuration[i].displaySymbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
+                            configuration[i].displaySymbols[0].AddFeature(Features.overlay);
+                            configuration[i].displaySymbols[0].is_overlay = true;
                         }
                     }
                     AddConfigurationToSequence(GameStates.baseGame, configuration);

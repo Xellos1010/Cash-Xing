@@ -19,12 +19,13 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         /// </summary>
         /// <param name="symbols_configuration">The reel symbols configuration shaped to evaluation logic, reelstrips - shapes - ways - etc</param>
         /// <returns>Object needed</returns>
-        public abstract object EvaluatePaylines(ReelSymbolConfiguration[] symbols_configuration);
+        public abstract object EvaluatePaylines(ref EvaluationObjectStruct symbols_configuration);
         /// <summary>
         /// Returns the evaluation objects number of root nodes supported given a reel configuration. {re-Built in Unity Editor with gaffs to evaluate current matrix object for number of reels and slots defined by display zones and build root nodes for evaluation points to start evaluations from
         /// </summary>
         /// <returns>supported root nodes</returns>
         public abstract int? ReturnEvaluationObjectSupportedRootCount();
+        public bool evaluated = false;
     }
 }
 

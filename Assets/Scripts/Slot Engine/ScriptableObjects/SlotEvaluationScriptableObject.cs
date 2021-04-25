@@ -9,13 +9,16 @@
 //
 //
 using System.Collections.Generic;
+
 namespace Slot_Engine.Matrix.ScriptableObjects
 {
+
     /// <summary>
     /// Defines a single symbol evaluation feature, Wilds - Overlays - Etc. returns list of nodes from configuration passed where symbol evaluates and conditions are met to trigger
     /// </summary>
     public abstract partial class SlotEvaluationScriptableObject : EvaluationScriptableObject
     {
+        public readonly Features featureName;
         /// <summary>
         /// The name of the Symbol(s) targeted for the wild evaluation [SA01, MA01, Etc...]
         /// </summary>

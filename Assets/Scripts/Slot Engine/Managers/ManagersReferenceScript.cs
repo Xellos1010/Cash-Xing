@@ -32,7 +32,7 @@ namespace Slot_Engine.Matrix
                 Debug.Log(String.Format("myTarget.spin_manager = {0}", myTarget.spin_manager.gameObject.name));
                 Debug.Log(String.Format("myTarget.interaction_controller = {0}", myTarget.interaction_controller.gameObject.name));
                 Debug.Log(String.Format("myTarget.paylines_manager = {0}", myTarget.paylines_manager.gameObject.name));
-                Debug.Log(String.Format("myTarget.end_configuration_manager = {0}", myTarget.end_configuration_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.end_configuration_manager = {0}", myTarget.endConfigurationManager.gameObject.name));
                 Debug.Log(String.Format("myTarget.racking_manager = {0}", myTarget.racking_manager.gameObject.name));
             }
             base.OnInspectorGUI();
@@ -90,7 +90,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Manages the reference for end configuration manager
         /// </summary>
-        public EndConfigurationManager end_configuration_manager
+        public EndConfigurationManager endConfigurationManager
         {
             get
             {
@@ -123,7 +123,7 @@ namespace Slot_Engine.Matrix
         internal MachineInfoManager _machine_info_manager;
 
         public LerpToMe lerpToMe;
-        public EvaluationManager evaluationManagger;
+        public EvaluationManager evaluationManager;
 
         private T CheckReturnComponent<T>(ref T component_referenece)
         {

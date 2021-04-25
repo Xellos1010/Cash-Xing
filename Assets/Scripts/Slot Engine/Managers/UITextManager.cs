@@ -102,11 +102,11 @@ namespace Slot_Engine.Matrix
         /// </summary>
         void OnEnable()
         {
-            matrix.slot_machine_managers.machine_info_manager.newMultiplier += Machine_information_manager_new_multiplier_set;
-            matrix.slot_machine_managers.machine_info_manager.newBetAmount += Machine_information_manager_new_bet_amount;
-            matrix.slot_machine_managers.machine_info_manager.newBankAmount += Machine_information_manager_new_bank_amount;
-            matrix.slot_machine_managers.machine_info_manager.newPlayerWalletAmount += Machine_information_manager_new_player_wallet_amount;
-            matrix.slot_machine_managers.machine_info_manager.newFreespinAmount += Machine_information_manager_new_freespin_amount;
+            matrix.slotMachineManagers.machine_info_manager.newMultiplier += Machine_information_manager_new_multiplier_set;
+            matrix.slotMachineManagers.machine_info_manager.newBetAmount += Machine_information_manager_new_bet_amount;
+            matrix.slotMachineManagers.machine_info_manager.newBankAmount += Machine_information_manager_new_bank_amount;
+            matrix.slotMachineManagers.machine_info_manager.newPlayerWalletAmount += Machine_information_manager_new_player_wallet_amount;
+            matrix.slotMachineManagers.machine_info_manager.newFreespinAmount += Machine_information_manager_new_freespin_amount;
             StateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
@@ -115,19 +115,19 @@ namespace Slot_Engine.Matrix
             switch (State)
             {
                 case States.Idle_Intro:
-                    if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
+                    if (matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
                     {
                         freespin_info.enabled = false;
                     }
                     break;
                 case States.bonus_idle_outro:
-                    if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
+                    if (matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
                     {
                         freespin_info.enabled = false;
                     }
                     break;
                 case States.Resolve_Intro:
-                    if(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
+                    if(matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
                     {
                         freespin_info.enabled = true;
                     }
@@ -142,11 +142,11 @@ namespace Slot_Engine.Matrix
 
         void OnDisable()
         {
-            matrix.slot_machine_managers.machine_info_manager.newMultiplier -= Machine_information_manager_new_multiplier_set;
-            matrix.slot_machine_managers.machine_info_manager.newBetAmount -= Machine_information_manager_new_bet_amount;
-            matrix.slot_machine_managers.machine_info_manager.newBankAmount -= Machine_information_manager_new_bank_amount;
-            matrix.slot_machine_managers.machine_info_manager.newPlayerWalletAmount -= Machine_information_manager_new_player_wallet_amount;
-            matrix.slot_machine_managers.machine_info_manager.newFreespinAmount -= Machine_information_manager_new_freespin_amount;
+            matrix.slotMachineManagers.machine_info_manager.newMultiplier -= Machine_information_manager_new_multiplier_set;
+            matrix.slotMachineManagers.machine_info_manager.newBetAmount -= Machine_information_manager_new_bet_amount;
+            matrix.slotMachineManagers.machine_info_manager.newBankAmount -= Machine_information_manager_new_bank_amount;
+            matrix.slotMachineManagers.machine_info_manager.newPlayerWalletAmount -= Machine_information_manager_new_player_wallet_amount;
+            matrix.slotMachineManagers.machine_info_manager.newFreespinAmount -= Machine_information_manager_new_freespin_amount;
         }
         /// <summary>
         /// Handles new float value setting for player wallet

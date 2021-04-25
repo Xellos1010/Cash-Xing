@@ -121,8 +121,8 @@ namespace Slot_Engine.Matrix.Managers
                     if (time_counter > 1)
                     {
                         ResetUseTimer();
-                        matrix.slot_machine_managers.interaction_controller.LockInteractions();
-                        matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+                        matrix.slotMachineManagers.interaction_controller.LockInteractions();
+                        matrix.slotMachineManagers.interaction_controller.CheckStateToSpinSlam();
                     }
                 }
                 else
@@ -170,17 +170,17 @@ namespace Slot_Engine.Matrix.Managers
         internal void TriggerFeatureWithSpin(Features feature)
         {
             //Add configuration to the sequence to trigger feature
-            matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(feature);
+            matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(feature);
             //Go through interaction controller to disable slamming during transition to idle_outro
-            matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+            matrix.slotMachineManagers.interaction_controller.CheckStateToSpinSlam();
         }
 
         internal void SetReelsLastConfigurationAndSpin()
         {
             //Add configuration to the sequence to trigger feature
-            matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(GameStates.baseGame,matrix.slot_machine_managers.end_configuration_manager.endConfigurationsScriptableObject.currentReelstripConfiguration);
+            matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(GameStates.baseGame,matrix.slotMachineManagers.endConfigurationManager.endConfigurationsScriptableObject.currentReelstripConfiguration);
             //Go through interaction controller to disable slamming during transition to idle_outro
-            matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+            matrix.slotMachineManagers.interaction_controller.CheckStateToSpinSlam();
         }
 
         internal void TriggerSpinWin(int[] symbols, int numberOfSymbols)
@@ -189,15 +189,15 @@ namespace Slot_Engine.Matrix.Managers
             configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
             for (int i = 0; i < configuration.Length; i++)
             {
-                configuration[i].display_symbols = new SlotDisplaySymbol[3]
+                configuration[i].displaySymbols = new SlotDisplaySymbol[3]
                 {
                             new SlotDisplaySymbol(symbols[0]),
                             new SlotDisplaySymbol(symbols[1]),
                             new SlotDisplaySymbol(UnityEngine.Random.Range(0,9))
                 };
             }
-                matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(GameStates.baseGame, configuration);
-            matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
+                matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(GameStates.baseGame, configuration);
+            matrix.slotMachineManagers.interaction_controller.CheckStateToSpinSlam();
 
         }
 

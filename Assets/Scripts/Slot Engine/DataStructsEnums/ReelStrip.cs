@@ -27,7 +27,7 @@ namespace Slot_Engine.Matrix
 
         internal string ReturnDisplaySymbolsPrint()
         {
-            return String.Join(" ", reelStrip.spin_info.display_symbols);
+            return String.Join(" ", reelStrip.spin_info.displaySymbols);
         }
     }
     [Serializable]
@@ -50,7 +50,7 @@ namespace Slot_Engine.Matrix
             string output = "";
             for (int i = 0; i < reelstrips.Length; i++)
             {
-                output += "-" + String.Join("|", reelstrips[i].spin_info.display_symbols);
+                output += "-" + String.Join("|", reelstrips[i].spin_info.displaySymbols);
             }
             return output;
         }
@@ -159,7 +159,7 @@ namespace Slot_Engine.Matrix
         /// end reel configuration symbols for this spin
         /// </summary>
         [UnityEngine.SerializeField]
-        public SlotDisplaySymbol[] display_symbols;
+        public SlotDisplaySymbol[] displaySymbols;
         /// <summary>
         /// The display symbols reel will cycle thru on loop
         /// </summary>
@@ -173,7 +173,7 @@ namespace Slot_Engine.Matrix
 
         public ReelStripSpinStruct(SlotDisplaySymbol[] slotDisplaySymbols) : this()
         {
-            display_symbols = slotDisplaySymbols;
+            displaySymbols = slotDisplaySymbols;
         }
     }
 }

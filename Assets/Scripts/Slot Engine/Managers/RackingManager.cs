@@ -127,10 +127,10 @@ namespace Slot_Engine.Matrix
         internal void StartRacking()
         {
             Debug.Log("Starting Rack");
-            if(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
-                SetCreditAmountToRack(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+            if(matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > 0)
+                SetCreditAmountToRack(matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank);
             else
-                SetCreditAmountToRack(matrix.slot_machine_managers.paylines_manager.GetTotalWinAmount());
+                SetCreditAmountToRack(matrix.slotMachineManagers.paylines_manager.GetTotalWinAmount());
             locked = false;
         }
         /// <summary>
@@ -192,7 +192,7 @@ namespace Slot_Engine.Matrix
         {
             //double finalRackAmount = Math.Round(amount_to_rack, 2);
             bank_rack_remaining -= finalRackAmount;
-            if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
+            if (matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > 0)
                 OffsetPlayerBankBy(-finalRackAmount);
             OffsetPlayerWalletBy(finalRackAmount);
             if(bank_rack_remaining == 0)
@@ -201,7 +201,7 @@ namespace Slot_Engine.Matrix
 
         private void OffsetPlayerBankBy(double v)
         {
-            matrix.slot_machine_managers.machine_info_manager.OffsetBankBy(v);
+            matrix.slotMachineManagers.machine_info_manager.OffsetBankBy(v);
         }
 
         /// <summary>

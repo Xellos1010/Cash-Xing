@@ -8,10 +8,9 @@
 //  @ Author : Evan McCall
 //
 //
-using Slot_Engine.Matrix;
-using Slot_Engine.Matrix.Managers;
 using System.Collections.Generic;
 using UnityEngine;
+
 namespace Slot_Engine.Matrix.ScriptableObjects
 {
     /// <summary>
@@ -20,29 +19,28 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     [CreateAssetMenu(fileName = "OverlayEvaluationReferenceObject", menuName = "BoomSportsScriptableObjects/OverlayEvaluationReferenceScriptableObject", order = 4)]
     public class OverlayEvaluationScriptableObject : SlotEvaluationScriptableObject
     {
+        public new readonly Features featureName = Features.overlay;
         /// <summary>
         /// The feature to trigger when overlay is activated
         /// </summary>
-        public Features featureToTrigger; 
+        public Features featureToTrigger;
         public void InitializeOverlaySymbolsEvaluation()
         {
             symbolsActivatingEvaluationConditions = new List<suffix_tree_node_info>();
         }
 
-        public override object EvaluatePaylines(ReelSymbolConfiguration[] symbols_configuration)
+        public override object EvaluatePaylines(ref EvaluationObjectStruct symbols_configuration)
         {
             InitializeOverlaySymbolsEvaluation();
             //return the feature overlay triggers - the symbols activating evaluation conditions
             //the core evaluation scriptable object will evaluate based on lines, ways, shape.
-            object[] objectReturn = new object[2] {featureToTrigger,symbolTargetNames};
+            object[] objectReturn = new object[2] { featureToTrigger, symbolTargetNames };
             return objectReturn;
         }
 
-        public override int ReturnEvaluationObjectSupportedRootCount()
+        public override int? ReturnEvaluationObjectSupportedRootCount()
         {
             return symbolsActivatingEvaluationConditions.Count;
         }
     }
-
 }
-

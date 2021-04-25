@@ -451,15 +451,15 @@ namespace Slot_Engine.Matrix
         {
             SlotManager[] slots_decending_order = GetSlotsDecending().ToArray();
             List<SlotDisplaySymbol> symbols_to_display = new List<SlotDisplaySymbol>();
-            for (int symbol = 0; symbol < reelStripStruct.display_symbols.Length; symbol++)
+            for (int symbol = 0; symbol < reelStripStruct.displaySymbols.Length; symbol++)
             {
-                symbols_to_display.Add(reelStripStruct.display_symbols[symbol]);
+                symbols_to_display.Add(reelStripStruct.displaySymbols[symbol]);
             }
             SetEndingSymbolsTo(symbols_to_display.ToArray());
             //The top slots are always before the matrix. TBD Refactor for any amount of cushion slots
             for (int slot = 1; slot < slots_decending_order.Length; slot++)
             {
-                slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.display_symbols[slot-1]);
+                slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[slot-1]);
                 end_symbols_set_from_config += 1;
             }
         }
@@ -633,7 +633,7 @@ namespace Slot_Engine.Matrix
             //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
             //Waits until all slots have stopped spinning
-            await StopReel(reelStrip.display_symbols); //This will control ho wfast the reel goes to stop spin
+            await StopReel(reelStrip.displaySymbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
 
@@ -740,7 +740,7 @@ namespace Slot_Engine.Matrix
                 slots_in_reel[i].SetSubStateMachineAnimators();
                 slots_in_reel[i].SetAllSubSymbolsGameobjectActive();
             }
-            matrix._slot_machine_managers.end_configuration_manager.SetMatrixToReelConfiguration();
+            matrix._slot_machine_managers.endConfigurationManager.SetMatrixToReelConfiguration();
         }
 
         internal void SetAllSlotContainersSubAnimatorStates()
