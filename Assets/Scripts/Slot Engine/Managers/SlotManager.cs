@@ -274,6 +274,14 @@ namespace Slot_Engine.Matrix
             state_machine.SetBool(ref animator, supportedBool,value);
         }
 
+        private void SetTriggerTo(ref Animator animator, supportedAnimatorTriggers supportedTrigger, bool value)
+        {
+            //Debug.Log(String.Format("{0} bool {1} is {2}", animator.gameObject.name, supportedBool.ToString(), value));
+            if(value)
+                state_machine.SetTrigger(ref animator, supportedTrigger);
+            else
+                state_machine.ResetTrigger(ref animator, supportedTrigger);
+        }
         internal void SetSymbolResolveToLose()
         {
             if (Application.isPlaying)
@@ -324,6 +332,8 @@ namespace Slot_Engine.Matrix
                 {
                     output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
                     SetBoolTo(ref output, supportedAnimatorBools.FeatureTrigger, true);
+                    //Resolve the spin and enter feature trigger animator
+                    SetTriggerTo(ref output, supportedAnimatorTriggers.SpinResolve, true);
                     return output;
                 }
             }

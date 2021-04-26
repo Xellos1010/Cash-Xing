@@ -1015,7 +1015,9 @@ namespace Slot_Engine.Matrix
                             Debug.Log("Presenting Small win");
                             SetAnimatorOverrideControllerTo(ref this.multiplier, ref multiplierTier, 0);
                         }
+                        //temporary - Set the Multiplier Animator to display Feature
                         this.multiplier.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), true);
+                        this.multiplier.SetTrigger(supportedAnimatorTriggers.SpinResolve.ToString());
                         await PlayFeatureAnimation(slotMachineManagers.evaluationManager.overlaySymbols);
                         await isAnimatorThruStateAndAtPauseState(this.multiplier, "Feature_Outro");
                         this.multiplier.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), false);
@@ -1082,7 +1084,6 @@ namespace Slot_Engine.Matrix
                     }
                     await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
                     await isAllSlotSubAnimatorsReady("Spin_Outro");
-                    
                     if (resolve_intro)
                     {
                         SetOverridesBasedOnTiers();
@@ -1093,8 +1094,12 @@ namespace Slot_Engine.Matrix
                         await isAllSlotSubAnimatorsReady("Resolve_Intro");
                         StateManager.SetStateTo(States.Resolve_Intro);
                     }
-                    else
+                    else //If the bonus game is triggered then transition into bonus game
                     {
+                        if (bonus_game_triggered)
+                        {
+                            SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.TransitionToFromBonus,true);
+                        }
                         SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinResolve, true);
                         await isAllSlotSubAnimatorsReady("Idle_Intro");
                         await isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
@@ -1256,7 +1261,7 @@ namespace Slot_Engine.Matrix
 
         private async Task StartAnimatorSpinAndSpinState()
         {
-            SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, true);
+            SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.StartSpin, true);
             await isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
             await isAllSlotSubAnimatorsReady("Idle_Outro");
             //Tell the spin manager to start spinning - animator is ready

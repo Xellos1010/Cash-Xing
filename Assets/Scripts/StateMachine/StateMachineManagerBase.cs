@@ -5,6 +5,8 @@ public enum supportedAnimatorTriggers
     SpinSlam,
     SpinResolve,
     ResolveEnd,
+    StartSpin,
+    TransitionToFromBonus,
     End
 }
 public enum supportedAnimatorBools

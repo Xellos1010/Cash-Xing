@@ -308,6 +308,7 @@ namespace Slot_Engine.Matrix.Managers
                     ResetUseTimer();
                     Debug.Log("Timer Reset");
                     await ReelsStopSpinning();
+                    matrix.SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, false);
                     Debug.Log("All reels Stopped Spinning");
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
                     Debug.Log("All Animators resolved spin_outro stateSpinning");
