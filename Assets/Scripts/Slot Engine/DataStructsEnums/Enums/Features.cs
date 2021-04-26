@@ -30,19 +30,19 @@ namespace Slot_Engine.Matrix
 		[UnityEngine.SerializeField]
 		public Features feature;
 		[UnityEngine.SerializeField]
-		public List<suffix_tree_node_info> appeared_on_node;
+		public List<SuffixTreeNodeInfo> appeared_on_node;
 
 		public FeaturesStructSymbolEvaluation(Features feature) : this()
 		{
 			this.feature = feature;
 		}
 
-        internal void AddNodeIfNotExist(ref suffix_tree_node_info node_info)
+        internal void AddNodeIfNotExist(ref SuffixTreeNodeInfo node_info)
         {
 			//UnityEngine.Debug.Log(String.Format("Checking node to add for feature activation {0}",node_info.Print()));
             //bool add_to_list = true;
             if (appeared_on_node == null)
-                appeared_on_node = new List<suffix_tree_node_info>();
+                appeared_on_node = new List<SuffixTreeNodeInfo>();
             if (!appeared_on_node.Contains(node_info))
 				appeared_on_node.Add(node_info);
 		}

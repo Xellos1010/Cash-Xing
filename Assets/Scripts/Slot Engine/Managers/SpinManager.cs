@@ -189,11 +189,11 @@ namespace Slot_Engine.Matrix.Managers
             configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
             for (int i = 0; i < configuration.Length; i++)
             {
-                configuration[i].displaySymbols = new SlotDisplaySymbol[3]
+                configuration[i].displaySymbols = new NodeDisplaySymbol[3]
                 {
-                            new SlotDisplaySymbol(symbols[0]),
-                            new SlotDisplaySymbol(symbols[1]),
-                            new SlotDisplaySymbol(UnityEngine.Random.Range(0,9))
+                            new NodeDisplaySymbol(symbols[0]),
+                            new NodeDisplaySymbol(symbols[1]),
+                            new NodeDisplaySymbol(UnityEngine.Random.Range(0,9))
                 };
             }
                 matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(GameStates.baseGame, configuration);

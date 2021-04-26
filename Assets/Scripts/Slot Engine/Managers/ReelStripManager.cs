@@ -178,7 +178,7 @@ namespace Slot_Engine.Matrix
         /// The Ending symbols to Set To 
         /// </summary>
         [SerializeField]
-        internal SlotDisplaySymbol[] ending_symbols;
+        internal NodeDisplaySymbol[] ending_symbols;
         /// <summary>
         /// Enable you to change the symbol when slot exits matrix to weighted distribution symbol set
         /// </summary>
@@ -224,9 +224,9 @@ namespace Slot_Engine.Matrix
         public int reel_strip_counter = 0;
         
 
-        internal SlotDisplaySymbol ReturnNextSymbolInStrip()
+        internal NodeDisplaySymbol ReturnNextSymbolInStrip()
         {
-            SlotDisplaySymbol output = reelstrip_info.spin_info.reel_spin_symbols[reel_strip_counter];
+            NodeDisplaySymbol output = reelstrip_info.spin_info.reel_spin_symbols[reel_strip_counter];
             if(reel_strip_counter+1 >= reelstrip_info.spin_info.reel_spin_symbols.Length)
             {
                 reel_strip_counter = 0;
@@ -450,7 +450,7 @@ namespace Slot_Engine.Matrix
         internal void SetSymbolCurrentDisplayTo(ReelStripSpinStruct reelStripStruct)
         {
             SlotManager[] slots_decending_order = GetSlotsDecending().ToArray();
-            List<SlotDisplaySymbol> symbols_to_display = new List<SlotDisplaySymbol>();
+            List<NodeDisplaySymbol> symbols_to_display = new List<NodeDisplaySymbol>();
             for (int symbol = 0; symbol < reelStripStruct.displaySymbols.Length; symbol++)
             {
                 symbols_to_display.Add(reelStripStruct.displaySymbols[symbol]);
@@ -641,7 +641,7 @@ namespace Slot_Engine.Matrix
         /// Stop the reel and set ending symbols
         /// </summary>
         /// <param name="ending_symbols">the symbols to land on</param>
-        public async Task StopReel(SlotDisplaySymbol[] ending_symbols)
+        public async Task StopReel(NodeDisplaySymbol[] ending_symbols)
         {
             SetEndingSymbolsTo(ending_symbols);
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
@@ -686,7 +686,7 @@ namespace Slot_Engine.Matrix
         /// Set Ending Symbols variable
         /// </summary>
         /// <param name="ending_symbols">ending symbols for reelstrip</param>
-        private void SetEndingSymbolsTo(SlotDisplaySymbol[] ending_symbols)
+        private void SetEndingSymbolsTo(NodeDisplaySymbol[] ending_symbols)
         {
             this.ending_symbols = ending_symbols;
         }

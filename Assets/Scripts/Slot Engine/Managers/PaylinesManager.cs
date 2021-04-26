@@ -38,7 +38,6 @@ namespace Slot_Engine.Matrix.Managers
             EditorGUILayout.LabelField("Commands");
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
-            EditorGUILayout.PropertyField(winning_paylines);
             base.OnInspectorGUI();
         }
     }
@@ -96,7 +95,7 @@ namespace Slot_Engine.Matrix.Managers
 
         private int GetSupportedGeneratedPaylines()
         {
-            return (int)matrix.slotMachineManagers.evaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>().ReturnEvaluationObjectSupportedRootCount();
+            return (int)EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.slotMachineManagers.evaluationManager.coreEvaluationObjects).ReturnEvaluationObjectSupportedRootCount();
         }
 
         internal async Task CancelCycleWins()
@@ -126,21 +125,21 @@ namespace Slot_Engine.Matrix.Managers
             return Task.CompletedTask;
         }
 
-        internal async Task EvaluateWinningSymbols(ReelStripSpinStruct[] reelstripsConfiguration)
-        {
-            ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstripsConfiguration.Length];
-            for (int reel = 0; reel < reelstripsConfiguration.Length; reel++)
-            {
-                symbols_configuration[reel].SetColumnSymbolsTo(reelstripsConfiguration[reel].displaySymbols);
-            }
-            await EvaluateWinningSymbols(symbols_configuration);
-        }
+        //internal async Task EvaluateWinningSymbols(ReelStripSpinStruct[] reelstripsConfiguration)
+        //{
+        //    ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstripsConfiguration.Length];
+        //    for (int reel = 0; reel < reelstripsConfiguration.Length; reel++)
+        //    {
+        //        symbols_configuration[reel].SetColumnSymbolsTo(reelstripsConfiguration[reel].displaySymbols);
+        //    }
+        //    await EvaluateWinningSymbols(symbols_configuration);
+        //}
 
-        public async Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
-        {
-            winningPaylines = await matrix.slotMachineManagers.evaluationManager.EvaluateSymbolConfigurationForWinningPaylines(symbols_configuration);
-            paylines_evaluated = true;
-        }
+        //public async Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
+        //{
+        //    winningPaylines = await matrix.slotMachineManagers.evaluationManager.EvaluateSymbolConfigurationForWinningPaylines(symbols_configuration);
+        //    paylines_evaluated = true;
+        //}
 
         internal void PlayCycleWins()
         {
@@ -237,13 +236,13 @@ namespace Slot_Engine.Matrix.Managers
         //TODO move into Evaluation Manager
         internal void GenerateDynamicPaylinesFromMatrix()
         {
-            dynamicPaylineObject = matrix.slotMachineManagers.evaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>();
+            dynamicPaylineObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.slotMachineManagers.evaluationManager.coreEvaluationObjects);
             dynamicPaylineObject.GenerateDynamicPaylinesFromMatrix(ref matrix.reel_strip_managers);
         }
 
         internal void ShowDynamicPaylineRaw(int payline_to_show)
         {
-            if (dynamicPaylineObject?.dynamic_paylines.root_nodes.Length > 0)
+            if (dynamicPaylineObject?.dynamic_paylines.rootNodes.Length > 0)
             {
                 if (payline_to_show >= 0 && payline_to_show < GetSupportedGeneratedPaylines()) // TODO have a number of valid paylines printed
                 {

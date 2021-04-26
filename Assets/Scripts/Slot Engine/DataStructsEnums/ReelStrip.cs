@@ -14,10 +14,10 @@ namespace Slot_Engine.Matrix
         [UnityEngine.SerializeField]
         public ReelStripStruct reelStrip;
 
-        internal static SlotDisplaySymbol[] GenerateReelStripStatic(GameStates currentMode, int slotsPerStrip, ref EndConfigurationManager endConfigurationManager)
+        internal static NodeDisplaySymbol[] GenerateReelStripStatic(GameStates currentMode, int slotsPerStrip, ref EndConfigurationManager endConfigurationManager)
         {
             //Generate new reel symbols array and assign based on weighted distribution - then add the display symbols at the end for now
-            SlotDisplaySymbol[] reel_spin_symbols = new SlotDisplaySymbol[slotsPerStrip];
+            NodeDisplaySymbol[] reel_spin_symbols = new NodeDisplaySymbol[slotsPerStrip];
             for (int i = 0; i < slotsPerStrip; i++)
             {
                 reel_spin_symbols[i] = endConfigurationManager.GetRandomWeightedSymbol(currentMode);
@@ -159,19 +159,19 @@ namespace Slot_Engine.Matrix
         /// end reel configuration symbols for this spin
         /// </summary>
         [UnityEngine.SerializeField]
-        public SlotDisplaySymbol[] displaySymbols;
+        public NodeDisplaySymbol[] displaySymbols;
         /// <summary>
         /// The display symbols reel will cycle thru on loop
         /// </summary>
         [UnityEngine.SerializeField]
-        public SlotDisplaySymbol[] reel_spin_symbols;
+        public NodeDisplaySymbol[] reel_spin_symbols;
         /// <summary>
         /// Holds the lower and upper range of array where ending symbols were placed in spin symbols
         /// </summary>
         [UnityEngine.SerializeField]
         public int[] display_symbol_range;
 
-        public ReelStripSpinStruct(SlotDisplaySymbol[] slotDisplaySymbols) : this()
+        public ReelStripSpinStruct(NodeDisplaySymbol[] slotDisplaySymbols) : this()
         {
             displaySymbols = slotDisplaySymbols;
         }

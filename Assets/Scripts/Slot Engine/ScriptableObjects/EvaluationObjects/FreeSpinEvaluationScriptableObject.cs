@@ -8,6 +8,8 @@
 //  @ Author : Evan McCall
 //
 //
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Slot_Engine.Matrix.ScriptableObjects
@@ -18,6 +20,19 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     [CreateAssetMenu(fileName = "FreeSpinEvaluationObject", menuName = "BoomSportsScriptableObjects/FreeSpinEvaluationScriptableObject", order = 4)]
     public class FreeSpinEvaluationScriptableObject : SlotEvaluationScriptableObject
     {
+        public override bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningPaylines)
+        {
+            //For now the only condition is that the symbols do not need to be on a winning payline
+            for (int condition = 0; condition < nodeEvaluationConditions.Count; condition++)
+            {
+                //if(nodeEvaluationConditions[condition].EvaluateCondition(,))
+                //{
+
+                //}
+            }
+            return true;
+        }
+
         public override object EvaluatePaylines(ref EvaluationObjectStruct symbols_configuration)
         {
             //Called at high level and take symbol names and return feature activating
@@ -28,7 +43,17 @@ namespace Slot_Engine.Matrix.ScriptableObjects
 
         public override int? ReturnEvaluationObjectSupportedRootCount()
         {
-            return symbolsActivatingEvaluationConditions?.Count;
+            return nodesActivatingEvaluationConditions?.Count;
+        }
+
+        internal bool EvaluateConditionsMet(List<SuffixTreeNodeInfo> nodesToCheck, WinningPayline[] winningPaylines)
+        {
+            for (int condition = 0; condition < nodeEvaluationConditions.Count; condition++)
+            {
+                if (!nodeEvaluationConditions[condition].EvaluateCondition(nodesToCheck.ToArray()))
+                    return false;
+            }
+            return true;
         }
     }
 }

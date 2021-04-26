@@ -205,7 +205,7 @@ namespace Slot_Engine.Matrix
                     {
                         if (reel_parent.reelstrip_info.spin_info.reel_spin_symbols.Length > 0)
                         {
-                            SlotDisplaySymbol symbol = reel_parent.ReturnNextSymbolInStrip();
+                            NodeDisplaySymbol symbol = reel_parent.ReturnNextSymbolInStrip();
                             SetDisplaySymbolTo(symbol);
                             symbol_set = true;
                         }
@@ -213,7 +213,7 @@ namespace Slot_Engine.Matrix
                     if (!symbol_set)
                     {
                         //Determines an overlay symbol
-                        SlotDisplaySymbol symbol = reel_parent.matrix.slotMachineManagers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode);
+                        NodeDisplaySymbol symbol = reel_parent.matrix.slotMachineManagers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode);
                         SetDisplaySymbolTo(symbol);
                     }
                 }
@@ -294,7 +294,7 @@ namespace Slot_Engine.Matrix
             state_machine.SetRuntimeControllerTo(animatorOverrideController);
         }
 
-        internal void SetDisplaySymbolTo(SlotDisplaySymbol symbol_to_display)
+        internal void SetDisplaySymbolTo(NodeDisplaySymbol symbol_to_display)
         {
             //Debug.Log(string.Format("Set Display symbol to {0} in reel {1} Slot {2}", symbol_to_display.primary_symbol,reel_parent.gameObject.name, gameObject.name));
             SetPresentationSymbolTo(symbol_to_display.primary_symbol);

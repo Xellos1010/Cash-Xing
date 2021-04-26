@@ -19,28 +19,48 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     [CreateAssetMenu(fileName = "OverlayEvaluationReferenceObject", menuName = "BoomSportsScriptableObjects/OverlayEvaluationReferenceScriptableObject", order = 4)]
     public class OverlayEvaluationScriptableObject : SlotEvaluationScriptableObject
     {
-        public new readonly Features featureName = Features.overlay;
         /// <summary>
         /// The feature to trigger when overlay is activated
         /// </summary>
         public Features featureToTrigger;
+
         public void InitializeOverlaySymbolsEvaluation()
         {
-            symbolsActivatingEvaluationConditions = new List<suffix_tree_node_info>();
+            nodesActivatingEvaluationConditions = new List<SuffixTreeNodeInfo>();
         }
 
         public override object EvaluatePaylines(ref EvaluationObjectStruct symbols_configuration)
         {
             InitializeOverlaySymbolsEvaluation();
-            //return the feature overlay triggers - the symbols activating evaluation conditions
-            //the core evaluation scriptable object will evaluate based on lines, ways, shape.
             object[] objectReturn = new object[2] { featureToTrigger, symbolTargetNames };
             return objectReturn;
         }
 
         public override int? ReturnEvaluationObjectSupportedRootCount()
         {
-            return symbolsActivatingEvaluationConditions.Count;
+            return nodesActivatingEvaluationConditions.Count;
+        }
+
+        public override bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects)
+        {
+            for (int winningObject = 0; winningObject < winningObjects.Length; winningObject++)
+            {
+                //if any conditions are met to the fullest then the node is a valid node
+                //First Test for Overlay - Pass On Winning Paylien Check then Count for payline
+                for (int condition = 0; condition < nodeEvaluationConditions.Count; condition++)
+                {
+                    if (nodeEvaluationConditions[condition].EvaluateCondition(winningObjects[winningObject], nodeInfo))
+                    {
+                        if(condition == nodeEvaluationConditions.Count - 1)
+                            return true;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

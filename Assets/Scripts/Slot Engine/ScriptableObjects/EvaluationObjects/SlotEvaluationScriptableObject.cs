@@ -8,6 +8,7 @@
 //  @ Author : Evan McCall
 //
 //
+using System;
 using System.Collections.Generic;
 
 namespace Slot_Engine.Matrix.ScriptableObjects
@@ -18,7 +19,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     /// </summary>
     public abstract partial class SlotEvaluationScriptableObject : EvaluationScriptableObject
     {
-        public readonly Features featureName;
+        public Features featureName;
         /// <summary>
         /// The name of the Symbol(s) targeted for the wild evaluation [SA01, MA01, Etc...]
         /// </summary>
@@ -26,6 +27,11 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         /// <summary>
         /// List of symbols that meet criteria of conditions to activate
         /// </summary>
-        public List<suffix_tree_node_info> symbolsActivatingEvaluationConditions;
+        public List<SuffixTreeNodeInfo> nodesActivatingEvaluationConditions;
+
+        //public Conditions to be met for slot feature to activate.
+        //Conditions can be as follows: Winning Payline Amount = 0 - configurationLength -1
+        public List<NodeEvaluationCondition> nodeEvaluationConditions;
+        public abstract bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects);
     }
 }

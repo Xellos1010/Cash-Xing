@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using System.Reflection;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -31,7 +32,7 @@ namespace Slot_Engine.Matrix.Managers
         {
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Commands");
-            paylinesEvaluationObject = myTarget.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>();
+            paylinesEvaluationObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref myTarget.coreEvaluationObjects);
             if (paylinesEvaluationObject != null)
             {
                 if (GUILayout.Button("Generate Paylines from Matrix"))
@@ -41,14 +42,18 @@ namespace Slot_Engine.Matrix.Managers
                     serializedObject.ApplyModifiedProperties();
                 }
 
-                if (paylinesEvaluationObject.dynamic_paylines.paylines_supported.Length > 0)
+                if (paylinesEvaluationObject.dynamic_paylines.paylinesSupported.Length > 0)
                 {
                     EditorGUILayout.LabelField("Dynamic Paylines Commands");
                     EditorGUI.BeginChangeCheck();
-                    payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, paylinesEvaluationObject.dynamic_paylines.paylines_supported.Length - 1);
+                    payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, paylinesEvaluationObject.dynamic_paylines.paylinesSupported.Length - 1);
                     if (EditorGUI.EndChangeCheck())
                     {
                         //myTarget.ShowDynamicPaylineRaw(payline_to_show);
+                    }
+                    if (GUILayout.Button("Show Current End Configuration On Reels"))
+                    {
+                        myTarget.matrix.slotMachineManagers.endConfigurationManager.SetMatrixToReelConfiguration();
                     }
                     if (GUILayout.Button("Evaluate Paylines From current End Configuration"))
                     {
@@ -71,17 +76,17 @@ namespace Slot_Engine.Matrix.Managers
         /// <summary>
         /// These Control the various ways a gridConfiguration can be evaluated for features - Wild allows more winning lines/ways/shapes - Overlays have sub symbols- trigger symbols trigger a feature 
         /// </summary>
-        public EvaluationScriptableObject[] featureEvaluationObjects;
+        public SlotEvaluationScriptableObject[] slotEvaluationObjects;
         /// <summary>
         /// This is either ways lines or grouped.
         /// </summary>
         public EvaluationScriptableObject[] coreEvaluationObjects;
         //temporary to get working - need to refactor to get list of activated overlays from scriptable object
-        public List<suffix_tree_node_info> overlaySymbols
+        public List<SuffixTreeNodeInfo> overlaySymbols
         {
             get
             {
-                return GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>().symbolsActivatingEvaluationConditions;
+                return GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref slotEvaluationObjects).nodesActivatingEvaluationConditions;
             }
         }
 
@@ -94,11 +99,12 @@ namespace Slot_Engine.Matrix.Managers
         {
             //Build a list of evaluation objects based on feature evaluation and core evaluation objects
             List<object> output_raw = new List<object>();
+
             //Build list of evaluations to make out of features and core objects
             List<EvaluationObjectStruct> evaluationsToTake = new List<EvaluationObjectStruct>();
             for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
             {
-                evaluationsToTake.Add(new EvaluationObjectStruct(coreEvaluationObjects[coreEvaluationObject], featureEvaluationObjects, symbols_configuration));
+                evaluationsToTake.Add(new EvaluationObjectStruct(coreEvaluationObjects[coreEvaluationObject], slotEvaluationObjects, symbols_configuration));
             }
             for (int evaluation = 0; evaluation < evaluationsToTake.Count; evaluation++)
             {
@@ -109,6 +115,7 @@ namespace Slot_Engine.Matrix.Managers
             {
                 output_filtered.AddRange((WinningPayline[])Convert.ChangeType(output_raw[i], typeof(WinningPayline[])));
             }
+            //Check that feature conditions are met and activated
             return Task.FromResult<WinningPayline[]>(output_filtered.ToArray());
         }
         /// <summary>
@@ -116,7 +123,7 @@ namespace Slot_Engine.Matrix.Managers
         /// </summary>
         /// <typeparam name="T">Type of evaluation manager to return</typeparam>
         /// <returns>Type if in list or null if nothing</returns>
-        internal T GetFirstInstanceCoreEvaluationObject<T>()
+        internal static T GetFirstInstanceCoreEvaluationObject<T>(ref EvaluationScriptableObject[] coreEvaluationObjects)
         {
             object output = null;
             for (int i = 0; i < coreEvaluationObjects.Length; i++)
@@ -134,14 +141,14 @@ namespace Slot_Engine.Matrix.Managers
         /// </summary>
         /// <typeparam name="T">Type of evaluation manager to return</typeparam>
         /// <returns>Type if in list or null if nothing</returns>
-        internal T GetFirstInstanceFeatureEvaluationObject<T>()
+        internal static T GetFirstInstanceFeatureEvaluationObject<T>(ref SlotEvaluationScriptableObject[] slotEvaluationObjects)
         {
             object output = null;
-            for (int i = 0; i < featureEvaluationObjects.Length; i++)
+            for (int i = 0; i < slotEvaluationObjects.Length; i++)
             {
-                if (featureEvaluationObjects[i].GetType() == typeof(T))
+                if (slotEvaluationObjects[i].GetType() == typeof(T))
                 {
-                    output = featureEvaluationObjects[i];
+                    output = slotEvaluationObjects[i];
                     break;
                 }
             }
@@ -163,119 +170,11 @@ namespace Slot_Engine.Matrix.Managers
             return await EvaluateSymbolConfigurationForWinningPaylines(symbols_configuration);
         }
 
-        public WinningPayline[] winningPaylines;
         public bool evaluated = false;
         public async void EvaluateWinningSymbolsFromCurrentConfiguration()
         {
-            winningPaylines = new WinningPayline[0];
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
-            winningPaylines = await EvaluateWinningSymbols(matrix.slotMachineManagers.endConfigurationManager.currentReelstripConfiguration);
+            await EvaluateWinningSymbols(matrix.slotMachineManagers.endConfigurationManager.currentReelstripConfiguration);
         }
-    }
-}
-
-
-/// <summary>
-/// Defines a ReelSymboLConfiguration and the coreEvaluationObjects used to evaluate it
-/// </summary>
-[Serializable]
-public struct EvaluationObjectStruct
-{
-    /// <summary>
-    /// Reel configuration and slots in reels
-    /// </summary>
-    [SerializeField]
-    public ReelSymbolConfiguration[] gridConfiguration;
-    /// <summary>
-    /// Core Evaluation Object Logic - Ways - Lines - etc...
-    /// </summary>
-    [SerializeField]
-    public EvaluationScriptableObject evaluationScriptableObject;
-    /// <summary>
-    /// Multiple evaluations methods, Wild, Overlay, Trigger Symbol
-    /// </summary>
-    [SerializeField]
-    public EvaluationScriptableObject[] featureEvaluationObjects;
-    /// <summary>
-    /// Winning Symbol Nodes
-    /// </summary>
-    [SerializeField]
-    public List<WinningSymbolNode> winning_symbols;
-    [SerializeField]
-    internal Dictionary<Features, List<suffix_tree_node_info>> featureEvaluationActiveCount;
-
-    public EvaluationObjectStruct(EvaluationScriptableObject evaluationScriptableObject, EvaluationScriptableObject[] featureEvaluationObjects, ReelSymbolConfiguration[] gridConfiguration) : this()
-    {
-        this.gridConfiguration = gridConfiguration;
-        this.evaluationScriptableObject = evaluationScriptableObject;
-        this.featureEvaluationObjects = featureEvaluationObjects;
-    }
-
-    internal int? maxLength
-    {
-        get
-        {
-            return gridConfiguration?.Length;
-        }
-    }
-
-    internal object Evaluate()
-    {
-        return evaluationScriptableObject.EvaluatePaylines(ref this);
-    }
-
-    internal void InitializeWinningSymbols()
-    {
-        winning_symbols = new List<WinningSymbolNode>();
-        featureEvaluationActiveCount = new Dictionary<Features, List<suffix_tree_node_info>>();
-    }
-
-    internal bool ContainsItemWithFeature(Features featureName, out SlotEvaluationScriptableObject? slotEvaluationActivated)
-    {
-        slotEvaluationActivated = null;
-        SlotEvaluationScriptableObject slotEvaluationObject;
-        for (int feature = 0; feature < featureEvaluationObjects.Length; feature++)
-        {
-            slotEvaluationObject = (SlotEvaluationScriptableObject)Convert.ChangeType(featureEvaluationObjects[feature], typeof(SlotEvaluationScriptableObject));
-            if (slotEvaluationObject.featureName == featureName)
-            {
-                slotEvaluationActivated = slotEvaluationObject;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Gets the first instance of a feature evaluation object of sub-class
-    /// </summary>
-    /// <typeparam name="T">Type of evaluation manager to return</typeparam>
-    /// <returns>Type if in list or null if nothing</returns>
-    internal T GetFirstInstanceFeatureEvaluationObject<T>()
-    {
-        object output = null;
-        for (int i = 0; i < featureEvaluationObjects.Length; i++)
-        {
-            if (featureEvaluationObjects[i].GetType() == typeof(T))
-            {
-                output = featureEvaluationObjects[i];
-                break;
-            }
-        }
-        return (T)Convert.ChangeType(output, typeof(T));
-    }
-}
-/// <summary>
-/// Defines the Slot Display Symbols to evaluate
-/// </summary>
-[Serializable]
-public struct ReelSymbolConfiguration
-{
-    [SerializeField]
-    public SlotDisplaySymbol[] columnSlots;
-
-    internal void SetColumnSymbolsTo(SlotDisplaySymbol[] display_symbols)
-    {
-        columnSlots = display_symbols;
     }
 }

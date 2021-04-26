@@ -10,7 +10,7 @@ namespace Slot_Engine.Matrix
     /// Holds the display information for slot symbol
     /// </summary>
     [Serializable]
-    public struct SlotDisplaySymbol
+    public struct NodeDisplaySymbol
     {
         [SerializeField]
         internal int primary_symbol;
@@ -39,7 +39,7 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal bool is_wild;
 
-        public SlotDisplaySymbol(int primary_symbol) : this()
+        public NodeDisplaySymbol(int primary_symbol) : this()
         {
             this.primary_symbol = primary_symbol;
         }

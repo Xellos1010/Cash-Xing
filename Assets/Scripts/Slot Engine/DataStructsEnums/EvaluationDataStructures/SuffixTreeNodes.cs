@@ -12,51 +12,51 @@ using UnityEngine;
 namespace Slot_Engine.Matrix
 {
     [Serializable]
-    public struct suffix_tree_node
+    public struct SuffixTreeNodes
     {
         [SerializeField]
         internal bool left_right;
         [SerializeField]
-        internal suffix_tree_node_info node_info;
+        internal SuffixTreeNodeInfo node_info;
 
         [SerializeField]
-        internal suffix_tree_node_info[] parent_nodes;
+        internal SuffixTreeNodeInfo[] parent_nodes;
 
         [SerializeField]
         internal int[] connected_nodes;
 
         [SerializeField]
-        internal suffix_tree_node[] connected_nodes_struct;
+        internal SuffixTreeNodes[] connected_nodes_struct;
 
-        public suffix_tree_node(int primary_node, suffix_tree_node_info[] parent_nodes, suffix_tree_node_info parent_node, int column) : this()
+        public SuffixTreeNodes(int primary_node, SuffixTreeNodeInfo[] parent_nodes, SuffixTreeNodeInfo parent_node, int column) : this()
         {
             this.node_info.row = primary_node;
 
             if (this.parent_nodes == null && parent_nodes == null)
             {
-                this.parent_nodes = new suffix_tree_node_info[0];
+                this.parent_nodes = new SuffixTreeNodeInfo[0];
             }
             else
             {
                 this.parent_nodes = parent_nodes;
             }
-            this.parent_nodes = this.parent_nodes.AddAt<suffix_tree_node_info>(0, parent_node);
+            this.parent_nodes = this.parent_nodes.AddAt<SuffixTreeNodeInfo>(0, parent_node);
             this.node_info.column = column;
         }
 
-        public suffix_tree_node(int column, int row, suffix_tree_node_info[] parent_nodes, suffix_tree_node_info parent_node, bool left_right) : this()
+        public SuffixTreeNodes(int column, int row, SuffixTreeNodeInfo[] parent_nodes, SuffixTreeNodeInfo parent_node, bool left_right) : this()
         {
-            suffix_tree_node_info node_Info = new suffix_tree_node_info(column,row);
+            SuffixTreeNodeInfo node_Info = new SuffixTreeNodeInfo(column, row);
             this.node_info = node_Info;
             if (this.parent_nodes == null && parent_nodes == null)
             {
-                this.parent_nodes = new suffix_tree_node_info[0];
+                this.parent_nodes = new SuffixTreeNodeInfo[0];
             }
             else
             {
                 this.parent_nodes = parent_nodes;
             }
-            this.parent_nodes = this.parent_nodes.AddAt<suffix_tree_node_info>(0, parent_node);
+            this.parent_nodes = this.parent_nodes.AddAt<SuffixTreeNodeInfo>(0, parent_node);
             this.left_right = left_right;
         }
 
@@ -67,38 +67,21 @@ namespace Slot_Engine.Matrix
         internal WinningPayline[] InitializeAndCheckForWinningPaylines(ref EvaluationObjectStruct evaluationObject)
         {
             //Initialize the node with the grid configuration lookup information
-            evaluationObject.InitializeWinningSymbols();
+            evaluationObject.InitializeWinningSymbolsFeaturesActiveCollections();
             //This could be a wild or overlay - evaluate the feature and add to list
-            SlotDisplaySymbol linewin_symbol = evaluationObject.gridConfiguration[node_info.column].columnSlots[node_info.row];
-            //Checks the first symbol for a feature and adds it to the list
-            CheckForFeatureAddActiveToList(linewin_symbol, ref evaluationObject, ref node_info);
+            NodeDisplaySymbol linewin_symbol = evaluationObject.gridConfiguration[node_info.column].displaySymbols[node_info.row];
+            //Checks the first symbol for a feature condition
+            CheckSlotNeedsFeatureEvaluated(linewin_symbol, ref evaluationObject, ref node_info);
+            //Adds the first symbol as a lineWin and makes the primary symbol to track for
             AddWinningSymbol(linewin_symbol.primary_symbol, ref evaluationObject, ref node_info);
             //Initialize Winning Paylines
             List<WinningPayline> winning_paylines = new List<WinningPayline>();
-
-            //Debug.Log(String.Format("Starting check for winning paylines from node {0}", node_info.Print()));
+            Debug.Log(String.Format("Starting check for winning paylines from node {0}", node_info.Print()));
             //Check all connected nodes for a win using dfs (depth first search) search
-            CheckConnectedNodes(ref node_info, ref connected_nodes_struct, ref evaluationObject, ref winning_paylines, linewin_symbol);
+            CheckConnectedNodesForWin(ref node_info, ref connected_nodes_struct, ref evaluationObject, ref winning_paylines, linewin_symbol);
             evaluationObject.winning_symbols.Clear();
             return winning_paylines.ToArray();
         }
-        /// <summary>
-        /// Checks for a feature activation at a slot
-        /// </summary>
-        /// <param name="evaluationSlotDisplaySymbol">the line</param>
-        /// <param name="evaluationObject"></param>
-        /// <param name="winningSymbols"></param>
-        /// <param name="nodeInfo"></param>
-        private void CheckForFeatureAddActiveToList(SlotDisplaySymbol evaluationSlotDisplaySymbol, ref EvaluationObjectStruct evaluationObject, ref suffix_tree_node_info nodeInfo)
-        {
-            //Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
-            if (evaluationSlotDisplaySymbol.is_feature)
-            {
-                //Check for features to activate with the first symbol and add the first symbol to the line win
-                CheckFeatureConditionsActive(evaluationSlotDisplaySymbol, ref evaluationObject, ref nodeInfo);
-            }
-        }
-
         private string PrintIntIntArray(int[][] symbols_configuration)
         {
             string output = "";
@@ -110,35 +93,46 @@ namespace Slot_Engine.Matrix
         }
 
         /// <summary>
-        /// Checks a symbol for any win conditions within special symbols
+        /// Checks if a sllot evaluates with a feature condition
         /// </summary>
-        /// <param name="linewin_symbol">the symbol that won</param>
+        /// <param name="evaluationDisplaySymbol">the symbol that won</param>
         /// <param name="evaluationObject">The special symbols conditions</param>
-        private void CheckFeatureConditionsActive(SlotDisplaySymbol linewin_symbol, ref EvaluationObjectStruct evaluationObject, ref suffix_tree_node_info node_info)
+        private void CheckSlotNeedsFeatureEvaluated(NodeDisplaySymbol evaluationDisplaySymbol, ref EvaluationObjectStruct evaluationObject, ref SuffixTreeNodeInfo nodeInfo)
         {
             //Debug.Log(String.Format("linewin_symbol.is_feature = {0}", linewin_symbol.is_feature));
-            if (linewin_symbol.features != null)
+            if (evaluationDisplaySymbol.features != null) //Check if symbol has features
             {
-                //Debug.Log(String.Format("linewin_symbol.features.Count", linewin_symbol.features.Count));
-                if (linewin_symbol.features?.Count > 0)
+                //Debug.Log($"linewin_symbol.features.Count {evaluationDisplaySymbol.features?.Count} for node {nodeInfo.Print()}");
+                if (evaluationDisplaySymbol.features?.Count > 0)
                 {
-                    for (int feature = 0; feature < linewin_symbol.features.Count; feature++)
+                    SlotEvaluationScriptableObject slotEvaluationActivated = null;
+                    bool? evaluationObjectContainsItemWithFeature;
+                    for (int feature = 0; feature < evaluationDisplaySymbol.features.Count; feature++)
                     {
+                        evaluationObjectContainsItemWithFeature = evaluationObject.ContainsItemWithFeature<SlotEvaluationScriptableObject>(evaluationDisplaySymbol.features[feature], ref slotEvaluationActivated);
                         //TODO house reference for feature activated nodes within scriptable object
-                        if (evaluationObject.ContainsItemWithFeature(linewin_symbol.features[feature], out SlotEvaluationScriptableObject slotEvaluationActivated))
+                        if (evaluationObjectContainsItemWithFeature != null)
                         {
-                            if (slotEvaluationActivated.symbolsActivatingEvaluationConditions == null)
-                                slotEvaluationActivated.symbolsActivatingEvaluationConditions = new List<suffix_tree_node_info>();
-                            if(!slotEvaluationActivated.symbolsActivatingEvaluationConditions.Contains(node_info))
+                            if (evaluationObjectContainsItemWithFeature == true)
                             {
-                                slotEvaluationActivated.symbolsActivatingEvaluationConditions.Add(node_info);
-                            }
-                            //TODO Refactor and remove after verify system works above
-                            if (!evaluationObject.featureEvaluationActiveCount.ContainsKey(linewin_symbol.features[feature]))
-                                evaluationObject.featureEvaluationActiveCount[linewin_symbol.features[feature]] = new List<suffix_tree_node_info>();
-                            if (!evaluationObject.featureEvaluationActiveCount[linewin_symbol.features[feature]].Contains(node_info))
-                            {
-                                evaluationObject.featureEvaluationActiveCount[linewin_symbol.features[feature]].Add(node_info);
+                                if (evaluationObject.featureEvaluationActiveCount == null)
+                                {
+                                    evaluationObject.featureEvaluationActiveCount = new Dictionary<Features, List<SuffixTreeNodeInfo>>();
+                                }
+                                //Store that the node has a feature. After Paylines are evaluated we take the nodes in evaluationObject.featureEvaluationActiveCount[feature] and ensure the winning 
+                                Debug.Log($"slotEvaluationActivated = {slotEvaluationActivated} Slot Evaluating Feature Condition");
+                                if (!evaluationObject.featureEvaluationActiveCount.ContainsKey(evaluationDisplaySymbol.features[feature]))
+                                    evaluationObject.featureEvaluationActiveCount[evaluationDisplaySymbol.features[feature]] = new List<SuffixTreeNodeInfo>();
+                                if (!evaluationObject.featureEvaluationActiveCount[evaluationDisplaySymbol.features[feature]].Contains(nodeInfo))
+                                {
+                                    Debug.Log($"node {nodeInfo.Print()} has feature and needs to evaluate if feature activates");
+                                    evaluationObject.featureEvaluationActiveCount[evaluationDisplaySymbol.features[feature]].Add(nodeInfo);
+                                }
+                                else
+                                {
+                                    Debug.Log($"node is already in list");
+                                }
+                                Debug.Log($"evaluationObject.featureEvaluationActiveCount.Count = {evaluationObject.featureEvaluationActiveCount.Count} node info = {nodeInfo.Print()}");
                             }
                         }
                     }
@@ -146,16 +140,13 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void CheckConnectedNodes(ref suffix_tree_node_info nodeChecked, ref suffix_tree_node[] connectedNodes, ref EvaluationObjectStruct evaluationObject, ref List<WinningPayline> winning_paylines, SlotDisplaySymbol rootWinSymbol)
+        private void CheckConnectedNodesForWin(ref SuffixTreeNodeInfo nodeChecked, ref SuffixTreeNodes[] connectedNodes, ref EvaluationObjectStruct evaluationObject, ref List<WinningPayline> winning_paylines, NodeDisplaySymbol rootWinSymbol)
         {
-            //if primary_linewin_symbol is a wild then use the next symbol in sequence - if next symbol is a wild then continue
             //Cycle thru each connected node for a winning payline
             for (int connected_node = 0; connected_node < connectedNodes.Length; connected_node++)
             {
                 //Debug.Log(String.Format("Checking Connected node {0} from {1}", connected_nodes_struct[connected_node].node_info.Print(),current_node.Print()));
-                //reference list
                 CheckForDynamicWinningPaylinesOnNode(ref connectedNodes[connected_node], ref evaluationObject, rootWinSymbol, ref winning_paylines);
-                //if connected nodes are the same leading up to the end winning symbol use the largest list length
             }
         }
 
@@ -165,50 +156,37 @@ namespace Slot_Engine.Matrix
         /// <param name="nodeToCheck">Node being checked</param>
         /// <param name="evaluationObject">symbols configuration to check against</param>
         /// <param name="winning_symbols">winning symbols list</param>
-        private void CheckForDynamicWinningPaylinesOnNode(ref suffix_tree_node nodeToCheck, ref EvaluationObjectStruct evaluationObject, SlotDisplaySymbol symbol_to_check_for, ref List<WinningPayline> winning_paylines)
+        private void CheckForDynamicWinningPaylinesOnNode(ref SuffixTreeNodes nodeToCheck, ref EvaluationObjectStruct evaluationObject, NodeDisplaySymbol nextDisplaySymbol, ref List<WinningPayline> winning_paylines)
         {
-            //Main Condition for is wild check
-            bool isWild = false;
+            //Get current node symbol display struct
+            NodeDisplaySymbol currentDisplaySymbol = evaluationObject.gridConfiguration[nodeToCheck.node_info.column].displaySymbols[nodeToCheck.node_info.row];
 
-            SlotDisplaySymbol symbol_to_check_for_wild_placeholder = symbol_to_check_for; 
-            //Debug.Log(String.Format("Checking node {0}", suffix_tree_node.node_info.Print()));
-            //Get current node symbol
-            SlotDisplaySymbol current_display_symbol = evaluationObject.gridConfiguration[nodeToCheck.node_info.column].columnSlots[nodeToCheck.node_info.row];
-            //get the feature condition if any for the node
-            FeaturesStructSymbolEvaluation feature_condition_current = new FeaturesStructSymbolEvaluation(Features.None);
             //Checks the node for a feature condition
-            CheckFeatureConditionsActive(current_display_symbol,ref evaluationObject, ref nodeToCheck.node_info);
+            //Wild makes current node any symbol
+            CheckSlotNeedsFeatureEvaluated(currentDisplaySymbol, ref evaluationObject, ref nodeToCheck.node_info);
 
-            //First Level Check - Wilds - TODO Refactor
-            if (current_display_symbol.primary_symbol == symbol_to_check_for.primary_symbol || current_display_symbol.is_wild || symbol_to_check_for.is_wild)
+            //First Level Check - Wilds - TODO Refactor to abstract logic - Need to build in wild support
+            if (SymbolsMatch(currentDisplaySymbol, nextDisplaySymbol))
             {
-                if(symbol_to_check_for.is_wild)
-                {
-                    symbol_to_check_for = current_display_symbol;
-                    isWild = true;
-                }
-                //Debug.Log(String.Format("current_display_symbol.primary_symbol = {0} symbol_to_check_for.primary_symbol = {1}", current_display_symbol.primary_symbol, symbol_to_check_for.primary_symbol));
-                AddWinningSymbol(current_display_symbol.primary_symbol, ref evaluationObject, ref nodeToCheck.node_info);
+                //Add the winning symbol to the payline
+                AddWinningSymbol(currentDisplaySymbol.primary_symbol, ref evaluationObject, ref nodeToCheck.node_info);
 
-                //Current payline index
-                int column_index = evaluationObject.winning_symbols.Count - 1;
+                //Current payline index - to remove symbol from payline after checking later nodes
+                int winningSymbolIndex = evaluationObject.winning_symbols.Count - 1;
+
                 //There is a match - move to the next node if the winning symbols don't equal total columns
                 if (evaluationObject.winning_symbols.Count < evaluationObject.gridConfiguration.Length)
                 {
                     //Check each connected node
-                    CheckConnectedNodes(ref nodeToCheck.node_info, ref nodeToCheck.connected_nodes_struct, ref evaluationObject, ref winning_paylines, symbol_to_check_for);
+                    CheckConnectedNodesForWin(ref nodeToCheck.node_info, ref nodeToCheck.connected_nodes_struct, ref evaluationObject, ref winning_paylines, nextDisplaySymbol);
                 }
                 else
                 {
                     //Reached the end of the payline - add this payline and override others - remove symbol and start down next tree
                     InitializeAndAddDynamicWinningPayline(nodeToCheck, ref evaluationObject.winning_symbols, ref winning_paylines);
                 }
-                if (isWild)
-                {
-                    symbol_to_check_for = symbol_to_check_for_wild_placeholder;
-                }
                 //Remove the winning Symbol when done evaluating all possible configuration paths after this node so you can evaluate next node in supported configuration sequence
-                RemoveWinningSymbol(ref evaluationObject.winning_symbols, column_index);
+                RemoveWinningSymbol(ref evaluationObject.winning_symbols, winningSymbolIndex);
             }
             else
             {
@@ -219,20 +197,33 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void InitializeAndAddDynamicWinningPayline(suffix_tree_node suffix_tree_node, ref List<WinningSymbolNode> winning_symbols, ref List<WinningPayline> winning_paylines)
+        private bool SymbolsMatch(NodeDisplaySymbol currentDisplaySymbol, NodeDisplaySymbol nextDisplaySymbol)
         {
-            //Debug.Log(String.Format("Payline {0} won!", PrintDynamicPayline(ref winning_symbols)));
+            //Checks if either symbol is a wild symbol or an overlay symbol applying wild or if symbols match
+            if (PrimarySymbolCheck(currentDisplaySymbol, nextDisplaySymbol) || WildSymbolCheck(ref currentDisplaySymbol, ref nextDisplaySymbol))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        private void InitializeAndAddDynamicWinningPayline(SuffixTreeNodes suffix_tree_node, ref List<WinningNode> winning_symbols, ref List<WinningPayline> winning_paylines)
+        {
+            Debug.Log(String.Format("Payline {0} won!", PrintDynamicPayline(ref winning_symbols)));
             int[] payline = new int[winning_symbols.Count];
-            List<WinningSymbolNode> winning_symbol_row = new List<WinningSymbolNode>();
+            List<WinningNode> winning_symbol_row = new List<WinningNode>();
             for (int symbol = 0; symbol < winning_symbols.Count; symbol++)
             {
-                payline[symbol] = winning_symbols[symbol].suffix_tree_node_info.row;
+                payline[symbol] = winning_symbols[symbol].nodeInfo.row;
                 winning_symbol_row.Add(winning_symbols[symbol]);
             }
             AddDynamicWinningPayline(payline, winning_symbol_row, suffix_tree_node.left_right, ref winning_paylines);
         }
 
-        internal void AddDynamicWinningPayline(int[] payline, List<WinningSymbolNode> matching_symbols_list, bool left_right, ref List<WinningPayline> winning_paylines)
+        internal void AddDynamicWinningPayline(int[] payline, List<WinningNode> matching_symbols_list, bool left_right, ref List<WinningPayline> winning_paylines)
         {
             Payline payline_won = new Payline(payline, left_right);
             WinningPayline new_winning_payline = new WinningPayline(payline_won, matching_symbols_list.ToArray());
@@ -326,13 +317,13 @@ namespace Slot_Engine.Matrix
             return payline1.payline_configuration.payline.Length > payline2.payline_configuration.payline.Length ? payline2.payline_configuration.payline : payline1.payline_configuration.payline;
         }
 
-        private string PrintDynamicPayline(ref List<WinningSymbolNode> winning_symbols)
+        private string PrintDynamicPayline(ref List<WinningNode> winning_symbols)
         {
             int[] payline = new int[winning_symbols.Count];
             int[] winning_symbol_row = new int[winning_symbols.Count];
             for (int symbol = 0; symbol < winning_symbols.Count; symbol++)
             {
-                payline[symbol] = winning_symbols[symbol].suffix_tree_node_info.row;
+                payline[symbol] = winning_symbols[symbol].nodeInfo.row;
                 winning_symbol_row[symbol] = winning_symbols[symbol].symbol;
             }
             return String.Format(
@@ -342,7 +333,7 @@ namespace Slot_Engine.Matrix
                 );
         }
 
-        private void RemoveWinningSymbol(ref List<WinningSymbolNode> winning_symbols, int index)
+        private void RemoveWinningSymbol(ref List<WinningNode> winning_symbols, int index)
         {
             //Debug.Log(String.Format("Removing winning symbol {0}", winning_symbols[index]));
             winning_symbols.RemoveAt(index);
@@ -353,17 +344,17 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="symbol">symbol to add</param>
         /// <param name="evaluationObject">winning symbols reference list</param>
-        private void AddWinningSymbol(int symbol, ref EvaluationObjectStruct evaluationObject, ref suffix_tree_node_info suffix_tree_node_info)
+        private void AddWinningSymbol(int symbol, ref EvaluationObjectStruct evaluationObject, ref SuffixTreeNodeInfo suffix_tree_node_info)
         {
             ////Debug.Log(String.Format("Adding winning symbol {0} from node {1}", symbol, suffix_tree_node_info.Print()));
-            evaluationObject.winning_symbols.Add(new WinningSymbolNode(suffix_tree_node_info, symbol));
+            evaluationObject.winning_symbols.Add(new WinningNode(suffix_tree_node_info, symbol));
         }
 
-        internal void InitializeNextNodes(int current_column, ref ReelStripStructDisplayZone[] display_zones, ref suffix_tree_node parent_node, bool left_right)
+        internal void InitializeNextNodes(int current_column, ref ReelStripStructDisplayZone[] display_zones, ref SuffixTreeNodes parent_node, bool left_right)
         {
             //Start in column 1
 
-            List<suffix_tree_node> children_nodes = new List<suffix_tree_node>();
+            List<SuffixTreeNodes> children_nodes = new List<SuffixTreeNodes>();
             List<int> child_nodes = new List<int>();
             //Check if within range of primary node
             if (parent_node.node_info.row == -1)
@@ -376,18 +367,18 @@ namespace Slot_Engine.Matrix
                 if (IsInActiveDisplayZone(parent_node.node_info.row - 1, ref display_zones))
                 {
                     child_nodes.Add(parent_node.node_info.row - 1);
-                    children_nodes.Add(new suffix_tree_node(current_column, parent_node.node_info.row - 1, parent_node.parent_nodes, parent_node.node_info, left_right));
+                    children_nodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row - 1, parent_node.parent_nodes, parent_node.node_info, left_right));
                 }
                 if (IsInActiveDisplayZone(parent_node.node_info.row, ref display_zones))
                 {
                     child_nodes.Add(parent_node.node_info.row);
-                    children_nodes.Add(new suffix_tree_node(current_column, parent_node.node_info.row, parent_node.parent_nodes, parent_node.node_info,  left_right));
+                    children_nodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row, parent_node.parent_nodes, parent_node.node_info, left_right));
                 }
 
                 if (IsInActiveDisplayZone(parent_node.node_info.row + 1, ref display_zones))
                 {
                     child_nodes.Add(parent_node.node_info.row + 1);
-                    children_nodes.Add(new suffix_tree_node(current_column, parent_node.node_info.row + 1, parent_node.parent_nodes, parent_node.node_info,left_right));
+                    children_nodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row + 1, parent_node.parent_nodes, parent_node.node_info, left_right));
                 }
             }
             connected_nodes = child_nodes.ToArray();
@@ -426,7 +417,7 @@ namespace Slot_Engine.Matrix
             return String.Join("|", payline);
         }
 
-        private List<int> GetPrimaryNodeOfNodeAndParents(ref suffix_tree_node node)
+        private List<int> GetPrimaryNodeOfNodeAndParents(ref SuffixTreeNodes node)
         {
             List<int> output = new List<int>();
             output.Add(node.node_info.row);
@@ -436,60 +427,16 @@ namespace Slot_Engine.Matrix
             }
             return output;
         }
-    }
 
-    [Serializable]
-    public struct suffix_tree_node_info
-    {
-        [SerializeField]
-        internal int column;
-        [SerializeField]
-        internal int row;
-
-        public suffix_tree_node_info(int column, int row) : this()
+        private bool WildSymbolCheck(ref NodeDisplaySymbol currentDisplaySymbol, ref NodeDisplaySymbol nextDisplaySymbol)
         {
-            this.column = column;
-            this.row = row;
+            //TODO this won't evauate if an overlay symbol triggers wild feature
+            return currentDisplaySymbol.is_wild || nextDisplaySymbol.is_wild;
         }
 
-        internal string Print()
+        private bool PrimarySymbolCheck(NodeDisplaySymbol currentDisplaySymbol, NodeDisplaySymbol nextDisplaySymbol)
         {
-            return String.Format("Node: Column {0} Row {1}", column, row);
-        }
-    }
-
-    [Serializable]
-    public struct suffix_tree_root_nodes
-    {
-        [SerializeField]
-        internal suffix_tree_node[] root_nodes;
-        [SerializeField]
-        public Payline[] paylines_supported;
-
-        internal Payline ReturnPayline(int payline_to_show)
-        {
-            return paylines_supported[payline_to_show];
-        }
-
-        internal void AddPaylineSupported(int[] vs, bool left_right)
-        {
-            if (paylines_supported == null)
-                paylines_supported = new Payline[0];
-            paylines_supported = paylines_supported.AddAt<Payline>(paylines_supported.Length, new Payline(vs, left_right));
-        }
-    }
-    [Serializable]
-    public struct WinningSymbolNode
-    {
-        [SerializeField]
-        internal suffix_tree_node_info suffix_tree_node_info;
-        [SerializeField]
-        internal int symbol;
-
-        public WinningSymbolNode(suffix_tree_node_info suffix_tree_node_info, int symbol) : this()
-        {
-            this.suffix_tree_node_info = suffix_tree_node_info;
-            this.symbol = symbol;
+            return currentDisplaySymbol.primary_symbol == nextDisplaySymbol.primary_symbol;
         }
     }
 }

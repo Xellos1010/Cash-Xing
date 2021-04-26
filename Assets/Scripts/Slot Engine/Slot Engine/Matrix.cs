@@ -423,7 +423,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal async Task PlayFeatureAnimation(List<suffix_tree_node_info> overlaySymbols)
+        internal async Task PlayFeatureAnimation(List<SuffixTreeNodeInfo> overlaySymbols)
         {
             Debug.Log("Playing Feature Animation");
             List<Animator> symbolAnimators = new List<Animator>(); 
@@ -480,13 +480,13 @@ namespace Slot_Engine.Matrix
             LerpToMe.lerpComplete -= LerpToMe_lerpComplete;
         }
 
-        internal Animator SetAnimatorFeatureTriggerAndReturn(suffix_tree_node_info suffix_tree_node_info)
+        internal Animator SetAnimatorFeatureTriggerAndReturn(SuffixTreeNodeInfo suffix_tree_node_info)
         {
             Animator output = SetOverlayFeatureAndReturnAnimatorFromNode(suffix_tree_node_info);
             return output;
         }
 
-        private Animator SetOverlayFeatureAndReturnAnimatorFromNode(suffix_tree_node_info suffix_tree_node_info)
+        private Animator SetOverlayFeatureAndReturnAnimatorFromNode(SuffixTreeNodeInfo suffix_tree_node_info)
         {
             return reel_strip_managers[suffix_tree_node_info.column].GetSlotsDecending()[reel_strip_managers[suffix_tree_node_info.column].reelstrip_info.padding_before + suffix_tree_node_info.row].SetOverlayAnimatorToFeatureAndGet();
         }
@@ -994,6 +994,7 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Spin_End:
                     bool resolve_intro = false;
+                    //TODO Change and abstract feature check based on feature objects and evaluationSymbols
                     if (slotMachineManagers.evaluationManager.overlaySymbols.Count > 0)
                     {
                         if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||

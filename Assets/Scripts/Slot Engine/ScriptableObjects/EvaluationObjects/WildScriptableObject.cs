@@ -19,6 +19,12 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     [CreateAssetMenu(fileName = "WildEvaluationObject", menuName = "BoomSportsScriptableObjects/WildEvaluationScriptableObject", order = 4)]
     public class WildScriptableObject : SlotEvaluationScriptableObject
     {
+
+        public override bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public override object EvaluatePaylines(ref EvaluationObjectStruct symbols_configuration)
         {
             //Called at high level and take symbol names and return feature activating
@@ -29,7 +35,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
 
         public override int? ReturnEvaluationObjectSupportedRootCount()
         {
-            return symbolsActivatingEvaluationConditions?.Count;
+            return nodesActivatingEvaluationConditions?.Count;
         }
     }
 }

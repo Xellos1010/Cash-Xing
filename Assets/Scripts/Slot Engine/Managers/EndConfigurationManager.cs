@@ -186,9 +186,9 @@ namespace Slot_Engine.Matrix
             return Task.FromResult<ReelStripSpinStruct[]>(output);
         }
 
-        private SlotDisplaySymbol[] GenerateEndingReelStrip(GameStates mode, ref ReelStripManager reelStripManager)
+        private NodeDisplaySymbol[] GenerateEndingReelStrip(GameStates mode, ref ReelStripManager reelStripManager)
         {
-            List<SlotDisplaySymbol> output = new List<SlotDisplaySymbol>();
+            List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             //Generate a symbol for each display zone slot
             for (int i = 0; i < reelStripManager.reelstrip_info.total_display_slots; i++)
             {
@@ -200,9 +200,9 @@ namespace Slot_Engine.Matrix
         /// Generate a random symbol based on weights defined
         /// </summary>
         /// <returns></returns>
-        public SlotDisplaySymbol GetRandomWeightedSymbol(GameStates currentMode)
+        public NodeDisplaySymbol GetRandomWeightedSymbol(GameStates currentMode)
         {
-            SlotDisplaySymbol output = new SlotDisplaySymbol();
+            NodeDisplaySymbol output = new NodeDisplaySymbol();
             int symbol = matrix.symbol_weights_per_state_dictionary[StateManager.enCurrentMode].intDistribution.Draw();//symbol_weights_per_state[currentMode].intDistribution.Draw();
             if (matrix.isSymbolOverlay(symbol))
             {
@@ -246,7 +246,9 @@ namespace Slot_Engine.Matrix
             //}
             return currentReelstripConfiguration;
         }
-
+        /// <summary>
+        /// Sets the matrix to the display current reelstrip configuration
+        /// </summary>
         internal void SetMatrixToReelConfiguration()
         {
             matrix.SetSymbolsToDisplayOnMatrixTo(currentReelstripConfiguration);
@@ -269,12 +271,12 @@ namespace Slot_Engine.Matrix
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
-                        configuration[i].displaySymbols = new SlotDisplaySymbol[3] 
+                        configuration[i].displaySymbols = new NodeDisplaySymbol[3] 
                         { 
-                            new SlotDisplaySymbol(i % 2 == 0 
+                            new NodeDisplaySymbol(i % 2 == 0 
                         ? (int)Symbol.SA01 : (int)Symbol.RO03),
-                            new SlotDisplaySymbol((int)Symbol.RO01),
-                            new SlotDisplaySymbol((int)Symbol.RO02)
+                            new NodeDisplaySymbol((int)Symbol.RO01),
+                            new NodeDisplaySymbol((int)Symbol.RO02)
                         };
 
                         if (i % 2 == 0)
@@ -288,12 +290,12 @@ namespace Slot_Engine.Matrix
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
-                        configuration[i].displaySymbols = new SlotDisplaySymbol[3]
+                        configuration[i].displaySymbols = new NodeDisplaySymbol[3]
                         {
-                            new SlotDisplaySymbol(i % 2 == 0
+                            new NodeDisplaySymbol(i % 2 == 0
                         ? (int)Symbol.SA02 : (int)Symbol.RO03),
-                            new SlotDisplaySymbol((int)Symbol.RO01),
-                            new SlotDisplaySymbol((int)Symbol.RO02)
+                            new NodeDisplaySymbol((int)Symbol.RO01),
+                            new NodeDisplaySymbol((int)Symbol.RO02)
                         };
                         if (i % 2 == 0)
                         {

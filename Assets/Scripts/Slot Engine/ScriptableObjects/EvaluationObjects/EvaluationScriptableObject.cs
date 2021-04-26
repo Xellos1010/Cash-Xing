@@ -9,6 +9,7 @@
 //
 //
 using Slot_Engine.Matrix.Managers;
+using System;
 using UnityEngine;
 namespace Slot_Engine.Matrix.ScriptableObjects
 {
