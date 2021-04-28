@@ -24,7 +24,7 @@ public static class StateManager
 
     //State Switching Variables
     public delegate void GameModeDelegate(GameStates modeActivated);
-    public static event GameModeDelegate GameModeActivated;
+    public static event GameModeDelegate gameModeSetTo;
     public delegate void StateDelegate(States State);
     public static event StateDelegate StateChangedTo;
     public static event StateDelegate StateSwitched;
@@ -54,7 +54,7 @@ public static class StateManager
     public static void SetGameModeActiveTo(GameStates state)
     {
         enCurrentMode = state;
-        GameModeActivated?.Invoke(state);
+        gameModeSetTo?.Invoke(state);
     }
     /// <summary>
     /// Sets a feature to being active or deactive

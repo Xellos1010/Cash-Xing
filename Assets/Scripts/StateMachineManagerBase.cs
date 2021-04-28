@@ -6,6 +6,7 @@ public enum supported_triggers
     SpinSlam,
     SpinResolve,
     ResolveEnd,
+    FeatureTransition,
     End
 }
 public enum supported_bools

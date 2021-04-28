@@ -51,7 +51,9 @@ public enum States {
     racking_start,
     racking_loop,
     racking_end,
-	feature_transition_out,
+    feature_intro,
+    feature_idle,
+    feature_outro,
     bonus_idle_intro,
     bonus_idle_idle,
     bonus_idle_outro,
@@ -60,6 +62,5 @@ public enum States {
     bonus_spin_outro,
     bonus_spin_end,
     bonus_spin_win,
-	feature_transition_in,
     total_win_presentation
 }
