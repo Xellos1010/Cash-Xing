@@ -27,6 +27,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         public void InitializeOverlaySymbolsEvaluation()
         {
             nodesActivatingEvaluationConditions = new List<SuffixTreeNodeInfo>();
+            nodesActivatingEvaluationConditions.Clear();
         }
 
         public override object EvaluatePaylines(ref EvaluationObjectStruct symbols_configuration)

@@ -102,9 +102,18 @@ namespace Slot_Engine.Matrix.Managers
 
             //Build list of evaluations to make out of features and core objects
             List<EvaluationObjectStruct> evaluationsToTake = new List<EvaluationObjectStruct>();
+
+            //Clear all feature conditions of activated nodes previously
+
+
             for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
             {
                 evaluationsToTake.Add(new EvaluationObjectStruct(coreEvaluationObjects[coreEvaluationObject], slotEvaluationObjects, symbols_configuration));
+                coreEvaluationObjects[coreEvaluationObject].ClearWinningObjects();
+            }
+            for (int slotEvaluationObject = 0; slotEvaluationObject < slotEvaluationObjects.Length; slotEvaluationObject++)
+            {
+                slotEvaluationObjects[slotEvaluationObject].ClearWinningObjects();
             }
             for (int evaluation = 0; evaluation < evaluationsToTake.Count; evaluation++)
             {
@@ -175,6 +184,55 @@ namespace Slot_Engine.Matrix.Managers
         {
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
             await EvaluateWinningSymbols(matrix.slotMachineManagers.endConfigurationManager.currentReelstripConfiguration);
+        }
+
+        internal bool DoesSymbolActivateFeature(SymbolObject symbolObject, Features feature)
+        {
+            for (int slotEvaluator = 0; slotEvaluator < slotEvaluationObjects.Length; slotEvaluator++)
+            {
+                if (slotEvaluationObjects[slotEvaluator].featureName == feature || feature == Features.Count)
+                {
+                    if (slotEvaluationObjects[slotEvaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        internal Features[] GetFeaturesSymbolActivates(SymbolObject symbolObject)
+        {
+            List<Features> output = new List<Features>();
+            for (int slotEvaluator = 0; slotEvaluator < slotEvaluationObjects.Length; slotEvaluator++)
+            {
+                if (slotEvaluationObjects[slotEvaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                {
+                    output.Add(slotEvaluationObjects[slotEvaluator].featureName);
+                }
+            }
+            return output.ToArray();
+        }
+
+        internal WinningPayline[] ReturnWinningObjectsAsWinningPaylines()
+        {
+            List<WinningPayline> output = new List<WinningPayline>();
+            WinningObject[] temp;
+            //TODO Check that T pass is Subclass or same class as WinningObject
+            for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
+            {
+                Debug.Log("Converting Type");
+                temp = coreEvaluationObjects[coreEvaluationObject].ReturnWinningObjects();
+
+                Debug.Log("Converted");
+                for (int i = 0; i < temp.Length; i++)
+                {
+                    output.Add(temp[i] as WinningPayline);
+                }
+            }
+            
+            Debug.Log($"Returning {output.Count}");
+            return output.ToArray();
         }
     }
 }

@@ -45,7 +45,13 @@ namespace Slot_Engine.Matrix.Managers
     public class PaylinesManager : MonoBehaviour
     {
         [SerializeField]
-        internal WinningPayline[] winningPaylines;
+        internal WinningPayline[] winningPaylines
+        {
+            get
+            {
+                return matrix.slotMachineManagers.evaluationManager.ReturnWinningObjectsAsWinningPaylines();
+            }
+        }
         public int current_winning_payline_shown = -1;
         //**
         public bool paylines_evaluated = false;
@@ -88,8 +94,10 @@ namespace Slot_Engine.Matrix.Managers
             float output = 0;
             for (int i = 0; i < winningPaylines.Length; i++)
             {
+                Debug.Log($"Get Total Win Amount = {output}");
                 output += winningPaylines[i].GetTotalWin(matrix);
             }
+            Debug.Log($"Returning Total Win Amount = {output}");
             return output;
         }
 
@@ -198,7 +206,6 @@ namespace Slot_Engine.Matrix.Managers
 
         internal void ClearWinningPaylines()
         {
-            winningPaylines = new WinningPayline[0];
             paylines_evaluated = false;
         }
 

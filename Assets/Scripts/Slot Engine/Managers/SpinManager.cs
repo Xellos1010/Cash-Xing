@@ -104,15 +104,14 @@ namespace Slot_Engine.Matrix.Managers
 
         void Update()
         {
-            if (use_timer)
+            if (use_timer && !StateManager.isInterupt)
             {
                 if (StateManager.enCurrentState == States.Spin_Idle)
                 {
                     time_counter += Time.deltaTime;
                     if (time_counter > spinSettingsScriptableObject.spin_loop_until_seconds_pass)
                     {
-                        ResetUseTimer();
-                        InterruptSpin();
+                        StateManager.SetStateTo(States.Spin_Interrupt);
                     }
                 }
                 else if (StateManager.enCurrentState == States.bonus_idle_idle)
@@ -128,8 +127,14 @@ namespace Slot_Engine.Matrix.Managers
                 else
                 {
                     if (time_counter > 0)
-                        time_counter = 0;
+                        ResetUseTimer();
                 }
+            }
+
+            else
+            {
+                if (time_counter > 0)
+                    ResetUseTimer();
             }
         }
 
@@ -143,10 +148,8 @@ namespace Slot_Engine.Matrix.Managers
         /// </summary>
         internal async void InterruptSpin()
         {
-            matrix.SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinSlam, true);
-            await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
-            await matrix.isAllSlotAnimatorsReady("Spin_Outro");
-            StateManager.SetStateTo(States.Spin_Outro);
+            Debug.Log("Matrix to interupt spin via spin manager");
+            await matrix.InterruptSpin();
         }
 
         //Engine Functions
@@ -226,6 +229,7 @@ namespace Slot_Engine.Matrix.Managers
                     SetSpinStateTo(SpinStates.idle_idle);
                     break;
                 case States.Spin_Interrupt:
+                    Debug.Log("Spin Controller IsInterupt = true");
                     StateManager.isInterupt = true;
                     SetSpinStateTo(SpinStates.spin_interrupt);
                     break;
@@ -288,12 +292,14 @@ namespace Slot_Engine.Matrix.Managers
                     Debug.Log("Setting Animation Controller to SpinStart");
                     matrix.SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, true);
                     await matrix.isAllAnimatorsThruState("Idle_Outro");
-                    await matrix.isAllSlotAnimatorsReady("Spin_Intro");
+                    await matrix.isAllSlotAnimatorsThruState("Idle_Outro");
                     StateManager.SetStateTo(States.Spin_Intro);
                     //Start the reels spinning
                     await StartSpinReels();
                     if (!StateManager.isInterupt)
                         StateManager.SetStateTo(States.Spin_Idle);
+                    else
+                        StateManager.SetStateTo(States.Spin_Outro);
                     break;
                 case SpinStates.spin_intro:
                     break;

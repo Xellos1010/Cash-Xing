@@ -246,25 +246,39 @@ namespace Slot_Engine.Matrix
             sub_state_animator.Play(animation, -1, 0);
         }
 
-
-        internal bool isSymbolAnimationFinished(string animation_to_check)
+        internal bool isSymbolAnimatorThruState(string stateToCheck)
         {
             if (presentation_symbol > 0)
             {
                 AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
-                //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
-                
-                if (state_info.IsName(animation_to_check))
+                if (!state_info.IsName(stateToCheck))
                 {
                     return true;
                 }
                 else
                 {
-                    //Debug.Log(String.Format("Not {0}", animation_to_check));
+                    //No way to check if its passed the state or what without making a hashtable with all the state names codes
                     return false;
                 }
             }
-            //Default return true if animator is not on matrix
+            return true;
+        }
+
+        internal bool isSymbolAnimatorFinishedAndAtPauseState(string stateToCheck)
+        {
+            if (presentation_symbol > 0)
+            {
+                AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
+                if (state_info.IsName(stateToCheck) && state_info.normalizedTime >= 1.0)
+                {
+                    return true;
+                }
+                else
+                {
+                    //No way to check if its passed the state or what without making a hashtable with all the state names codes
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -328,7 +342,7 @@ namespace Slot_Engine.Matrix
             //Compare to Symbols
             for (int i = 0; i < reel_parent.matrix.symbols_data_for_matrix.symbols.Length; i++)
             {
-                if (reel_parent.matrix.symbols_data_for_matrix.symbols[i].isOverlaySymbol)
+                if (reel_parent.matrix.slotMachineManagers.evaluationManager.DoesSymbolActivateFeature(reel_parent.matrix.symbols_data_for_matrix.symbols[i],Features.overlay))
                 {
                     output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
                     SetBoolTo(ref output, supportedAnimatorBools.FeatureTrigger, true);
@@ -479,6 +493,29 @@ namespace Slot_Engine.Matrix
         internal void SetStateMachineAnimators()
         {
             state_machine.SetStateMachineSyncAnimators();
+        }
+        internal bool isAllAnimatorsFinishedAndAtPauseState(string animation_to_check)
+        {
+            bool output = false;
+            AnimatorStateInfo state_info;
+            for (int subStateMachine = 0; subStateMachine < state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length; subStateMachine++)
+            {
+                for (int animator = 0; animator < state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length; animator++)
+                {
+                    state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator].GetCurrentAnimatorStateInfo(0);
+                    //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
+
+                    if (state_info.IsName(animation_to_check) && state_info.normalizedTime >= 1 && (subStateMachine == state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length - 1) && (animator == state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length - 1))
+                    {
+                        output = true;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            return output;
         }
 
         internal bool isAllAnimatorsFinished(string animation_to_check)

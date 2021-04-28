@@ -33,5 +33,14 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         //Conditions can be as follows: Winning Payline Amount = 0 - configurationLength -1
         public List<NodeEvaluationCondition> nodeEvaluationConditions;
         public abstract bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects);
+        public override void ClearWinningObjects()
+        {
+            if (nodesActivatingEvaluationConditions == null)
+                nodesActivatingEvaluationConditions = new List<SuffixTreeNodeInfo>();
+            if (nodesActivatingEvaluationConditions.Count > 0)
+            {
+                nodesActivatingEvaluationConditions.Clear();
+            }
+        }
     }
 }

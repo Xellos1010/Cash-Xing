@@ -3,25 +3,6 @@ using Slot_Engine.Matrix;
 using System;
 using UnityEngine;
 /// <summary>
-/// Can be a Payline a Way line - A Shape - etc...
-/// </summary>
-[Serializable]
-public abstract class WinningObject
-{
-    [SerializeField]
-    public WinningNode[] winningNodes;
-
-    internal bool ContainsNode(SuffixTreeNodeInfo nodeInfo)
-    {
-        for (int node = 0; node < winningNodes.Length; node++)
-        {
-            if (winningNodes[node].nodeInfo.ColumnRow() == nodeInfo.ColumnRow())
-                return true;
-        }
-        return false;
-    }
-}
-/// <summary>
 /// A representation of a payline win object
 /// </summary>
 [Serializable]
@@ -51,15 +32,17 @@ public class WinningPayline : WinningObject
         }
         return output;
     }
-
+//TODO Base this on payline table
     private float CalculateTotalWin(int win_value, ref Slot_Engine.Matrix.Matrix matrix)
     {
         if (matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
         {
+            Debug.Log($"Calculating Total win = {(win_value * matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount) * matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier}");
             return (win_value * matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount) * matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier;
         }
         else
         {
+            Debug.Log($"Calculating Total win = {win_value * matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount}");
             return (win_value * matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount);
         }
     }

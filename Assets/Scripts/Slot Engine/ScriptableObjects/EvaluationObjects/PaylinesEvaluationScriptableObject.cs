@@ -41,7 +41,6 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         /// </summary>
         public SuffixTreeRootNodes dynamic_paylines;
         public EvaluationObjectStruct evaluationUsed;
-        public WinningPayline[] winningPaylines;
         /// <summary>
         /// MainEntry to evaluate for WinningPaylines
         /// </summary>
@@ -62,56 +61,77 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw,evaluationObject.maxLength);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
-                Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,rootNode, dynamic_paylines.rootNodes[rootNode].node_info.Print()));
+                //Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,rootNode, dynamic_paylines.rootNodes[rootNode].node_info.Print()));
             }
-            //Debug.Log(String.Format("Looking for features that activated"));
-            foreach (KeyValuePair<Features, List<SuffixTreeNodeInfo>> item in evaluationObject.featureEvaluationActiveCount)
+            if (evaluationObject.featureEvaluationActiveCount != null)
             {
-                //Multiplier calculated first then mode is applied
-                Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
-                if ((item.Key == Features.overlay || item.Key == Features.multiplier))
+                //Debug.Log(String.Format("Looking for features that activated"));
+                foreach (KeyValuePair<Features, List<SuffixTreeNodeInfo>> item in evaluationObject.featureEvaluationActiveCount)
                 {
-                    OverlayEvaluationScriptableObject overlayLogic = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
-                    //Feature Evaluated Slot items are in raw format waiting for winningObjects to be generated to run evaluation logic- run check if items are valid
-                    for (int node = item.Value.Count - 1; node >= 0; node--)
+                    //Multiplier calculated first then mode is applied
+                    Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
+                    if ((item.Key == Features.overlay || item.Key == Features.multiplier))
                     {
-                        if (!overlayLogic.EvaluateNodeForConditionsMet(item.Value[node], output_filtered.ToArray()))
+                        OverlayEvaluationScriptableObject overlayLogic = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
+                        //Feature Evaluated Slot items are in raw format waiting for winningObjects to be generated to run evaluation logic- run check if items are valid
+                        for (int node = item.Value.Count - 1; node >= 0; node--)
                         {
-                            item.Value.RemoveAt(node);
+                            if (!overlayLogic.EvaluateNodeForConditionsMet(item.Value[node], output_filtered.ToArray()))
+                            {
+                                item.Value.RemoveAt(node);
+                            }
+                        }
+                        if (item.Value.Count > 0)
+                        {
+                            if (StateManager.enCurrentMode != GameStates.freeSpin)
+                            {
+                                if (StateManager.enCurrentMode == GameStates.baseGame) //Can Only apply overlay feature in base-game
+                                    StateManager.SetFeatureActiveTo(Features.multiplier, true);
+                                EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects).nodesActivatingEvaluationConditions = item.Value;
+                            }
+                            else
+                            {
+                                StateManager.AddToMultiplier(item.Value.Count);
+                            }
                         }
                     }
-                    if (item.Value.Count > 0)
+                    if (item.Key == Features.freespin)
                     {
-                        if (StateManager.enCurrentMode != GameStates.freeSpin)
+                        FreeSpinEvaluationScriptableObject freespinsObject = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<FreeSpinEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
+                        bool activateFeature = freespinsObject.EvaluateConditionsMet(item.Value, output_filtered.ToArray());
+                        if (activateFeature)
                         {
-                            if (StateManager.enCurrentMode == GameStates.baseGame) //Can Only apply overlay feature in base-game
-                                StateManager.SetFeatureActiveTo(Features.multiplier, true);
-                            EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects).nodesActivatingEvaluationConditions = item.Value;
+                            StateManager.SetFeatureActiveTo(Features.freespin, true);
                         }
                         else
                         {
-                            StateManager.AddToMultiplier(item.Value.Count);
+                            freespinsObject.nodesActivatingEvaluationConditions.Clear();
+                            break;
                         }
-                    }
-                }
-                if (item.Key == Features.freespin)
-                {
-                    FreeSpinEvaluationScriptableObject freespinsObject = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<FreeSpinEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
-                    bool activateFeature = freespinsObject.EvaluateConditionsMet(item.Value, output_filtered.ToArray());
-                    if (activateFeature)
-                    {
-                        StateManager.SetFeatureActiveTo(Features.freespin, true);
-                    }
-                    else
-                    {
-                        freespinsObject.nodesActivatingEvaluationConditions.Clear();
-                        break;
                     }
                 }
             }
             evaluated = true;
-            winningPaylines = output_filtered.ToArray();
+            if (winningObjects == null)
+                winningObjects = new List<WinningObject>();
+            winningObjects.AddRange(output_filtered.ToArray());
+            BuildWinningSymbolNodes(ref winningObjects); 
             return output_filtered.ToArray();
+        }
+
+        private void BuildWinningSymbolNodes(ref List<WinningObject> winningPaylines)
+        {
+            HashSet<WinningNode> winningNodes = new HashSet<WinningNode>();
+            for (int payline = 0; payline < winningPaylines.Count; payline++)
+            {
+                for (int node = 0; node < winningPaylines[payline].winningNodes.Length; node++)
+                {
+                    winningNodes.Add(winningPaylines[payline].winningNodes[node]);
+                }
+            }
+            if (evaluationUsed.winningSymbols == null)
+                evaluationUsed.winningSymbols = new List<WinningNode>();
+            evaluationUsed.winningSymbols.AddRange(winningNodes);
         }
 
         public override int? ReturnEvaluationObjectSupportedRootCount()
@@ -353,6 +373,11 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 }
             }
             return paylines_supported;
+        }
+
+        public override void ClearWinningObjects()
+        {
+            winningObjects = new List<WinningObject>();
         }
     }
 }

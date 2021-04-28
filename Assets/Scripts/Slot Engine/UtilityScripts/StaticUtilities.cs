@@ -154,7 +154,10 @@ public static class StaticUtilities
     {
         Debug.LogError(message);
     }
-
+    public static T ConvertValue<T, U>(U value) where U : IConvertible
+    {
+        return (T)Convert.ChangeType(value, typeof(T));
+    }
 }
 
 public static class AnimatorStaticUtilites

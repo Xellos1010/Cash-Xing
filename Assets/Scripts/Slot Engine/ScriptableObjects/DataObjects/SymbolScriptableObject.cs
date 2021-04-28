@@ -48,27 +48,10 @@ public struct SymbolObject
     [SerializeField]
     public int winValue; // Calculkate win value as base amount until Resolve Intro
     /// <summary>
-    /// Will this trigger a feature?
-    /// </summary>
-    [SerializeField]
-    public bool isFeatureSymbol;
-    [SerializeField]
-    public Features[] features;
-    /// <summary>
-    /// Will this trigger a feature?
-    /// </summary>
-    [SerializeField]
-    public bool isOverlaySymbol;
-    /// <summary>
     /// Symbol Weight Info
     /// </summary>
     [SerializeField]
     public symbol_weight_state[] symbolWeights;
-    /// <summary>
-    /// Used to toggle wild feature
-    /// </summary>
-    [SerializeField]
-    internal bool isWildSymbol;
 }
 [Serializable]
 public struct symbol_weight_state

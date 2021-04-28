@@ -10,11 +10,14 @@
 //
 using Slot_Engine.Matrix.Managers;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 namespace Slot_Engine.Matrix.ScriptableObjects
 {
     public abstract partial class EvaluationScriptableObject : ScriptableObject
     {
+        public bool evaluated = false;
+        public List<WinningObject> winningObjects;
         /// <summary>
         /// Can return winning paylines - number of overlay symbols - anything
         /// </summary>
@@ -26,7 +29,12 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         /// </summary>
         /// <returns>supported root nodes</returns>
         public abstract int? ReturnEvaluationObjectSupportedRootCount();
-        public bool evaluated = false;
+        public abstract void ClearWinningObjects();
+
+        internal WinningObject[] ReturnWinningObjects()
+        {
+            return winningObjects.ToArray();
+        }
     }
 }
 
