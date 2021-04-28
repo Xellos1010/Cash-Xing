@@ -61,7 +61,8 @@ namespace Slot_Engine.Matrix
             IncreaseBet,
             PlaceBet,
             Spin,
-            Slam
+            Slam,
+            ChangeLayout
         }
 
         private Matrix _matrix;
@@ -75,6 +76,8 @@ namespace Slot_Engine.Matrix
         private bool draw_line_gizmo;
         private Ray camera_ray_out;
         public Animator spin_btn_animator;
+        public bool compactExpandedToggle = true;
+        public Animator compactExpandeedLayoutController;
 
         void OnDrawGizmos()
         {
@@ -85,6 +88,10 @@ namespace Slot_Engine.Matrix
         // Update is called once per frame
         void Update()
         {
+            if(Input.GetKeyDown(KeyCode.C))
+            {
+                PerformAction(Actions.ChangeLayout);
+            }
             if (!locked)
             {
                 if (Input.GetMouseButtonDown(0))
@@ -188,6 +195,9 @@ namespace Slot_Engine.Matrix
                 case Actions.Slam:
                     CheckStateToSpinSlam();
                     break;
+                case Actions.ChangeLayout:
+                    ToggleLayout();
+                    break;
             }
         }
 
@@ -264,16 +274,20 @@ namespace Slot_Engine.Matrix
 
         private void RaycastForUIFromPosition(Vector3 position)
         {
-            //Debug.Log(String.Format("testing position = {0} for raycast hit", position));
+            Debug.Log(String.Format("testing position = {0} for raycast hit", position));
             RaycastHit hit_info;
             Ray ray_to_use = Camera.main.ScreenPointToRay(position);
             Physics.Raycast(ray_to_use, out hit_info, 1000f);
             EnableDrawLineGizmo(ray_to_use);
-            //Debug.Log(hit_info.transform?.gameObject.name);
+            Debug.Log(hit_info.transform?.gameObject.name);
             if (hit_info.collider != null)
             {
                 if (StateManager.enCurrentState == States.Idle_Idle)
                 {
+                    if (hit_info.collider.gameObject.tag == "Layout")
+                    {
+                        ToggleLayout();
+                    }
                     if (hit_info.collider.gameObject.tag == "BetUp")
                     {
                         PerformAction(Actions.IncreaseBet);
@@ -302,6 +316,12 @@ namespace Slot_Engine.Matrix
                     }
                 }
             }
+        }
+
+        private void ToggleLayout()
+        {
+            compactExpandedToggle = !compactExpandedToggle;
+            compactExpandeedLayoutController.SetBool(supported_bools.Compact.ToString(), compactExpandedToggle);
         }
 
         private void EnableDrawLineGizmo(Ray camera_ray_out)

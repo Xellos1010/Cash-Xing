@@ -15,6 +15,7 @@ public enum supported_bools
     FeatureTrigger,
     SymbolResolve,
     LoopPaylineWins,
+    Compact,
     End
 }
 
