@@ -322,6 +322,7 @@ namespace Slot_Engine.Matrix
         {
             compactExpandedToggle = !compactExpandedToggle;
             compactExpandeedLayoutController.SetBool(supported_bools.Compact.ToString(), compactExpandedToggle);
+            locked = false;
         }
 
         private void EnableDrawLineGizmo(Ray camera_ray_out)
