@@ -122,7 +122,7 @@ namespace Slot_Engine.Matrix
         }
         internal MachineInfoManager _machine_info_manager;
 
-        public LerpToMe lerpToMe;
+        public LerpToMe multiplierLerpToMe;
         private T CheckReturnComponent<T>(ref T component_referenece)
         {
             if (component_referenece == null)

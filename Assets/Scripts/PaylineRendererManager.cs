@@ -127,8 +127,10 @@ namespace Slot_Engine.Matrix
         /// Show the winning payline and highlight symbols that won with...a bigger line!
         /// </summary>
         /// <param name="payline_to_show">The Winning payline to show</param>
-        internal void ShowWinningPayline(WinningPayline payline_to_show)
+        /// <param name="createAndReturnTextObject">Should we generate and return payline text to be destroyed?</param>
+        internal GameObject ShowWinningPayline(WinningPayline payline_to_show, bool createAndReturnTextObject = false)
         {
+            GameObject output;
             ToggleRenderer(true);
             //initialize the line positions list and 
             List<Vector3> linePositions;
@@ -153,22 +155,41 @@ namespace Slot_Engine.Matrix
                 Vector3.Lerp(winningSymbolPositions[((int)winningSymbolPositions.Length / 2)-1], winningSymbolPositions[(int)winningSymbolPositions.Length / 2], .5f) : //If line win is even
                 winningSymbolPositions[(int)winningSymbolPositions.Length / 2];                                  //If line win is odd
             //Sets the winning amount text
-            SetWinningAmountDisplay(position,payline_to_show.GetTotalWin(matrix));
+            output = SetWinningAmountDisplay(position,payline_to_show.GetTotalWin(matrix), createAndReturnTextObject);
             if (line_renderers_to_use < 2)
             {
                 //Solution for single line renderer
-                SetLineRendererPositions(linePositions, ref payline_renderers[0]);
+               SetLineRendererPositions(linePositions, ref payline_renderers[0]);
             }
             else
             {
                 throw new Exception("Multiple Line Renderers TBD");
             }
+            return output;
         }
-        public TMPro.TextMeshPro winingPaylineText;
-        private void SetWinningAmountDisplay(Vector3 vector3, float v)
+        public TMPro.TextMeshPro winningPaylineText;
+        public Transform winningPaylinePrefab;
+        private GameObject SetWinningAmountDisplay(Vector3 vector3, float v, bool createAndReturnTextObject)
         {
-            winingPaylineText.transform.position = vector3 + (/*(Vector3.right * 200) + (Vector3.up * 60) + */(Vector3.back * 5));
-            winingPaylineText.text = String.Format("{0:C2}",v);
+            if (!createAndReturnTextObject)
+            {
+                winningPaylineText.transform.position = vector3 + Vector3.back * 5;
+                winningPaylineText.text = String.Format("{0:C2}", v);
+                winningPaylineText.enabled = true;
+                return winningPaylineText.gameObject;
+            }
+            else
+            {
+                winningPaylineText.enabled = false;
+                Transform winingPaylineTextGameObjectObject = PrefabUtility.InstantiatePrefab(winningPaylinePrefab) as Transform;
+                //Debug.Log($"winningPaylineText null = {winningPaylineText == null}");
+
+                //winingPaylineTextGameObjectObject.transform.SetParent(transform.parent);
+                winingPaylineTextGameObjectObject.transform.position = vector3 + Vector3.back * 5;
+                TMPro.TextMeshPro text = winingPaylineTextGameObjectObject.GetComponent<TMPro.TextMeshPro>();
+                text.text = String.Format("{0:C2}", v);
+                return winingPaylineTextGameObjectObject.gameObject;
+            }
         }
 
         private int ReturnIndexFirstLastFromList(bool left_right, int i, int count)
@@ -183,7 +204,8 @@ namespace Slot_Engine.Matrix
             {
                 payline_renderers[i].line_renderer.enabled = on_off;
             }
-            winingPaylineText.enabled = on_off;
+            if (!on_off)
+                winningPaylineText.enabled = false;
         }
 
         internal void SetWidth(int v1, int v2)

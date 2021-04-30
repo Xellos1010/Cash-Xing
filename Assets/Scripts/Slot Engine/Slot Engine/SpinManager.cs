@@ -53,6 +53,14 @@ namespace Slot_Engine.Matrix.Managers
                 {
                     myTarget.SetReelsLastConfigurationAndSpin();
                 }
+                if (GUILayout.Button("Save Current Configuration for use later"))
+                {
+                    myTarget.SaveCurrentConfiguration();
+                }
+                if (GUILayout.Button("Load Saved Configuration"))
+                {
+                    myTarget.LoadSaveConfiguration();
+                }
                 if (GUILayout.Button("End Test Spin"))
                 {
                     myTarget.SetSpinStateTo(SpinStates.spin_outro);
@@ -91,6 +99,7 @@ namespace Slot_Engine.Matrix.Managers
         /// </summary>
         [SerializeField]
         private bool use_timer = false;
+        public float timeToEndSpinLoop = 3.0f;
         /// <summary>
         /// Counter used to measure time passed in loop state
         /// </summary>
@@ -178,7 +187,7 @@ namespace Slot_Engine.Matrix.Managers
         internal void SetReelsLastConfigurationAndSpin()
         {
             //Add configuration to the sequence to trigger feature
-            matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(GameStates.baseGame,matrix.slot_machine_managers.end_configuration_manager.endConfigurationsScriptableObject.currentReelstripConfiguration);
+            matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(StateManager.enCurrentMode,matrix.slot_machine_managers.end_configuration_manager.endConfigurationsScriptableObject.currentReelstripConfiguration);
             //Go through interaction controller to disable slamming during transition to idle_outro
             matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
         }
@@ -319,6 +328,16 @@ namespace Slot_Engine.Matrix.Managers
                 default:
                     break;
             }
+        }
+
+        internal void SaveCurrentConfiguration()
+        {
+            matrix.slot_machine_managers.end_configuration_manager.SaveCurrentConfiguration();
+        }
+
+        internal void LoadSaveConfiguration()
+        {
+            matrix._slot_machine_managers.end_configuration_manager.LoadSavedConfigurationIntoNextSpin();
         }
     }
 }

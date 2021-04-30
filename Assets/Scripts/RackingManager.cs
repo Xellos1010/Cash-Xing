@@ -124,13 +124,10 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Sets the credit amount to rack and starts racking mode
         /// </summary>
-        internal void StartRacking()
+        internal void StartRacking(double amount)
         {
             Debug.Log("Starting Rack");
-            if(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
-                SetCreditAmountToRack(matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
-            else
-                SetCreditAmountToRack(matrix.slot_machine_managers.paylines_manager.GetTotalWinAmount());
+            SetCreditAmountToRack(amount);
             locked = false;
         }
         /// <summary>
@@ -148,7 +145,7 @@ namespace Slot_Engine.Matrix
             }
             else
             {
-                Debug.Log("Racking manager Starting to rack" + win_amount + " Amount won");
+                Debug.Log("Racking manager Starting to rack " + win_amount + " Amount won");
                 //OffsetPlayerBankBy(win_amount);
                 //Set Credits to rack
                 SetCreditsToRackAtSpeed(win_amount, credit_rack_speed);
@@ -195,8 +192,11 @@ namespace Slot_Engine.Matrix
             if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
                 OffsetPlayerBankBy(-finalRackAmount);
             OffsetPlayerWalletBy(finalRackAmount);
-            if(bank_rack_remaining == 0)
+            if (bank_rack_remaining == 0)
+            {
+                Debug.LogWarning("No more credits to rack - racking manager sending rack end event");
                 rackEnd?.Invoke();
+            }
         }
 
         private void OffsetPlayerBankBy(double v)

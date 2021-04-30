@@ -309,6 +309,18 @@ namespace Slot_Engine.Matrix
                     break;
             }
         }
+
+        internal void LoadSavedConfigurationIntoNextSpin()
+        {
+            if(endConfigurationsScriptableObject.savedReelConfiguration != null)
+                AddConfigurationToSequence(StateManager.enCurrentMode,endConfigurationsScriptableObject.savedReelConfiguration);
+        }
+
+        internal void SaveCurrentConfiguration()
+        {
+            endConfigurationsScriptableObject.savedReelConfiguration = endConfigurationsScriptableObject.currentReelstripConfiguration;
+        }
+
         internal void ClearConfigurations()
         {
             foreach (KeyValuePair<GameStates,GameStateConfigurationStorage> weight in endConfigurationsScriptableObject.endReelstripsPerState)

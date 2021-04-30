@@ -46,6 +46,7 @@ public class EndConfigurationsScriptableObject : ScriptableObject
     /// </summary>
     public List<ReelStripSpinStruct[]> end_reelstrips_used;
 
+    public ReelStripSpinStruct[] savedReelConfiguration;
     internal void AddReelstripToUsedList(ReelStripSpinStruct[] current_reelstrip_configuration)
     {
         if (end_reelstrips_used == null)

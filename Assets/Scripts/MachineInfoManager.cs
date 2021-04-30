@@ -49,6 +49,8 @@ namespace Slot_Engine.Matrix
         public delegate void FloatValueSet(float new_float_value);
         public delegate void DoubleValueSet(double new_double_value);
         public delegate void IntValueSet(int new_int_value);
+        public delegate void SetBoolValue(bool toValue);
+        public event SetBoolValue setBankEnabled;
         public event FloatValueSet newMultiplier;
         public event FloatValueSet newBetAmount;
         public event DoubleValueSet newBankAmount;
@@ -210,6 +212,11 @@ namespace Slot_Engine.Matrix
         internal void ResetMultiplier()
         {
             SetMultiplierTo(0);
+        }
+
+        internal void SetBankView(bool v)
+        {
+            setBankEnabled?.Invoke(v);
         }
     }
 }

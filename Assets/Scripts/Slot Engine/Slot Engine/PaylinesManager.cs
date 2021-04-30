@@ -217,6 +217,20 @@ namespace Slot_Engine.Matrix
         /// <param name="payline_to_show"></param>
         /// <returns></returns>
         [ExecuteInEditMode]
+        public Task<GameObject> RenderWinningPaylineReturnTextObject(WinningPayline payline_to_show)
+        {
+            //If first time thru then lerp money to bank
+            matrix.slot_machine_managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
+            matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
+            return Task.FromResult<GameObject>(payline_renderer_manager.ShowWinningPayline(payline_to_show,true));
+        }
+
+        /// <summary>
+        /// Renderes the line for winniing payline
+        /// </summary>
+        /// <param name="payline_to_show"></param>
+        /// <returns></returns>
+        [ExecuteInEditMode]
         public Task RenderWinningPayline(WinningPayline payline_to_show)
         {
             //If first time thru then lerp money to bank
@@ -268,16 +282,12 @@ namespace Slot_Engine.Matrix
             {
                 //Multiplier calculated first then mode is applied
                 Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
-                if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode != GameStates.freeSpin)
+                if ((item.Key == Features.overlay || item.Key == Features.multiplier))
                 {
                     Debug.Log("Overlay Symbol Found in Winning Paylines");
                     if(StateManager.enCurrentMode == GameStates.baseGame)
                         StateManager.SetFeatureActiveTo(Features.multiplier, true);
                     overlaySymbols = item.Value;
-                }
-                else if ((item.Key == Features.overlay || item.Key == Features.multiplier) && StateManager.enCurrentMode == GameStates.freeSpin)
-                {
-                    StateManager.AddToMultiplier(item.Value.Count);
                 }
                 if (item.Key == Features.freespin)
                     if (item.Value.Count > 2)
@@ -467,6 +477,7 @@ namespace Slot_Engine.Matrix
         void OnDisable()
         {
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
+            winBankTextLerp.lerpComplete -= WinBankTextLerp_lerpComplete;
         }
 
         void OnApplicationQuit()
@@ -671,6 +682,61 @@ namespace Slot_Engine.Matrix
                     payline_renderer_manager.ShowPayline(dynamic_paylines_evaluation.dynamic_paylines.ReturnPayline(payline_to_show));
                 }
             }
+        }
+
+        bool lerpComplete = false;
+        internal async Task CyclePaylinesOneShot()
+        {
+            lerpComplete = false;
+            List<Task> allTasks = new List<Task>();
+            for (int winningPayline = 0; winningPayline < winning_paylines.Length; winningPayline++)
+            {
+                allTasks.Add(RenderWinningPaylineOneShot(winning_paylines[winningPayline]));
+            }
+            await Task.WhenAll(allTasks.ToArray());
+            while(!lerpComplete)
+            {
+                await Task.Delay(100);
+            }
+        }
+
+        private void WinBankTextLerp_lerpComplete()
+        {
+            for (int winningText = lerpsToDestory.Count-1; winningText >= 0; winningText--)
+            {
+                Destroy(lerpsToDestory[winningText].objectToLerp.gameObject);
+            }
+            winBankTextLerp.lerpComplete -= WinBankTextLerp_lerpComplete;
+            lerpComplete = true;
+        }
+
+        public LerpToMe winBankTextLerp;
+        public List<LerpableObject> lerpsToDestory;
+        private async Task RenderWinningPaylineOneShot(WinningPayline winningPayline)
+        {
+            GameObject textOfPayline = await RenderWinningPaylineReturnTextObject(winningPayline);
+            LerpableObject lerpableObject = winBankTextLerp.AddLerpToMeObject(textOfPayline.transform);
+            lerpableObject.winAmount = winningPayline.GetTotalWin(matrix);
+            lerpableObject.lerpComplete += LerpableObject_lerpComplete;
+            lerpableObject.lerpCompleteObjectReturn += LerpableObject_lerpCompleteObjectReturn;
+            if (lerpsToDestory == null)
+            {
+                lerpsToDestory = new List<LerpableObject>();
+            }
+            lerpsToDestory.Add(lerpableObject);
+        }
+
+        private void LerpableObject_lerpCompleteObjectReturn(LerpableObject objectLerped)
+        {
+            lerpsToDestory.Remove(objectLerped);
+            objectLerped.lerpCompleteObjectReturn -= LerpableObject_lerpCompleteObjectReturn;
+            Destroy(objectLerped.objectToLerp.gameObject);
+        }
+
+        private void LerpableObject_lerpComplete(double winAmount)
+        {
+            matrix.slot_machine_managers.machine_info_manager.OffsetBankBy(winAmount);
+            matrix.slot_machine_managers.machine_info_manager.SetBankView(true);
         }
     }
 }

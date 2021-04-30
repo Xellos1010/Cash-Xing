@@ -107,7 +107,13 @@ namespace Slot_Engine.Matrix
             matrix.slot_machine_managers.machine_info_manager.newBankAmount += Machine_information_manager_new_bank_amount;
             matrix.slot_machine_managers.machine_info_manager.newPlayerWalletAmount += Machine_information_manager_new_player_wallet_amount;
             matrix.slot_machine_managers.machine_info_manager.newFreespinAmount += Machine_information_manager_new_freespin_amount;
+            matrix.slot_machine_managers.machine_info_manager.setBankEnabled += Machine_info_manager_setBankEnabled;
             StateManager.StateChangedTo += StateManager_StateChangedTo;
+        }
+
+        private void Machine_info_manager_setBankEnabled(bool toValue)
+        {
+            bank.enabled = toValue;
         }
 
         private void StateManager_StateChangedTo(States State)
@@ -147,6 +153,7 @@ namespace Slot_Engine.Matrix
             matrix.slot_machine_managers.machine_info_manager.newBankAmount -= Machine_information_manager_new_bank_amount;
             matrix.slot_machine_managers.machine_info_manager.newPlayerWalletAmount -= Machine_information_manager_new_player_wallet_amount;
             matrix.slot_machine_managers.machine_info_manager.newFreespinAmount -= Machine_information_manager_new_freespin_amount;
+            matrix.slot_machine_managers.machine_info_manager.setBankEnabled -= Machine_info_manager_setBankEnabled;
         }
         /// <summary>
         /// Handles new float value setting for player wallet
