@@ -47,17 +47,17 @@ namespace Slot_Engine.Matrix
                 }
                 if (GUILayout.Button("Generate Reelstrips Basegame"))
                 {
-                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameStates.baseGame,20);
+                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameModes.baseGame,20);
                     serializedObject.ApplyModifiedProperties();
                 }
                 if (GUILayout.Button("Generate Reelstrips Free-Spins"))
                 {
-                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameStates.freeSpin,20);
+                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameModes.freeSpin,20);
                     serializedObject.ApplyModifiedProperties();
                 }
                 if (GUILayout.Button("Generate Reelstrips Overlay-Spins"))
                 {
-                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameStates.overlaySpin,20);
+                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameModes.overlaySpin,20);
                     serializedObject.ApplyModifiedProperties();
                 }
                 if(GUILayout.Button("Clear end_reelstrips_to_display_sequence"))
@@ -165,7 +165,7 @@ namespace Slot_Engine.Matrix
         /// Generates the Display matrix then runs payline evaluation
         /// </summary>
         /// <returns>Task.Completed</returns>
-        internal async Task GenerateMultipleEndReelStripsConfiguration(GameStates gameState, int amount)
+        internal async Task GenerateMultipleEndReelStripsConfiguration(GameModes gameState, int amount)
         {
             if(!endConfigurationsScriptableObject.endReelstripsPerState.ContainsKey(gameState))
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState] = new GameStateConfigurationStorage();
@@ -176,7 +176,7 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, matrix.reel_strip_managers).Result));
             }
          }
-        internal Task<ReelStripSpinStruct[]> GenerateReelStrips(GameStates gameState, ReelStripManager[] reel_strip_managers)
+        internal Task<ReelStripSpinStruct[]> GenerateReelStrips(GameModes gameState, ReelStripManager[] reel_strip_managers)
         {
             ReelStripSpinStruct[] output = new ReelStripSpinStruct[reel_strip_managers.Length];
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
@@ -186,7 +186,7 @@ namespace Slot_Engine.Matrix
             return Task.FromResult<ReelStripSpinStruct[]>(output);
         }
 
-        private NodeDisplaySymbol[] GenerateEndingReelStrip(GameStates mode, ref ReelStripManager reelStripManager)
+        private NodeDisplaySymbol[] GenerateEndingReelStrip(GameModes mode, ref ReelStripManager reelStripManager)
         {
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             //Generate a symbol for each display zone slot
@@ -200,7 +200,7 @@ namespace Slot_Engine.Matrix
         /// Generate a random symbol based on weights defined
         /// </summary>
         /// <returns></returns>
-        public NodeDisplaySymbol GetRandomWeightedSymbol(GameStates currentMode)
+        public NodeDisplaySymbol GetRandomWeightedSymbol(GameModes currentMode)
         {
             NodeDisplaySymbol output = new NodeDisplaySymbol();
             int symbol = matrix.symbol_weights_per_state_dictionary[StateManager.enCurrentMode].intDistribution.Draw();//symbol_weights_per_state[currentMode].intDistribution.Draw();
@@ -254,7 +254,7 @@ namespace Slot_Engine.Matrix
             matrix.SetSymbolsToDisplayOnMatrixTo(currentReelstripConfiguration);
         }
 
-        internal void AddConfigurationToSequence(GameStates gameState,ReelStripSpinStruct[] configuration)
+        internal void AddConfigurationToSequence(GameModes gameState,ReelStripSpinStruct[] configuration)
         {
             if (endConfigurationsScriptableObject.endReelstripsPerState[gameState] == null)
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState] = new GameStateConfigurationStorage();
@@ -284,7 +284,7 @@ namespace Slot_Engine.Matrix
                             configuration[i].displaySymbols[0].AddFeature(Features.freespin);
                         }   
                     }
-                    AddConfigurationToSequence(GameStates.baseGame,configuration);
+                    AddConfigurationToSequence(GameModes.baseGame,configuration);
                     break;
                 case Features.overlay:
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
@@ -305,7 +305,7 @@ namespace Slot_Engine.Matrix
                             configuration[i].displaySymbols[0].is_overlay = true;
                         }
                     }
-                    AddConfigurationToSequence(GameStates.baseGame, configuration);
+                    AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 default:
                     break;
@@ -313,7 +313,7 @@ namespace Slot_Engine.Matrix
         }
         internal void ClearConfigurations()
         {
-            foreach (KeyValuePair<GameStates,GameStateConfigurationStorage> weight in endConfigurationsScriptableObject.endReelstripsPerState)
+            foreach (KeyValuePair<GameModes,GameStateConfigurationStorage> weight in endConfigurationsScriptableObject.endReelstripsPerState)
             {
                 weight.Value.data.Clear();
             }

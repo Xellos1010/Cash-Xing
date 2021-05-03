@@ -2,18 +2,20 @@
 using Slot_Engine.Matrix;
 using System;
 using UnityEngine;
-//[Serializable]
-//public struct PaylineNode
-//{
-//    [SerializeField]
-//    public suffix_tree_node_info nodeInfo;
-//    [SerializeField]
-//    public int symbol;
-//}
-[System.Serializable]
-public class WinningPayline
+[Serializable]
+public struct PaylineNode
 {
+    [SerializeField]
+    public SuffixTreeNodeInfo nodeInfo;
+    [SerializeField]
+    public int symbol;
+}
+[System.Serializable]
+public partial class WinningPayline : WinningObject
+{
+    [SerializeField]
     public Payline payline;
+    [SerializeField]
     public PaylineNode[] winning_symbols;
 
     public WinningPayline(Payline payline, PaylineNode[] winning_symbols)

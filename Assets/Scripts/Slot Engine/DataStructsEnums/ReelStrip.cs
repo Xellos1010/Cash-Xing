@@ -14,7 +14,7 @@ namespace Slot_Engine.Matrix
         [UnityEngine.SerializeField]
         public ReelStripStruct reelStrip;
 
-        internal static NodeDisplaySymbol[] GenerateReelStripStatic(GameStates currentMode, int slotsPerStrip, ref EndConfigurationManager endConfigurationManager)
+        internal static NodeDisplaySymbol[] GenerateReelStripStatic(GameModes currentMode, int slotsPerStrip, ref EndConfigurationManager endConfigurationManager)
         {
             //Generate new reel symbols array and assign based on weighted distribution - then add the display symbols at the end for now
             NodeDisplaySymbol[] reel_spin_symbols = new NodeDisplaySymbol[slotsPerStrip];
