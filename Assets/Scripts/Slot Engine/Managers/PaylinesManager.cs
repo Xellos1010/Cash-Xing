@@ -110,12 +110,13 @@ namespace Slot_Engine.Matrix.Managers
         {
             Debug.Log("Canceling Cycle Wins");
             cycle_paylines = false;
-            await SymbolWinAnimatorsInResolveIntro();
+            //Cancel the cycle winning paylines and wait for the animators to return to pause state 
+            await SymbolAnimatorsAtEndOfState("Resolve_Intro");
         }
 
-        private async Task SymbolWinAnimatorsInResolveIntro()
+        private async Task SymbolAnimatorsAtEndOfState(string state)
         {
-            await matrix.WaitForSymbolWinResolveToIntro();
+            await matrix.WaitForSymbolsStateEndAndPause(state);
         }
 
         /// <summary>

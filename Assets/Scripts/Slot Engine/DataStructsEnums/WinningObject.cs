@@ -6,7 +6,7 @@ using UnityEngine;
 /// Can be a Payline a Way line - A Shape - etc...
 /// </summary>
 [Serializable]
-public class WinningObject : ScriptableObject
+public partial class WinningObject
 {
     [SerializeField]
     public WinningNode[] winningNodes;

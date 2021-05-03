@@ -6,14 +6,13 @@ using UnityEngine;
 /// A representation of a payline win object
 /// </summary>
 [Serializable]
-public class WinningPayline : WinningObject
+public partial class WinningPayline : WinningObject
 {
     /// <summary>
     /// Payline configuration that you won - will be partial filled for partial paylines
     /// </summary>
     [SerializeField]
     public Payline payline;
-
     public WinningPayline(Payline payline, WinningNode[] winning_symbols)
     {
         this.payline = payline;

@@ -495,7 +495,7 @@ namespace Slot_Engine.Matrix
 
 
 
-        internal async Task WaitForSymbolWinResolveToIntro()
+        internal async Task WaitForSymbolsStateEndAndPause(string stateToPauseAtEnd)
         {
             if (current_payline_displayed != null)
             {
@@ -506,7 +506,7 @@ namespace Slot_Engine.Matrix
                 {
                     for (int slot = 0; slot < winning_slots.Count; slot++)
                     {
-                        if (!winning_slots[slot].isSymbolAnimatorFinishedAndAtPauseState("Resolve_Intro"))
+                        if (!winning_slots[slot].isSymbolAnimatorFinishedAndAtPauseState(stateToPauseAtEnd))
                         {
                             await Task.Delay(100);
                             break;
