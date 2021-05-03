@@ -30,7 +30,7 @@ public class WinningPayline
         float output = 0;
         for (int i = 0; i < winning_symbols.Length; i++)
         {
-            output += CalculateTotalWin(matrix.symbols_data_for_matrix.symbols[winning_symbols[i].symbol].winValue,ref matrix);
+            output += CalculateTotalWin(matrix.symbolDataScriptableObject.symbols[winning_symbols[i].symbol].winValue,ref matrix);
         }
         return output;
     }

@@ -77,7 +77,7 @@ public struct symbol_weight_state
     /// Game state of to apply weights
     /// </summary>
     [SerializeField]
-    public GameStates gameState;
+    public GameModes gameState;
     /// <summary>
     /// Symbol weight info
     /// </summary>

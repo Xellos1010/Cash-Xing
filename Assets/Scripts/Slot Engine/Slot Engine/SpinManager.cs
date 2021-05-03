@@ -205,7 +205,7 @@ namespace Slot_Engine.Matrix.Managers
                             new SlotDisplaySymbol(UnityEngine.Random.Range(0,9))
                 };
             }
-                matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(GameStates.baseGame, configuration);
+                matrix._slot_machine_managers.end_configuration_manager.AddConfigurationToSequence(GameModes.baseGame, configuration);
             matrix.slot_machine_managers.interaction_controller.CheckStateToSpinSlam();
 
         }

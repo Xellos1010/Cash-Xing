@@ -15,7 +15,7 @@ using System;
 public static class StateManager
 {
     public static States enCurrentState;
-    public static GameStates enCurrentMode;
+    public static GameModes enCurrentMode;
     /// <summary>
     /// the current active feature reference for the game
     /// </summary>
@@ -23,7 +23,7 @@ public static class StateManager
     internal static bool isInterupt;
 
     //State Switching Variables
-    public delegate void GameModeDelegate(GameStates modeActivated);
+    public delegate void GameModeDelegate(GameModes modeActivated);
     public static event GameModeDelegate gameModeSetTo;
     public delegate void StateDelegate(States State);
     public static event StateDelegate StateChangedTo;
@@ -51,7 +51,7 @@ public static class StateManager
         if(StateChangedTo != null)
             StateChangedTo.Invoke(State);
 	}
-    public static void SetGameModeActiveTo(GameStates state)
+    public static void SetGameModeActiveTo(GameModes state)
     {
         enCurrentMode = state;
         gameModeSetTo?.Invoke(state);
@@ -69,24 +69,24 @@ public static class StateManager
         {
             case Features.freespin:
                 if(active_inactive)
-                    SetGameModeActiveTo(GameStates.freeSpin);
+                    SetGameModeActiveTo(GameModes.freeSpin);
                 else
-                    SetGameModeActiveTo(GameStates.baseGame);
+                    SetGameModeActiveTo(GameModes.baseGame);
                 break;
             case Features.multiplier:
                 if(active_inactive)
-                    SetGameModeActiveTo(GameStates.overlaySpin);
+                    SetGameModeActiveTo(GameModes.overlaySpin);
                 else
-                    SetGameModeActiveTo(GameStates.baseGame);
+                    SetGameModeActiveTo(GameModes.baseGame);
                 break;
             case Features.overlay:
                 if(active_inactive)
-                    SetGameModeActiveTo(GameStates.overlaySpin);
+                    SetGameModeActiveTo(GameModes.overlaySpin);
                 else
-                    SetGameModeActiveTo(GameStates.baseGame);
+                    SetGameModeActiveTo(GameModes.baseGame);
                 break;
             default:
-                SetGameModeActiveTo(GameStates.baseGame);
+                SetGameModeActiveTo(GameModes.baseGame);
                 break;
         }
         featureTransition?.Invoke(feature, active_inactive);

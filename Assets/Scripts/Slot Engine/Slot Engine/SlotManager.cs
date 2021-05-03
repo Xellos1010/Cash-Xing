@@ -318,9 +318,9 @@ namespace Slot_Engine.Matrix
         {
             Animator output;
             //Compare to Symbols
-            for (int i = 0; i < reel_parent.matrix.symbols_data_for_matrix.symbols.Length; i++)
+            for (int i = 0; i < reel_parent.matrix.symbolDataScriptableObject.symbols.Length; i++)
             {
-                if (reel_parent.matrix.symbols_data_for_matrix.symbols[i].isOverlaySymbol)
+                if (reel_parent.matrix.symbolDataScriptableObject.symbols[i].isOverlaySymbol)
                 {
                     output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
                     SetBoolTo(ref output, supported_bools.FeatureTrigger, true);
@@ -388,7 +388,7 @@ namespace Slot_Engine.Matrix
 
         internal void ShowRandomSymbol()
         {
-            ShowSymbolRenderer(reel_parent.matrix.symbol_weights_per_state_dictionary[StateManager.enCurrentMode].intDistribution.Draw());//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw());
+            ShowSymbolRenderer(reel_parent.matrix.DrawRandomSymbolFromCurrentState());
         }
         /// <summary>
         /// Shows a symbols renderer
@@ -399,7 +399,7 @@ namespace Slot_Engine.Matrix
         {
             //Debug.Log(String.Format("Enabling symbol_prefabs[{0}] = {1}", symbol_to_show, symbol_prefabs[symbol_to_show].gameObject.ToString()));
             //Ensure Symbol Prefab Objects are instantiated
-            if (symbol_prefabs?.Length != reel_parent.matrix.symbols_data_for_matrix.symbols.Length)
+            if (symbol_prefabs?.Length != reel_parent.matrix.symbolDataScriptableObject.symbols.Length)
             {
                 InstantiateSymbolPrefabs();
             }
@@ -431,15 +431,15 @@ namespace Slot_Engine.Matrix
         private void InstantiateSymbolPrefabs()
         {
 #if UNITY_EDITOR
-            symbol_prefabs = new Transform[reel_parent.matrix.symbols_data_for_matrix.symbols.Length];
+            symbol_prefabs = new Transform[reel_parent.matrix.symbolDataScriptableObject.symbols.Length];
             for (int symbol = 0; symbol < symbol_prefabs.Length; symbol++)
             {
-                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbolPrefab) as Transform;
-                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbols_data_for_matrix.symbols[symbol].symbolName);
+                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbolDataScriptableObject.symbols[symbol].symbolPrefab) as Transform;
+                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbolDataScriptableObject.symbols[symbol].symbolName);
                 symbol_prefabs[symbol].parent = transform;
                 symbol_prefabs[symbol].localPosition = Vector3.zero;
                 symbol_prefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);
-                symbol_prefabs[symbol].localScale = reel_parent.matrix.slot_size;
+                symbol_prefabs[symbol].localScale = Vector3.one;
                 symbol_prefabs[symbol].gameObject.SetActive(false);
         }
 #endif

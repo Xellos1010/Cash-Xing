@@ -354,7 +354,7 @@ namespace Slot_Engine.Matrix
             //get slots_in_reel: destroy slots if to many - add slots if to few
             for (int position_in_reel = 0; position_in_reel < positions_in_path_v3_local.Length; position_in_reel++)
             {
-                positions_in_path_v3_local[position_in_reel] = GenerateSlotPositionBasedOnPositionInreel(position_in_reel);
+                positions_in_path_v3_local[position_in_reel] = GenerateSlotPositionBasedOnPositionInReel(position_in_reel);
             }
         }
 
@@ -516,7 +516,7 @@ namespace Slot_Engine.Matrix
                 }
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
-                slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInreel(i);
+                slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInReel(i);
             }
         }
         /// <summary>
@@ -696,7 +696,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="position_in_reel">Position in Reel slot will be</param>
         /// <returns>Slot Position Vector3</returns>
-        internal Vector3 GenerateSlotPositionBasedOnPositionInreel(int position_in_reel)
+        internal Vector3 GenerateSlotPositionBasedOnPositionInReel(int position_in_reel)
         {
             //TODO Base on Spin Direction
             Debug.Log(String.Format("reelstrip_info.reel_number = {0} slot size = ({1},{2}) matrix padding.x = {3}", reelstrip_info.reel_number, matrix.slot_size.x, matrix.slot_size.y, matrix.padding.x));
@@ -713,7 +713,7 @@ namespace Slot_Engine.Matrix
         {
             for (int i = 0; i < slots_in_reel.Length; i++)
             {
-                slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInreel(i);
+                slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInReel(i);
             }
         }
 

@@ -21,7 +21,7 @@ public enum SpinStates
     end
 }
 
-public enum GameStates
+public enum GameModes
 {
     baseGame,
     overlaySpin,

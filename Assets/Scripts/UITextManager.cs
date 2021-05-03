@@ -53,7 +53,7 @@ namespace Slot_Engine.Matrix
         {
             //Set the bank text
             SetTextMeshProTextTo(ref bank, String.Format("{0:C2}", value));
-            bank.enabled = value > 0 && StateManager.enCurrentMode != GameStates.baseGame? true : false;
+            bank.enabled = value > 0 && StateManager.enCurrentMode != GameModes.baseGame? true : false;
 
             SetTextMeshProTextTo(ref bigWin, String.Format("{0:C2}", value));
         }

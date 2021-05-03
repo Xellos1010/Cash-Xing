@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using WeightedDistribution;
 
 namespace Slot_Engine.Matrix
 {
@@ -61,15 +62,52 @@ namespace Slot_Engine.Matrix
             }
             if(GUILayout.Button("Set Weights from symbols data"))
             {
-                Debug.Log(myTarget.symbol_weights_per_state_dictionary == null ? "No object returned" : "Ensuring weights");
-                myTarget.AddSymbolStateWeightToDict();
+                myTarget.SetSymbolWeightsByState();
                 //myTarget.EnsureWeightsAreCorrect();
             }
             base.OnInspectorGUI();
         }
     }
 #endif
+    /// <summary>
+    /// Holds a state defined for weights scriptable object
+    /// </summary>
+    [Serializable]
+    public class ModeWeights
+    {
+        [SerializeField]
+        public GameModes gameMode;
+        [SerializeField]
+        public WeightsForMode weightsDistribution;
 
+        public ModeWeights(GameModes key, List<float> value)
+        {
+            gameMode = key;
+            weightsDistribution.SetWeightsForInt(value);
+        }
+    }
+    [Serializable]
+    public class WeightsForMode
+    {
+        /// <summary>
+        /// The symbol weights object to draw from
+        /// </summary>
+        [SerializeField]
+        public IntDistribution intDistribution;
+
+        internal async Task SetWeightsForInt(List<float> value)
+        {
+            for (int i = 0; i < value.Count; i++)
+            {
+                //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
+                //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
+                await Task.Delay(20);
+                intDistribution.Add(i, value[i]);
+                await Task.Delay(20);
+                intDistribution.Items[i].Weight = value[i];
+            }
+        }
+    }
     public class Matrix : MonoBehaviour
     {
         /// <summary>
@@ -87,145 +125,19 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal ManagersReferenceScript _slot_machine_managers;
         /// <summary>
-        /// Symbol information for the matrix
+        /// Symbol information for the matrix - Loaded from each game folder
         /// </summary>
-        public SymbolScriptableObject symbols_data_for_matrix;
+        public SymbolScriptableObject symbolDataScriptableObject;
         /// <summary>
         /// Holds reference for the symbol weights prefab and other utility prefabs
         /// </summary>
         public CorePrefabsReferencesScriptableObject core_prefabs;
+        /// <summary>
+        /// Sets the symbol weights via Symbol Data by state
+        /// </summary>
         [SerializeField]
-        public Dictionary<GameStates, WeightsDistributionScriptableObject> symbol_weights_per_state_dictionary;
-        [SerializeField]
-        public GameStateDistributionDictionary symbol_weights_per_state
-        {
-            get
-            {
-                if (_symbol_weights_per_state == null)
-                {
-                    _symbol_weights_per_state = new GameStateDistributionDictionary();
-                }
-                return _symbol_weights_per_state;
-            }
-        }
+        public ModeWeights[] symbolWeightsByState;
 
-        internal async Task AddSymbolStateWeightToDict()
-        {
-            symbol_weight_state temp;
-            Dictionary<GameStates, List<float>> symboWeightsByState = new Dictionary<GameStates, List<float>>();
-            for (int symbol = 0; symbol < symbols_data_for_matrix.symbols.Length; symbol++)
-            {
-                for (int weight_state = 0; weight_state < symbols_data_for_matrix.symbols[symbol].symbolWeights.Length; weight_state++)
-                {
-                    temp = symbols_data_for_matrix.symbols[symbol].symbolWeights[weight_state];
-                    if (!symboWeightsByState.ContainsKey(temp.gameState))
-                    {
-                        symboWeightsByState[temp.gameState] = new List<float>();
-                    }
-                    symboWeightsByState[temp.gameState].Add(temp.symbolWeightInfo);
-                }
-            }
-            await AddSymbolStateWeightToDict(symboWeightsByState);
-        }
-
-        public WeightsDistributionScriptableObject[] weightObjects;
-
-        private async Task AddSymbolStateWeightToDict(Dictionary<GameStates, List<float>> symbol_weight_state)
-        {
-            int counter = -1;
-            foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
-            {
-                if (symbol_weights_per_state_dictionary == null)
-                    symbol_weights_per_state_dictionary = new Dictionary<GameStates, WeightsDistributionScriptableObject>();
-                counter++;
-                symbol_weights_per_state_dictionary[item.Key] = weightObjects[counter];
-                await Task.Delay(20);
-                if (symbol_weights_per_state_dictionary[item.Key]?.intDistribution != null)
-                {
-                    //Clear and re-add
-                    for (int i = symbol_weights_per_state_dictionary[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
-                    {
-                        symbol_weights_per_state_dictionary[item.Key].intDistribution.RemoveAt(i);
-                        await Task.Delay(10);
-                    }
-                }
-
-                for (int i = 0; i < item.Value.Count; i++)
-                {
-                    //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
-                    //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
-                    await Task.Delay(20);
-                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Add(i, item.Value[i]);
-                    await Task.Delay(20);
-                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Items[i].Weight = item.Value[i];
-                }
-            }
-//#if UNITY_EDITOR
-//            EditorUtility.SetDirty(this);
-//            foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
-//            {
-//                symbol_weights_per_state[item.Key] = FindDistributionFromResources(item.Key);
-//                await Task.Delay(20);
-//                if (symbol_weights_per_state[item.Key]?.intDistribution != null)
-//                {
-//                    //Clear and re-add
-//                    for (int i = symbol_weights_per_state[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
-//                    {
-//                        symbol_weights_per_state[item.Key].intDistribution.RemoveAt(i);
-//                        await Task.Delay(10);
-//                    }
-//                }
-
-//                for (int i = 0; i < item.Value.Count; i++)
-//                {
-//                    //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
-//                    //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
-//                    await Task.Delay(20);
-//                    symbol_weights_per_state[item.Key].intDistribution.Add(i, item.Value[i]);
-//                    await Task.Delay(20);
-//                    symbol_weights_per_state[item.Key].intDistribution.Items[i].Weight = item.Value[i];
-//                }
-//                PrefabUtility.RecordPrefabInstancePropertyModifications(this);
-//            }
-//#else
-//            foreach (KeyValuePair<GameStates, List<float>> item in symbol_weight_state)
-//            {
-//                symbol_weights_per_state_dictionary[item.Key] = FindDistributionFromResources(item.Key);
-//                await Task.Delay(20);
-//                if (symbol_weights_per_state_dictionary[item.Key]?.intDistribution != null)
-//                {
-//                    //Clear and re-add
-//                    for (int i = symbol_weights_per_state_dictionary[item.Key].intDistribution.Items.Count - 1; i >= 0; i--)
-//                    {
-//                        symbol_weights_per_state_dictionary[item.Key].intDistribution.RemoveAt(i);
-//                        await Task.Delay(10);
-//                    }
-//                }
-
-//                for (int i = 0; i < item.Value.Count; i++)
-//                {
-//                    //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
-//                    //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
-//                    await Task.Delay(20);
-//                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Add(i, item.Value[i]);
-//                    await Task.Delay(20);
-//                    symbol_weights_per_state_dictionary[item.Key].intDistribution.Items[i].Weight = item.Value[i];
-//                }
-//            }
-//#endif
-
-
-        }
-
-        private WeightsDistributionScriptableObject FindDistributionFromResources(GameStates key)
-        {
-            Debug.Log(String.Format("Loading Resources/Core/ScriptableObjects/Weights/{0}", key.ToString()));
-            return Resources.Load(String.Format("Core/ScriptableObjects/Weights/{0}", key.ToString())) as WeightsDistributionScriptableObject;
-        }
-
-        [SerializeField]
-        public GameStateDistributionDictionary _symbol_weights_per_state;
-      
         /// <summary>
         /// What is the size of the slot in pixels
         /// </summary>
@@ -234,10 +146,6 @@ namespace Slot_Engine.Matrix
         /// The padding between each slot
         /// </summary>
         public Vector3 padding;
-        /// <summary>
-        /// The padding between each reel
-        /// </summary>
-
         /// <summary>
         /// Controls how many slots to include in reel strip
         /// </summary>
@@ -277,32 +185,81 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal async Task SetSymbolWeightsByState()
+        {
+            symbol_weight_state temp;
+            Dictionary<GameModes, List<float>> symboWeightsByState = new Dictionary<GameModes, List<float>>();
+            for (int symbol = 0; symbol < symbolDataScriptableObject.symbols.Length; symbol++)
+            {
+                for (int weight_state = 0; weight_state < symbolDataScriptableObject.symbols[symbol].symbolWeights.Length; weight_state++)
+                {
+                    temp = symbolDataScriptableObject.symbols[symbol].symbolWeights[weight_state];
+                    if (!symboWeightsByState.ContainsKey(temp.gameState))
+                    {
+                        symboWeightsByState[temp.gameState] = new List<float>();
+                    }
+                    symboWeightsByState[temp.gameState].Add(temp.symbolWeightInfo);
+                }
+            }
+            await AddSymbolStateWeightByDict(symboWeightsByState);
+        }
+
+        private async Task AddSymbolStateWeightByDict(Dictionary<GameModes, List<float>> symbol_weight_state)
+        {
+            symbolWeightsByState = new ModeWeights[symbol_weight_state.Keys.Count];
+            int counter = -1;
+            foreach (KeyValuePair<GameModes, List<float>> item in symbol_weight_state)
+            {
+                counter += 1;
+                symbolWeightsByState[counter] = new ModeWeights(item.Key,item.Value);
+            }
+
+
+        }
+        private WeightsDistributionScriptableObject FindDistributionFromResources(GameModes key)
+        {
+            Debug.Log(String.Format("Loading Resources/Core/ScriptableObjects/Weights/{0}", key.ToString()));
+            return Resources.Load(String.Format("Core/ScriptableObjects/Weights/{0}", key.ToString())) as WeightsDistributionScriptableObject;
+        }
+
+        internal int DrawRandomSymbol(GameModes gameMode)
+        {
+            for (int i = 0; i < symbolWeightsByState.Length; i++)
+            {
+                if(symbolWeightsByState[i].gameMode == gameMode)
+                {
+                    return symbolWeightsByState[i].weightsDistribution.intDistribution.Draw();
+                }
+            }
+            Debug.Log($"Game Mode {gameMode.ToString()} doesn't have valid weights to draw from");
+            return -1;
+        }
 
         public string[] supported_symbols
         {
             get
             {
                 Debug.Log("Getting supported symbols");
-                string[] names = new string[symbols_data_for_matrix.symbols.Length];
-                for (int i = 0; i < symbols_data_for_matrix.symbols.Length; i++)
+                string[] names = new string[symbolDataScriptableObject.symbols.Length];
+                for (int i = 0; i < symbolDataScriptableObject.symbols.Length; i++)
                 {
-                    names[i] = symbols_data_for_matrix.symbols[i].symbolName;
+                    names[i] = symbolDataScriptableObject.symbols[i].symbolName;
                 }
                 return names;
             }
         }
         async void Start()
         {
-            StateManager.SetGameModeActiveTo(GameStates.baseGame);
+            StateManager.SetGameModeActiveTo(GameModes.baseGame);
             int symbol_weight_pass_check = -1;
             try
             {
-                symbol_weight_pass_check = symbol_weights_per_state_dictionary[GameStates.baseGame].intDistribution.Draw();//symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+                symbol_weight_pass_check = DrawRandomSymbolFromCurrentState();
             }
             catch
             {
-                await AddSymbolStateWeightToDict();
-                symbol_weight_pass_check = symbol_weights_per_state_dictionary[GameStates.baseGame].intDistribution.Draw();//symbol_weights_per_state[GameStates.baseGame].intDistribution.Draw();
+                await SetSymbolWeightsByState();
+                symbol_weight_pass_check = DrawRandomSymbolFromCurrentState();
                 Debug.Log("Weights are in");
             }
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
@@ -314,6 +271,11 @@ namespace Slot_Engine.Matrix
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
+        }
+
+        internal int DrawRandomSymbolFromCurrentState()
+        {
+            return DrawRandomSymbol(StateManager.enCurrentMode);
         }
 
         internal void ReturnPositionsBasedOnPayline(ref Payline payline, out List<Vector3> out_positions)
@@ -493,12 +455,12 @@ namespace Slot_Engine.Matrix
 
         internal bool isSymbolOverlay(int symbol)
         {
-            return symbols_data_for_matrix.symbols[symbol].isOverlaySymbol;
+            return symbolDataScriptableObject.symbols[symbol].isOverlaySymbol;
         }
 
         internal bool isWildSymbol(int symbol)
         {
-            return symbols_data_for_matrix.symbols[symbol].isWildSymbol;
+            return symbolDataScriptableObject.symbols[symbol].isWildSymbol;
         }
 
 
@@ -531,12 +493,12 @@ namespace Slot_Engine.Matrix
 
         internal bool isFeatureSymbol(int symbol)
         {
-            return symbols_data_for_matrix.symbols[symbol].isFeatureSymbol;
+            return symbolDataScriptableObject.symbols[symbol].isFeatureSymbol;
         }
 
         internal Features[] GetSymbolFeatures(int symbol)
         {
-            return symbols_data_for_matrix.symbols[symbol].features;
+            return symbolDataScriptableObject.symbols[symbol].features;
         }
 
         private Vector3 ReturnPositionOnReelForPayline(ref ReelStripManager reel, int slot_in_reel)
@@ -902,15 +864,15 @@ namespace Slot_Engine.Matrix
             //StateManager.add_to_multiplier += StateManager_add_to_multiplierAsync;
         }
 
-        private void StateManager_gameModeSetTo(GameStates modeActivated)
+        private void StateManager_gameModeSetTo(GameModes modeActivated)
         {
             switch (modeActivated)
             {
-                case GameStates.baseGame:
+                case GameModes.baseGame:
                     break;
-                case GameStates.overlaySpin:
+                case GameModes.overlaySpin:
                     break;
-                case GameStates.freeSpin:
+                case GameModes.freeSpin:
                     break;
                 default:
                     break;
@@ -1039,7 +1001,7 @@ namespace Slot_Engine.Matrix
                             //Proceed to next state and sync state machine
                             SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
                             SetFreespinTextTo(String.Format("{0:C2} Total Won this Spin", GetTotalSpinAmountWon()));
-                            if (StateManager.enCurrentMode != GameStates.baseGame)
+                            if (StateManager.enCurrentMode != GameModes.baseGame)
                                 StateManager.SetFeatureActiveTo(Features.freespin, false);
                             Debug.LogWarning("Setting Resolve Intro true");
                             resolve_intro = true;
@@ -1138,9 +1100,9 @@ namespace Slot_Engine.Matrix
                     }
                     if (slot_machine_managers.paylines_manager.winning_paylines.Length > 0)
                     {
-                        if (StateManager.enCurrentMode != GameStates.freeSpin)
+                        if (StateManager.enCurrentMode != GameModes.freeSpin)
                             CycleWinningPaylinesMode();
-                        else if (StateManager.enCurrentMode == GameStates.freeSpin && (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
+                        else if (StateManager.enCurrentMode == GameModes.freeSpin && (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
                             CycleWinningPaylinesMode();
                     }
                     break;
@@ -1160,7 +1122,7 @@ namespace Slot_Engine.Matrix
                     SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
                     SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
                     //If going back to base game initialize vars for next bonus trigger
-                    if (StateManager.enCurrentMode == GameStates.baseGame)
+                    if (StateManager.enCurrentMode == GameModes.baseGame)
                     {
                         SetAllAnimatorsBoolTo(supported_bools.BonusActive, false);
                         //ensure multiplier set to 0
@@ -1725,7 +1687,7 @@ namespace Slot_Engine.Matrix
 
         internal AudioClip ReturnSymbolSound(int winningSymbol)
         {
-            return symbols_data_for_matrix.symbols[winningSymbol].winAudioClip;
+            return symbolDataScriptableObject.symbols[winningSymbol].winAudioClip;
         }
 
         internal void CreateEmptyAnimationContainer()

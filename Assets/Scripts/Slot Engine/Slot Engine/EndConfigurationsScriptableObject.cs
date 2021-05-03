@@ -24,9 +24,9 @@ public class SpinConfigurationStorage : SerializableDictionary.Storage<ReelStrip
 [Serializable]
 public class GameStateConfigurationStorage : SerializableDictionary.Storage<List<SpinConfigurationStorage>> { }
 [Serializable]
-public class GameStateConfigurationDictionary : SerializableDictionary<GameStates, GameStateConfigurationStorage> { }
+public class GameStateConfigurationDictionary : SerializableDictionary<GameModes, GameStateConfigurationStorage> { }
 [Serializable]
-public class GameStateDistributionDictionary : SerializableDictionary<GameStates, WeightsDistributionScriptableObject> { }
+public class GameStateDistributionDictionary : SerializableDictionary<GameModes, WeightsDistributionScriptableObject> { }
 /// <summary>
 /// Creates the scriptable object for end configurations to be stored
 /// </summary>
