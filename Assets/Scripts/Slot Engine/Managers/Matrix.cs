@@ -114,9 +114,14 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal int slots_per_strip_onSpinLoop = 50;
 
-        internal Task InterruptSpin()
+        internal async Task InterruptSpin()
         {
-            throw new NotImplementedException();
+            SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinSlam, true);
+            Debug.Log("Slam Spin Set Waiting for Spin_Outro");
+            await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
+            Debug.Log("Waiting for Spin_Outro on all sot animators");
+            await isAllSlotAnimatorsReadyAndAtPauseState("Spin_Outro");
+            StateManager.SetStateTo(States.Spin_Outro);
         }
 
         /// <summary>
@@ -176,14 +181,42 @@ namespace Slot_Engine.Matrix
         {
             symbolWeightsByState = new ModeWeights[symbol_weight_state.Keys.Count];
             int counter = -1;
+            ModeWeights temp;
+            WeightsForMode temp2;
+            WeightsDistributionScriptableObject temp3;
             foreach (KeyValuePair<GameModes, List<float>> item in symbol_weight_state)
             {
                 counter += 1;
-                symbolWeightsByState[counter] = new ModeWeights(item.Key,item.Value);
+                temp = new ModeWeights();
+                temp.gameMode = item.Key;
+                temp2 = new WeightsForMode();
+                temp2.symbolWeights = item.Value;
+                temp3 = LoadFromResourcesWeights(item.Key);
+                if (temp3.intDistribution.Items.Count > 0)
+                    temp3.intDistribution.ClearItems();
+                for (int weight = 0; weight < temp2.symbolWeights.Count; weight++)
+                {
+                    temp3.intDistribution.Add(weight,temp2.symbolWeights[weight]);
+                }
+                for (int weight = 0; weight < temp3.intDistribution.Items.Count; weight++)
+                {
+                    temp3.intDistribution.Items[weight].Weight = temp2.symbolWeights[weight];
+                }
+                temp2.weightDistributionScriptableObject = temp3;
+                temp.weightsForModeDistribution = temp2;
+                symbolWeightsByState[counter] = temp;
             }
-
-
         }
+        /// <summary>
+        /// Loads the weights scriptable object from resources folder
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private WeightsDistributionScriptableObject LoadFromResourcesWeights(GameModes mode)
+        {
+            return Resources.Load($"Core/ScriptableObjects/WeightObjects/{mode}") as WeightsDistributionScriptableObject;
+        }
+
         private WeightsDistributionScriptableObject FindDistributionFromResources(GameModes key)
         {
             Debug.Log(String.Format("Loading Resources/Core/ScriptableObjects/Weights/{0}", key.ToString()));
@@ -207,7 +240,7 @@ namespace Slot_Engine.Matrix
             {
                 if(symbolWeightsByState[i].gameMode == gameMode)
                 {
-                    return symbolWeightsByState[i].weightsDistribution.intDistribution.Draw();
+                    return symbolWeightsByState[i].weightsForModeDistribution.weightDistributionScriptableObject.intDistribution.Draw();
                 }
             }
             Debug.Log($"Game Mode {gameMode.ToString()} doesn't have valid weights to draw from");
@@ -233,12 +266,12 @@ namespace Slot_Engine.Matrix
             int symbol_weight_pass_check = -1;
             try
             {
-                symbol_weight_pass_check = DrawRandomSymbolFromCurrentState();
+                symbol_weight_pass_check = DrawRandomSymbolFromCurrentMode();
             }
             catch
             {
                 await SetSymbolWeightsByState();
-                symbol_weight_pass_check = DrawRandomSymbolFromCurrentState();
+                symbol_weight_pass_check = DrawRandomSymbolFromCurrentMode();
                 Debug.Log("Weights are in");
             }
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
@@ -252,8 +285,9 @@ namespace Slot_Engine.Matrix
             StateManager.SetStateTo(States.Idle_Intro);
         }
 
-        internal int DrawRandomSymbolFromCurrentState()
+        internal int DrawRandomSymbolFromCurrentMode()
         {
+            Debug.Log($"Drawing random symbol for state {StateManager.enCurrentMode}");
             return DrawRandomSymbol(StateManager.enCurrentMode);
         }
 
@@ -1165,7 +1199,7 @@ namespace Slot_Engine.Matrix
 
         private async Task CycleWinningPaylinesOneShot()
         {
-            throw new Exception("Implement");
+            Debug.LogWarning("Implement Cycle Winning Paylines Oneshot");
             //await slotMachineManagers.paylines_manager.CyclePaylinesOneShot();
         }
 
@@ -1486,6 +1520,27 @@ namespace Slot_Engine.Matrix
                     {
                         await Task.Delay(100);
                     }
+                }
+            }
+        }
+        internal async Task isAllSlotAnimatorsReadyAndAtPauseState(string state)
+        {
+            //Check all animators are on given state before continuing
+            bool is_all_animators_resolved = false;
+            while (!is_all_animators_resolved)
+            {
+                for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+                {
+                    for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
+                    {
+                        if (!reel_strip_managers[reel].slots_in_reel[slot].isSymbolAnimatorFinishedAndAtPauseState(state))
+                        {
+                            await Task.Delay(100);
+                            break;
+                        }
+                    }
+                    if (reel == reel_strip_managers.Length - 1)
+                        is_all_animators_resolved = true;
                 }
             }
         }

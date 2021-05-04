@@ -240,10 +240,10 @@ namespace Slot_Engine.Matrix.Managers
             //TODO Check that T pass is Subclass or same class as WinningObject
             for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
             {
-                Debug.Log("Converting Type");
+                //Debug.Log("Converting Type");
                 temp = coreEvaluationObjects[coreEvaluationObject].ReturnWinningObjects();
 
-                Debug.Log("Converted");
+                //Debug.Log("Converted");
                 for (int i = 0; i < temp.Length; i++)
                 {
                     output.Add(temp[i] as WinningPayline);

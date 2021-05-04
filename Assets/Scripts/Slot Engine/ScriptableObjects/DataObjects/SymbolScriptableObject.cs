@@ -66,4 +66,9 @@ public struct symbol_weight_state
     /// </summary>
     [SerializeField]
     public float symbolWeightInfo;
+    /// <summary>
+    /// Some indexs in an array from the server won't be used so we need to be able to spin the game with the logic of the server implementation
+    /// </summary>
+    [SerializeField]
+    public int arrayIndexServer;
 }

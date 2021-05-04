@@ -11,13 +11,21 @@ using WeightedDistribution;
 namespace Slot_Engine.Matrix
 {
     [Serializable]
-    public class WeightsForMode
+    public struct WeightsForMode
     {
         /// <summary>
         /// The symbol weights object to draw from
         /// </summary>
         [SerializeField]
-        public IntDistribution intDistribution;
+        public WeightsDistributionScriptableObject weightDistributionScriptableObject;
+        [SerializeField]
+        internal List<float> symbolWeights;
+
+        public WeightsForMode(List<float> symbolWeights) : this()
+        {
+            this.symbolWeights = symbolWeights;
+            SetWeightsForInt(symbolWeights);
+        }
 
         internal void SetWeightsForInt(List<float> value)
         {
@@ -26,9 +34,9 @@ namespace Slot_Engine.Matrix
                 //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
                 //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
                 //await Task.Delay(20);
-                intDistribution.Add(i, value[i]);
+                weightDistributionScriptableObject.intDistribution.Add(i, value[i]);
                 //await Task.Delay(20);
-                intDistribution.Items[i].Weight = value[i];
+                weightDistributionScriptableObject.intDistribution.Items[i].Weight = value[i];
             }
         }
     }

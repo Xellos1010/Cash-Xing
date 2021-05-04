@@ -10,17 +10,18 @@ namespace Slot_Engine.Matrix
     /// Holds a state defined for weights scriptable object
     /// </summary>
     [Serializable]
-    public class ModeWeights
+    public struct ModeWeights
     {
         [SerializeField]
         public GameModes gameMode;
         [SerializeField]
-        public WeightsForMode weightsDistribution;
+        public WeightsForMode weightsForModeDistribution;
 
         public ModeWeights(GameModes key, List<float> value)
         {
             gameMode = key;
-            weightsDistribution.SetWeightsForInt(value);
+            WeightsForMode weightsTemp = new WeightsForMode(value);
+            weightsForModeDistribution = weightsTemp;
         }
     }
 }

@@ -388,7 +388,7 @@ namespace Slot_Engine.Matrix
 
         internal void ShowRandomSymbol()
         {
-            ShowSymbolRenderer(reel_parent.matrix.DrawRandomSymbolFromCurrentState());
+            ShowSymbolRenderer(reel_parent.matrix.DrawRandomSymbolFromCurrentMode());
         }
         /// <summary>
         /// Shows a symbols renderer
@@ -504,6 +504,23 @@ namespace Slot_Engine.Matrix
                     output.Add(state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator]);
                 }
             }
+        }
+        internal bool isSymbolAnimatorFinishedAndAtPauseState(string stateToCheck)
+        {
+            if (presentation_symbol > 0)
+            {
+                AnimatorStateInfo state_info = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[presentation_symbol].GetCurrentAnimatorStateInfo(0);
+                if (state_info.IsName(stateToCheck) && state_info.normalizedTime >= 1.0)
+                {
+                    return true;
+                }
+                else
+                {
+                    //No way to check if its passed the state or what without making a hashtable with all the state names codes
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

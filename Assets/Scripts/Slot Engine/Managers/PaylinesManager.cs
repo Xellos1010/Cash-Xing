@@ -94,10 +94,10 @@ namespace Slot_Engine.Matrix.Managers
             float output = 0;
             for (int i = 0; i < winningPaylines.Length; i++)
             {
-                Debug.Log($"Get Total Win Amount = {output}");
+                //Debug.Log($"Get Total Win Amount = {output}");
                 output += winningPaylines[i].GetTotalWin(matrix);
             }
-            Debug.Log($"Returning Total Win Amount = {output}");
+            //Debug.Log($"Returning Total Win Amount = {output}");
             return output;
         }
 

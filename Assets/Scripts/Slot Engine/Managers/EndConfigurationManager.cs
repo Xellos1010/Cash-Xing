@@ -125,7 +125,7 @@ namespace Slot_Engine.Matrix
                 catch (Exception e)
                 {
                     Debug.LogWarning(e.Message);
-                    GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode,20);
+                    GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode, 20);
                     SetAndRemoveConfiguration(0);
                 }
                 return endConfigurationsScriptableObject.currentReelstripConfiguration;
@@ -134,13 +134,13 @@ namespace Slot_Engine.Matrix
 
         private void SetAndRemoveConfiguration(int v)
         {
-            if(v > endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data.Count)
+            if (v > endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data.Count)
             {
-                GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode,v);
+                GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode, v);
             }
             //Save the strip used into the backlog
             if (currentReelstripConfiguration?.Length > 0) ;
-                SaveReelstripUsed(currentReelstripConfiguration);
+            SaveReelstripUsed(currentReelstripConfiguration);
             //TODO Validate Data in Reel Strip then Generate if no valid data found
             SetCurrentConfigurationTo(endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data[v].data);
             endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data.RemoveAt(v);
@@ -155,7 +155,7 @@ namespace Slot_Engine.Matrix
         {
             currentReelstripConfiguration = reelstrips;
         }
-        
+
         private void SetEndingReelStripToDisplay(ReelStripSpinStruct[] reelstrips_to_display)
         {
             nextConfiguration = reelstrips_to_display;
@@ -167,7 +167,7 @@ namespace Slot_Engine.Matrix
         /// <returns>Task.Completed</returns>
         internal async Task GenerateMultipleEndReelStripsConfiguration(GameModes gameState, int amount)
         {
-            if(!endConfigurationsScriptableObject.endReelstripsPerState.ContainsKey(gameState))
+            if (!endConfigurationsScriptableObject.endReelstripsPerState.ContainsKey(gameState))
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState] = new GameStateConfigurationStorage();
             if (endConfigurationsScriptableObject.endReelstripsPerState[gameState].data == null)
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data = new List<SpinConfigurationStorage>();
@@ -175,13 +175,13 @@ namespace Slot_Engine.Matrix
             {
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, matrix.reel_strip_managers).Result));
             }
-         }
+        }
         internal Task<ReelStripSpinStruct[]> GenerateReelStrips(GameModes gameState, ReelStripManager[] reel_strip_managers)
         {
             ReelStripSpinStruct[] output = new ReelStripSpinStruct[reel_strip_managers.Length];
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
-                output[reel] = new ReelStripSpinStruct(GenerateEndingReelStrip(gameState,ref reel_strip_managers[reel])); ;
+                output[reel] = new ReelStripSpinStruct(GenerateEndingReelStrip(gameState, ref reel_strip_managers[reel])); ;
             }
             return Task.FromResult<ReelStripSpinStruct[]>(output);
         }
@@ -203,7 +203,8 @@ namespace Slot_Engine.Matrix
         public NodeDisplaySymbol GetRandomWeightedSymbol(GameModes currentMode)
         {
             NodeDisplaySymbol output = new NodeDisplaySymbol();
-            int symbol = matrix.DrawRandomSymbol();//symbol_weights_per_state[currentMode].intDistribution.Draw();
+            int symbol = matrix.DrawRandomSymbol(currentMode);
+            //Debug.LogWarning($"End Configuration Draw Random Symbol returned {symbol}");
             if (matrix.isSymbolOverlay(symbol))
             {
                 output.SetOverlaySymbolTo(symbol);
@@ -254,7 +255,7 @@ namespace Slot_Engine.Matrix
             matrix.SetSymbolsToDisplayOnMatrixTo(currentReelstripConfiguration);
         }
 
-        internal void AddConfigurationToSequence(GameModes gameState,ReelStripSpinStruct[] configuration)
+        internal void AddConfigurationToSequence(GameModes gameState, ReelStripSpinStruct[] configuration)
         {
             if (endConfigurationsScriptableObject.endReelstripsPerState[gameState] == null)
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState] = new GameStateConfigurationStorage();
@@ -271,9 +272,9 @@ namespace Slot_Engine.Matrix
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
-                        configuration[i].displaySymbols = new NodeDisplaySymbol[3] 
-                        { 
-                            new NodeDisplaySymbol(i % 2 == 0 
+                        configuration[i].displaySymbols = new NodeDisplaySymbol[3]
+                        {
+                            new NodeDisplaySymbol(i % 2 == 0
                         ? (int)Symbol.SA01 : (int)Symbol.RO03),
                             new NodeDisplaySymbol((int)Symbol.RO01),
                             new NodeDisplaySymbol((int)Symbol.RO02)
@@ -282,9 +283,9 @@ namespace Slot_Engine.Matrix
                         if (i % 2 == 0)
                         {
                             configuration[i].displaySymbols[0].AddFeature(Features.freespin);
-                        }   
+                        }
                     }
-                    AddConfigurationToSequence(GameModes.baseGame,configuration);
+                    AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 case Features.overlay:
                     configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
@@ -313,7 +314,7 @@ namespace Slot_Engine.Matrix
         }
         internal void ClearConfigurations()
         {
-            foreach (KeyValuePair<GameModes,GameStateConfigurationStorage> weight in endConfigurationsScriptableObject.endReelstripsPerState)
+            foreach (KeyValuePair<GameModes, GameStateConfigurationStorage> weight in endConfigurationsScriptableObject.endReelstripsPerState)
             {
                 weight.Value.data.Clear();
             }
