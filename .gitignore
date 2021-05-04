@@ -56,5 +56,5 @@ Corridor/Library/metadata/
 # Boom Sports Required #
 # ============ #
 #Required to import Game Packages Seperate from the environment
-Assets/Resources/GamePackages
+Assets/Resources/GamePackages/*
 Assets/Resources/GamePackages.meta
