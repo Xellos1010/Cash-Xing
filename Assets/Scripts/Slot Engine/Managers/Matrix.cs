@@ -195,7 +195,10 @@ namespace Slot_Engine.Matrix
         /// <returns>symbol int</returns>
         internal int DrawRandomSymbol()
         {
-            return DrawRandomSymbol(StateManager.enCurrentMode);
+            if(Application.isPlaying)
+                return DrawRandomSymbol(StateManager.enCurrentMode);
+            else
+                return DrawRandomSymbol(GameModes.baseGame);
         }
 
         internal int DrawRandomSymbol(GameModes gameMode)
