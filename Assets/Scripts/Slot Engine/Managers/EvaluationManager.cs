@@ -137,9 +137,16 @@ namespace Slot_Engine.Matrix.Managers
             object output = null;
             for (int i = 0; i < coreEvaluationObjects.Length; i++)
             {
-                if(coreEvaluationObjects[i].GetType() == typeof(T))
+                if (coreEvaluationObjects[i] != null)
                 {
-                    output = coreEvaluationObjects[i];
+                    if (coreEvaluationObjects[i].GetType() == typeof(T))
+                    {
+                        output = coreEvaluationObjects[i];
+                        break;
+                    }
+                }
+                else
+                {
                     break;
                 }
             }
