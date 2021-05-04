@@ -68,52 +68,14 @@ namespace Slot_Engine.Matrix
             base.OnInspectorGUI();
         }
     }
+
 #endif
-    /// <summary>
-    /// Holds a state defined for weights scriptable object
-    /// </summary>
-    [Serializable]
-    public class ModeWeights
-    {
-        [SerializeField]
-        public GameModes gameMode;
-        [SerializeField]
-        public WeightsForMode weightsDistribution;
-
-        public ModeWeights(GameModes key, List<float> value)
-        {
-            gameMode = key;
-            weightsDistribution.SetWeightsForInt(value);
-        }
-    }
-    [Serializable]
-    public class WeightsForMode
-    {
-        /// <summary>
-        /// The symbol weights object to draw from
-        /// </summary>
-        [SerializeField]
-        public IntDistribution intDistribution;
-
-        internal async Task SetWeightsForInt(List<float> value)
-        {
-            for (int i = 0; i < value.Count; i++)
-            {
-                //Debug.Log(String.Format("{0} value added = {1} iterator = {2}", item.Key.ToString(), item.Value[i],i));
-                //Setting the value to the idex of the symbol so to support reorderable lists 2020.3.3
-                await Task.Delay(20);
-                intDistribution.Add(i, value[i]);
-                await Task.Delay(20);
-                intDistribution.Items[i].Weight = value[i];
-            }
-        }
-    }
     public class Matrix : MonoBehaviour
     {
         /// <summary>
         /// Holds the reference to all managers
         /// </summary>
-        public ManagersReferenceScript slot_machine_managers
+        public ManagersReferenceScript slotMachineManagers
         {
             get
             {
@@ -151,6 +113,12 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         internal int slots_per_strip_onSpinLoop = 50;
+
+        internal Task InterruptSpin()
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Symbol Win Resolve Animator Override Controller
         /// </summary>
@@ -221,6 +189,14 @@ namespace Slot_Engine.Matrix
             Debug.Log(String.Format("Loading Resources/Core/ScriptableObjects/Weights/{0}", key.ToString()));
             return Resources.Load(String.Format("Core/ScriptableObjects/Weights/{0}", key.ToString())) as WeightsDistributionScriptableObject;
         }
+        /// <summary>
+        /// Draws a random symbol based on weights of current mode
+        /// </summary>
+        /// <returns>symbol int</returns>
+        internal int DrawRandomSymbol()
+        {
+            return DrawRandomSymbol(StateManager.enCurrentMode);
+        }
 
         internal int DrawRandomSymbol(GameModes gameMode)
         {
@@ -267,7 +243,7 @@ namespace Slot_Engine.Matrix
             SetSubStatesAllSlotAnimatorStateMachines();
             SetManagerStateMachineSubStates();
             //Initialize Machine and Player  Information
-            slot_machine_managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 -1, 0, 0);
+            slotMachineManagers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, slotMachineManagers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 -1, 0, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
@@ -306,14 +282,14 @@ namespace Slot_Engine.Matrix
         internal async Task StopReels()
         {
             //Get the end display configuration and set per reel
-            ReelStripSpinStruct[] configuration_to_use = slot_machine_managers.end_configuration_manager.GetCurrentConfiguration();
+            ReelStripSpinStruct[] configuration_to_use = slotMachineManagers.endConfigurationManager.GetCurrentConfiguration();
             //Determine whether to stop reels forwards or backwards.
-            for (int i = slot_machine_managers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? 0 : reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
-                slot_machine_managers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i < reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
-                i = slot_machine_managers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1
+            for (int i = slotMachineManagers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? 0 : reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
+                slotMachineManagers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i < reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
+                i = slotMachineManagers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
                 //If reel strip delays are enabled wait between strips to stop
-                if (slot_machine_managers.spin_manager.spinSettingsScriptableObject.reel_spin_delay_end_enabled)
+                if (slotMachineManagers.spin_manager.spinSettingsScriptableObject.reel_spin_delay_end_enabled)
                 {
                     await reel_strip_managers[i].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
                 }
@@ -353,9 +329,9 @@ namespace Slot_Engine.Matrix
         internal async Task SpinReels()
         {
             //The end reel configuration is set when spin starts to the next item in the list
-            ReelStripSpinStruct[] end_reel_configuration = slot_machine_managers.end_configuration_manager.UseNextConfigurationInList();
+            ReelStripSpinStruct[] end_reel_configuration = slotMachineManagers.endConfigurationManager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
-            slot_machine_managers.paylines_manager.EvaluateWinningSymbolsFromCurrentConfiguration();
+            slotMachineManagers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
 
             await SpinReels(end_reel_configuration);
         }
@@ -365,7 +341,7 @@ namespace Slot_Engine.Matrix
         internal async Task SpinReels(ReelStripSpinStruct[] end_reel_configuration)
         {
             //If we want to use ReelStrips for the spin loop we need to stitch the end_reel_configuration and display symbols together
-            if (slot_machine_managers.spin_manager.spinSettingsScriptableObject.use_reelstrips_for_spin_loop)
+            if (slotMachineManagers.spin_manager.spinSettingsScriptableObject.use_reelstrips_for_spin_loop)
             {
                 //Generate Reel strips if none are present
                 GenerateReelStripsToLoop(ref end_reel_configuration);
@@ -373,17 +349,17 @@ namespace Slot_Engine.Matrix
                 //TODO Insert end_reelstrips_to_display into generated reelstrips
             }
             //Spin the reels - if there is a delay between reels then wait delay amount
-            for (int i = slot_machine_managers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? 0 : reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
-                slot_machine_managers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i < reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
-                i = slot_machine_managers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1
+            for (int i = slotMachineManagers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? 0 : reel_strip_managers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
+                slotMachineManagers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i < reel_strip_managers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
+                i = slotMachineManagers.spin_manager.spinSettingsScriptableObject.spin_reels_starting_forward_back ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1
             {
                 await reel_strip_managers[i].StartSpin();
             }
         }
 
-        internal async Task PlayFeatureAnimation(List<suffix_tree_node_info> overlaySymbols)
+        internal async Task PlayFeatureAnimation(List<SuffixTreeNodeInfo> overlaySymbols)
         {
-            this.multiplierChar.SetBool(supported_bools.FeatureTrigger.ToString(), true);
+            this.multiplierChar.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), true);
             Debug.Log("Playing Feature Animation");
             List<Animator> symbolAnimators = new List<Animator>(); 
             for (int i = 0; i < overlaySymbols.Count; i++)
@@ -417,10 +393,10 @@ namespace Slot_Engine.Matrix
             }
 
             await isAnimatorThruStateAndAtPauseState(this.multiplierChar, "Feature_Outro");
-            this.multiplierChar.SetBool(supported_bools.FeatureTrigger.ToString(), false);
+            this.multiplierChar.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), false);
             for (int i = 0; i < symbolAnimators.Count; i++)
             {
-                symbolAnimators[i].SetBool(supported_bools.FeatureTrigger.ToString(), false);
+                symbolAnimators[i].SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), false);
             }
         }
 
@@ -428,8 +404,8 @@ namespace Slot_Engine.Matrix
         private async Task LerpToMeFinished(Transform transform)
         {
             isLerping = true;
-            slot_machine_managers.multiplierLerpToMe.lerpComplete += MultiplierLerpToMe_lerpComplete; 
-            slot_machine_managers.multiplierLerpToMe.AddLerpToMeObject(transform);
+            slotMachineManagers.multiplierLerpToMe.lerpComplete += MultiplierLerpToMe_lerpComplete; 
+            slotMachineManagers.multiplierLerpToMe.AddLerpToMeObject(transform);
             while(isLerping)
             {
                 await Task.Delay(100);
@@ -439,33 +415,33 @@ namespace Slot_Engine.Matrix
         {
             Debug.Log("isLerping = False");
             isLerping = false;
-            slot_machine_managers.multiplierLerpToMe.lerpComplete -= MultiplierLerpToMe_lerpComplete;
+            slotMachineManagers.multiplierLerpToMe.lerpComplete -= MultiplierLerpToMe_lerpComplete;
         }
 
-        internal Animator SetAnimatorFeatureTriggerAndReturn(suffix_tree_node_info suffix_tree_node_info)
+        internal Animator SetAnimatorFeatureTriggerAndReturn(SuffixTreeNodeInfo SuffixTreeNodeInfo)
         {
-            Animator output = SetOverlayFeatureAndReturnAnimatorFromNode(suffix_tree_node_info);
+            Animator output = SetOverlayFeatureAndReturnAnimatorFromNode(SuffixTreeNodeInfo);
             return output;
         }
 
-        private Animator SetOverlayFeatureAndReturnAnimatorFromNode(suffix_tree_node_info suffix_tree_node_info)
+        private Animator SetOverlayFeatureAndReturnAnimatorFromNode(SuffixTreeNodeInfo SuffixTreeNodeInfo)
         {
-            return reel_strip_managers[suffix_tree_node_info.column].GetSlotsDecending()[reel_strip_managers[suffix_tree_node_info.column].reelstrip_info.padding_before + suffix_tree_node_info.row].SetOverlayAnimatorToFeatureAndGet();
+            return reel_strip_managers[SuffixTreeNodeInfo.column].GetSlotsDecending()[reel_strip_managers[SuffixTreeNodeInfo.column].reelstrip_info.padding_before + SuffixTreeNodeInfo.row].SetOverlayAnimatorToFeatureAndGet();
         }
 
         internal bool isSymbolOverlay(int symbol)
         {
-            return symbolDataScriptableObject.symbols[symbol].isOverlaySymbol;
+            return slotMachineManagers.evaluationManager.DoesSymbolActivateFeature(symbolDataScriptableObject.symbols[symbol],Features.overlay);
         }
 
         internal bool isWildSymbol(int symbol)
         {
-            return symbolDataScriptableObject.symbols[symbol].isWildSymbol;
+            return slotMachineManagers.evaluationManager.DoesSymbolActivateFeature(symbolDataScriptableObject.symbols[symbol],Features.wild);
         }
 
 
 
-        internal async Task WaitForSymbolWinResolveToIntro()
+        internal async Task WaitForSymbolToResolveState(string state)
         {
             if (current_payline_displayed != null)
             {
@@ -476,7 +452,7 @@ namespace Slot_Engine.Matrix
                 {
                     for (int slot = 0; slot < winning_slots.Count; slot++)
                     {
-                        if (!winning_slots[slot].isSymbolAnimationFinished("Resolve_Intro"))
+                        if (!winning_slots[slot].isSymbolAnimationFinished(state))
                         {
                             await Task.Delay(100);
                             break;
@@ -493,12 +469,12 @@ namespace Slot_Engine.Matrix
 
         internal bool isFeatureSymbol(int symbol)
         {
-            return symbolDataScriptableObject.symbols[symbol].isFeatureSymbol;
+            return slotMachineManagers.evaluationManager.IsSymbolFeatureSymbol(symbolDataScriptableObject.symbols[symbol]);
         }
 
         internal Features[] GetSymbolFeatures(int symbol)
         {
-            return symbolDataScriptableObject.symbols[symbol].features;
+            return slotMachineManagers.evaluationManager.GetSymbolFeatures(symbolDataScriptableObject.symbols[symbol]);
         }
 
         private Vector3 ReturnPositionOnReelForPayline(ref ReelStripManager reel, int slot_in_reel)
@@ -508,7 +484,7 @@ namespace Slot_Engine.Matrix
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
-            SetSlotsAnimatorBoolTo(supported_bools.LoopPaylineWins,false);
+            SetSlotsAnimatorBoolTo(supportedAnimatorBools.LoopPaylineWins,false);
             yield return 0;
         }
         private WinningPayline current_payline_displayed;
@@ -579,18 +555,18 @@ namespace Slot_Engine.Matrix
         internal void SlamLoopingPaylines()
         {
             //Pause and interrupt racking before continue
-            slot_machine_managers.racking_manager.PauseRackingOnInterrupt();
+            slotMachineManagers.racking_manager.PauseRackingOnInterrupt();
             StateManager.SetStateTo(States.Resolve_Outro);
         }
 
         internal void SetSystemToPresentWin()
         {
-            SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
+            SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, true);
         }
 
         internal void CycleWinningPaylinesMode()
         {
-            slot_machine_managers.paylines_manager.PlayCycleWins();
+            slotMachineManagers.paylines_manager.PlayCycleWins();
         }
         /// <summary>
         /// Set Free spin information for all Animators
@@ -600,14 +576,14 @@ namespace Slot_Engine.Matrix
         {
             Debug.Log("Bonus Active = " + onOff);
             bonusGameTriggered = onOff;
-            SetAllAnimatorsBoolTo(supported_bools.BonusActive, onOff);
+            SetAllAnimatorsBoolTo(supportedAnimatorBools.BonusActive, onOff);
             if (!onOff)
-                slot_machine_managers.machine_info_manager.SetMultiplierTo(0);
+                slotMachineManagers.machine_info_manager.SetMultiplierTo(0);
         }
 
-        private void SetAllAnimatorsBoolTo(supported_bools bool_to_set, bool value)
+        internal void SetAllAnimatorsBoolTo(supportedAnimatorBools bool_to_set, bool value)
         {
-            slot_machine_managers.animator_statemachine_master.SetBoolAllStateMachines(bool_to_set, value);
+            slotMachineManagers.animator_statemachine_master.SetBoolAllStateMachines(bool_to_set, value);
             SetSlotsAnimatorBoolTo(bool_to_set,value);
         }
 
@@ -624,7 +600,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void SetSlotsAnimatorBoolTo(supported_bools bool_name, bool v)
+        private void SetSlotsAnimatorBoolTo(supportedAnimatorBools bool_name, bool v)
         {
             //Debug.Log(String.Format("Setting Slot Animator {0} to {1}",bool_name.ToString(),v));
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
@@ -679,7 +655,7 @@ namespace Slot_Engine.Matrix
                 reel_strip_managers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
             }
             //Update Payline Manager
-            slot_machine_managers.paylines_manager.GenerateDynamicPaylinesFromMatrix();
+            slotMachineManagers.paylines_manager.GenerateDynamicPaylinesFromMatrix();
         }
 
         /// <summary>
@@ -770,7 +746,7 @@ namespace Slot_Engine.Matrix
         private void GenerateReelStripsFor(ref ReelStripManager[] reel_strip_managers, ref ReelStripSpinStruct[] spin_configuration_reelstrip, int slots_per_strip_onSpinLoop)
         {
             EndConfigurationManager temp;
-            temp = slot_machine_managers.end_configuration_manager;
+            temp = slotMachineManagers.endConfigurationManager;
             //Loop over each reelstrip and assign reel strip
             for (int i = 0; i < reel_strip_managers.Length; i++)
             {
@@ -794,7 +770,7 @@ namespace Slot_Engine.Matrix
 
         internal void InitializeAllAnimators()
         {
-            slot_machine_managers.animator_statemachine_master.InitializeAnimator();
+            slotMachineManagers.animator_statemachine_master.InitializeAnimator();
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
                 for (int slot = 0; slot < reel_strip_managers[reel].slots_in_reel.Length; slot++)
@@ -838,7 +814,7 @@ namespace Slot_Engine.Matrix
 
         internal void OffetPlayerWalletBy(double amount)
         {
-            slot_machine_managers.machine_info_manager.OffsetPlayerAmountBy(amount);
+            slotMachineManagers.machine_info_manager.OffsetPlayerAmountBy(amount);
         }
 
         private string PrintSpinSymbols(ref ReelStripSpinStruct[] stripInitial)
@@ -853,7 +829,7 @@ namespace Slot_Engine.Matrix
 
         private string ReturnDisplaySymbolsPrint(ReelStripSpinStruct reelstrip_info)
         {
-            return String.Join("|",reelstrip_info.display_symbols);
+            return String.Join("|",reelstrip_info.displaySymbols);
         }
 
         void OnEnable()
@@ -928,11 +904,11 @@ namespace Slot_Engine.Matrix
                     if(active_inactive)
                     {
                         background.runtimeAnimatorController = backgroundACO[0];
-                        background.SetBool(supported_bools.BonusActive.ToString(),true);
+                        background.SetBool(supportedAnimatorBools.BonusActive.ToString(),true);
                     }
                     else
                     {
-                        background.SetBool(supported_bools.BonusActive.ToString(), false);
+                        background.SetBool(supportedAnimatorBools.BonusActive.ToString(), false);
                     }
                     break;
                 case Features.multiplier:
@@ -950,8 +926,8 @@ namespace Slot_Engine.Matrix
             StateManager.StateChangedTo -= StateManager_StateChangedTo;
             StateManager.featureTransition -= StateManager_FeatureTransition;
             StateManager.gameModeSetTo -= StateManager_gameModeSetTo;
-            slot_machine_managers.racking_manager.rackEnd -= Racking_manager_rackEnd;
-            slot_machine_managers.multiplierLerpToMe.lerpComplete -= MultiplierLerpToMe_lerpComplete;
+            slotMachineManagers.racking_manager.rackEnd -= Racking_manager_rackEnd;
+            slotMachineManagers.multiplierLerpToMe.lerpComplete -= MultiplierLerpToMe_lerpComplete;
         }
 
         public AnimatorOverrideController[] characterTier;
@@ -975,18 +951,18 @@ namespace Slot_Engine.Matrix
             {
                 case States.Idle_Intro:
                     //Reset the state of all slots to
-                    await isAllAnimatorsThruState("Idle_Intro");
+                    await isAllMainAnimatorsThruState("Idle_Intro");
                     //Fall thru to Idle_Idle State - ATM the animator falls thru Idle_Intro
                     StateManager.SetStateTo(States.Idle_Idle);
                     break;
                 case States.Idle_Outro:
                     //Decrease Bet Amount
-                    PlayerHasBet(slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount);
+                    PlayerHasBet(slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount);
                     await StartAnimatorSpinAndSpinState();
                     break;
                 case States.Spin_End:
                     bool resolve_intro = false;
-                    Debug.LogWarning($"mode = {StateManager.enCurrentMode} Bonus Game triggered = {bonusGameTriggered} FreeSpins Remaining = {slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins} Multiplier = {slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier}");
+                    Debug.LogWarning($"mode = {StateManager.enCurrentMode} Bonus Game triggered = {bonusGameTriggered} FreeSpins Remaining = {slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins} Multiplier = {slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier}");
                     
                     //Can Trigger Free Spins without having a win.
                     if (CheckForWin()) //If overlay has won will have winning payline
@@ -999,7 +975,7 @@ namespace Slot_Engine.Matrix
                             Debug.Log("Win in Base Game Triggered");
                             //Calculate Rack Amount and either skip resolve phase or 
                             //Proceed to next state and sync state machine
-                            SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
+                            SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, true);
                             SetFreespinTextTo(String.Format("{0:C2} Total Won this Spin", GetTotalSpinAmountWon()));
                             if (StateManager.enCurrentMode != GameModes.baseGame)
                                 StateManager.SetFeatureActiveTo(Features.freespin, false);
@@ -1014,10 +990,10 @@ namespace Slot_Engine.Matrix
                             //slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
                             SetFreespinTextTo(String.Format("{0:C2} Total Won this Spin", GetTotalSpinAmountWon()));
                             ToggleTMPFreespin(true);
-                            SetAllAnimatorsBoolTo(supported_bools.WinRacking, false); // dont rack wins
-                            if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
+                            SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, false); // dont rack wins
+                            if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
                             {
-                                Debug.LogWarning($"Freespins Remaining = {slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins}");
+                                Debug.LogWarning($"Freespins Remaining = {slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins}");
                             }
                             else
                             {
@@ -1032,21 +1008,21 @@ namespace Slot_Engine.Matrix
                         // Set Trigger for state machine to SymbolResolve and WinRacking to false
                         if (bonusGameTriggered)
                         {
-                            Debug.Log(String.Format("Bonus Game no win", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank));
-                            if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
+                            Debug.Log(String.Format("Bonus Game no win", slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank));
+                            if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
                             {
                                 Debug.Log("Bonus Game No Win No Freespins- Setting Resolve Intro to True");
                                 resolve_intro = true;
                             }
                         }
-                        else if (!bonusGameTriggered && slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > 0)
+                        else if (!bonusGameTriggered && slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > 0)
                         {
-                            Debug.Log(String.Format("Bonus game ended and bank has amount to rack = {0}", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank));
+                            Debug.Log(String.Format("Bonus game ended and bank has amount to rack = {0}", slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank));
                             resolve_intro = true;                        
                         }
                         else
                         {
-                            Debug.Log(String.Format("Base Game no win - return to idle", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank));
+                            Debug.Log(String.Format("Base Game no win - return to idle", slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank));
                         }
                     }
                     await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
@@ -1057,8 +1033,8 @@ namespace Slot_Engine.Matrix
                         Debug.Log("Playing Resolve Into in Spin End");
                         SetOverridesBasedOnTiers();
                         await Task.Delay(20);
-                        SetAllAnimatorsBoolTo(supported_bools.WinRacking, true);
-                        SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                        SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, true);
+                        SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinResolve, true);
                         await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
                         await isAllSlotSubAnimatorsReady("Resolve_Intro");
                         StateManager.SetStateTo(States.Resolve_Intro);
@@ -1068,12 +1044,12 @@ namespace Slot_Engine.Matrix
                         Debug.Log("Not Playing Resolve Outro in Spin End");
                         //If the spin has ended and there are no wining paylines or freespins left then disable freespin mode
 
-                        if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0 && bonusGameTriggered)
+                        if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins <= 0 && bonusGameTriggered)
                         {
-                            Debug.Log($"Freespins = {slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins} Setting Freespins Inactive");
+                            Debug.Log($"Freespins = {slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins} Setting Freespins Inactive");
                             StateManager.SetFeatureActiveTo(Features.freespin, false);
                         }
-                        SetAllAnimatorsTriggerTo(supported_triggers.SpinResolve, true);
+                        SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinResolve, true);
                         await isAllSlotSubAnimatorsReady("Idle_Intro");
                         await isAllAnimatorsThruStateAndAtPauseState("Idle_Idle");
                         if (bonusGameTriggered)
@@ -1086,55 +1062,56 @@ namespace Slot_Engine.Matrix
                     break;
                 case States.Resolve_Intro:
                     await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
-                    Debug.Log($"Resolve Intro state entered - Bonus Game Triggered = {bonusGameTriggered} multiplier = {slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier} Toal Win = {GetTotalSpinAmountWon()}");
+                    Debug.Log($"Resolve Intro state entered - Bonus Game Triggered = {bonusGameTriggered} multiplier = {slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier} Toal Win = {GetTotalSpinAmountWon()}");
                     //The amount total even with multiplier
                     double totalSpinAwardeded = GetTotalSpinAmountWon();
-                    double totalAwardeded = totalSpinAwardeded + slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank + totalSpinAwardeded;
+                    double totalAwardeded = totalSpinAwardeded + slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank + totalSpinAwardeded;
                     //If multiplier > 0 then combine to present total
-                    await DisplayWinAmount(totalSpinAwardeded, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank);
+                    await DisplayWinAmount(totalSpinAwardeded, slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank);
                     //Check to reset freespin state now that everything is calculated
-                    if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
+                    if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins <= 0)
                     {
-                        Debug.Log($"Resolve Intro Freespins = {slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins} Setting Freespins Inactive");
+                        Debug.Log($"Resolve Intro Freespins = {slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins} Setting Freespins Inactive");
                         StateManager.SetFeatureActiveTo(Features.freespin, false);
                     }
-                    if (slot_machine_managers.paylines_manager.winning_paylines.Length > 0)
+                    WinningObject[] winningObjects = slotMachineManagers.evaluationManager.ReturnWinningObjects();
+                    if (winningObjects.Length > 0)
                     {
                         if (StateManager.enCurrentMode != GameModes.freeSpin)
                             CycleWinningPaylinesMode();
-                        else if (StateManager.enCurrentMode == GameModes.freeSpin && (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
+                        else if (StateManager.enCurrentMode == GameModes.freeSpin && (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins == 0 || slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins == 10))
                             CycleWinningPaylinesMode();
                     }
                     break;
                 case States.Resolve_Outro:
-                    await slot_machine_managers.paylines_manager.CancelCycleWins();
+                    await slotMachineManagers.paylines_manager.CancelCycleWins();
                     //TODO Refactor hack
-                    if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins < 1)
+                    if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins < 1)
                     {
                         SetFreespinTextTo("");
                         freespinText.enabled = false;
                     }
                     else
                     {
-                        slot_machine_managers.machine_info_manager.SetFreeSpinsTo(slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins);
+                        slotMachineManagers.machine_info_manager.SetFreeSpinsTo(slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins);
                     }
                     //Set animator to Resolve_Outro State
-                    SetAllAnimatorsBoolTo(supported_bools.WinRacking, false);
-                    SetAllAnimatorsBoolTo(supported_bools.LoopPaylineWins, false);
+                    SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, false);
+                    SetAllAnimatorsBoolTo(supportedAnimatorBools.LoopPaylineWins, false);
                     //If going back to base game initialize vars for next bonus trigger
                     if (StateManager.enCurrentMode == GameModes.baseGame)
                     {
-                        SetAllAnimatorsBoolTo(supported_bools.BonusActive, false);
+                        SetAllAnimatorsBoolTo(supportedAnimatorBools.BonusActive, false);
                         //ensure multiplier set to 0
-                        slot_machine_managers.machine_info_manager.ResetMultiplier();
+                        slotMachineManagers.machine_info_manager.ResetMultiplier();
                     }
                     //Wait for animator to play all resolve outro animations
                     await isAllAnimatorsThruStateAndAtPauseState("Resolve_Outro");
                     await isAllSlotAnimatorsReady("Resolve_Outro");
                     //Need to refactor to integrate
                     await isAnimatorThruStateAndAtPauseState(this.multiplierChar,"Resolve_Outro");
-                    SetAllAnimatorsTriggerTo(supported_triggers.ResolveEnd,true);
-                    this.multiplierChar.SetTrigger(supported_triggers.ResolveEnd.ToString());
+                    SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.ResolveEnd,true);
+                    this.multiplierChar.SetTrigger(supportedAnimatorTriggers.ResolveEnd.ToString());
                     if (!bonusGameTriggered)
                     {                        //TODO wait for all animators to go thru idle_intro state
                         StateManager.SetStateTo(States.Idle_Intro);
@@ -1145,7 +1122,7 @@ namespace Slot_Engine.Matrix
                     }
                     break;
                 case States.bonus_idle_intro:
-                    await isAllAnimatorsThruState("Idle_Intro");
+                    await isAllMainAnimatorsThruState("Idle_Intro");
                     StateManager.SetStateTo(States.bonus_idle_idle);
                     break;
                 case States.bonus_idle_outro:
@@ -1157,17 +1134,17 @@ namespace Slot_Engine.Matrix
 
         private async Task CheckForOverlayAndPlay()
         {
-            if (slot_machine_managers.paylines_manager.overlaySymbols.Count > 0)
+            if (slotMachineManagers.evaluationManager.overlaySymbols.Count > 0)
             {
                 Debug.Log("Overlay in winning Line - Setting to play feature");
-                if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
-        slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+                if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
+        slotMachineManagers.paylines_manager.GetTotalWinAmount() > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
                 {
                     Debug.Log("Present Character Big Win");
                     SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 2);
                 }
-                else if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
-                    slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
+                else if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
+                    slotMachineManagers.paylines_manager.GetTotalWinAmount() > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
                 {
                     Debug.Log("Present Character Medium Win");
                     SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 1);
@@ -1178,14 +1155,15 @@ namespace Slot_Engine.Matrix
                     Debug.Log("Present Character Small Win");
                     SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 0);
                 }
-                await PlayFeatureAnimation(slot_machine_managers.paylines_manager.overlaySymbols);
+                await PlayFeatureAnimation(slotMachineManagers.evaluationManager.overlaySymbols);
                 Debug.Log("All Overlay Animators are finished");
             }
         }
 
         private async Task CycleWinningPaylinesOneShot()
         {
-            await slot_machine_managers.paylines_manager.CyclePaylinesOneShot();
+            throw new Exception("Implement");
+            //await slotMachineManagers.paylines_manager.CyclePaylinesOneShot();
         }
 
         private void ToggleTMPFreespin(bool v)
@@ -1196,7 +1174,7 @@ namespace Slot_Engine.Matrix
         private double GetTotalSpinAmountWon()
         {
             double output = 0;
-            output = slot_machine_managers.paylines_manager.GetTotalWinAmount();
+            output = slotMachineManagers.paylines_manager.GetTotalWinAmount();
 
             //if (!bonusGameTriggered)
             //{
@@ -1223,30 +1201,30 @@ namespace Slot_Engine.Matrix
             SetFreespinTextTo(String.Format("{0:C2} {1}", spinWinAmount, " Won This Spin!"));
             ToggleMeshRendererForGameObject(rackingRollupText.gameObject, false);
             //If you are 9X bet or you have a multiplier win - multiplier win will be phased out for own mechanism
-            if (spinWinAmount + bankAmount > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 || slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
+            if (spinWinAmount + bankAmount > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 || slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
             {
                 //Present and set callback event for bigwin display
                 PresentBigWinDisplayAnimator();
-                slot_machine_managers.racking_manager.rackEnd += CloseBigWinDisplay;
+                slotMachineManagers.racking_manager.rackEnd += CloseBigWinDisplay;
                 //This is a special feature for instaspin - multiplier smash. Need to build in UI based event sequencer
-                if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
+                if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
                 {
                     //await Smash together the Multiplier and Bank text Field.
                     Animator[] winbankMultiplier = new Animator[1] { plateGraphicAnimatorWinBank };
                     SetAnimatorsToTriggerFeature(winbankMultiplier, true);
                     await isAllAnimatorsThruStateAndAtPauseStateTriggerEventAt(winbankMultiplier, States.Resolve_Win_Idle.ToString(), 1f, PresentBigWinDisplayAnimator);
                     SetAnimatorsToTriggerFeature(winbankMultiplier, false);
-                    spinWinAmount = (bankAmount + spinWinAmount) * slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier;
+                    spinWinAmount = (bankAmount + spinWinAmount) * slotMachineManagers.machine_info_manager.machineInfoScriptableObject.multiplier;
                 }
             }
             SetRackingtextTo(spinWinAmount);
             ToggleMeshRendererForGameObject(rackingRollupText.gameObject, true);
-            slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank = spinWinAmount;
+            slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank = spinWinAmount;
             //Waits to present amount then racks down
             await Task.Delay(2000);
-            slot_machine_managers.racking_manager.rackEnd += Racking_manager_rackEnd;
+            slotMachineManagers.racking_manager.rackEnd += Racking_manager_rackEnd;
             amountRacked = spinWinAmount;
-            slot_machine_managers.racking_manager.StartRacking(spinWinAmount); //This is to resolve wins in resolve intro
+            slotMachineManagers.racking_manager.StartRacking();//spinWinAmount); //This is to resolve wins in resolve intro
         }
 
         private void SetRackingtextTo(double spinWinAmount)
@@ -1275,29 +1253,29 @@ namespace Slot_Engine.Matrix
             SetFreespinTextTo(String.Format("{0:C2} {1}", amountRacked, " Total Winnings"));
             ToggleTMPFreespin(true);
             amountRacked = 0;
-            slot_machine_managers.racking_manager.rackEnd -= Racking_manager_rackEnd;
+            slotMachineManagers.racking_manager.rackEnd -= Racking_manager_rackEnd;
         }
 
         private void PresentBigWinDisplayAnimator()
         {
-            rackingRollupAnimator.SetBool(supported_bools.LoopPaylineWins.ToString(), true);
-            rackingRollupAnimator.SetBool(supported_bools.SymbolResolve.ToString(), true);
+            rackingRollupAnimator.SetBool(supportedAnimatorBools.LoopPaylineWins.ToString(), true);
+            rackingRollupAnimator.SetBool(supportedAnimatorBools.SymbolResolve.ToString(), true);
         }
 
         private void SetAnimatorsToTriggerFeature(Animator[] animators,bool onOff)
         {
             for (int animator = 0; animator < animators.Length; animator++)
             {
-                animators[animator].SetBool(supported_bools.LoopPaylineWins.ToString(), onOff);
-                animators[animator].SetBool(supported_bools.SymbolResolve.ToString(), onOff);
+                animators[animator].SetBool(supportedAnimatorBools.LoopPaylineWins.ToString(), onOff);
+                animators[animator].SetBool(supportedAnimatorBools.SymbolResolve.ToString(), onOff);
             }
         }
 
         private void CloseBigWinDisplay()
         {
-            rackingRollupAnimator.SetBool(supported_bools.LoopPaylineWins.ToString(), false);
-            rackingRollupAnimator.SetBool(supported_bools.SymbolResolve.ToString(), false);
-            slot_machine_managers.racking_manager.rackEnd -= CloseBigWinDisplay;
+            rackingRollupAnimator.SetBool(supportedAnimatorBools.LoopPaylineWins.ToString(), false);
+            rackingRollupAnimator.SetBool(supportedAnimatorBools.SymbolResolve.ToString(), false);
+            slotMachineManagers.racking_manager.rackEnd -= CloseBigWinDisplay;
         }
 
         internal async Task isAnimatorThruStateAndAtPauseState(Animator multiplier, string state)
@@ -1323,15 +1301,15 @@ namespace Slot_Engine.Matrix
 
         private void SetOverridesBasedOnTiers()
         {
-            Debug.Log(String.Format("slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank  = {0} slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 = {1} slot_machine_managers.paylines_manager.GetTotalWinAmount() = {2}", slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank, slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9, slot_machine_managers.paylines_manager.GetTotalWinAmount()));
-            if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
-                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
+            Debug.Log(String.Format("slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank  = {0} slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 = {1} slot_machine_managers.paylines_manager.GetTotalWinAmount() = {2}", slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank, slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9, slotMachineManagers.paylines_manager.GetTotalWinAmount()));
+            if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9 ||
+                slotMachineManagers.paylines_manager.GetTotalWinAmount() > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
             {
                 Debug.Log("Present Big Win First");
                 SetAnimatorOverrideControllerTo(ref character, ref characterTier,2);
             }
-            else if (slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bank > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
-                slot_machine_managers.paylines_manager.GetTotalWinAmount() > slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
+            else if (slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bank > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
+                slotMachineManagers.paylines_manager.GetTotalWinAmount() > slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
             {
                 Debug.Log("Presenting Medium win");
                 SetAnimatorOverrideControllerTo(ref character, ref characterTier, 1);
@@ -1363,11 +1341,11 @@ namespace Slot_Engine.Matrix
 
         private async Task StartAnimatorSpinAndSpinState()
         {
-            SetAllAnimatorsTriggerTo(supported_triggers.SpinStart, true);
+            SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.StartSpin, true);
             await isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
             await isAllSlotSubAnimatorsReady("Idle_Outro");
             //Tell the spin manager to start spinning - animator is ready
-            slot_machine_managers.spin_manager.SetSpinStateTo(SpinStates.spin_start);
+            slotMachineManagers.spin_manager.SetSpinStateTo(SpinStates.spin_start);
         }
 
         private async Task isAllSlotSubAnimatorsReady(string state)
@@ -1394,9 +1372,29 @@ namespace Slot_Engine.Matrix
 
         internal bool CheckForWin()
         {
-            return slot_machine_managers.paylines_manager.winning_paylines.Length > 0 ? true : false;
+            return slotMachineManagers.evaluationManager.ReturnWinningObjects().Length > 0 ? true : false;
         }
-        internal async Task isAllAnimatorsThruState(string state)
+        internal async Task isAllSlotAnimatorsThruState(string state)
+        {
+            await isAllAnimatorsThruState( GetAllSlotAnimators(), state);
+        }
+
+        private Animator[] GetAllSlotAnimators()
+        {
+            List<Animator> output = new List<Animator>();
+            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            {
+                reel_strip_managers[reel].AddSlotAnimatorsToList(ref output);
+            }
+            return output.ToArray();
+        }
+
+        internal async Task isAllMainAnimatorsThruState(string state)
+        {
+            await isAllAnimatorsThruState(_slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync, state);
+        }
+
+        internal async Task isAllAnimatorsThruState(Animator[] animators, string state)
         {
             //Check all animators are on given state before continuing
             bool is_all_animators_resolved = false;
@@ -1405,13 +1403,13 @@ namespace Slot_Engine.Matrix
             bool wait = true;
             while (!is_all_animators_resolved)
             {
-                for (int state_machine = 0; state_machine < _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync.Length; state_machine++)
+                for (int state_machine = 0; state_machine < animators.Length; state_machine++)
                 {
-                    state_info = _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync[state_machine].GetCurrentAnimatorStateInfo(0);
+                    state_info = animators[state_machine].GetCurrentAnimatorStateInfo(0);
 
                     while (wait)
                     {
-                        state_info = _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync[state_machine].GetCurrentAnimatorStateInfo(0);
+                        state_info = animators[state_machine].GetCurrentAnimatorStateInfo(0);
                         Debug.Log(String.Format("Current State Normalized Time = {0} State Checking = {1} State Name = {2}", state_info.normalizedTime, state, state_info.IsName(state) ? state : "Something Else"));
                         //Check if time has gone thru
                         if (!state_info.IsName(state))
@@ -1424,11 +1422,12 @@ namespace Slot_Engine.Matrix
                         }
                     }
                     Debug.Log("All States Resolved");
-                    if (state_machine == _slot_machine_managers.animator_statemachine_master.animator_state_machines.state_machines_to_sync.Length - 1)
+                    if (state_machine == animators.Length - 1)
                         is_all_animators_resolved = true;
                 }
             }
         }
+
         internal async Task isAllAnimatorsThruStateAndAtPauseState(Animator[] animators,string state)
         {
             //Check all animators are on given state before continuing
@@ -1530,22 +1529,22 @@ namespace Slot_Engine.Matrix
 
         private void ReduceFreeSpinBy(int amount)
         {
-            if(slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
+            if(slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins > 0)
             {
-                slot_machine_managers.machine_info_manager.SetFreeSpinsTo(slot_machine_managers.machine_info_manager.machineInfoScriptableObject.freespins - amount);
+                slotMachineManagers.machine_info_manager.SetFreeSpinsTo(slotMachineManagers.machine_info_manager.machineInfoScriptableObject.freespins - amount);
             }
         }
 
-        internal void SetAllAnimatorsTriggerTo(supported_triggers trigger, bool v)
+        internal void SetAllAnimatorsTriggerTo(supportedAnimatorTriggers trigger, bool v)
         {
             if(v)
             {
-                slot_machine_managers.animator_statemachine_master.SetAllTriggersTo(trigger);
+                slotMachineManagers.animator_statemachine_master.SetAllTriggersTo(trigger);
                 SetSlotsAnimatorTriggerTo(trigger);
             }
             else
             {
-                slot_machine_managers.animator_statemachine_master.ResetAllTrigger(trigger);
+                slotMachineManagers.animator_statemachine_master.ResetAllTrigger(trigger);
                 ResetSlotsAnimatorTrigger(trigger);
             }
         }
@@ -1569,7 +1568,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void SetSlotsAnimatorTriggerTo(supported_triggers slot_to_trigger)
+        private void SetSlotsAnimatorTriggerTo(supportedAnimatorTriggers slot_to_trigger)
         {
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
@@ -1581,7 +1580,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void ResetSlotsAnimatorTrigger(supported_triggers slot_to_trigger)
+        private void ResetSlotsAnimatorTrigger(supportedAnimatorTriggers slot_to_trigger)
         {
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
@@ -1601,7 +1600,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetPlayerWalletTo(float to_value)
         {
-            slot_machine_managers.machine_info_manager.SetPlayerWalletTo(to_value);
+            slotMachineManagers.machine_info_manager.SetPlayerWalletTo(to_value);
         }
 
         internal void SetReelInfoNumbers()
@@ -1672,14 +1671,14 @@ namespace Slot_Engine.Matrix
 
         internal int GetRollupIndexFromAmountToRack(double amountToRack)
         {
-            float betAmount = slot_machine_managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts[slot_machine_managers.machine_info_manager.machineInfoScriptableObject.current_bet_amount];
+            float betAmount = slotMachineManagers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts[slotMachineManagers.machine_info_manager.machineInfoScriptableObject.current_bet_amount];
             int index = 0;
             while(amountToRack > betAmount)
             {
                 index += 1;
                 amountToRack -= betAmount;
                 //Big win if we are over the total rollups present
-                if (index == slot_machine_managers.soundManager.machineSoundsReference.rollups.Length -1)
+                if (index == slotMachineManagers.soundManager.machineSoundsReference.rollups.Length -1)
                     break;
             }
             return index;

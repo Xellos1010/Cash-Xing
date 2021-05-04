@@ -116,7 +116,7 @@ namespace Slot_Engine.Matrix.Managers
 
         private async Task SymbolAnimatorsAtEndOfState(string state)
         {
-            await matrix.WaitForSymbolsStateEndAndPause(state);
+            await matrix.WaitForSymbolToResolveState(state);
         }
 
         /// <summary>

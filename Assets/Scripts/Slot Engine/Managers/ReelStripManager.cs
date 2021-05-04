@@ -786,5 +786,13 @@ namespace Slot_Engine.Matrix
                 slots_in_reel[slot].SetStateMachineAnimators();
             }
         }
+
+        internal void AddSlotAnimatorsToList(ref List<Animator> output)
+        {
+            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            {
+                slots_in_reel[slot].AddAnimatorsToList(ref output);
+            }
+        }
     }
 }

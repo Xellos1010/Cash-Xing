@@ -79,7 +79,7 @@ namespace Slot_Engine.Matrix
             Debug.Log(String.Format("Starting check for winning paylines from node {0}", node_info.Print()));
             //Check all connected nodes for a win using dfs (depth first search) search
             CheckConnectedNodesForWin(ref node_info, ref connected_nodes_struct, ref evaluationObject, ref winning_paylines, linewin_symbol);
-            evaluationObject.winningSymbols.Clear();
+            evaluationObject.winningEvaluationNodes.Clear();
             return winning_paylines.ToArray();
         }
         private string PrintIntIntArray(int[][] symbols_configuration)
@@ -172,10 +172,10 @@ namespace Slot_Engine.Matrix
                 AddWinningSymbol(currentDisplaySymbol.primary_symbol, ref evaluationObject, ref nodeToCheck.node_info);
 
                 //Current payline index - to remove symbol from payline after checking later nodes
-                int winningSymbolIndex = evaluationObject.winningSymbols.Count - 1;
+                int winningSymbolIndex = evaluationObject.winningEvaluationNodes.Count - 1;
 
                 //There is a match - move to the next node if the winning symbols don't equal total columns
-                if (evaluationObject.winningSymbols.Count < evaluationObject.gridConfiguration.Length)
+                if (evaluationObject.winningEvaluationNodes.Count < evaluationObject.gridConfiguration.Length)
                 {
                     //Check each connected node
                     CheckConnectedNodesForWin(ref nodeToCheck.node_info, ref nodeToCheck.connected_nodes_struct, ref evaluationObject, ref winning_paylines, nextDisplaySymbol);
@@ -183,16 +183,16 @@ namespace Slot_Engine.Matrix
                 else
                 {
                     //Reached the end of the payline - add this payline and override others - remove symbol and start down next tree
-                    InitializeAndAddDynamicWinningPayline(nodeToCheck, ref evaluationObject.winningSymbols, ref winning_paylines);
+                    InitializeAndAddDynamicWinningPayline(nodeToCheck, ref evaluationObject.winningEvaluationNodes, ref winning_paylines);
                 }
                 //Remove the winning Symbol when done evaluating all possible configuration paths after this node so you can evaluate next node in supported configuration sequence
-                RemoveWinningSymbol(ref evaluationObject.winningSymbols, winningSymbolIndex);
+                RemoveWinningSymbol(ref evaluationObject.winningEvaluationNodes, winningSymbolIndex);
             }
             else
             {
-                if (evaluationObject.winningSymbols.Count >= 3)
+                if (evaluationObject.winningEvaluationNodes.Count >= 3)
                 {
-                    InitializeAndAddDynamicWinningPayline(nodeToCheck, ref evaluationObject.winningSymbols, ref winning_paylines);
+                    InitializeAndAddDynamicWinningPayline(nodeToCheck, ref evaluationObject.winningEvaluationNodes, ref winning_paylines);
                 }
             }
         }
@@ -210,11 +210,11 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void InitializeAndAddDynamicWinningPayline(SuffixTreeNodes suffix_tree_node, ref List<WinningNode> winning_symbols, ref List<WinningPayline> winning_paylines)
+        private void InitializeAndAddDynamicWinningPayline(SuffixTreeNodes suffix_tree_node, ref List<EvaluationNode> winning_symbols, ref List<WinningPayline> winning_paylines)
         {
             //Debug.Log(String.Format("Payline {0} won!", PrintDynamicPayline(ref winning_symbols)));
             int[] payline = new int[winning_symbols.Count];
-            List<WinningNode> winning_symbol_row = new List<WinningNode>();
+            List<EvaluationNode> winning_symbol_row = new List<EvaluationNode>();
             for (int symbol = 0; symbol < winning_symbols.Count; symbol++)
             {
                 payline[symbol] = winning_symbols[symbol].nodeInfo.row;
@@ -223,7 +223,7 @@ namespace Slot_Engine.Matrix
             AddDynamicWinningPayline(payline, winning_symbol_row, suffix_tree_node.left_right, ref winning_paylines);
         }
 
-        internal void AddDynamicWinningPayline(int[] payline, List<WinningNode> matching_symbols_list, bool left_right, ref List<WinningPayline> winning_paylines)
+        internal void AddDynamicWinningPayline(int[] payline, List<EvaluationNode> matching_symbols_list, bool left_right, ref List<WinningPayline> winning_paylines)
         {
             Payline payline_won = new Payline(payline, left_right);
             WinningPayline new_winning_payline = new WinningPayline(payline_won, matching_symbols_list.ToArray());
@@ -317,7 +317,7 @@ namespace Slot_Engine.Matrix
             return payline1.payline_configuration.payline.Length > payline2.payline_configuration.payline.Length ? payline2.payline_configuration.payline : payline1.payline_configuration.payline;
         }
 
-        private string PrintDynamicPayline(ref List<WinningNode> winning_symbols)
+        private string PrintDynamicPayline(ref List<EvaluationNode> winning_symbols)
         {
             int[] payline = new int[winning_symbols.Count];
             int[] winning_symbol_row = new int[winning_symbols.Count];
@@ -333,7 +333,7 @@ namespace Slot_Engine.Matrix
                 );
         }
 
-        private void RemoveWinningSymbol(ref List<WinningNode> winning_symbols, int index)
+        private void RemoveWinningSymbol(ref List<EvaluationNode> winning_symbols, int index)
         {
             //Debug.Log(String.Format("Removing winning symbol {0}", winning_symbols[index]));
             winning_symbols.RemoveAt(index);
@@ -347,7 +347,7 @@ namespace Slot_Engine.Matrix
         private void AddWinningSymbol(int symbol, ref EvaluationObjectStruct evaluationObject, ref SuffixTreeNodeInfo suffix_tree_node_info)
         {
             ////Debug.Log(String.Format("Adding winning symbol {0} from node {1}", symbol, suffix_tree_node_info.Print()));
-            evaluationObject.winningSymbols.Add(new WinningNode(suffix_tree_node_info, symbol));
+            evaluationObject.winningEvaluationNodes.Add(new EvaluationNode(suffix_tree_node_info, symbol));
         }
 
         internal void InitializeNextNodes(int current_column, ref ReelStripStructDisplayZone[] display_zones, ref SuffixTreeNodes parent_node, bool left_right)

@@ -181,7 +181,7 @@ namespace Slot_Engine.Matrix.Managers
         internal void SetReelsLastConfigurationAndSpin()
         {
             //Add configuration to the sequence to trigger feature
-            matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(GameStates.baseGame,matrix.slotMachineManagers.endConfigurationManager.endConfigurationsScriptableObject.currentReelstripConfiguration);
+            matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame,matrix.slotMachineManagers.endConfigurationManager.endConfigurationsScriptableObject.currentReelstripConfiguration);
             //Go through interaction controller to disable slamming during transition to idle_outro
             matrix.slotMachineManagers.interaction_controller.CheckStateToSpinSlam();
         }
@@ -199,7 +199,7 @@ namespace Slot_Engine.Matrix.Managers
                             new NodeDisplaySymbol(UnityEngine.Random.Range(0,9))
                 };
             }
-                matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(GameStates.baseGame, configuration);
+                matrix._slot_machine_managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame, configuration);
             matrix.slotMachineManagers.interaction_controller.CheckStateToSpinSlam();
 
         }
@@ -291,7 +291,7 @@ namespace Slot_Engine.Matrix.Managers
                     await matrix.isAllAnimatorsThruStateAndAtPauseState("Idle_Outro");
                     Debug.Log("Setting Animation Controller to SpinStart");
                     matrix.SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, true);
-                    await matrix.isAllAnimatorsThruState("Idle_Outro");
+                    await matrix.isAllMainAnimatorsThruState("Idle_Outro");
                     await matrix.isAllSlotAnimatorsThruState("Idle_Outro");
                     StateManager.SetStateTo(States.Spin_Intro);
                     //Start the reels spinning

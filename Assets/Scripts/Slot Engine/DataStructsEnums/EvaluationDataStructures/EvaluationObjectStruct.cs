@@ -28,7 +28,7 @@ public struct EvaluationObjectStruct
     /// Winning Symbol Nodes
     /// </summary>
     [SerializeField]
-    public List<WinningNode> winningSymbols;
+    public List<EvaluationNode> winningEvaluationNodes;
     [SerializeField]
     internal Dictionary<Features, List<SuffixTreeNodeInfo>> featureEvaluationActiveCount;
 
@@ -54,7 +54,7 @@ public struct EvaluationObjectStruct
 
     internal void InitializeWinningSymbolsFeaturesActiveCollections()
     {
-        winningSymbols = new List<WinningNode>();
+        winningEvaluationNodes = new List<EvaluationNode>();
     }
 
     internal bool? ContainsItemWithFeature<T>(Features featureName, ref SlotEvaluationScriptableObject slotEvaluationActivated)

@@ -17,6 +17,7 @@ public enum supportedAnimatorBools
     FeatureTrigger,
     SymbolResolve,
     LoopPaylineWins,
+    Compact,
     End
 }
 

@@ -83,9 +83,9 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                         }
                         if (item.Value.Count > 0)
                         {
-                            if (StateManager.enCurrentMode != GameStates.freeSpin)
+                            if (StateManager.enCurrentMode != GameModes.freeSpin)
                             {
-                                if (StateManager.enCurrentMode == GameStates.baseGame) //Can Only apply overlay feature in base-game
+                                if (StateManager.enCurrentMode == GameModes.baseGame) //Can Only apply overlay feature in base-game
                                     StateManager.SetFeatureActiveTo(Features.multiplier, true);
                                 EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects).nodesActivatingEvaluationConditions = item.Value;
                             }
@@ -121,7 +121,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
 
         private void BuildWinningSymbolNodes(ref List<WinningObject> winningPaylines)
         {
-            HashSet<WinningNode> winningNodes = new HashSet<WinningNode>();
+            HashSet<EvaluationNode> winningNodes = new HashSet<EvaluationNode>();
             for (int payline = 0; payline < winningPaylines.Count; payline++)
             {
                 for (int node = 0; node < winningPaylines[payline].winningNodes.Length; node++)
@@ -129,9 +129,9 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                     winningNodes.Add(winningPaylines[payline].winningNodes[node]);
                 }
             }
-            if (evaluationUsed.winningSymbols == null)
-                evaluationUsed.winningSymbols = new List<WinningNode>();
-            evaluationUsed.winningSymbols.AddRange(winningNodes);
+            if (evaluationUsed.winningEvaluationNodes == null)
+                evaluationUsed.winningEvaluationNodes = new List<EvaluationNode>();
+            evaluationUsed.winningEvaluationNodes.AddRange(winningNodes);
         }
 
         public override int? ReturnEvaluationObjectSupportedRootCount()

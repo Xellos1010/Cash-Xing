@@ -320,7 +320,7 @@ namespace Slot_Engine.Matrix
         private void ToggleLayout()
         {
             compactExpandedToggle = !compactExpandedToggle;
-            compactExpandeedLayoutController.SetBool(supported_bools.Compact.ToString(), compactExpandedToggle);
+            compactExpandeedLayoutController.SetBool(supportedAnimatorBools.Compact.ToString(), compactExpandedToggle);
             locked = false;
         }
 

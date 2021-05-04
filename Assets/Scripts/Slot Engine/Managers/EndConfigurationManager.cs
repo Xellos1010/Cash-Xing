@@ -203,14 +203,14 @@ namespace Slot_Engine.Matrix
         public NodeDisplaySymbol GetRandomWeightedSymbol(GameModes currentMode)
         {
             NodeDisplaySymbol output = new NodeDisplaySymbol();
-            int symbol = matrix.symbol_weights_per_state_dictionary[StateManager.enCurrentMode].intDistribution.Draw();//symbol_weights_per_state[currentMode].intDistribution.Draw();
+            int symbol = matrix.DrawRandomSymbol();//symbol_weights_per_state[currentMode].intDistribution.Draw();
             if (matrix.isSymbolOverlay(symbol))
             {
                 output.SetOverlaySymbolTo(symbol);
                 output.AddFeaturesTo(matrix.GetSymbolFeatures(symbol));
                 while (matrix.isSymbolOverlay(symbol))
                 {
-                    symbol = matrix.symbol_weights_per_state_dictionary[StateManager.enCurrentMode].intDistribution.Draw();//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw();
+                    symbol = matrix.DrawRandomSymbol();//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw();
                     //Set Overlay feature in list and freespin
                 }
             }

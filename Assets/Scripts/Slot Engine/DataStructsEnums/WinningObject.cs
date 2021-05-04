@@ -9,7 +9,7 @@ using UnityEngine;
 public partial class WinningObject
 {
     [SerializeField]
-    public WinningNode[] winningNodes;
+    public EvaluationNode[] winningNodes;
 
     internal bool ContainsNode(SuffixTreeNodeInfo nodeInfo)
     {

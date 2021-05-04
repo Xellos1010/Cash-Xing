@@ -213,7 +213,19 @@ namespace Slot_Engine.Matrix.Managers
             }
             return output.ToArray();
         }
+        internal WinningObject[] ReturnWinningObjects()
+        {
+            List<WinningObject> output = new List<WinningObject>();
+            WinningObject[] temp;
+            //TODO Check that T pass is Subclass or same class as WinningObject
+            for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
+            {
+                output.AddRange(coreEvaluationObjects[coreEvaluationObject].ReturnWinningObjects());
+            }
 
+            Debug.Log($"Returning {output.Count}");
+            return output.ToArray();
+        }
         internal WinningPayline[] ReturnWinningObjectsAsWinningPaylines()
         {
             List<WinningPayline> output = new List<WinningPayline>();
@@ -232,6 +244,36 @@ namespace Slot_Engine.Matrix.Managers
             }
             
             Debug.Log($"Returning {output.Count}");
+            return output.ToArray();
+        }
+
+        internal bool IsSymbolFeatureSymbol(SymbolObject symbolObject)
+        {
+            //for every slot evaluation object see which 
+            bool output = false;
+            for (int evaluator = 0; evaluator < slotEvaluationObjects.Length; evaluator++)
+            {
+                if (slotEvaluationObjects[evaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                {
+                    output = true;
+                    break;
+                }
+            }
+            return output;
+        }
+
+        internal Features[] GetSymbolFeatures(SymbolObject symbolObject)
+        {
+            //for every slot evaluation object see which 
+            List<Features> output = new List<Features>();
+            for (int evaluator = 0; evaluator < slotEvaluationObjects.Length; evaluator++)
+            {
+                if (slotEvaluationObjects[evaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                {
+                    if(!output.Contains(slotEvaluationObjects[evaluator].featureName))
+                        output.Add(slotEvaluationObjects[evaluator].featureName);
+                }
+            }
             return output.ToArray();
         }
     }
