@@ -112,17 +112,17 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal SpinStates current_spin_state;
         //the matrix associated with the reel_strip
-        internal Matrix matrix
+        internal ReelStripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = transform.GetComponentInParent<Matrix>();
+                    _matrix = transform.GetComponentInParent<ReelStripConfigurationObject>();
                 return _matrix;
             }
         }
         [SerializeField]
-        internal Matrix _matrix;
+        internal ReelStripConfigurationObject _matrix;
         /// <summary>
         /// Slot managers in the reel strip
         /// </summary>
@@ -328,7 +328,7 @@ namespace Slot_Engine.Matrix
         /// <param name="before_display_zones_slot_obejcts">number of slot objects to generate before first display_zone</param>
         /// <param name="after_display_zones_position_padding">number of empty position slots to generate after display zones</param>
         /// <returns></returns>
-        public async Task SetReelStripInfoTo(ReelStripStructDisplayZone[] display_zones, Matrix matrix_parent, int before_display_zones_slot_obejcts, int after_display_zones_position_padding)
+        public async Task SetReelStripInfoTo(ReelStripStructDisplayZone[] display_zones, ReelStripConfigurationObject matrix_parent, int before_display_zones_slot_obejcts, int after_display_zones_position_padding)
         {
             //Set the matrix parent to get settings from
             this._matrix = matrix_parent;
@@ -464,10 +464,10 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        internal void SetSpinParametersTo(ReelStripSpinParametersScriptableObject spin_parameters)
+        internal void SetSpinParametersTo(ReelStripSpinDirectionalConstantScriptableObject spin_parameters)
         {
             ReelStripStruct new_reelstrip_info = reelstrip_info;
-            new_reelstrip_info.spin_parameters = spin_parameters;
+            new_reelstrip_info.spinParameters = spin_parameters;
             reelstrip_info = new_reelstrip_info;
         }
 
@@ -498,27 +498,27 @@ namespace Slot_Engine.Matrix
                 slots_in_reel[slot] = GenerateSlotObject(slot);
             }
         }
-
-        public void UpdatePositionInPathForDirection()
-        {
-            //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
-            if(reelstrip_info.spin_parameters.reel_spin_direction.y < 0)
-                for (int i = 0; i < positions_in_path_v3_local.Length; i++)
-                {
-                    float positions_in_path_v3_y = -Math.Abs(positions_in_path_v3_local[i].y);
-                    positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x),positions_in_path_v3_y,0);
-                }
-            //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
-            if (reelstrip_info.spin_parameters.reel_spin_direction.y > 0)
-                for (int i = 0; i < positions_in_path_v3_local.Length; i++)
-                {
-                    positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x), Math.Abs(positions_in_path_v3_local[i].y), 0);
-                }
-            for (int i = 0; i < slots_in_reel.Length; i++)
-            {
-                slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInReel(i);
-            }
-        }
+        
+        //public void UpdatePositionInPathForDirection()
+        //{
+        //    //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
+        //    if(reelstrip_info.spinParameters.reel_spin_direction.y < 0)
+        //        for (int i = 0; i < positions_in_path_v3_local.Length; i++)
+        //        {
+        //            float positions_in_path_v3_y = -Math.Abs(positions_in_path_v3_local[i].y);
+        //            positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x),positions_in_path_v3_y,0);
+        //        }
+        //    //Right now only support up or down. If direction y > 0 then spin up, < 0 spin down
+        //    if (reelstrip_info.spinParameters.reel_spin_direction.y > 0)
+        //        for (int i = 0; i < positions_in_path_v3_local.Length; i++)
+        //        {
+        //            positions_in_path_v3_local[i] = new Vector3(Math.Abs(positions_in_path_v3_local[i].x), Math.Abs(positions_in_path_v3_local[i].y), 0);
+        //        }
+        //    for (int i = 0; i < slots_in_reel.Length; i++)
+        //    {
+        //        slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInReel(i);
+        //    }
+        //}
         /// <summary>
         /// 
         /// </summary>
@@ -553,7 +553,7 @@ namespace Slot_Engine.Matrix
             InitializeVarsForNewSpin();
 
             SetSpinStateTo(SpinStates.spin_start);
-            reel_spin_speed_current = reelstrip_info.spin_parameters.spin_speed_constant;
+            reel_spin_speed_current = reelstrip_info.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().spin_speed_constant;
 
             //TODO hooks for reel state machine
             for (int i = 0; i < slots_in_reel.Length; i++)
@@ -699,13 +699,14 @@ namespace Slot_Engine.Matrix
         internal Vector3 GenerateSlotPositionBasedOnPositionInReel(int position_in_reel)
         {
             //TODO Base on Spin Direction
-            Debug.Log(String.Format("reelstrip_info.reel_number = {0} slot size = ({1},{2}) matrix padding.x = {3}", reelstrip_info.reel_number, matrix.slot_size.x, matrix.slot_size.y, matrix.padding.x));
-            float x = reelstrip_info.reel_number * (matrix.slot_size.x + matrix.padding.x);
-            float y = -(position_in_reel * (matrix.slot_size.y + matrix.padding.y));
+            Debug.Log(String.Format("reelstrip_info.reel_number = {0} slot size = ({1},{2}) matrix padding.x = {3}", reelstrip_info.reel_number, matrix.configurationSettings.slotSize.x, matrix.configurationSettings.slotSize.y, matrix.configurationSettings.slotPadding.x));
+            float x = reelstrip_info.reel_number * (matrix.configurationSettings.slotSize.x + matrix.configurationSettings.slotPadding.x);
+            float y = -(position_in_reel * (matrix.configurationSettings.slotSize.y + matrix.configurationSettings.slotPadding.y));
             Debug.Log(string.Format("Local Position for slot {0} int reel {1} is ({2},{3},{4}) ",position_in_reel, transform.name,x.ToString(), y.ToString(),0));
             Vector3 return_position = new Vector3(x, y, 0);
             return return_position;
         }
+
         /// <summary>
         /// Sets the slots as referenced to the position in the reel
         /// </summary>

@@ -85,18 +85,18 @@ namespace Slot_Engine.Matrix
     [System.Serializable]
     public partial class EndConfigurationManager : MonoBehaviour
     {
-        internal Matrix matrix
+        internal ReelStripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
                     //TODO hardcoded - will change
-                    _matrix = transform.parent.parent.GetComponentInChildren<Matrix>();
+                    _matrix = transform.parent.parent.GetComponentInChildren<ReelStripConfigurationObject>();
                 return _matrix;
             }
         }
         [SerializeField]
-        private Matrix _matrix;
+        private ReelStripConfigurationObject _matrix;
         public EndConfigurationsScriptableObject endConfigurationsScriptableObject;
         /// <summary>
         /// The current reelstrip display configuration
@@ -173,7 +173,7 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data = new List<SpinConfigurationStorage>();
             for (int i = 0; i < amount; i++)
             {
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, matrix.reel_strip_managers).Result));
+                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, matrix.reelStripManagers).Result));
             }
         }
         internal Task<ReelStripSpinStruct[]> GenerateReelStrips(GameModes gameState, ReelStripManager[] reel_strip_managers)
@@ -269,7 +269,7 @@ namespace Slot_Engine.Matrix
             switch (feature)
             {
                 case Features.freespin:
-                    configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
+                    configuration = new ReelStripSpinStruct[matrix.reelStripManagers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
                         configuration[i].displaySymbols = new NodeDisplaySymbol[3]
@@ -288,7 +288,7 @@ namespace Slot_Engine.Matrix
                     AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 case Features.overlay:
-                    configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
+                    configuration = new ReelStripSpinStruct[matrix.reelStripManagers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
                         configuration[i].displaySymbols = new NodeDisplaySymbol[3]

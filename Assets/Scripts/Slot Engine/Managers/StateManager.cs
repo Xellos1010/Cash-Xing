@@ -21,6 +21,7 @@ public static class StateManager
     /// </summary>
     public static Features current_feature_active;
     internal static bool isInterupt;
+    internal static bool bonusGameTriggered;
 
     //State Switching Variables
     public delegate void GameModeDelegate(GameModes modeActivated);

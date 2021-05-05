@@ -71,17 +71,17 @@ namespace Slot_Engine.Matrix.Managers
             }
         }
         public PaylineRendererManager _payline_renderer_manager;
-        internal Matrix matrix
+        internal ReelStripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = GameObject.FindObjectOfType<Matrix>();
+                    _matrix = GameObject.FindObjectOfType<ReelStripConfigurationObject>();
                 return _matrix;
             }
         }
         [SerializeField]
-        private Matrix _matrix;
+        private ReelStripConfigurationObject _matrix;
 
         public CancellationToken cancelTaskToken;
         public Task cycle_paylines_task;
@@ -245,7 +245,7 @@ namespace Slot_Engine.Matrix.Managers
         internal void GenerateDynamicPaylinesFromMatrix()
         {
             dynamicPaylineObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.slotMachineManagers.evaluationManager.coreEvaluationObjects);
-            dynamicPaylineObject.GenerateDynamicPaylinesFromMatrix(ref matrix.reel_strip_managers);
+            dynamicPaylineObject.GenerateDynamicPaylinesFromMatrix(ref matrix.reelStripManagers);
         }
 
         internal void ShowDynamicPaylineRaw(int payline_to_show)

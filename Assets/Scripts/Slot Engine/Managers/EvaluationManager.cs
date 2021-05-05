@@ -38,7 +38,7 @@ namespace Slot_Engine.Matrix.Managers
                 if (GUILayout.Button("Generate Paylines from Matrix"))
                 {
                     //todo get matrix from script
-                    paylinesEvaluationObject.GenerateDynamicPaylinesFromMatrix(ref myTarget.matrix.reel_strip_managers);
+                    paylinesEvaluationObject.GenerateDynamicPaylinesFromMatrix(ref myTarget.matrix.reelStripManagers);
                     serializedObject.ApplyModifiedProperties();
                 }
 
@@ -230,7 +230,7 @@ namespace Slot_Engine.Matrix.Managers
                 output.AddRange(coreEvaluationObjects[coreEvaluationObject].ReturnWinningObjects());
             }
 
-            Debug.Log($"Returning {output.Count}");
+            //Debug.Log($"Returning {output.Count}");
             return output.ToArray();
         }
         internal WinningPayline[] ReturnWinningObjectsAsWinningPaylines()
@@ -250,7 +250,7 @@ namespace Slot_Engine.Matrix.Managers
                 }
             }
             
-            Debug.Log($"Returning {output.Count}");
+            //Debug.Log($"Returning {output.Count}");
             return output.ToArray();
         }
 

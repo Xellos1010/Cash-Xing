@@ -26,7 +26,7 @@ namespace Slot_Engine.Matrix
     /// A stackable display zone active display zones will be affected by payline evaluations. in-active zones will be omitted from paylien evaluations
     /// </summary>
     [Serializable]
-    public struct ReelStripStructDisplayZones
+    public struct ConfigurationStripStructDisplayZones
     {
         /// <summary>
         /// Padding before display zone
@@ -43,5 +43,11 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         public ReelStripStructDisplayZone[] reelstrip_display_zones; //regular 3x5 matrix needs 3 slots in reelstrip and active_payline_evalutation = true
+        /// <summary>
+        /// Type of Spin to use on this reel. Constant Lerp - Step 1 slot over time.
+        /// </summary>
+        [SerializeField]
+        public ReelStripSpinBaseScriptableObject spin_parameters;
+
     }
 }

@@ -41,16 +41,16 @@ namespace Slot_Engine.Matrix
 #endif
     public class ManagersReferenceScript : MonoBehaviour
     {
-        public Matrix matrix
+        public ReelStripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = transform.parent.GetComponentInChildren<Matrix>();
+                    _matrix = transform.parent.GetComponentInChildren<ReelStripConfigurationObject>();
                 return _matrix;
             }
         }
-        internal Matrix _matrix;
+        internal ReelStripConfigurationObject _matrix;
         public AnimatorStateMachineManager animator_statemachine_master
         {
             get

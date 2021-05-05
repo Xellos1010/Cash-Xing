@@ -11,11 +11,16 @@
 using System;
 using UnityEngine;
 
+public partial class ReelStripSpinBaseScriptableObject : ScriptableObject
+{
+
+}
+
 /// <summary>
 /// Creates the scriptable object for the reels spin parameters
 /// </summary>
 [CreateAssetMenu(fileName = "ReelStripSpinParameters", menuName = "BoomSportsScriptableObjects/ReelStripSpinParametersScriptableObject", order = 2)]
-public class ReelStripSpinParametersScriptableObject : ScriptableObject
+public class ReelStripSpinDirectionalConstantScriptableObject : ReelStripSpinBaseScriptableObject
 {
     /// <summary>
     /// Controls the direction of the spin

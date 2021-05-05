@@ -65,7 +65,7 @@ namespace Slot_Engine.Matrix.Managers
 
     public class SpinManager : MonoBehaviour
     {
-        public Matrix matrix
+        public ReelStripConfigurationObject matrix
         {
             get
             {
@@ -146,12 +146,15 @@ namespace Slot_Engine.Matrix.Managers
         /// <summary>
         /// Interrupts the spin and sets to spin outro state
         /// </summary>
-        internal async void InterruptSpin()
+        internal async Task InterruptSpin()
         {
-            Debug.Log("Matrix to interupt spin via spin manager");
-            await matrix.InterruptSpin();
+            matrix.SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinSlam, true);
+            Debug.Log("Slam Spin Set Waiting for Spin_Outro");
+            await matrix.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
+            Debug.Log("Waiting for Spin_Outro on all sot animators");
+            await matrix.isAllSlotAnimatorsReadyAndAtPauseState("Spin_Outro");
+            StateManager.SetStateTo(States.Spin_Outro);
         }
-
         //Engine Functions
         /// <summary>
         /// Start spinning the reels
@@ -189,7 +192,7 @@ namespace Slot_Engine.Matrix.Managers
         internal void TriggerSpinWin(int[] symbols, int numberOfSymbols)
         {
             ReelStripSpinStruct[] configuration = new ReelStripSpinStruct[0];
-            configuration = new ReelStripSpinStruct[matrix.reel_strip_managers.Length];
+            configuration = new ReelStripSpinStruct[matrix.reelStripManagers.Length];
             for (int i = 0; i < configuration.Length; i++)
             {
                 configuration[i].displaySymbols = new NodeDisplaySymbol[3]

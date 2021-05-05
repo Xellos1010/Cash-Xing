@@ -36,7 +36,7 @@ namespace Slot_Engine.Matrix
         [UnityEngine.SerializeField]
         public ReelStripStruct[] reelstrips;
 
-        public ReelStripsStruct(ReelStripStructDisplayZones[] display_zones_per_reel) : this()
+        public ReelStripsStruct(ConfigurationStripStructDisplayZones[] display_zones_per_reel) : this()
         {
             reelstrips = new ReelStripStruct[display_zones_per_reel.Length];
             for (int reel_number = 0; reel_number < reelstrips.Length; reel_number++)
@@ -68,7 +68,7 @@ namespace Slot_Engine.Matrix
         /// Holds information for spinning - direction speed etc
         /// </summary>
         [SerializeField]
-        internal ReelStripSpinParametersScriptableObject spin_parameters;
+        internal ReelStripSpinBaseScriptableObject spinParameters;
         /// <summary>
         /// Controls how many positions to generate after the display area for the slots to spin off-screen
         /// </summary>
@@ -131,7 +131,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        public ReelStripStruct(int reel_number, ReelStripStructDisplayZones display_zone) : this()
+        public ReelStripStruct(int reel_number, ConfigurationStripStructDisplayZones display_zone) : this()
         {
             this.reel_number = reel_number;
             this.display_zones = display_zone.reelstrip_display_zones;
@@ -144,9 +144,29 @@ namespace Slot_Engine.Matrix
             spin_info = reelStripStruct;
         }
 
-        internal void SetSpinParametersTo(ReelStripSpinParametersScriptableObject spin_parameters)
+        internal void SetSpinParametersTo(ReelStripSpinDirectionalConstantScriptableObject spinParameters)
         {
-            this.spin_parameters = spin_parameters;
+            this.spinParameters = spinParameters;
+        }
+
+        internal T GetSpinParametersAs<T>()
+        {
+            //object spinParameter = spinParameters;
+            return GetSpinParametersAs<T>(ref spinParameters);
+        }
+        /// <summary>
+        /// Gets the first instance of an evaluation object of sub-class
+        /// </summary>
+        /// <typeparam name="T">Type of evaluation manager to return</typeparam>
+        /// <returns>Type if in list or null if nothing</returns>
+        internal static T GetSpinParametersAs<T>(ref ReelStripSpinBaseScriptableObject baseSpinParameters)
+        {
+            object output = null;
+            if(baseSpinParameters.GetType() == typeof(T))
+            {
+                output = baseSpinParameters;
+            }
+            return (T)Convert.ChangeType(output, typeof(T)); ;
         }
     }
     /// <summary>

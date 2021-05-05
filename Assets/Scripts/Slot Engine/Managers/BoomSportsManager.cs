@@ -6,6 +6,6 @@ namespace Slot_Engine.Matrix.Managers
     public abstract class BoomSportsManager : MonoBehaviour
     {
         [SerializeField]
-        public Matrix matrix;
+        public ReelStripConfigurationObject matrix;
     }
 }

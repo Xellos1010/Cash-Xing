@@ -4,7 +4,7 @@ namespace Slot_Engine.Matrix
 {
     public class SoundManager : MonoBehaviour
     {
-        public Matrix matrix;
+        public ReelStripConfigurationObject matrix;
         public MachineSoundsReferenceScriptableObject machineSoundsReference;
 
         public AudioSource audioSource
@@ -24,10 +24,10 @@ namespace Slot_Engine.Matrix
         void OnEnable()
         {
             //Setup Reel Start and Stop Spin
-            for (int reel = 0; reel < matrix.reel_strip_managers.Length; reel++)
+            for (int reel = 0; reel < matrix.reelStripManagers.Length; reel++)
             {
-                matrix.reel_strip_managers[reel].reelStartSpin += SoundManager_reelStartSpin;
-                matrix.reel_strip_managers[reel].reelStopSpin += SoundManager_reelStopSpin;
+                matrix.reelStripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
+                matrix.reelStripManagers[reel].reelStopSpin += SoundManager_reelStopSpin;
             }
             matrix.slotMachineManagers.racking_manager.rackStart += Racking_manager_rackStart;
             matrix.slotMachineManagers.racking_manager.rackEnd += Racking_manager_rackEnd;
@@ -60,9 +60,9 @@ namespace Slot_Engine.Matrix
 
         void OnDisable()
         {
-            for (int reel = 0; reel < matrix.reel_strip_managers.Length; reel++)
+            for (int reel = 0; reel < matrix.reelStripManagers.Length; reel++)
             {
-                matrix.reel_strip_managers[reel].reelStartSpin += SoundManager_reelStartSpin;
+                matrix.reelStripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
             }
         }
 
