@@ -53,11 +53,11 @@ namespace Slot_Engine.Matrix
                 {
                     _payline_renderers = GetComponentsInChildren<PaylineRenderer>();
                 }
-                if (_payline_renderers.Length != matrix.reelStripManagers.Length - 1)
+                if (_payline_renderers.Length != matrix.stripManagers.Length - 1)
                 {
                     List<PaylineRenderer> renderers = new List<PaylineRenderer>();
                     renderers.AddRange(_payline_renderers);
-                    for (int i = 0; i < matrix.reelStripManagers.Length - 1; i++)
+                    for (int i = 0; i < matrix.stripManagers.Length - 1; i++)
                     {
                         renderers.Add(GenerateNewPaylineObject());
                     }
@@ -135,12 +135,12 @@ namespace Slot_Engine.Matrix
             //initialize the line positions list and 
             List<Vector3> linePositions;
             Payline toShowPayline = new Payline(payline_to_show.payline);
-            if(payline_to_show.payline.payline_configuration.payline.Length < matrix.reelStripManagers.Length)
+            if(payline_to_show.payline.payline_configuration.payline.Length < matrix.stripManagers.Length)
             {
                 List<int> paylineTemp = new List<int>();
                 paylineTemp.AddRange(toShowPayline.payline_configuration.payline);
                 int newNumber = paylineTemp[paylineTemp.Count-1];
-                for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.reelStripManagers.Length; paylineNode++)
+                for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.stripManagers.Length; paylineNode++)
                 {
                     paylineTemp.Add(newNumber);
                 }

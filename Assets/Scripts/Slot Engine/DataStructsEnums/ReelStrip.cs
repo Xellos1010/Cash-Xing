@@ -20,7 +20,7 @@ namespace Slot_Engine.Matrix
             NodeDisplaySymbol[] reel_spin_symbols = new NodeDisplaySymbol[slotsPerStrip];
             for (int i = 0; i < slotsPerStrip; i++)
             {
-                reel_spin_symbols[i] = endConfigurationManager.GetRandomWeightedSymbol(currentMode);
+                reel_spin_symbols[i] = endConfigurationManager.GetRandomWeightedSymbol(currentMode).Result;
             }
             return reel_spin_symbols;
         }
@@ -126,7 +126,7 @@ namespace Slot_Engine.Matrix
             {
                 for (int display_zone = 0; display_zone < display_zones.Length; display_zone++)
                 {
-                    output += display_zones[display_zone].slots_in_reelstrip_zone;
+                    output += display_zones[display_zone].positionsInZone;
                 }
             }
         }
@@ -134,7 +134,7 @@ namespace Slot_Engine.Matrix
         public ReelStripStruct(int reel_number, ConfigurationStripStructDisplayZones display_zone) : this()
         {
             this.reel_number = reel_number;
-            this.display_zones = display_zone.reelstrip_display_zones;
+            this.display_zones = display_zone.stripDisplayZone;
             this.padding_before = display_zone.padding_before;
             this.padding_after = display_zone.padding_after;
         }

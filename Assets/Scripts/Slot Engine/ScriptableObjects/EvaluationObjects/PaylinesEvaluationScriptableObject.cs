@@ -242,7 +242,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 ReelStripStructDisplayZone reel_display_zone = reel_strip_manager.reelstrip_info.display_zones[display_zone];
                 if (reel_display_zone.active_payline_evaluations)
                 {
-                    for (int slot = 0; slot < reel_display_zone.slots_in_reelstrip_zone; slot++)
+                    for (int slot = 0; slot < reel_display_zone.positionsInZone; slot++)
                     {
                         //Build my node
                         node = new SuffixTreeNodes(column, row, null, new SuffixTreeNodeInfo(-1, -1), left_right);
@@ -253,8 +253,8 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 }
                 else
                 {
-                    Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", reel_display_zone.slots_in_reelstrip_zone));
-                    for (int slot = 0; slot < reel_display_zone.slots_in_reelstrip_zone; slot++)
+                    Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", reel_display_zone.positionsInZone));
+                    for (int slot = 0; slot < reel_display_zone.positionsInZone; slot++)
                     {
                         //Register blank slot
                         Debug.Log(String.Format("Root Node {0} {1} not in active payzone", column, row));
@@ -294,7 +294,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                     return false;
                 if (display_zones[i].active_payline_evaluations)
                 {
-                    for (int slot = 0; slot < display_zones[i].slots_in_reelstrip_zone; slot++)
+                    for (int slot = 0; slot < display_zones[i].positionsInZone; slot++)
                     {
                         if (node == active_slot)
                         {
@@ -305,7 +305,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 }
                 else
                 {
-                    active_slot += display_zones[i].slots_in_reelstrip_zone;
+                    active_slot += display_zones[i].positionsInZone;
                 }
             }
             return false;

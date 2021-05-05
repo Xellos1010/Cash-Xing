@@ -24,7 +24,7 @@ namespace Slot_Engine.Matrix
         /// The Reel strip slot amount
         /// </summary>
         [SerializeField]
-        public int slots_in_reelstrip_zone;
+        public int positionsInZone;
         /// <summary>
         /// Is this an active zone for payline evaluations?
         /// </summary>

@@ -42,12 +42,35 @@ namespace Slot_Engine.Matrix
         /// This is where you can stack display zones that are affected or not affected by payline evaluations
         /// </summary>
         [SerializeField]
-        public ReelStripStructDisplayZone[] reelstrip_display_zones; //regular 3x5 matrix needs 3 slots in reelstrip and active_payline_evalutation = true
+        public ReelStripStructDisplayZone[] stripDisplayZone; //regular 3x5 matrix needs 3 slots in reelstrip and active_payline_evalutation = true
+        /// <summary>
+        /// strip display zone's total
+        /// </summary>
+        [SerializeField]
+        public int stripDisplayZonePositionsTotal
+        {
+            get
+            {
+                int output = 0;
+                for (int displayZone = 0; displayZone < stripDisplayZone.Length; displayZone++)
+                {
+                    output += stripDisplayZone[displayZone].positionsInZone;
+                }
+                return output;
+            }
+        }
         /// <summary>
         /// Type of Spin to use on this reel. Constant Lerp - Step 1 slot over time.
         /// </summary>
         [SerializeField]
         public ReelStripSpinBaseScriptableObject spin_parameters;
-
+        
+        internal int totalPositions
+        {
+            get
+            {
+                return padding_before + padding_before + stripDisplayZonePositionsTotal;
+            }
+        }
     }
 }

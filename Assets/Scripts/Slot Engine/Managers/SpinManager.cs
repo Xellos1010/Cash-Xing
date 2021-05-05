@@ -192,7 +192,7 @@ namespace Slot_Engine.Matrix.Managers
         internal void TriggerSpinWin(int[] symbols, int numberOfSymbols)
         {
             ReelStripSpinStruct[] configuration = new ReelStripSpinStruct[0];
-            configuration = new ReelStripSpinStruct[matrix.reelStripManagers.Length];
+            configuration = new ReelStripSpinStruct[matrix.stripManagers.Length];
             for (int i = 0; i < configuration.Length; i++)
             {
                 configuration[i].displaySymbols = new NodeDisplaySymbol[3]

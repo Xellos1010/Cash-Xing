@@ -67,7 +67,7 @@ namespace Slot_Engine.Matrix
                 }
                 if (GUILayout.Button("Update Slot objects and positions local world reference"))
                 {
-                    my_target.UpdateSlotObjectsAndPositions();
+                    my_target.UpdateStripPositions();
                 }
                 if (GUILayout.Button("Update sub state machines slot managers"))
                 {
@@ -127,7 +127,7 @@ namespace Slot_Engine.Matrix
         /// Slot managers in the reel strip
         /// </summary>
         [SerializeField] //If base inspector enabled can check references
-        internal SlotManager[] slots_in_reel;
+        internal SlotManager[] slotsInStrip;
 
         /// <summary>
         /// Distance for animation to travel when movement is enabled
@@ -139,31 +139,13 @@ namespace Slot_Engine.Matrix
         /// Holds the reel strip to cycle thru symbols for spin and end symbol configuration for reel
         /// </summary>
         [SerializeField]
-        internal ReelStripStruct reelstrip_info
-        {
-            get
-            {
-                return _reelstrip_info;
-            }
-            set
-            {
-                ReelStripStruct temp = _reelstrip_info;
-                _reelstrip_info = value;
-                if (_reelstrip_info.total_positions != temp.total_positions)
-                {
-                    UpdateSlotObjectsAndPositions();
-                }
-            }
-        }
+        internal ReelStripStruct reelstrip_info;
 
-        internal void UpdateSlotObjectsAndPositions()
+        internal void UpdateStripPositions()
         {
+            Debug.LogWarning($"reelstrip_info.total_positions = {reelstrip_info.total_positions} reelstrip_info.total_slot_objects = {reelstrip_info.total_slot_objects}");
             UpdateLocalPositionsInPath(reelstrip_info.total_positions);
-            UpdateSlotObjectsInReelStrip(reelstrip_info.total_slot_objects);
         }
-
-        [SerializeField]
-        internal ReelStripStruct _reelstrip_info;
 
         /// <summary>
         /// On Spin Start uses a curve editor to determine speed over time - 0 -> -100 -> 0 -> +200 for example over for seconds is ease out
@@ -193,20 +175,20 @@ namespace Slot_Engine.Matrix
             get
             {
                 bool is_spinning = true;
-                if (slots_in_reel != null)
+                if (slotsInStrip != null)
                 {
-                    for (int slot = 0; slot <= slots_in_reel.Length; slot++)
+                    for (int slot = 0; slot <= slotsInStrip.Length; slot++)
                     {
-                        if (slot < slots_in_reel.Length)
+                        if (slot < slotsInStrip.Length)
                         {
-                            if (slots_in_reel[slot] != null)
+                            if (slotsInStrip[slot] != null)
                             {
-                                if (slot == slots_in_reel.Length)
+                                if (slot == slotsInStrip.Length)
                                 {
                                     is_spinning = false;
                                     break;
                                 }
-                                if (slots_in_reel[slot].movement_enabled)
+                                if (slotsInStrip[slot].movement_enabled)
                                 {
                                     break;
                                 }
@@ -342,6 +324,7 @@ namespace Slot_Engine.Matrix
         internal void SetReelConfigurationTo(ReelStripStruct reelstrip_info)
         {
             this.reelstrip_info = reelstrip_info;
+            UpdateStripPositions();
         }
         /// <summary>
         /// updates number of positions to store reference for based on reel length
@@ -354,70 +337,18 @@ namespace Slot_Engine.Matrix
             //get slots_in_reel: destroy slots if to many - add slots if to few
             for (int position_in_reel = 0; position_in_reel < positions_in_path_v3_local.Length; position_in_reel++)
             {
-                positions_in_path_v3_local[position_in_reel] = GenerateSlotPositionBasedOnPositionInReel(position_in_reel);
-            }
-        }
-
-        /// <summary>
-        /// Set the number of slot objects in reel
-        /// </summary>
-        /// <param name="display_zones">Display Slots in reel</param>
-        /// <param name="before_display_slots">amount of slots before display slots to generate objects for - minimum 1</param>
-        internal void UpdateSlotObjectsInReelStrip(int slots_in_reelstrip)
-        {
-            List<SlotManager> slots_in_reel = new List<SlotManager>();
-            if (this.slots_in_reel == null)
-            {
-                SlotManager[] slots_initialized = transform.GetComponentsInChildren<SlotManager>();
-                if (slots_initialized.Length > 0)
-                {
-                    this.slots_in_reel = slots_initialized;
-                }
-                else
-                {
-                    this.slots_in_reel = new SlotManager[0];
-                }
-            }
-            slots_in_reel.AddRange(this.slots_in_reel);
-
-            int total_slot_objects_required = slots_in_reelstrip;
-
-            SetSlotObjectsInReelTo(ref slots_in_reel, total_slot_objects_required);
-
-            this.slots_in_reel = slots_in_reel.ToArray();
-        }
-
-        internal void SetSlotObjectsInReelTo(ref List<SlotManager> slots_in_reel, int total_slot_objects_required)
-        {
-
-            //Do we need to add or remove display slot objects on reelstrip
-            bool add_substract = slots_in_reel.Count < total_slot_objects_required ? true : false;
-
-            //Either remove from end or add until we have the amount of display and before display slot obejcts
-            for (int slot_to_update = add_substract ? slots_in_reel.Count : slots_in_reel.Count - 1; //Set to current count to add or count - 1 to subtract
-                add_substract ? slot_to_update < total_slot_objects_required : slot_to_update >= total_slot_objects_required; // either add until you have required slot objects or remove
-                slot_to_update += add_substract ? 1 : -1) //count up or down
-            {
-                if (add_substract)
-                {
-                    slots_in_reel.Add(GenerateSlotObject(slot_to_update));
-                }
-                else
-                {
-                    DestroyImmediate(slots_in_reel[slot_to_update].gameObject);
-                    slots_in_reel.RemoveAt(slot_to_update);
-                }
+                positions_in_path_v3_local[position_in_reel] = GetSlotPositionInStrip(position_in_reel);
             }
         }
 
         internal bool AreSlotsInEndPosition()
         {
             bool output = false;
-            for (int i = 0; i < slots_in_reel.Length; i++)
+            for (int i = 0; i < slotsInStrip.Length; i++)
             {
-                if(slots_in_reel[i].slot_in_end_position)
+                if(slotsInStrip[i].slot_in_end_position)
                 {
-                    if (i == slots_in_reel.Length - 1)
+                    if (i == slotsInStrip.Length - 1)
                         output = true;
                 }
             }
@@ -438,10 +369,10 @@ namespace Slot_Engine.Matrix
             List<SlotManager> output = new List<SlotManager>();
             for (int position_to_check = 0; position_to_check < positions_in_path_v3_local.Length; position_to_check++)
             {
-                for (int slot = 0; slot < slots_in_reel.Length; slot++)
+                for (int slot = 0; slot < slotsInStrip.Length; slot++)
                 {
-                    if(slots_in_reel[slot].transform.localPosition == positions_in_path_v3_local[position_to_check])
-                        output.Add(slots_in_reel[slot]);
+                    if(slotsInStrip[slot].transform.localPosition == positions_in_path_v3_local[position_to_check])
+                        output.Add(slotsInStrip[slot]);
                 }
             }
             return output;
@@ -470,34 +401,6 @@ namespace Slot_Engine.Matrix
             new_reelstrip_info.spinParameters = spin_parameters;
             reelstrip_info = new_reelstrip_info;
         }
-
-        /// <summary>
-        /// Generates a Slot Gameobject
-        /// </summary>
-        /// <param name="slot_position_in_reel">the slot in reel generating the object for</param>
-        /// <returns></returns>
-        private SlotManager GenerateSlotObject(int slot_position_in_reel)
-        {
-            //Local positions are already generated by this point
-            Vector3 slot_position_on_path = positions_in_path_v3_local[slot_position_in_reel];
-            SlotManager generated_slot = InstantiateSlotGameobject(slot_position_in_reel, this, slot_position_on_path, Vector3.one,Quaternion.identity);
-            generated_slot.reel_parent = this;
-            //Generate a random symbol prefab
-            generated_slot.ShowRandomSymbol();
-            positions_in_path_v3_local[slot_position_in_reel] = slot_position_on_path;
-            return generated_slot;
-        }
-
-        internal void RegenerateSlotObjects()
-        {
-            for (int slot = 0; slot < slots_in_reel.Length; slot++)
-            {
-                Debug.Log(String.Format("Reel {0} deleteing slot {1}",reelstrip_info.reel_number, slot));
-                if(slots_in_reel[slot] != null)
-                    DestroyImmediate(slots_in_reel[slot].gameObject);
-                slots_in_reel[slot] = GenerateSlotObject(slot);
-            }
-        }
         
         //public void UpdatePositionInPathForDirection()
         //{
@@ -519,29 +422,7 @@ namespace Slot_Engine.Matrix
         //        slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInReel(i);
         //    }
         //}
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="slot_number"></param>
-        /// <param name="parent_reel"></param>
-        /// <param name="start_position"></param>
-        /// <param name="scale"></param>
-        /// <returns>Slot Manager Reference</returns>
-        internal SlotManager InstantiateSlotGameobject(int slot_number, ReelStripManager parent_reel, Vector3 start_position, Vector3 scale, Quaternion start_rotation)
-        {
-#if UNITY_EDITOR
-            GameObject ReturnValue = PrefabUtility.InstantiatePrefab(Resources.Load("Core/Prefabs/Slot-Container")) as GameObject; // TODO Refactor to include custom sot container passable argument
-            ReturnValue.gameObject.name = String.Format("Slot_{0}",slot_number);
-            ReturnValue.transform.parent = parent_reel.transform;
-            SlotManager return_component = ReturnValue.GetComponent<SlotManager>();
-            //ReturnValue.transform.GetChild(0).localScale = scale;
-            ReturnValue.transform.localPosition = start_position;
-            ReturnValue.transform.localRotation = start_rotation;
-            return return_component;
-#endif
-            //Intended - we want to only instantiate these objects in unity_editor
-            return null;
-        }
+        
         /// <summary>
         /// Spin the Reels
         /// </summary>
@@ -556,10 +437,10 @@ namespace Slot_Engine.Matrix
             reel_spin_speed_current = reelstrip_info.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().spin_speed_constant;
 
             //TODO hooks for reel state machine
-            for (int i = 0; i < slots_in_reel.Length; i++)
+            for (int i = 0; i < slotsInStrip.Length; i++)
             {
                 //Last slot needs to ease in and out to the "next position" but 
-                slots_in_reel[i].StartSpin(); // Tween to the same position then evaluate
+                slotsInStrip[i].StartSpin(); // Tween to the same position then evaluate
             }
             //Task.Delay(time_to_enter_loop);
             //TODO Implement Ease In for Starting spin
@@ -577,10 +458,10 @@ namespace Slot_Engine.Matrix
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSpinStateTo(SpinStates.spin_start);
             //TODO hooks for reel state machine
-            for (int i = 0; i < slots_in_reel.Length; i++)
+            for (int i = 0; i < slotsInStrip.Length; i++)
             {
                 //Last slot needs to ease in and out to the "next position" but 
-                slots_in_reel[i].StartSpin(); // Tween to the same position then evaluate
+                slotsInStrip[i].StartSpin(); // Tween to the same position then evaluate
             }
             //Task.Delay(time_to_enter_loop);
             //TODO Implement Ease In for Starting spin
@@ -608,9 +489,9 @@ namespace Slot_Engine.Matrix
         /// <param name="enable_disable">Set Slot movement enabled or disabled</param>
         internal void SetSlotsMovementEnabled(bool enable_disable)
         {
-            for (int i = 0; i < slots_in_reel.Length; i++)
+            for (int i = 0; i < slotsInStrip.Length; i++)
             {
-                slots_in_reel[i].SetSlotMovementEnabledTo(enable_disable);
+                slotsInStrip[i].SetSlotMovementEnabledTo(enable_disable);
             }
         }
         /// <summary>
@@ -618,10 +499,10 @@ namespace Slot_Engine.Matrix
         /// </summary>
         private void SetSlotsToStopSpinning()
         {
-            for (int i = 0; i < slots_in_reel.Length; i++)
+            for (int i = 0; i < slotsInStrip.Length; i++)
             {
                 //Last slot needs to ease in and out to the "next position" but 
-                slots_in_reel[i].SetToStopSpin(); // Tween to the same position then evaluate\
+                slotsInStrip[i].SetToStopSpin(); // Tween to the same position then evaluate\
             }
         }
         /// <summary>
@@ -668,13 +549,13 @@ namespace Slot_Engine.Matrix
             get
             {
                 bool output = true;
-                for (int i = 0; i < slots_in_reel.Length; i++)
+                for (int i = 0; i < slotsInStrip.Length; i++)
                 {
-                    if (!slots_in_reel[i].slot_in_end_position)
+                    if (!slotsInStrip[i].slot_in_end_position)
                     {
                         break;
                     }
-                    if (i == slots_in_reel.Length - 1)
+                    if (i == slotsInStrip.Length - 1)
                     {
                         output = false;
                     }
@@ -694,15 +575,15 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Generates a position for a slot in reel
         /// </summary>
-        /// <param name="position_in_reel">Position in Reel slot will be</param>
+        /// <param name="positionInStrip">Position in Reel slot will be</param>
         /// <returns>Slot Position Vector3</returns>
-        internal Vector3 GenerateSlotPositionBasedOnPositionInReel(int position_in_reel)
+        internal Vector3 GetSlotPositionInStrip(int positionInStrip)
         {
             //TODO Base on Spin Direction
             Debug.Log(String.Format("reelstrip_info.reel_number = {0} slot size = ({1},{2}) matrix padding.x = {3}", reelstrip_info.reel_number, matrix.configurationSettings.slotSize.x, matrix.configurationSettings.slotSize.y, matrix.configurationSettings.slotPadding.x));
-            float x = reelstrip_info.reel_number * (matrix.configurationSettings.slotSize.x + matrix.configurationSettings.slotPadding.x);
-            float y = -(position_in_reel * (matrix.configurationSettings.slotSize.y + matrix.configurationSettings.slotPadding.y));
-            Debug.Log(string.Format("Local Position for slot {0} int reel {1} is ({2},{3},{4}) ",position_in_reel, transform.name,x.ToString(), y.ToString(),0));
+            float x = 0;//reelstrip_info.reel_number * (matrix.configurationSettings.slotSize.x + matrix.configurationSettings.slotPadding.x);//Uncomment to set slot position at slot level
+            float y = -(positionInStrip * (matrix.configurationSettings.slotSize.y + matrix.configurationSettings.slotPadding.y));
+            Debug.Log(string.Format("Local Position for slot {0} int reel {1} is ({2},{3},{4}) ",positionInStrip, transform.name,x.ToString(), y.ToString(),0));
             Vector3 return_position = new Vector3(x, y, 0);
             return return_position;
         }
@@ -712,9 +593,9 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void SetSlotPositionToStart()
         {
-            for (int i = 0; i < slots_in_reel.Length; i++)
+            for (int i = 0; i < slotsInStrip.Length; i++)
             {
-                slots_in_reel[i].transform.localPosition = GenerateSlotPositionBasedOnPositionInReel(i);
+                slotsInStrip[i].transform.localPosition = GetSlotPositionInStrip(i);
             }
         }
 
@@ -736,36 +617,36 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void UpdateSlotManagersSubStateMachines()
         {
-            for (int i = 0; i < slots_in_reel?.Length; i++)
+            for (int i = 0; i < slotsInStrip?.Length; i++)
             {
-                slots_in_reel[i].SetSubStateMachineAnimators();
-                slots_in_reel[i].SetAllSubSymbolsGameobjectActive();
+                slotsInStrip[i].SetSubStateMachineAnimators();
+                slotsInStrip[i].SetAllSubSymbolsGameobjectActive();
             }
             matrix._slot_machine_managers.endConfigurationManager.SetMatrixToReelConfiguration();
         }
 
         internal void SetAllSlotContainersSubAnimatorStates()
         {
-            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            for (int slot = 0; slot < slotsInStrip.Length; slot++)
             {
-                slots_in_reel[slot].SetAllSubStateAnimators();
+                slotsInStrip[slot].SetAllSubStateAnimators();
             }
         }
 
         internal void ClearAllSlotContainersSubAnimatorStates()
         {
-            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            for (int slot = 0; slot < slotsInStrip.Length; slot++)
             {
-                slots_in_reel[slot].ClearAllSubStateAnimators();
+                slotsInStrip[slot].ClearAllSubStateAnimators();
             }
         }
 
         internal string[] ReturnAllKeysFromSubStates()
         {
             List<string> keys = new List<string>();
-            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            for (int slot = 0; slot < slotsInStrip.Length; slot++)
             {
-                keys.AddRange(slots_in_reel[slot].state_machine.animator_state_machines.sub_state_machines_keys);
+                keys.AddRange(slotsInStrip[slot].state_machine.animator_state_machines.sub_state_machines_keys);
             }
             return keys.ToArray();
         }
@@ -773,26 +654,26 @@ namespace Slot_Engine.Matrix
         internal AnimatorSubStateMachine[] ReturnAllValuesFromSubStates()
         {
             List<AnimatorSubStateMachine> values = new List<AnimatorSubStateMachine>();
-            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            for (int slot = 0; slot < slotsInStrip.Length; slot++)
             {
-                values.AddRange(slots_in_reel[slot].state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines);
+                values.AddRange(slotsInStrip[slot].state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines);
             }
             return values.ToArray();
         }
 
         internal void SetAllSlotContainersAnimatorSyncStates()
         {
-            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            for (int slot = 0; slot < slotsInStrip.Length; slot++)
             {
-                slots_in_reel[slot].SetStateMachineAnimators();
+                slotsInStrip[slot].SetStateMachineAnimators();
             }
         }
 
         internal void AddSlotAnimatorsToList(ref List<Animator> output)
         {
-            for (int slot = 0; slot < slots_in_reel.Length; slot++)
+            for (int slot = 0; slot < slotsInStrip.Length; slot++)
             {
-                slots_in_reel[slot].AddAnimatorsToList(ref output);
+                slotsInStrip[slot].AddAnimatorsToList(ref output);
             }
         }
     }

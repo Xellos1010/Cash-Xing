@@ -10,6 +10,7 @@
 //
 using UnityEngine;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
@@ -143,6 +144,10 @@ namespace Slot_Engine.Matrix
             GenerateConfigurationObject(ref connectedConfigurationObject);
             SetConnectedConfigurationObjectLoadedSettings();
             await DisplayConfigurationSettings(ref configurationGeneratorSettings);
+            //For Each Local position thats an active display slot generate a backplate prefab for grid effect for now
+            //GenerateBackplateFromConfiguration(connectedConfigurationObject);
+            //Update Payline Manager
+            connectedConfigurationObject.slotMachineManagers.paylines_manager.GenerateDynamicPaylinesFromMatrix();
         }
 
         private void SetConnectedConfigurationObjectLoadedSettings()
@@ -165,8 +170,9 @@ namespace Slot_Engine.Matrix
         public Task SetConfigurationDisplayZones(ConfigurationStripStructDisplayZones[] display_zones_per_reel)
         {
             //Build reelstrip info 
-            ReelStripsStruct reelstrips_configuration = new ReelStripsStruct(display_zones_per_reel);
-            SetReelsAndSlotsPerReel(reelstrips_configuration);
+            ReelStripsStruct stripConfiguration = new ReelStripsStruct(display_zones_per_reel);
+            Debug.Log($"stripConfiguration.reelstrips.Length = {stripConfiguration.reelstrips.Length}");
+            SetReelsAndSlotsPerReel(stripConfiguration);
             return Task.CompletedTask;
         }
 
@@ -176,23 +182,298 @@ namespace Slot_Engine.Matrix
         /// <param name="slots_per_reelstrip"></param>
         internal void SetReelsAndSlotsPerReel(ReelStripsStruct reelstrips_configuration)
         {
-            SetReelObjectsToLength(reelstrips_configuration.reelstrips.Length, ref connectedConfigurationObject.reelStripManagers);
-            //Ensure reels have slots
+            //Ensure there are enough reel objects
+            SetStripObjectsToLength(reelstrips_configuration.reelstrips.Length, ref connectedConfigurationObject);
+
+            //Ensure the strips are positioned in
+            SetStripObjectsInitialPositions(ref connectedConfigurationObject);
+
+            //Set each Reels Configuration - each reel will take care of generating slots
             for (int i = 0; i < reelstrips_configuration.reelstrips.Length; i++)
             {
-                connectedConfigurationObject.reelStripManagers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
+                Debug.Log($"Setting {connectedConfigurationObject.stripManagers[i].gameObject.name} reelstrip info with total positions {reelstrips_configuration.reelstrips[i].total_positions}");
+                //Set ReelStrip Configuration
+                connectedConfigurationObject.stripManagers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
+                //Generate Slot Objects
+                GenerateStripSlotObjects(ref connectedConfigurationObject.stripManagers[i], reelstrips_configuration.reelstrips[i]);
             }
-            //For Each Local position thats an active display slot generate a backplate prefab for grid effect for now
-            GenerateBackplateFromConfiguration(reelstrips_configuration);
-            //Update Payline Manager
-            connectedConfigurationObject.slotMachineManagers.paylines_manager.GenerateDynamicPaylinesFromMatrix();
         }
-        private void GenerateBackplateFromConfiguration(ReelStripsStruct reelstrips_configuration)
+
+        private void GenerateStripSlotObjects(ref ReelStripManager reelStripManager, ReelStripStruct reelStripStruct)
         {
-            for (int reel = 0; reel < reelstrips_configuration.reelstrips.Length; reel++)
+            //gather slot object child if any
+            List<SlotManager> childSlots = new List<SlotManager>();
+            childSlots.AddRange(reelStripManager.transform.GetComponentsInChildren<SlotManager>());
+            if(childSlots.Count < reelStripStruct.total_slot_objects)
             {
-                //reelstrips_configuration.reelstrips[reel];
+                for (int slotToGenerate = childSlots.Count; slotToGenerate < reelStripStruct.total_slot_objects; slotToGenerate++)
+                {
+                    childSlots.Add(GenerateSlotObject(slotToGenerate,ref reelStripManager));
+                }
             }
+        }
+
+        /// <summary>
+        /// Sets Strip Objects Initial Positions
+        /// </summary>
+        /// <param name="connectedConfigurationObject"></param>
+        private void SetStripObjectsInitialPositions(ref ReelStripConfigurationObject connectedConfigurationObject)
+        {
+            for (int strip = 0; strip < connectedConfigurationObject.stripManagers.Length; strip++)
+            {
+                connectedConfigurationObject.stripManagers[strip].transform.localPosition = GenerateLocalPositionForStrip(strip, connectedConfigurationObject.stripManagers.Length, connectedConfigurationObject.configurationSettings);
+            }
+        }
+
+        public enum eAnchor
+        {
+            TopLeft, TopMiddle, TopRight,
+            MiddleLeft, MiddleCenter, MiddleRight,
+            BottomLeft,BottomCenter,BottomRight
+        }
+
+        public eAnchor anchor = eAnchor.MiddleCenter;
+        /// <summary>
+        /// Need to control how strips are placed. in future implement anchor point - Anchor Default to top Center
+        /// </summary>
+        /// <param name="strip"></param>
+        /// <param name="lengthOfStrips"></param>
+        /// <param name="configurationSettings"></param>
+        /// <returns></returns>
+        private Vector3 GenerateLocalPositionForStrip(int strip, int lengthOfStrips, ConfigurationSettingsScriptableObject configurationSettings)
+        {
+            Vector3 output;
+            //Offset is based on anchor - middle center we place the reel closest to center - 3x5 - reel 3 offset by half slot size only- 4x6 - reel 3
+            //Whole number the offset is 1 slot + padding - odd half slot + padding
+            Debug.LogWarning($"strip = {strip}, lengthOfStrips = {lengthOfStrips}");
+            Debug.LogWarning($"lengthOfStrips % 2 == 0  = {lengthOfStrips % 2 == 0} (int)lengthOfStrips / 2 = {(int)lengthOfStrips / 2}");
+            float centerStripOffset = lengthOfStrips % 2 == 0 ? configurationSettings.slotSize.x / 2 : 0;//configurationSettings.slotSize.x : configurationSettings.slotSize.x / 2;
+            int centerIndex = (int)lengthOfStrips / 2; // 7 / 2 = 3.5 centerindex = 3
+            //At this point anchor offset is either 285 or 285/2 - take 5x7 = 3 reels place left of center - 3 reels to right - 1 in center
+            //Start Placement left to right 
+            float xPosition = -centerStripOffset;
+            //120
+            //Apply left most anchor with padding 1-10-2-10-3-10-4-10-5-10-6-10-7
+            Debug.LogWarning($"({centerIndex - strip}) * ({configurationSettings.slotSize.x})");
+            xPosition += -(((centerIndex - strip) * (configurationSettings.slotSize.x)) + ((centerIndex - strip) * configurationSettings.slotPadding.x)); // Base Calculation of just slot positions
+            Debug.LogWarning($"anchorXOffsetFrom0 = {centerStripOffset} centerIndex = {centerIndex} of lengthOfStrips {lengthOfStrips} positionX generated = {xPosition}");
+            float yPosition = 0;
+            float zPosition = 0;
+            //if anchor y is 
+            output = new Vector3(xPosition,yPosition,zPosition);
+            return output;
+        }
+
+        /// <summary>
+        /// Used to generate backplate and covers for the slots
+        /// </summary>
+        public GameObject backPlateCoverSceneObject;
+        private void GenerateBackplateFromConfiguration(ReelStripConfigurationObject connectedConfigurationObject)
+        {
+            Vector3[][] configurationObjectWorldPosition = connectedConfigurationObject.positions_in_path_v3_local;
+            CoverFacePlateGameobjectManager temp = null;
+            //Ensure there is a Backplate and Cover Object - If not generate one and place as child
+            if (backPlateCoverSceneObject == null)
+            {
+                backPlateCoverSceneObject = GameObject.FindGameObjectWithTag("cover_plate");
+                if (backPlateCoverSceneObject == null)
+                {
+                    temp = CreateNewCoverPlateObject();
+                    backPlateCoverSceneObject = temp.gameObject;
+                }
+                else
+                    temp = backPlateCoverSceneObject.GetComponent<CoverFacePlateGameobjectManager>();
+            }
+            //for each display zone - generate a cover only for any padding and backing for any active
+            for (int strip = 0; strip < connectedConfigurationObject.configurationSettings.displayZones.Length; strip++)
+            {
+                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].totalPositions; position++)
+                {
+                    //Anything before the first active display zone needs a cover
+                    if (position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before)
+                    {
+                        GenerateCoverForPosition(configurationObjectWorldPosition[strip][position], ref temp);
+                    }
+                    //Anything after initial padding needs wither a cover or a backplate depending if active or inactive
+                    else if(position >= connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before && position < (connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before + connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZonePositionsTotal))
+                    {
+                        for (int displayZoneStrip = 0; displayZoneStrip < connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone.Length; displayZoneStrip++)
+                        {
+                            //Will generate objects based on active of inactive display zone and increment position
+                            GenerateCoverOrBackplate(connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone[displayZoneStrip], ref position);
+                        }
+                    }
+                    if (position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_after)
+                    {
+
+                    }
+                }
+            }
+        }
+
+        private void GenerateCoverOrBackplate(ReelStripStructDisplayZone reelStripStructDisplayZone, ref int position)
+        {
+            for (int i = 0; i < reelStripStructDisplayZone.positionsInZone; i++)
+            {
+                
+            }
+        }
+
+
+        /// <summary>
+        /// Generates a Slot Gameobject
+        /// </summary>
+        /// <param name="slot_position_in_reel">the slot in reel generating the object for</param>
+        /// <returns></returns>
+        private SlotManager GenerateSlotObject(int slot_position_in_reel, ref ReelStripManager reelStripManager)
+        {
+            //Local positions are already generated by this point
+            Vector3 slot_position_on_path = reelStripManager.positions_in_path_v3_local[slot_position_in_reel];
+            SlotManager generated_slot = InstantiateSlotGameobject(slot_position_in_reel, reelStripManager, slot_position_on_path, Vector3.one, Quaternion.identity);
+            generated_slot.reel_parent = reelStripManager;
+            //Generate a random symbol prefab
+            generated_slot.ShowRandomSymbol();
+            if (slot_position_in_reel >= reelStripManager.positions_in_path_v3_local.Length)
+            {
+                Debug.LogWarning($"{reelStripManager.gameObject.name}.positions_in_path_v3_local.Length {reelStripManager.positions_in_path_v3_local.Length} is lower than the slot position in reel passed - trying to make it work.");
+                reelStripManager.positions_in_path_v3_local = reelStripManager.positions_in_path_v3_local.AddAt<Vector3>(slot_position_in_reel, slot_position_on_path);
+            }
+            else
+            {
+                reelStripManager.positions_in_path_v3_local[slot_position_in_reel] = slot_position_on_path;
+            }
+            return generated_slot;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="slot_number"></param>
+        /// <param name="parent_reel"></param>
+        /// <param name="start_position"></param>
+        /// <param name="scale"></param>
+        /// <returns>Slot Manager Reference</returns>
+        internal SlotManager InstantiateSlotGameobject(int slot_number, ReelStripManager parent_reel, Vector3 start_position, Vector3 scale, Quaternion start_rotation)
+        {
+#if UNITY_EDITOR
+            GameObject ReturnValue = PrefabUtility.InstantiatePrefab(Resources.Load("Core/Prefabs/Slot-Container")) as GameObject; // TODO Refactor to include custom sot container passable argument
+            ReturnValue.gameObject.name = String.Format("Slot_{0}", slot_number);
+            ReturnValue.transform.parent = parent_reel.transform;
+            SlotManager return_component = ReturnValue.GetComponent<SlotManager>();
+            //ReturnValue.transform.GetChild(0).localScale = scale;
+            ReturnValue.transform.localPosition = start_position;
+            ReturnValue.transform.localRotation = start_rotation;
+            return return_component;
+#endif
+            //Intended - we want to only instantiate these objects in unity_editor
+            return null;
+        }
+
+        ///// <summary>
+        ///// Set the number of slot objects in reel
+        ///// </summary>
+        ///// <param name="display_zones">Display Slots in reel</param>
+        ///// <param name="before_display_slots">amount of slots before display slots to generate objects for - minimum 1</param>
+        //internal void UpdateSlotObjectsInReelStrip(int slots_in_reelstrip)
+        //{
+        //    List<SlotManager> slotsInStrip = new List<SlotManager>();
+        //    if (this.slotsInStrip == null)
+        //    {
+        //        SlotManager[] slots_initialized = transform.GetComponentsInChildren<SlotManager>();
+        //        if (slots_initialized.Length > 0)
+        //        {
+        //            this.slotsInStrip = slots_initialized;
+        //        }
+        //        else
+        //        {
+        //            this.slotsInStrip = new SlotManager[0];
+        //        }
+        //    }
+        //    slotsInStrip.AddRange(this.slotsInStrip);
+
+        //    int total_slot_objects_required = slots_in_reelstrip;
+
+        //    SetSlotObjectsInStripTo(ref slotsInStrip, total_slot_objects_required);
+
+        //    this.slotsInStrip = slotsInStrip.ToArray();
+        //}
+
+        //internal void RegenerateSlotObjects()
+        //{
+        //    for (int slot = 0; slot < slotsInStrip.Length; slot++)
+        //    {
+        //        Debug.Log(String.Format("Reel {0} deleteing slot {1}", reelstrip_info.reel_number, slot));
+        //        if (slotsInStrip[slot] != null)
+        //            DestroyImmediate(slotsInStrip[slot].gameObject);
+        //        slotsInStrip[slot] = GenerateSlotObject(slot);
+        //    }
+        ////}
+        //internal void SetSlotObjectsInStripTo(ref List<SlotManager> slots_in_reel, int total_slot_objects_required)
+        //{
+
+        //    //Do we need to add or remove display slot objects on reelstrip
+        //    bool add_substract = slots_in_reel.Count < total_slot_objects_required ? true : false;
+
+        //    //Either remove from end or add until we have the amount of display and before display slot obejcts
+        //    for (int slot_to_update = add_substract ? slots_in_reel.Count : slots_in_reel.Count - 1; //Set to current count to add or count - 1 to subtract
+        //        add_substract ? slot_to_update < total_slot_objects_required : slot_to_update >= total_slot_objects_required; // either add until you have required slot objects or remove
+        //        slot_to_update += add_substract ? 1 : -1) //count up or down
+        //    {
+        //        if (add_substract)
+        //        {
+        //            slots_in_reel.Add(GenerateSlotObject(slot_to_update));
+        //        }
+        //        else
+        //        {
+        //            DestroyImmediate(slots_in_reel[slot_to_update].gameObject);
+        //            slots_in_reel.RemoveAt(slot_to_update);
+        //        }
+        //    }
+        //}
+
+        private void GenerateCoverForPosition(Vector3 vector3, ref CoverFacePlateGameobjectManager faceplateObjectManager)
+        {
+            //Generate Now - Track later
+            GameObject gameobjectGenerated = PrefabUtility.InstantiatePrefab(configurationGeneratorSettings.symbolCover, faceplateObjectManager.coverPlateParent) as GameObject;
+            gameobjectGenerated.transform.position = vector3;
+            gameobjectGenerated.transform.rotation = Quaternion.identity;
+            gameobjectGenerated.transform.localScale = Vector3.one;
+        }
+
+        public class CoverFacePlateGameobjectManager : MonoBehaviour
+        {
+            public Transform coverPlateParent;
+            public Transform backPlateParent;
+        }
+
+        private CoverFacePlateGameobjectManager CreateNewCoverPlateObject()
+        {
+            Type[] componentsToAdd = new Type[1] {typeof(CoverFacePlateGameobjectManager) };
+            GameObject output = new GameObject("Cover-Face-ObjectsGenerated", componentsToAdd);
+
+            CoverFacePlateGameobjectManager temp = output.GetComponent<CoverFacePlateGameobjectManager>();
+            
+            GameObject outputcoverParent = new GameObject("Symbol-Covers", componentsToAdd);
+            outputcoverParent.transform.parent = output.transform;
+            outputcoverParent.transform.position = Vector3.zero;
+            outputcoverParent.transform.rotation = Quaternion.identity;
+            outputcoverParent.transform.localScale = Vector3.one;
+
+            GameObject outputbackParent = new GameObject("Symbol-Backplate", componentsToAdd);
+            outputbackParent.transform.parent = output.transform;
+            outputbackParent.transform.position = Vector3.zero;
+            outputbackParent.transform.rotation = Quaternion.identity;
+            outputbackParent.transform.localScale = Vector3.one;
+
+            temp.backPlateParent = outputbackParent.transform;
+            temp.coverPlateParent = outputcoverParent.transform;
+            output.transform.parent = transform;
+            output.transform.position = Vector3.zero;
+            output.transform.rotation = Quaternion.identity;
+            output.transform.localScale = Vector3.one;
+
+            output.tag = "cover_plate";
+            return temp;
         }
 
         /// <summary>
@@ -201,51 +482,66 @@ namespace Slot_Engine.Matrix
         /// <param name="reels">Reels in Configuration</param>
         internal void SetReelsTo(int reels)
         {
-            SetReelObjectsToLength(reels, ref connectedConfigurationObject.reelStripManagers);
-        }
+            SetStripObjectsToLength(reels, ref connectedConfigurationObject);
+        }   
 
         /// <summary>
         /// Generate or remove reelstrip objects based on number of reels set
         /// </summary>
         /// <param name="lengthOfReels">Reels in Configuration</param>
-        /// <param name="reelStripManagersReference">reference var to cached reelstrip_managers</param>
-        internal void SetReelObjectsToLength(int lengthOfReels, ref ReelStripManager[] reelStripManagersReference)
+        /// <param name="connectedConfigurationObject.reelStripManagers">reference var to cached reelstrip_managers</param>
+        internal void SetStripObjectsToLength(int lengthOfReels, ref ReelStripConfigurationObject connectedConfigurationObject)
         {
-            //See whether we need to make more or subtract some 
-            bool add_subtract_reels = reelStripManagersReference.Length < lengthOfReels ? true : false;
-            //First we are going to ensure the amount of reels are the correct amount - then we are going to initialize the amount of slots per reel
-
-            //If current reels generated are > or < matrix.length then need to adjust accordingly
-            //Ensure enough reels are on the board then ensure all reels have slots
-            for (int reel = add_subtract_reels ? reelStripManagersReference.Length : reelStripManagersReference.Length - 1;
-                add_subtract_reels ? reel < lengthOfReels : reel >= lengthOfReels;
-                reel = add_subtract_reels ? reel + 1 : reel - 1)
+            //Ensure Connected Reel Managers 
+            EnsureConnectedConfigurationObjectStripManagersSet(ref connectedConfigurationObject);
+            //Add or subtract reel obejcts as needed
+            if(lengthOfReels - connectedConfigurationObject.stripManagers.Length < 0)
             {
-                if (add_subtract_reels)
+                ReelStripManager temp;
+                //Remove strip objects
+                for (int strip = connectedConfigurationObject.stripManagers.Length - 1; strip >= lengthOfReels ; strip--)
                 {
-                    reelStripManagersReference = reelStripManagersReference.AddAt<ReelStripManager>(reel, GenerateReel(reel));
-                }
-                else
-                {
-                    if (reelStripManagersReference[reel] != null)
-                        DestroyImmediate(reelStripManagersReference[reel].gameObject);
-                    reelStripManagersReference = reelStripManagersReference.RemoveAt(reel);
+                    temp = connectedConfigurationObject.stripManagers[strip];
+                    connectedConfigurationObject.stripManagers = connectedConfigurationObject.stripManagers.RemoveAt<ReelStripManager>(strip);
+                    Destroy(temp.gameObject);
                 }
             }
-            for (int reel = 0; reel < reelStripManagersReference.Length; reel++)
+            else
             {
-                if (reelStripManagersReference[reel] == null)
+                List<ReelStripManager> strips = new List<ReelStripManager>();
+                strips.AddRange(connectedConfigurationObject.stripManagers);
+                //Add strip objects
+                for (int strip = connectedConfigurationObject.stripManagers.Length; strip < lengthOfReels; strip++)
                 {
-                    reelStripManagersReference[reel] = GenerateReel(reel);
+                    strips.Add(GenerateStrip(strip));
                 }
+                connectedConfigurationObject.stripManagers = strips.ToArray();
             }
         }
 
-        ReelStripManager GenerateReel(int reel_number)
+        private static void EnsureConnectedConfigurationObjectStripManagersSet(ref ReelStripConfigurationObject connectedConfigurationObject)
         {
-            Type[] gameobject_components = new Type[1];
-            gameobject_components[0] = typeof(ReelStripManager);
-            ReelStripManager output_reelstrip_manager = StaticUtilities.CreateGameobject<ReelStripManager>(gameobject_components, "Reel_" + reel_number, transform);
+            if (connectedConfigurationObject.stripManagers?.Length > 0)
+            {
+                for (int manager = 0; manager < connectedConfigurationObject.stripManagers.Length; manager++)
+                {
+                    if (connectedConfigurationObject.stripManagers[manager] == null)
+                    {
+                        connectedConfigurationObject.stripManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<ReelStripManager>();
+                    }
+                }
+            }
+            else
+            {
+                connectedConfigurationObject.stripManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<ReelStripManager>();
+            }
+        }
+
+        ReelStripManager GenerateStrip(int columnNumber)
+        {
+            Type[] reelComponents = new Type[1];
+            reelComponents[0] = typeof(ReelStripManager);
+            ReelStripManager output_reelstrip_manager = StaticUtilities.CreateGameobject<ReelStripManager>(reelComponents, "Strip_" + columnNumber, connectedConfigurationObject.transform);
             return output_reelstrip_manager;
         }
 
@@ -283,7 +579,7 @@ namespace Slot_Engine.Matrix
         internal void LoadConfigurationSelected()
         {
             configurationObjectLoadedName = configurationGeneratorSettings.configurationName;
-            connectedConfigurationObject.LoadConfiguration(configurationGeneratorSettings);
+            connectedConfigurationObject.SetConfigurationSettings(configurationGeneratorSettings);
             //Ensure All Objects match Configuration
             CreateCurrentConfiguration();
         }

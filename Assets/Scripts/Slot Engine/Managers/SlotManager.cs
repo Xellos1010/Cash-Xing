@@ -213,7 +213,7 @@ namespace Slot_Engine.Matrix
                     if (!symbol_set)
                     {
                         //Determines an overlay symbol
-                        NodeDisplaySymbol symbol = reel_parent.matrix.slotMachineManagers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode);
+                        NodeDisplaySymbol symbol = reel_parent.matrix.slotMachineManagers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
                         SetDisplaySymbolTo(symbol);
                     }
                 }

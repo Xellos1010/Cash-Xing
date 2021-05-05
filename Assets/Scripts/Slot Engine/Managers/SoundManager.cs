@@ -24,10 +24,10 @@ namespace Slot_Engine.Matrix
         void OnEnable()
         {
             //Setup Reel Start and Stop Spin
-            for (int reel = 0; reel < matrix.reelStripManagers.Length; reel++)
+            for (int reel = 0; reel < matrix.stripManagers.Length; reel++)
             {
-                matrix.reelStripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
-                matrix.reelStripManagers[reel].reelStopSpin += SoundManager_reelStopSpin;
+                matrix.stripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
+                matrix.stripManagers[reel].reelStopSpin += SoundManager_reelStopSpin;
             }
             matrix.slotMachineManagers.racking_manager.rackStart += Racking_manager_rackStart;
             matrix.slotMachineManagers.racking_manager.rackEnd += Racking_manager_rackEnd;
@@ -60,9 +60,9 @@ namespace Slot_Engine.Matrix
 
         void OnDisable()
         {
-            for (int reel = 0; reel < matrix.reelStripManagers.Length; reel++)
+            for (int reel = 0; reel < matrix.stripManagers.Length; reel++)
             {
-                matrix.reelStripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
+                matrix.stripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
             }
         }
 

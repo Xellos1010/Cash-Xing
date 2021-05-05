@@ -38,7 +38,7 @@ namespace Slot_Engine.Matrix.Managers
                 if (GUILayout.Button("Generate Paylines from Matrix"))
                 {
                     //todo get matrix from script
-                    paylinesEvaluationObject.GenerateDynamicPaylinesFromMatrix(ref myTarget.matrix.reelStripManagers);
+                    paylinesEvaluationObject.GenerateDynamicPaylinesFromMatrix(ref myTarget.matrix.stripManagers);
                     serializedObject.ApplyModifiedProperties();
                 }
 

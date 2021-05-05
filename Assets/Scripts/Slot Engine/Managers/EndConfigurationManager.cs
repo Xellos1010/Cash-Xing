@@ -173,26 +173,26 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data = new List<SpinConfigurationStorage>();
             for (int i = 0; i < amount; i++)
             {
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, matrix.reelStripManagers).Result));
+                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, matrix.stripManagers).Result));
             }
         }
-        internal Task<ReelStripSpinStruct[]> GenerateReelStrips(GameModes gameState, ReelStripManager[] reel_strip_managers)
+        internal async Task<ReelStripSpinStruct[]> GenerateReelStrips(GameModes gameState, ReelStripManager[] reel_strip_managers)
         {
             ReelStripSpinStruct[] output = new ReelStripSpinStruct[reel_strip_managers.Length];
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
             {
-                output[reel] = new ReelStripSpinStruct(GenerateEndingReelStrip(gameState, ref reel_strip_managers[reel])); ;
+                output[reel] = new ReelStripSpinStruct(await GenerateEndingReelStrip(gameState, reel_strip_managers[reel])); ;
             }
-            return Task.FromResult<ReelStripSpinStruct[]>(output);
+            return output;
         }
 
-        private NodeDisplaySymbol[] GenerateEndingReelStrip(GameModes mode, ref ReelStripManager reelStripManager)
+        private async Task<NodeDisplaySymbol[]> GenerateEndingReelStrip(GameModes mode, ReelStripManager reelStripManager)
         {
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             //Generate a symbol for each display zone slot
             for (int i = 0; i < reelStripManager.reelstrip_info.total_display_slots; i++)
             {
-                output.Add(GetRandomWeightedSymbol(mode));
+                output.Add(await GetRandomWeightedSymbol(mode));
             }
             return output.ToArray();
         }
@@ -200,10 +200,10 @@ namespace Slot_Engine.Matrix
         /// Generate a random symbol based on weights defined
         /// </summary>
         /// <returns></returns>
-        public NodeDisplaySymbol GetRandomWeightedSymbol(GameModes currentMode)
+        public async Task<NodeDisplaySymbol> GetRandomWeightedSymbol(GameModes currentMode)
         {
             NodeDisplaySymbol output = new NodeDisplaySymbol();
-            int symbol = matrix.DrawRandomSymbol(currentMode);
+            int symbol = await matrix .DrawRandomSymbol(currentMode);
             //Debug.LogWarning($"End Configuration Draw Random Symbol returned {symbol}");
             if (matrix.isSymbolOverlay(symbol))
             {
@@ -211,7 +211,7 @@ namespace Slot_Engine.Matrix
                 output.AddFeaturesTo(matrix.GetSymbolFeatures(symbol));
                 while (matrix.isSymbolOverlay(symbol))
                 {
-                    symbol = matrix.DrawRandomSymbol();//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw();
+                    symbol = await matrix.DrawRandomSymbol();//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw();
                     //Set Overlay feature in list and freespin
                 }
             }
@@ -269,7 +269,7 @@ namespace Slot_Engine.Matrix
             switch (feature)
             {
                 case Features.freespin:
-                    configuration = new ReelStripSpinStruct[matrix.reelStripManagers.Length];
+                    configuration = new ReelStripSpinStruct[matrix.stripManagers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
                         configuration[i].displaySymbols = new NodeDisplaySymbol[3]
@@ -288,7 +288,7 @@ namespace Slot_Engine.Matrix
                     AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 case Features.overlay:
-                    configuration = new ReelStripSpinStruct[matrix.reelStripManagers.Length];
+                    configuration = new ReelStripSpinStruct[matrix.stripManagers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
                         configuration[i].displaySymbols = new NodeDisplaySymbol[3]

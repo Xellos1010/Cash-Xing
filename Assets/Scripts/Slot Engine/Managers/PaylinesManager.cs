@@ -245,7 +245,7 @@ namespace Slot_Engine.Matrix.Managers
         internal void GenerateDynamicPaylinesFromMatrix()
         {
             dynamicPaylineObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.slotMachineManagers.evaluationManager.coreEvaluationObjects);
-            dynamicPaylineObject.GenerateDynamicPaylinesFromMatrix(ref matrix.reelStripManagers);
+            dynamicPaylineObject.GenerateDynamicPaylinesFromMatrix(ref matrix.stripManagers);
         }
 
         internal void ShowDynamicPaylineRaw(int payline_to_show)
