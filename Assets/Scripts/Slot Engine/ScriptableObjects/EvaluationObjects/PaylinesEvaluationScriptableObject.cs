@@ -15,12 +15,27 @@ using System;
 
 namespace Slot_Engine.Matrix.ScriptableObjects
 {
-    public enum payline_direction
+    public enum paylineDirection
     {
         left,
         right,
         both,
+        customcolumns,
         count
+    }
+    [Serializable]
+    public class CustomColumns
+    {
+        /// <summary>
+        /// Columns of the root nodes to process
+        /// </summary>
+        [SerializeField]
+        public int rootColumn;
+        /// <summary>
+        /// Whether you evaluate left or right - abstract to support different directions
+        /// </summary>
+        [SerializeField]
+        public bool leftRight;
     }
     /// <summary>
     /// Paylines Evaluation Scriptable Object - Holds nodes and conditions to build nodes and store information
@@ -31,11 +46,15 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         /// <summary>
         /// Which way should the evaluation take place?
         /// </summary>
-        public payline_direction evaluation_direction;
+        public paylineDirection evaluationDirection;
         /// <summary>
         /// number of paylines supported - pre-generated in editor mode
         /// </summary>
         public int number_of_paylines = 0;
+        /// <summary>
+        /// Should not exceed column count of spin Strips
+        /// </summary>
+        public CustomColumns[] customColumnsDefine;
         /// <summary>
         /// The root nodes for dynamic paylines using a suffix tree
         /// </summary>
@@ -212,17 +231,24 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             List<SuffixTreeNodes> root_nodes = new List<SuffixTreeNodes>();
             SuffixTreeNodes node;
             //Initialize all the rows and the next elements
-            switch (evaluation_direction)
+            switch (evaluationDirection)
             {
-                case payline_direction.left:
+                case paylineDirection.left:
                     root_nodes.AddRange(BuildRootNodes(0, ref reel_strip_managers[0], true));
                     break;
-                case payline_direction.right:
+                case paylineDirection.right:
                     root_nodes.AddRange(BuildRootNodes(reel_strip_managers.Length - 1, ref reel_strip_managers[reel_strip_managers.Length - 1], false));
                     break;
-                case payline_direction.both:
+                case paylineDirection.both:
                     root_nodes.AddRange(BuildRootNodes(0, ref reel_strip_managers[0], true));
                     root_nodes.AddRange(BuildRootNodes(reel_strip_managers.Length - 1, ref reel_strip_managers[reel_strip_managers.Length - 1], false));
+                    break;
+                case paylineDirection.customcolumns:
+                    for (int column = 0; column < customColumnsDefine.Length; column++)
+                    {
+                        root_nodes.AddRange(BuildRootNodes(customColumnsDefine[column].rootColumn, ref reel_strip_managers[customColumnsDefine[column].rootColumn], customColumnsDefine[column].leftRight));
+                        Debug.Log($"root_nodes count = {root_nodes.Count}");
+                    }
                     break;
                 default:
                     Debug.Log("Please set the evaluation direciton to left, right or both");

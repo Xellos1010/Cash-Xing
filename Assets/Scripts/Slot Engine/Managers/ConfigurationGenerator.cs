@@ -106,7 +106,7 @@ namespace Slot_Engine.Matrix
 
 #endif
 
-    public class ConfigurationGenerator : MonoBehaviour
+    public partial class ConfigurationGenerator : MonoBehaviour
     {
         //Static Self Reference
         private static ConfigurationGenerator instance;
@@ -136,6 +136,10 @@ namespace Slot_Engine.Matrix
         //Associate the instance that gets updated with Generate Matrix
         public ReelStripConfigurationObject connectedConfigurationObject;
         /// <summary>
+        /// Used to generate backplate and covers for the slots
+        /// </summary>
+        public GameObject backPlateCoverSceneObject;
+        /// <summary>
         /// Creates a configuration based on current settings
         /// </summary>
         public async void CreateCurrentConfiguration() //Main matrix Create Function
@@ -145,7 +149,7 @@ namespace Slot_Engine.Matrix
             SetConnectedConfigurationObjectLoadedSettings();
             await DisplayConfigurationSettings(ref configurationGeneratorSettings);
             //For Each Local position thats an active display slot generate a backplate prefab for grid effect for now
-            //GenerateBackplateFromConfiguration(connectedConfigurationObject);
+            GenerateBackplateFromConfiguration(connectedConfigurationObject);
             //Update Payline Manager
             connectedConfigurationObject.slotMachineManagers.paylines_manager.GenerateDynamicPaylinesFromMatrix();
         }
@@ -230,7 +234,7 @@ namespace Slot_Engine.Matrix
             TopLeft, TopMiddle, TopRight,
             MiddleLeft, MiddleCenter, MiddleRight,
             BottomLeft,BottomCenter,BottomRight
-        }
+        } 
 
         public eAnchor anchor = eAnchor.MiddleCenter;
         /// <summary>
@@ -245,8 +249,8 @@ namespace Slot_Engine.Matrix
             Vector3 output;
             //Offset is based on anchor - middle center we place the reel closest to center - 3x5 - reel 3 offset by half slot size only- 4x6 - reel 3
             //Whole number the offset is 1 slot + padding - odd half slot + padding
-            Debug.LogWarning($"strip = {strip}, lengthOfStrips = {lengthOfStrips}");
-            Debug.LogWarning($"lengthOfStrips % 2 == 0  = {lengthOfStrips % 2 == 0} (int)lengthOfStrips / 2 = {(int)lengthOfStrips / 2}");
+            //Debug.LogWarning($"strip = {strip}, lengthOfStrips = {lengthOfStrips}");
+            //Debug.LogWarning($"lengthOfStrips % 2 == 0  = {lengthOfStrips % 2 == 0} (int)lengthOfStrips / 2 = {(int)lengthOfStrips / 2}");
             float centerStripOffset = lengthOfStrips % 2 == 0 ? configurationSettings.slotSize.x / 2 : 0;//configurationSettings.slotSize.x : configurationSettings.slotSize.x / 2;
             int centerIndex = (int)lengthOfStrips / 2; // 7 / 2 = 3.5 centerindex = 3
             //At this point anchor offset is either 285 or 285/2 - take 5x7 = 3 reels place left of center - 3 reels to right - 1 in center
@@ -254,23 +258,31 @@ namespace Slot_Engine.Matrix
             float xPosition = -centerStripOffset;
             //120
             //Apply left most anchor with padding 1-10-2-10-3-10-4-10-5-10-6-10-7
-            Debug.LogWarning($"({centerIndex - strip}) * ({configurationSettings.slotSize.x})");
+            //Debug.LogWarning($"({centerIndex - strip}) * ({configurationSettings.slotSize.x})");
             xPosition += -(((centerIndex - strip) * (configurationSettings.slotSize.x)) + ((centerIndex - strip) * configurationSettings.slotPadding.x)); // Base Calculation of just slot positions
-            Debug.LogWarning($"anchorXOffsetFrom0 = {centerStripOffset} centerIndex = {centerIndex} of lengthOfStrips {lengthOfStrips} positionX generated = {xPosition}");
-            float yPosition = 0;
+            //Debug.LogWarning($"anchorXOffsetFrom0 = {centerStripOffset} centerIndex = {centerIndex} of lengthOfStrips {lengthOfStrips} positionX generated = {xPosition}");
+            float yPosition = configurationSettings.slotSize.y / 2;
             float zPosition = 0;
             //if anchor y is 
             output = new Vector3(xPosition,yPosition,zPosition);
             return output;
         }
-
-        /// <summary>
-        /// Used to generate backplate and covers for the slots
-        /// </summary>
-        public GameObject backPlateCoverSceneObject;
         private void GenerateBackplateFromConfiguration(ReelStripConfigurationObject connectedConfigurationObject)
         {
+            //The positions here need to include the reels X value - will run a replacement for now
             Vector3[][] configurationObjectWorldPosition = connectedConfigurationObject.positions_in_path_v3_local;
+            List<Vector3> reelPositionXList = new List<Vector3>();
+            Vector3 stripXVector;
+            for (int strip = 0; strip < configurationObjectWorldPosition.Length; strip++)
+            {
+                stripXVector = GenerateLocalPositionForStrip(strip, configurationObjectWorldPosition.Length, connectedConfigurationObject.configurationSettings);
+                for (int position = 0; position < configurationObjectWorldPosition[strip].Length; position++)
+                {
+                    configurationObjectWorldPosition[strip][position].x = stripXVector.x;
+                    configurationObjectWorldPosition[strip][position].y += stripXVector.y;
+                }
+            }
+            Debug.LogWarning($"connectedConfigurationObject.positions_in_path_v3_local length = {connectedConfigurationObject.positions_in_path_v3_local.Length}");
             CoverFacePlateGameobjectManager temp = null;
             //Ensure there is a Backplate and Cover Object - If not generate one and place as child
             if (backPlateCoverSceneObject == null)
@@ -282,42 +294,78 @@ namespace Slot_Engine.Matrix
                     backPlateCoverSceneObject = temp.gameObject;
                 }
                 else
+                {
                     temp = backPlateCoverSceneObject.GetComponent<CoverFacePlateGameobjectManager>();
+                }
             }
+            else
+            {
+                temp = backPlateCoverSceneObject.GetComponent<CoverFacePlateGameobjectManager>();
+            }
+            DestroyAllChildren(temp.backPlateParent);
+            DestroyAllChildren(temp.coverPlateParent);
+            int positionTemp = 0;
             //for each display zone - generate a cover only for any padding and backing for any active
             for (int strip = 0; strip < connectedConfigurationObject.configurationSettings.displayZones.Length; strip++)
             {
-                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].totalPositions; position++)
+                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before; position++)
                 {
-                    //Anything before the first active display zone needs a cover
-                    if (position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before)
-                    {
-                        GenerateCoverForPosition(configurationObjectWorldPosition[strip][position], ref temp);
-                    }
-                    //Anything after initial padding needs wither a cover or a backplate depending if active or inactive
-                    else if(position >= connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before && position < (connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before + connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZonePositionsTotal))
-                    {
-                        for (int displayZoneStrip = 0; displayZoneStrip < connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone.Length; displayZoneStrip++)
-                        {
-                            //Will generate objects based on active of inactive display zone and increment position
-                            GenerateCoverOrBackplate(connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone[displayZoneStrip], ref position);
-                        }
-                    }
-                    if (position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_after)
-                    {
-
-                    }
+                    GenerateCoverPrefab(connectedConfigurationObject, configurationObjectWorldPosition, temp, strip, position);
+                }
+                positionTemp = connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before;
+                for (int displayZoneStrip = 0; displayZoneStrip < connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone.Length; displayZoneStrip++)
+                {
+                    //Will generate objects based on active of inactive display zone and increment position
+                    GenerateCoverOrBackplate(connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone[displayZoneStrip], connectedConfigurationObject, configurationObjectWorldPosition, temp, strip, ref positionTemp);
+                }
+                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_after; position++)
+                {
+                    GenerateCoverPrefab(connectedConfigurationObject, configurationObjectWorldPosition, temp, strip, connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZonePositionsTotal + connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before + position);
                 }
             }
         }
 
-        private void GenerateCoverOrBackplate(ReelStripStructDisplayZone reelStripStructDisplayZone, ref int position)
+        private void DestroyAllChildren(Transform parent)
+        {
+            for (int child = parent.childCount-1; child >= 0; child--)
+            {
+                DestroyImmediate(parent.GetChild(child).gameObject);
+            }
+        }
+
+        private void GenerateCoverOrBackplate(ReelStripStructDisplayZone reelStripStructDisplayZone, ReelStripConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, ref int positionInStrip)
         {
             for (int i = 0; i < reelStripStructDisplayZone.positionsInZone; i++)
             {
-                
+                //Active generate back
+                if (reelStripStructDisplayZone.active_payline_evaluations)
+                {
+                    GenerateBackPlatePrefab(connectedConfigurationObject, configurationObjectWorldPosition, temp, strip, positionInStrip + i);
+                }
+                else
+                {
+                    GenerateCoverPrefab(connectedConfigurationObject, configurationObjectWorldPosition, temp, strip, positionInStrip + i);
+                }
             }
+            positionInStrip += reelStripStructDisplayZone.positionsInZone;
         }
+
+        private void GenerateCoverPrefab(ReelStripConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
+        {
+            Debug.LogWarning($"Generating Cover for position {configurationObjectWorldPosition[strip][position]}");
+            Debug.LogWarning($"Using Cover Prefab {connectedConfigurationObject.configurationSettings.symbolCover.name}");
+            Debug.LogWarning($"Cover Plate Parent =  {temp.coverPlateParent.name}");
+            GeneratePrefabAtPosition(configurationObjectWorldPosition[strip][position] + Vector3.back, connectedConfigurationObject.configurationSettings.symbolCover, temp.coverPlateParent);
+        }
+
+        private void GenerateBackPlatePrefab(ReelStripConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
+        {
+            Debug.LogWarning($"Generating Backplate for position {configurationObjectWorldPosition[strip][position]}");
+            Debug.LogWarning($"Using Backplate Prefab {connectedConfigurationObject.configurationSettings.symbolBackplatePrefab.name}");
+            Debug.LogWarning($"Backplate Plate Parent =  {temp.backPlateParent.name}");
+            GeneratePrefabAtPosition(configurationObjectWorldPosition[strip][position] + Vector3.forward, connectedConfigurationObject.configurationSettings.symbolBackplatePrefab, temp.backPlateParent);
+        }
+
 
 
         /// <summary>
@@ -431,19 +479,14 @@ namespace Slot_Engine.Matrix
         //    }
         //}
 
-        private void GenerateCoverForPosition(Vector3 vector3, ref CoverFacePlateGameobjectManager faceplateObjectManager)
+        private async void GeneratePrefabAtPosition(Vector3 vector3, Transform prefab, Transform parent)
         {
-            //Generate Now - Track later
-            GameObject gameobjectGenerated = PrefabUtility.InstantiatePrefab(configurationGeneratorSettings.symbolCover, faceplateObjectManager.coverPlateParent) as GameObject;
-            gameobjectGenerated.transform.position = vector3;
-            gameobjectGenerated.transform.rotation = Quaternion.identity;
-            gameobjectGenerated.transform.localScale = Vector3.one;
-        }
-
-        public class CoverFacePlateGameobjectManager : MonoBehaviour
-        {
-            public Transform coverPlateParent;
-            public Transform backPlateParent;
+#if UNITY_EDITOR
+            Transform gameobjectGenerated = PrefabUtility.InstantiatePrefab(prefab, parent) as Transform;
+            gameobjectGenerated.position = vector3;
+            gameobjectGenerated.rotation = Quaternion.identity;
+            gameobjectGenerated.localScale = Vector3.one;
+#endif
         }
 
         private CoverFacePlateGameobjectManager CreateNewCoverPlateObject()
@@ -453,13 +496,13 @@ namespace Slot_Engine.Matrix
 
             CoverFacePlateGameobjectManager temp = output.GetComponent<CoverFacePlateGameobjectManager>();
             
-            GameObject outputcoverParent = new GameObject("Symbol-Covers", componentsToAdd);
+            GameObject outputcoverParent = new GameObject("Symbol-Covers");
             outputcoverParent.transform.parent = output.transform;
             outputcoverParent.transform.position = Vector3.zero;
             outputcoverParent.transform.rotation = Quaternion.identity;
             outputcoverParent.transform.localScale = Vector3.one;
 
-            GameObject outputbackParent = new GameObject("Symbol-Backplate", componentsToAdd);
+            GameObject outputbackParent = new GameObject("Symbol-Backplate");
             outputbackParent.transform.parent = output.transform;
             outputbackParent.transform.position = Vector3.zero;
             outputbackParent.transform.rotation = Quaternion.identity;
