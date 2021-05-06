@@ -49,7 +49,7 @@ namespace Slot_Engine.Matrix.Managers
         {
             get
             {
-                return matrix.slotMachineManagers.evaluationManager.ReturnWinningObjectsAsWinningPaylines();
+                return matrix.managers.evaluationManager.ReturnWinningObjectsAsWinningPaylines();
             }
         }
         public int current_winning_payline_shown = -1;
@@ -103,7 +103,7 @@ namespace Slot_Engine.Matrix.Managers
 
         private int GetSupportedGeneratedPaylines()
         {
-            return (int)EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.slotMachineManagers.evaluationManager.coreEvaluationObjects).ReturnEvaluationObjectSupportedRootCount();
+            return (int)EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.managers.evaluationManager.coreEvaluationObjects).ReturnEvaluationObjectSupportedRootCount();
         }
 
         internal async Task CancelCycleWins()
@@ -129,7 +129,7 @@ namespace Slot_Engine.Matrix.Managers
         {
             //If first time thru then lerp money to bank
             payline_renderer_manager.ShowWinningPayline(payline_to_show);
-            matrix.slotMachineManagers.soundManager.PlayAudioForWinningPayline(payline_to_show);
+            matrix.managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
             matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
             return Task.CompletedTask;
         }
@@ -244,7 +244,7 @@ namespace Slot_Engine.Matrix.Managers
         //TODO move into Evaluation Manager
         internal void GenerateDynamicPaylinesFromMatrix()
         {
-            dynamicPaylineObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.slotMachineManagers.evaluationManager.coreEvaluationObjects);
+            dynamicPaylineObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.managers.evaluationManager.coreEvaluationObjects);
             dynamicPaylineObject.GenerateDynamicPaylinesFromMatrix(ref matrix.stripManagers);
         }
 

@@ -333,14 +333,14 @@ namespace Slot_Engine.Matrix
         private void IncreaseBetAmount()
         {
             if (StateManager.enCurrentState == States.Idle_Idle)
-                matrix.slotMachineManagers.machine_info_manager.IncreaseBetAmount();
+                matrix.managers.machine_info_manager.IncreaseBetAmount();
             locked = false;
         }
 
         private void DecreaseBetAmount()
         {
             if(StateManager.enCurrentState == States.Idle_Idle)
-                matrix.slotMachineManagers.machine_info_manager.DecreaseBetAmount();
+                matrix.managers.machine_info_manager.DecreaseBetAmount();
             locked = false;
         }
 

@@ -29,8 +29,8 @@ namespace Slot_Engine.Matrix
                 matrix.stripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
                 matrix.stripManagers[reel].reelStopSpin += SoundManager_reelStopSpin;
             }
-            matrix.slotMachineManagers.racking_manager.rackStart += Racking_manager_rackStart;
-            matrix.slotMachineManagers.racking_manager.rackEnd += Racking_manager_rackEnd;
+            matrix.managers.racking_manager.rackStart += Racking_manager_rackStart;
+            matrix.managers.racking_manager.rackEnd += Racking_manager_rackEnd;
         }
 
         private void Racking_manager_rackEnd()

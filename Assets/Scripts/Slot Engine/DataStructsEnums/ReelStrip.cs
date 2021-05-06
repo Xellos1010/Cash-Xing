@@ -69,7 +69,7 @@ namespace Slot_Engine.Matrix
         /// Holds information for spinning - direction speed etc
         /// </summary>
         [SerializeField]
-        internal ReelStripSpinBaseScriptableObject spinParameters;
+        internal StripSpinEvaluatorBaseScriptableObject spinParameters;
         /// <summary>
         /// Controls how many positions to generate after the display area for the slots to spin off-screen
         /// </summary>
@@ -145,7 +145,7 @@ namespace Slot_Engine.Matrix
             spin_info = reelStripStruct;
         }
 
-        internal void SetSpinParametersTo(ReelStripSpinDirectionalConstantScriptableObject spinParameters)
+        internal void SetSpinParametersTo(StripSpinDirectionalConstantEvaluatorScriptableObject spinParameters)
         {
             this.spinParameters = spinParameters;
         }
@@ -160,7 +160,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <typeparam name="T">Type of evaluation manager to return</typeparam>
         /// <returns>Type if in list or null if nothing</returns>
-        internal static T GetSpinParametersAs<T>(ref ReelStripSpinBaseScriptableObject baseSpinParameters)
+        internal static T GetSpinParametersAs<T>(ref StripSpinEvaluatorBaseScriptableObject baseSpinParameters)
         {
             object output = null;
             if(baseSpinParameters.GetType() == typeof(T))

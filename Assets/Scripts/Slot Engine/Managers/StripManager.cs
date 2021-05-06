@@ -27,10 +27,10 @@ namespace Slot_Engine.Matrix
 
 
     [CanEditMultipleObjects]
-    [CustomEditor(typeof(ReelStripManager))]
+    [CustomEditor(typeof(StripManager))]
     class ReelStripManagerEditor : BoomSportsEditor
     {
-        ReelStripManager my_target;
+        StripManager my_target;
         SerializedProperty reel_spin_speed_current;
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Slot_Engine.Matrix
 
         public void OnEnable()
         {
-            my_target = (ReelStripManager)target;
+            my_target = (StripManager)target;
             reel_spin_speed_current = serializedObject.FindProperty("reel_spin_speed_current");
             positions_in_path_v3 = serializedObject.FindProperty("positions_in_path_v3");
             use_ease_inOut_spin = serializedObject.FindProperty("use_ease_inOut_spin");
@@ -104,11 +104,16 @@ namespace Slot_Engine.Matrix
         }
     }
 #endif
-    public class ReelStripManager : MonoBehaviour
+    public partial class ConfigurationGroupManager : MonoBehaviour
     {
-        public delegate void ReelEvent(int reelNumber);
-        public event ReelEvent reelStartSpin;
-        public event ReelEvent reelStopSpin;
+
+    }
+
+    public class StripManager : ConfigurationGroupManager
+    {
+        public delegate void StripEvent(int stripNumber);
+        public event StripEvent reelStartSpin;
+        public event StripEvent reelStopSpin;
         [SerializeField]
         internal SpinStates current_spin_state;
         //the matrix associated with the reel_strip
@@ -414,7 +419,7 @@ namespace Slot_Engine.Matrix
             return String.Join("|", output);
         }
 
-        internal void SetSpinParametersTo(ReelStripSpinDirectionalConstantScriptableObject spin_parameters)
+        internal void SetSpinParametersTo(StripSpinDirectionalConstantEvaluatorScriptableObject spin_parameters)
         {
             StripStruct new_reelstrip_info = stripInfo;
             new_reelstrip_info.spinParameters = spin_parameters;
@@ -453,7 +458,7 @@ namespace Slot_Engine.Matrix
             InitializeVarsForNewSpin();
 
             SetSpinStateTo(SpinStates.spin_start);
-            reel_spin_speed_current = stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().spin_speed_constant;
+            reel_spin_speed_current = stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().spin_speed_constant;
 
             //TODO hooks for reel state machine
             for (int i = 0; i < slotsInStrip.Length; i++)
@@ -652,7 +657,7 @@ namespace Slot_Engine.Matrix
                 slotsInStrip[i].SetSubStateMachineAnimators();
                 slotsInStrip[i].SetAllSubSymbolsGameobjectActive();
             }
-            configurationObjectParent._slot_machine_managers.endConfigurationManager.SetMatrixToReelConfiguration();
+            configurationObjectParent._managers.endConfigurationManager.SetMatrixToReelConfiguration();
         }
 
         internal void SetAllSlotContainersSubAnimatorStates()

@@ -159,7 +159,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         }
 
         //Generating Paylines supported froma matrix
-        internal void GenerateDynamicPaylinesFromMatrix(ref ReelStripManager[] matrixReels)
+        internal void GenerateDynamicPaylinesFromMatrix(ref StripManager[] matrixReels)
         {
             //        Initialize:
             //          Create a root node at column 0(off - screen, non - column part of all solutions)
@@ -196,7 +196,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 BuildPayline(ref payline, ref dynamic_paylines.rootNodes[root_node], ref matrixReels);
             }
         }
-        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes node, ref ReelStripManager[] reel_strip_managers)
+        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes node, ref StripManager[] reel_strip_managers)
         {
             //Add current node to payline
             payline.Add(node.node_info.row);
@@ -226,7 +226,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             }
         }
 
-        private List<SuffixTreeNodes> InitializeRootNodes(ref ReelStripManager[] reel_strip_managers)
+        private List<SuffixTreeNodes> InitializeRootNodes(ref StripManager[] reel_strip_managers)
         {
             List<SuffixTreeNodes> root_nodes = new List<SuffixTreeNodes>();
             SuffixTreeNodes node;
@@ -257,7 +257,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             return root_nodes;
         }
 
-        private List<SuffixTreeNodes> BuildRootNodes(int column, ref ReelStripManager reel_strip_manager, bool left_right)
+        private List<SuffixTreeNodes> BuildRootNodes(int column, ref StripManager reel_strip_manager, bool left_right)
         {
             List<SuffixTreeNodes> root_nodes = new List<SuffixTreeNodes>();
             SuffixTreeNodes node;

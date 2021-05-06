@@ -35,7 +35,7 @@ public partial class WinningPayline : WinningObject
         //}
         //else
         //{
-            return (win_value * matrix.slotMachineManagers.machine_info_manager.machineInfoScriptableObject.bet_amount);
+            return (win_value * matrix.managers.machine_info_manager.machineInfoScriptableObject.bet_amount);
         //}
     }
 

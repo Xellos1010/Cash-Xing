@@ -58,7 +58,7 @@ namespace Slot_Engine.Matrix
         public string presentation_symbol_name;
         public int presentation_symbol;
 
-        public ReelStripManager reel_parent;
+        public StripManager reel_parent;
 
         public bool movement_enabled = false;
         /// <summary>
@@ -136,18 +136,18 @@ namespace Slot_Engine.Matrix
             {
                 Vector3 toPosition;
 
-                toPosition = GeneratePositionUpdateSpeed(reel_parent.stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction * reel_parent.reel_spin_speed_current);
+                toPosition = GeneratePositionUpdateSpeed(reel_parent.stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().reel_spin_direction * reel_parent.reel_spin_speed_current);
                 //Check X Y and Z and move slot to opposite
 
                 //Check if to far left or right and move
 
                 //Check if to far down or up and move
-                if (reel_parent.stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction.y < 0)
+                if (reel_parent.stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().reel_spin_direction.y < 0)
                 {
                     if (toPosition.y <= reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], true);
                 }
-                else if (reel_parent.stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction.y > 0)
+                else if (reel_parent.stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().reel_spin_direction.y > 0)
                 {
                     if (toPosition.y >= reel_parent.positions_in_path_v3_local[0].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], false);
@@ -213,7 +213,7 @@ namespace Slot_Engine.Matrix
                     if (!symbol_set)
                     {
                         //Determines an overlay symbol
-                        NodeDisplaySymbol symbol = reel_parent.configurationObjectParent.slotMachineManagers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
+                        NodeDisplaySymbol symbol = reel_parent.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
                         SetDisplaySymbolTo(symbol);
                     }
                 }

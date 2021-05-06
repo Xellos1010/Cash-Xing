@@ -176,7 +176,7 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, configurationObject.stripManagers).Result));
             }
         }
-        internal async Task<ReelStripSpinStruct[]> GenerateReelStrips(GameModes gameState, ReelStripManager[] reel_strip_managers)
+        internal async Task<ReelStripSpinStruct[]> GenerateReelStrips(GameModes gameState, StripManager[] reel_strip_managers)
         {
             ReelStripSpinStruct[] output = new ReelStripSpinStruct[reel_strip_managers.Length];
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
@@ -186,7 +186,7 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        private async Task<NodeDisplaySymbol[]> GenerateEndingReelStrip(GameModes mode, ReelStripManager reelStripManager)
+        private async Task<NodeDisplaySymbol[]> GenerateEndingReelStrip(GameModes mode, StripManager reelStripManager)
         {
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             //Generate a symbol for each display zone slot

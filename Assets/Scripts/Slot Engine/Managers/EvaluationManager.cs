@@ -53,7 +53,7 @@ namespace Slot_Engine.Matrix.Managers
                     }
                     if (GUILayout.Button("Show Current End Configuration On Reels"))
                     {
-                        myTarget.matrix.slotMachineManagers.endConfigurationManager.SetMatrixToReelConfiguration();
+                        myTarget.matrix.managers.endConfigurationManager.SetMatrixToReelConfiguration();
                     }
                     if (GUILayout.Button("Evaluate Paylines From current End Configuration"))
                     {
@@ -190,7 +190,7 @@ namespace Slot_Engine.Matrix.Managers
         public async void EvaluateWinningSymbolsFromCurrentConfiguration()
         {
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
-            await EvaluateWinningSymbols(matrix.slotMachineManagers.endConfigurationManager.currentReelstripConfiguration);
+            await EvaluateWinningSymbols(matrix.managers.endConfigurationManager.currentReelstripConfiguration);
         }
 
         internal bool DoesSymbolActivateFeature(SymbolObject symbolObject, Features feature)
