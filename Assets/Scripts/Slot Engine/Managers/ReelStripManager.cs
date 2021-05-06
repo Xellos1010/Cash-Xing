@@ -74,7 +74,7 @@ namespace Slot_Engine.Matrix
                     my_target.UpdateSlotManagersSubStateMachines();
                 }
             }
-            if (my_target.is_reel_spinning)
+            if (my_target.isReelSpinning)
             {
                 if (GUILayout.Button("Spin Reel Test"))
                 {
@@ -112,7 +112,7 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal SpinStates current_spin_state;
         //the matrix associated with the reel_strip
-        internal ReelStripConfigurationObject matrix
+        internal ReelStripConfigurationObject configurationObjectParent
         {
             get
             {
@@ -139,12 +139,12 @@ namespace Slot_Engine.Matrix
         /// Holds the reel strip to cycle thru symbols for spin and end symbol configuration for reel
         /// </summary>
         [SerializeField]
-        internal ReelStripStruct reelstrip_info;
+        internal StripStruct stripInfo;
 
         internal void UpdateStripPositions()
         {
-            Debug.LogWarning($"reelstrip_info.total_positions = {reelstrip_info.total_positions} reelstrip_info.total_slot_objects = {reelstrip_info.total_slot_objects}");
-            UpdateLocalPositionsInPath(reelstrip_info.total_positions);
+            Debug.LogWarning($"reelstrip_info.total_positions = {stripInfo.total_positions} reelstrip_info.total_slot_objects = {stripInfo.total_slot_objects}");
+            UpdateLocalPositionsInPath(stripInfo.total_positions);
         }
 
         /// <summary>
@@ -162,15 +162,18 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal NodeDisplaySymbol[] ending_symbols;
         /// <summary>
-        /// Enable you to change the symbol when slot exits matrix to weighted distribution symbol set
+        /// Enables you to change the symbol graphic when slot exits the viewable area of a configuration to a predefined strip or random draw weighte distribution symbol
         /// </summary>
-        public bool change_symbol_graphic_on_spin_idle = true;
-        internal int end_symbols_set_from_config = 0;
+        public bool randomSetSymbolsOnTraverseReel = true;
+        /// <summary>
+        /// UI Indicator to ensure operation for setting symbols to end configuration has performed
+        /// </summary>
+        internal int endSymbolsSetFromConfiguration = 0;
         
         /// <summary>
         /// is the reel in a spin state
         /// </summary>
-        internal bool is_reel_spinning
+        internal bool isReelSpinning
         {
             get
             {
@@ -208,8 +211,8 @@ namespace Slot_Engine.Matrix
 
         internal NodeDisplaySymbol ReturnNextSymbolInStrip()
         {
-            NodeDisplaySymbol output = reelstrip_info.spin_info.reel_spin_symbols[reel_strip_counter];
-            if(reel_strip_counter+1 >= reelstrip_info.spin_info.reel_spin_symbols.Length)
+            NodeDisplaySymbol output = stripInfo.spin_info.reel_spin_symbols[reel_strip_counter];
+            if(reel_strip_counter+1 >= stripInfo.spin_info.reel_spin_symbols.Length)
             {
                 reel_strip_counter = 0;
             }
@@ -321,9 +324,9 @@ namespace Slot_Engine.Matrix
         /// <param name="number_of_slots">Number of display slots</param>
         /// <param name="start_slot_padding">How many slots to generate ontop of the display slot to move onto the reel</param>
         /// <param name="ending_slot_position_padding">How many positions extra to have reelstrip spinn off until slot object moves to top of reel</param>
-        internal void SetReelConfigurationTo(ReelStripStruct reelstrip_info)
+        internal void SetReelConfigurationTo(StripStruct reelstrip_info)
         {
-            this.reelstrip_info = reelstrip_info;
+            this.stripInfo = reelstrip_info;
             UpdateStripPositions();
         }
         /// <summary>
@@ -338,6 +341,7 @@ namespace Slot_Engine.Matrix
             for (int position_in_reel = 0; position_in_reel < positions_in_path_v3_local.Length; position_in_reel++)
             {
                 positions_in_path_v3_local[position_in_reel] = GetSlotPositionInStrip(position_in_reel);
+                //Debug.LogWarning($"positions_in_path_v3_local[position_in_reel] Generated for strip {gameObject.name} = {positions_in_path_v3_local[position_in_reel].ToString()}");
             }
         }
 
@@ -355,22 +359,15 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        /// <summary>
-        /// Used by the matrix to set display symbols
-        /// </summary>
-        /// <param name="reelstrip"></param>
-        internal void SetEndingDisplaySymbolsTo(ReelStripStruct reelstrip)
-        {
-            //SetEndingSymbolsTo(reelstrip.display_symbols);
-        }
-
         internal List<SlotManager> GetSlotsDecending()
         {
             List<SlotManager> output = new List<SlotManager>();
+            Debug.Log($"positions_in_path_v3_local.Length == {positions_in_path_v3_local.Length} - slotsInStrip.Length == {slotsInStrip.Length}");
             for (int position_to_check = 0; position_to_check < positions_in_path_v3_local.Length; position_to_check++)
             {
                 for (int slot = 0; slot < slotsInStrip.Length; slot++)
                 {
+                    //Debug.Log($"slotsInStrip[slot].transform.localPosition {slotsInStrip[slot].transform.localPosition} == {positions_in_path_v3_local[position_to_check]} positions_in_path_v3_local[position_to_check] is {slotsInStrip[slot].transform.localPosition == positions_in_path_v3_local[position_to_check]}");
                     if(slotsInStrip[slot].transform.localPosition == positions_in_path_v3_local[position_to_check])
                         output.Add(slotsInStrip[slot]);
                 }
@@ -380,26 +377,48 @@ namespace Slot_Engine.Matrix
 
         internal void SetSymbolCurrentDisplayTo(ReelStripSpinStruct reelStripStruct)
         {
-            SlotManager[] slots_decending_order = GetSlotsDecending().ToArray();
-            List<NodeDisplaySymbol> symbols_to_display = new List<NodeDisplaySymbol>();
+            endSymbolsSetFromConfiguration = 0;
+            SlotManager[] slotsDecendingOrder = GetSlotsDecending().ToArray();
+            Debug.Log($"{gameObject.name} slotsDecendingOrder.Length = {slotsDecendingOrder.Length} Slot Order = {PrintSlotObjectNames(slotsDecendingOrder)}");
+            List<NodeDisplaySymbol> symbolsToDisplay = new List<NodeDisplaySymbol>();
             for (int symbol = 0; symbol < reelStripStruct.displaySymbols.Length; symbol++)
             {
-                symbols_to_display.Add(reelStripStruct.displaySymbols[symbol]);
+                symbolsToDisplay.Add(reelStripStruct.displaySymbols[symbol]);
             }
-            SetEndingSymbolsTo(symbols_to_display.ToArray());
-            //The top slots are always before the matrix. TBD Refactor for any amount of cushion slots
-            for (int slot = 1; slot < slots_decending_order.Length; slot++)
+            Debug.Log($"symbolsToDisplay.Count = {symbolsToDisplay.Count}");
+
+            SetEndingSymbolsTo(symbolsToDisplay.ToArray());
+            for (int slot = GetPaddingBeforeStrip(stripInfo.stripColumn); slot < slotsDecendingOrder.Length; slot++)
             {
-                slots_decending_order[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[slot-1]);
-                end_symbols_set_from_config += 1;
+                Debug.Log($"Setting {slotsDecendingOrder[slot].gameObject.name} to symbol reelStripStruct.displaySymbols[{endSymbolsSetFromConfiguration}]");
+                slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[endSymbolsSetFromConfiguration]);
+                endSymbolsSetFromConfiguration += 1;
             }
+        }
+
+        private int GetPaddingBeforeStrip(int stripColumn)
+        {
+            int output = 0;
+            output = configurationObjectParent.GetPaddingBeforeStrip(stripColumn);
+            Debug.Log($"Padding for strip {stripColumn} is {output}");
+            return output;
+        }
+
+        private object PrintSlotObjectNames(SlotManager[] slotsList)
+        {
+            List<string> output = new List<string>();
+            for (int slot = 0; slot < slotsList.Length; slot++)
+            {
+                output.Add(slotsList[slot].gameObject.name);
+            }
+            return String.Join("|", output);
         }
 
         internal void SetSpinParametersTo(ReelStripSpinDirectionalConstantScriptableObject spin_parameters)
         {
-            ReelStripStruct new_reelstrip_info = reelstrip_info;
+            StripStruct new_reelstrip_info = stripInfo;
             new_reelstrip_info.spinParameters = spin_parameters;
-            reelstrip_info = new_reelstrip_info;
+            stripInfo = new_reelstrip_info;
         }
         
         //public void UpdatePositionInPathForDirection()
@@ -429,12 +448,12 @@ namespace Slot_Engine.Matrix
         /// <returns>async task to track</returns>
         public Task StartSpin()
         {
-            reelStartSpin?.Invoke(reelstrip_info.reel_number);
+            reelStartSpin?.Invoke(stripInfo.stripColumn);
             //Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
             InitializeVarsForNewSpin();
 
             SetSpinStateTo(SpinStates.spin_start);
-            reel_spin_speed_current = reelstrip_info.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().spin_speed_constant;
+            reel_spin_speed_current = stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().spin_speed_constant;
 
             //TODO hooks for reel state machine
             for (int i = 0; i < slotsInStrip.Length; i++)
@@ -510,7 +529,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public async Task StopReel(ReelStripSpinStruct reelStrip)
         {
-            end_symbols_set_from_config = 0;
+            endSymbolsSetFromConfiguration = 0;
             //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
             //Waits until all slots have stopped spinning
@@ -527,7 +546,7 @@ namespace Slot_Engine.Matrix
             SetEndingSymbolsTo(ending_symbols);
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
             await AllSlotsStoppedSpinning();
-            reelStopSpin?.Invoke(reelstrip_info.reel_number);
+            reelStopSpin?.Invoke(stripInfo.stripColumn);
             //Debug.Log(String.Format("All slots stopped spinning for reel {0}",transform.name));
         }
         internal async Task AllSlotsStoppedSpinning()
@@ -566,10 +585,21 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Set Ending Symbols variable
         /// </summary>
-        /// <param name="ending_symbols">ending symbols for reelstrip</param>
-        private void SetEndingSymbolsTo(NodeDisplaySymbol[] ending_symbols)
+        /// <param name="endingSymbols">ending symbols for reelstrip</param>
+        private void SetEndingSymbolsTo(NodeDisplaySymbol[] endingSymbols)
         {
-            this.ending_symbols = ending_symbols;
+            Debug.Log($"Setting End Symbols To {PrintNodeDisplaySymbolArray(endingSymbols)}");
+            this.ending_symbols = endingSymbols;
+        }
+
+        private string PrintNodeDisplaySymbolArray(NodeDisplaySymbol[] endingSymbols)
+        {
+            List<int> output = new List<int>();
+            for (int endingSymbol = 0; endingSymbol < endingSymbols.Length; endingSymbol++)
+            {
+                output.Add(endingSymbols[endingSymbol].primary_symbol);
+            }
+            return String.Join("|", output);
         }
 
         /// <summary>
@@ -580,10 +610,10 @@ namespace Slot_Engine.Matrix
         internal Vector3 GetSlotPositionInStrip(int positionInStrip)
         {
             //TODO Base on Spin Direction
-            Debug.Log(String.Format("reelstrip_info.reel_number = {0} slot size = ({1},{2}) matrix padding.x = {3}", reelstrip_info.reel_number, matrix.configurationSettings.slotSize.x, matrix.configurationSettings.slotSize.y, matrix.configurationSettings.slotPadding.x));
+            Debug.Log(String.Format("reelstrip_info.reel_number = {0} slot size = ({1},{2}) matrix padding.x = {3}", stripInfo.stripColumn, configurationObjectParent.configurationSettings.slotSize.x, configurationObjectParent.configurationSettings.slotSize.y, configurationObjectParent.configurationSettings.slotPadding.x));
             float x = 0;//reelstrip_info.reel_number * (matrix.configurationSettings.slotSize.x + matrix.configurationSettings.slotPadding.x);//Uncomment to set slot position at slot level
-            float y = -(positionInStrip * (matrix.configurationSettings.slotSize.y + matrix.configurationSettings.slotPadding.y));
-            Debug.Log(string.Format("Local Position for slot {0} int reel {1} is ({2},{3},{4}) ",positionInStrip, transform.name,x.ToString(), y.ToString(),0));
+            float y = -(positionInStrip * (configurationObjectParent.configurationSettings.slotSize.y + configurationObjectParent.configurationSettings.slotPadding.y));
+            //Debug.Log(string.Format("Local Position for slot {0} int reel {1} is ({2},{3},{4}) ",positionInStrip, transform.name,x.ToString(), y.ToString(),0));
             Vector3 return_position = new Vector3(x, y, 0);
             return return_position;
         }
@@ -622,7 +652,7 @@ namespace Slot_Engine.Matrix
                 slotsInStrip[i].SetSubStateMachineAnimators();
                 slotsInStrip[i].SetAllSubSymbolsGameobjectActive();
             }
-            matrix._slot_machine_managers.endConfigurationManager.SetMatrixToReelConfiguration();
+            configurationObjectParent._slot_machine_managers.endConfigurationManager.SetMatrixToReelConfiguration();
         }
 
         internal void SetAllSlotContainersSubAnimatorStates()

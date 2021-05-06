@@ -43,4 +43,8 @@ public partial class ConfigurationSettingsScriptableObject : ScriptableObject
     /// Shape of the slot on the matrix. eg. Square, hex, etc...
     /// </summary>
     public eSlotShape slotShape;
+    /// <summary>
+    /// Symbol Data used for the Configuration Object
+    /// </summary>
+    public SymbolScriptableObject symbolData;
 }

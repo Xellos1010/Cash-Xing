@@ -136,18 +136,18 @@ namespace Slot_Engine.Matrix
             {
                 Vector3 toPosition;
 
-                toPosition = GeneratePositionUpdateSpeed(reel_parent.reelstrip_info.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction * reel_parent.reel_spin_speed_current);
+                toPosition = GeneratePositionUpdateSpeed(reel_parent.stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction * reel_parent.reel_spin_speed_current);
                 //Check X Y and Z and move slot to opposite
 
                 //Check if to far left or right and move
 
                 //Check if to far down or up and move
-                if (reel_parent.reelstrip_info.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction.y < 0)
+                if (reel_parent.stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction.y < 0)
                 {
                     if (toPosition.y <= reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], true);
                 }
-                else if (reel_parent.reelstrip_info.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction.y > 0)
+                else if (reel_parent.stripInfo.GetSpinParametersAs<ReelStripSpinDirectionalConstantScriptableObject>().reel_spin_direction.y > 0)
                 {
                     if (toPosition.y >= reel_parent.positions_in_path_v3_local[0].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], false);
@@ -182,12 +182,12 @@ namespace Slot_Engine.Matrix
             {
                 //Set Graphics and end position
                 graphics_set_to_end = true;
-                end_position = reel_parent.positions_in_path_v3_local[(reel_parent.positions_in_path_v3_local.Length - 2) - reel_parent.end_symbols_set_from_config];
+                end_position = reel_parent.positions_in_path_v3_local[(reel_parent.positions_in_path_v3_local.Length - 2) - reel_parent.endSymbolsSetFromConfiguration];
 
-                if (reel_parent.end_symbols_set_from_config < reel_parent.ending_symbols.Length)
+                if (reel_parent.endSymbolsSetFromConfiguration < reel_parent.ending_symbols.Length)
                 {
-                    SetDisplaySymbolTo(reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1 - reel_parent.end_symbols_set_from_config]);
-                    reel_parent.end_symbols_set_from_config += 1;
+                    SetDisplaySymbolTo(reel_parent.ending_symbols[reel_parent.ending_symbols.Length - 1 - reel_parent.endSymbolsSetFromConfiguration]);
+                    reel_parent.endSymbolsSetFromConfiguration += 1;
                 }
                 else
                 {
@@ -198,12 +198,12 @@ namespace Slot_Engine.Matrix
             else
             {
                 bool symbol_set = false;
-                if (reel_parent.change_symbol_graphic_on_spin_idle)
+                if (reel_parent.randomSetSymbolsOnTraverseReel)
                 {
                     //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
-                    if (reel_parent.reelstrip_info.spin_info.reel_spin_symbols != null)
+                    if (reel_parent.stripInfo.spin_info.reel_spin_symbols != null)
                     {
-                        if (reel_parent.reelstrip_info.spin_info.reel_spin_symbols.Length > 0)
+                        if (reel_parent.stripInfo.spin_info.reel_spin_symbols.Length > 0)
                         {
                             NodeDisplaySymbol symbol = reel_parent.ReturnNextSymbolInStrip();
                             SetDisplaySymbolTo(symbol);
@@ -213,7 +213,7 @@ namespace Slot_Engine.Matrix
                     if (!symbol_set)
                     {
                         //Determines an overlay symbol
-                        NodeDisplaySymbol symbol = reel_parent.matrix.slotMachineManagers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
+                        NodeDisplaySymbol symbol = reel_parent.configurationObjectParent.slotMachineManagers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
                         SetDisplaySymbolTo(symbol);
                     }
                 }
@@ -296,7 +296,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetDisplaySymbolTo(NodeDisplaySymbol symbol_to_display)
         {
-            //Debug.Log(string.Format("Set Display symbol to {0} in reel {1} Slot {2}", symbol_to_display.primary_symbol,reel_parent.gameObject.name, gameObject.name));
+            Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primary_symbol}");
             SetPresentationSymbolTo(symbol_to_display.primary_symbol);
             ShowSymbolRenderer(symbol_to_display.primary_symbol);
             if (symbol_to_display.is_overlay)
@@ -318,9 +318,9 @@ namespace Slot_Engine.Matrix
         {
             Animator output;
             //Compare to Symbols
-            for (int i = 0; i < reel_parent.matrix.symbolDataScriptableObject.symbols.Length; i++)
+            for (int i = 0; i < reel_parent.configurationObjectParent.symbolDataScriptableObject.symbols.Length; i++)
             {
-                if (reel_parent.matrix.isSymbolOverlay(i))
+                if (reel_parent.configurationObjectParent.isSymbolOverlay(i))
                 {
                     output = state_machine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
                     SetBoolTo(ref output, supportedAnimatorBools.FeatureTrigger, true);
@@ -388,7 +388,7 @@ namespace Slot_Engine.Matrix
 
         internal void ShowRandomSymbol()
         {
-            ShowSymbolRenderer(reel_parent.matrix.DrawRandomSymbolFromCurrentMode());
+            ShowSymbolRenderer(reel_parent.configurationObjectParent.DrawRandomSymbolFromCurrentMode());
         }
         /// <summary>
         /// Shows a symbols renderer
@@ -399,7 +399,7 @@ namespace Slot_Engine.Matrix
         {
             //Debug.Log(String.Format("Enabling symbol_prefabs[{0}] = {1}", symbol_to_show, symbol_prefabs[symbol_to_show].gameObject.ToString()));
             //Ensure Symbol Prefab Objects are instantiated
-            if (symbol_prefabs?.Length != reel_parent.matrix.symbolDataScriptableObject.symbols.Length)
+            if (symbol_prefabs?.Length != reel_parent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
             {
                 InstantiateSymbolPrefabs();
             }
@@ -431,11 +431,11 @@ namespace Slot_Engine.Matrix
         private void InstantiateSymbolPrefabs()
         {
 #if UNITY_EDITOR
-            symbol_prefabs = new Transform[reel_parent.matrix.symbolDataScriptableObject.symbols.Length];
+            symbol_prefabs = new Transform[reel_parent.configurationObjectParent.symbolDataScriptableObject.symbols.Length];
             for (int symbol = 0; symbol < symbol_prefabs.Length; symbol++)
             {
-                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.matrix.symbolDataScriptableObject.symbols[symbol].symbolPrefab) as Transform;
-                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.matrix.symbolDataScriptableObject.symbols[symbol].symbolName);
+                symbol_prefabs[symbol] = PrefabUtility.InstantiatePrefab(reel_parent.configurationObjectParent.symbolDataScriptableObject.symbols[symbol].symbolPrefab) as Transform;
+                symbol_prefabs[symbol].gameObject.name = String.Format("Symbol_{0}", reel_parent.configurationObjectParent.symbolDataScriptableObject.symbols[symbol].symbolName);
                 symbol_prefabs[symbol].parent = transform;
                 symbol_prefabs[symbol].localPosition = Vector3.zero;
                 symbol_prefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);

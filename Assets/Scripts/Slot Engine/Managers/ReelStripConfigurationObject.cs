@@ -58,7 +58,7 @@ namespace Slot_Engine.Matrix
             }
             if (GUILayout.Button("Set Reel Numbers"))
             {
-                myTarget.SetReelInfoNumbers();
+                myTarget.SetStripsInfoColumnNumber();
             }
             if(GUILayout.Button("Set Weights from symbols data"))
             {
@@ -371,6 +371,11 @@ namespace Slot_Engine.Matrix
             await WaitForAllReelsToStop(stripManagers);
         }
 
+        internal int GetPaddingBeforeStrip(int stripColumn)
+        {
+            return configurationSettings.displayZones[stripColumn].padding_before;
+        }
+
         private async Task WaitForAllReelsToStop(ReelStripManager[] reel_strip_managers)
         {
             bool lock_task = true;
@@ -495,7 +500,7 @@ namespace Slot_Engine.Matrix
 
         private Animator SetOverlayFeatureAndReturnAnimatorFromNode(SuffixTreeNodeInfo SuffixTreeNodeInfo)
         {
-            return stripManagers[SuffixTreeNodeInfo.column].GetSlotsDecending()[stripManagers[SuffixTreeNodeInfo.column].reelstrip_info.padding_before + SuffixTreeNodeInfo.row].SetOverlayAnimatorToFeatureAndGet();
+            return stripManagers[SuffixTreeNodeInfo.column].GetSlotsDecending()[stripManagers[SuffixTreeNodeInfo.column].stripInfo.padding_before + SuffixTreeNodeInfo.row].SetOverlayAnimatorToFeatureAndGet();
         }
 
         internal bool isSymbolOverlay(int symbol)
@@ -546,7 +551,7 @@ namespace Slot_Engine.Matrix
 
         private Vector3 ReturnPositionOnReelForPayline(ref ReelStripManager reel, int slot_in_reel)
         {
-            return reel.transform.TransformPoint(reel.positions_in_path_v3_local[reel.reelstrip_info.padding_before+slot_in_reel] + (Vector3.back * 10));
+            return reel.transform.TransformPoint(reel.positions_in_path_v3_local[reel.stripInfo.padding_before+slot_in_reel] + (Vector3.back * 10));
         }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
@@ -591,13 +596,13 @@ namespace Slot_Engine.Matrix
                 reel += winning_payline.payline.left_right ? 1 : -1)
             {
                 List<SlotManager> slots_decending_in_reel = reel_managers[reel].GetSlotsDecending();
-                int first_display_slot = reel_managers[reel].reelstrip_info.padding_before;
+                int first_display_slot = reel_managers[reel].stripInfo.padding_before;
                 //Debug.Log(String.Format("first_display_slot for reel {0} = {1}", reel, first_display_slot));
                 for (int slot = first_display_slot; slot < slots_decending_in_reel.Count; slot++)
                 {
                     if (winning_symbols_added < winning_payline.payline.payline_configuration.payline.Length && !winning_slot_set)
                     {
-                        int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].reelstrip_info.padding_before;
+                        int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].stripInfo.padding_before;
                         if (slot == winning_slot)
                         {
                             //Debug.Log(String.Format("Adding Winning Symbol on reel {0} slot {1}",reel, slot));
@@ -659,10 +664,12 @@ namespace Slot_Engine.Matrix
             Debug.Log("Preparing Slot Machine for Spin");
         }
 
-        internal void SetSymbolsToDisplayOnMatrixTo(ReelStripSpinStruct[] current_reelstrip_configuration)
+        internal void SetSymbolsToDisplayOnConfigurationObjectTo(ReelStripSpinStruct[] current_reelstrip_configuration)
         {
+            Debug.Log($"stripManagers.Length = {stripManagers.Length}");
             for (int reel = 0; reel < stripManagers.Length; reel++)
             {
+                Debug.Log($"stripManagers[{reel}].SetSymbolCurrentDisplayTo({String.Join("|",current_reelstrip_configuration[reel].GetAllDisplaySymbols())})");
                 stripManagers[reel].SetSymbolCurrentDisplayTo(current_reelstrip_configuration[reel]);
             }
         }
@@ -723,7 +730,7 @@ namespace Slot_Engine.Matrix
                     spinConfiguration[i].reel_spin_symbols = ReelStrip.GenerateReelStripStatic(StateManager.enCurrentMode,slots_per_strip_onSpinLoop, ref temp);
                 }
                 //Assign reelstrip to reel
-                reelStripManagers[i].reelstrip_info.SetSpinConfigurationTo(spinConfiguration[i]);
+                reelStripManagers[i].stripInfo.SetSpinConfigurationTo(spinConfiguration[i]);
             }
         }
 
@@ -1584,13 +1591,13 @@ namespace Slot_Engine.Matrix
             slotMachineManagers.machine_info_manager.SetPlayerWalletTo(to_value);
         }
 
-        internal void SetReelInfoNumbers()
+        internal void SetStripsInfoColumnNumber()
         {
             for (int reel = 0; reel < stripManagers.Length; reel++)
             {
-                ReelStripStruct temp = stripManagers[reel].reelstrip_info;
-                temp.reel_number = reel;
-                stripManagers[reel].reelstrip_info = temp;
+                StripStruct temp = stripManagers[reel].stripInfo;
+                temp.stripColumn = reel;
+                stripManagers[reel].stripInfo = temp;
             }
         }
 
