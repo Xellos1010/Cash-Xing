@@ -32,22 +32,30 @@ namespace Slot_Engine.Matrix
         /// Padding before display zone
         /// </summary>
         [Range(1,50)]
-        public int padding_before;
+        public int paddingBefore;
         /// <summary>
         /// Padding After Display Zone - default to 1
         /// </summary>
         [Range(1,50)]
-        public int padding_after;
+        public int paddingAfter;
         /// <summary>
         /// This is where you can stack display zones that are affected or not affected by payline evaluations
         /// </summary>
         [SerializeField]
-        public ReelStripStructDisplayZone[] stripDisplayZone;
+        public ReelStripStructDisplayZone[] stripDisplayZones;
         /// <summary>
         /// Type of Spin to use on this reel. Constant Lerp - Step 1 slot over time.
         /// </summary>
         [SerializeField]
         public BaseSpinEvaluatorScriptableObject spinParameters;
+
+        public ConfigurationStripStructDisplayZones(ConfigurationStripStructDisplayZones stripDisplayZonesSetting) : this()
+        {
+            spinParameters = stripDisplayZonesSetting.spinParameters;
+            stripDisplayZones = stripDisplayZonesSetting.stripDisplayZones;
+            paddingBefore = stripDisplayZonesSetting.paddingBefore;
+            paddingAfter = stripDisplayZonesSetting.paddingAfter;
+        }
 
         /// <summary>
         /// strip display zone's total
@@ -58,9 +66,9 @@ namespace Slot_Engine.Matrix
             get
             {
                 int output = 0;
-                for (int displayZone = 0; displayZone < stripDisplayZone.Length; displayZone++)
+                for (int displayZone = 0; displayZone < stripDisplayZones.Length; displayZone++)
                 {
-                    output += stripDisplayZone[displayZone].positionsInZone;
+                    output += stripDisplayZones[displayZone].positionsInZone;
                 }
                 return output;
             }
@@ -69,7 +77,7 @@ namespace Slot_Engine.Matrix
         {
             get
             {
-                return padding_before + padding_before + stripDisplayZonePositionsTotal;
+                return paddingBefore + paddingBefore + stripDisplayZonePositionsTotal;
             }
         }
     }

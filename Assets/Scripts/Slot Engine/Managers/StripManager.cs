@@ -211,19 +211,17 @@ namespace Slot_Engine.Matrix
                 return is_spinning;
             }
         }
-        public int reel_strip_counter = 0;
-        
-
         internal NodeDisplaySymbol ReturnNextSymbolInStrip()
         {
-            NodeDisplaySymbol output = stripInfo.spin_info.reel_spin_symbols[reel_strip_counter];
-            if(reel_strip_counter+1 >= stripInfo.spin_info.reel_spin_symbols.Length)
+            int stripCounter = 0;
+            NodeDisplaySymbol output = stripInfo.spin_info.stripSpinSymbols[stripCounter];
+            if(stripCounter+1 >= stripInfo.spin_info.stripSpinSymbols.Length)
             {
-                reel_strip_counter = 0;
+                stripCounter = 0;
             }
             else
             {
-                reel_strip_counter += 1;
+                stripCounter += 1;
             }
             return output;
         }
@@ -380,7 +378,7 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        internal void SetSymbolCurrentDisplayTo(ReelStripSpinStruct reelStripStruct)
+        internal void SetSymbolCurrentDisplayTo(StripSpinStruct reelStripStruct)
         {
             endSymbolsSetFromConfiguration = 0;
             SlotManager[] slotsDecendingOrder = GetSlotsDecending().ToArray();
@@ -418,13 +416,6 @@ namespace Slot_Engine.Matrix
             }
             return String.Join("|", output);
         }
-
-        internal void SetSpinParametersTo(StripSpinDirectionalConstantEvaluatorScriptableObject spin_parameters)
-        {
-            StripStruct new_reelstrip_info = stripInfo;
-            new_reelstrip_info.spinParameters = spin_parameters;
-            stripInfo = new_reelstrip_info;
-        }
         
         //public void UpdatePositionInPathForDirection()
         //{
@@ -458,7 +449,8 @@ namespace Slot_Engine.Matrix
             InitializeVarsForNewSpin();
 
             SetSpinStateTo(SpinStates.spin_start);
-            reel_spin_speed_current = stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().spin_speed_constant;
+            StripSpinDirectionalConstantEvaluatorScriptableObject temp = stripInfo.GetSpinParametersAs() as StripSpinDirectionalConstantEvaluatorScriptableObject;
+            reel_spin_speed_current = temp.spin_speed_constant;
 
             //TODO hooks for reel state machine
             for (int i = 0; i < slotsInStrip.Length; i++)
@@ -532,7 +524,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public async Task StopReel(ReelStripSpinStruct reelStrip)
+        public async Task StopReel(StripSpinStruct reelStrip)
         {
             endSymbolsSetFromConfiguration = 0;
             //Set State to spin outro

@@ -14,9 +14,9 @@ using System.Collections.Generic;
 using System;
 
 [Serializable]
-public class SpinConfigurationStorage : SerializableDictionary.Storage<ReelStripSpinStruct[]>
+public class SpinConfigurationStorage : SerializableDictionary.Storage<StripSpinStruct[]>
 {
-    public SpinConfigurationStorage(ReelStripSpinStruct[] result)
+    public SpinConfigurationStorage(StripSpinStruct[] result)
     {
          data = result;
     }
@@ -36,7 +36,7 @@ public class EndConfigurationsScriptableObject : ScriptableObject
     /// <summary>
     /// Current end reelstrip configuration in use
     /// </summary>
-    public ReelStripSpinStruct[] currentReelstripConfiguration;
+    public StripSpinStruct[] currentReelstripConfiguration;
     /// <summary>
     /// end reelstrips to display in sequence
     /// </summary>
@@ -44,13 +44,13 @@ public class EndConfigurationsScriptableObject : ScriptableObject
     /// <summary>
     /// reelstrips that have been used
     /// </summary>
-    public List<ReelStripSpinStruct[]> end_reelstrips_used;
+    public List<StripSpinStruct[]> end_reelstrips_used;
 
-    public ReelStripSpinStruct[] savedReelConfiguration;
-    internal void AddReelstripToUsedList(ReelStripSpinStruct[] current_reelstrip_configuration)
+    public StripSpinStruct[] savedReelConfiguration;
+    internal void AddReelstripToUsedList(StripSpinStruct[] current_reelstrip_configuration)
     {
         if (end_reelstrips_used == null)
-            end_reelstrips_used = new List<ReelStripSpinStruct[]>();
+            end_reelstrips_used = new List<StripSpinStruct[]>();
         end_reelstrips_used.Add(current_reelstrip_configuration);
     }
 }

@@ -170,19 +170,22 @@ namespace Slot_Engine.Matrix
 
         private Task DisplayConfigurationSettings(ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
         {
-            SetConfigurationDisplayZones(configurationGeneratorSettings.displayZones);
+            Debug.Log($"High level configurationGeneratorSettings.displayZones[0].paddingBefore = {configurationGeneratorSettings.displayZones[0].paddingBefore}");
+            SetConfigurationDisplayZones(ref configurationGeneratorSettings.displayZones);
             return Task.CompletedTask;
         }
 
         /// <summary>
         /// Sets the reelstrips info for the matrix
         /// </summary>
-        /// <param name="display_zones_per_reel">The display zone breakdown per reel</param>
+        /// <param name="displayZonesPerStrip">The display zone breakdown per reel</param>
         /// <returns></returns>
-        public Task SetConfigurationDisplayZones(ConfigurationStripStructDisplayZones[] display_zones_per_reel)
+        public Task SetConfigurationDisplayZones(ref ConfigurationStripStructDisplayZones[] displayZonesPerStrip)
         {
+            Debug.Log($"1 displayZonesPerStrip[0].paddingBefore = {displayZonesPerStrip[0].paddingBefore}");
             //Build reelstrip info 
-            ReelStripsStruct stripConfiguration = new ReelStripsStruct(display_zones_per_reel);
+            StripsStruct stripConfiguration = new StripsStruct(ref displayZonesPerStrip);
+            Debug.Log($"1 stripConfiguration.strips[0].stripDisplayZonesSetting.paddingBefore = {stripConfiguration.strips[0].stripDisplayZonesSetting.paddingBefore}");
             //Debug.Log($"stripConfiguration.reelstrips.Length = {stripConfiguration.reelstrips.Length}");
             SetReelsAndSlotsPerReel(stripConfiguration);
             return Task.CompletedTask;
@@ -192,25 +195,25 @@ namespace Slot_Engine.Matrix
         /// Anytime this is called - the end_configuration, paylines managers need to update.
         /// </summary>
         /// <param name="slots_per_reelstrip"></param>
-        internal void SetReelsAndSlotsPerReel(ReelStripsStruct reelstrips_configuration)
+        internal void SetReelsAndSlotsPerReel(StripsStruct stripsConfiguration)
         {
             //Ensure there are enough reel objects
-            SetStripObjectsToLength(reelstrips_configuration.reelstrips.Length, ref connectedConfigurationObject);
+            SetStripObjectsToLength(stripsConfiguration.strips.Length, ref connectedConfigurationObject);
 
             //Ensure each strip knows its column position
-            connectedConfigurationObject.SetStripsInfoColumnNumber();
+            connectedConfigurationObject.SetStripInfoStruct(connectedConfigurationObject);
 
             //Ensure the strips are positioned in
             SetStripObjectsInitialPositions(ref connectedConfigurationObject);
 
             //Set each Reels Configuration - each reel will take care of generating slots
-            for (int i = 0; i < reelstrips_configuration.reelstrips.Length; i++)
+            for (int i = 0; i < stripsConfiguration.strips.Length; i++)
             {
-                Debug.Log($"Setting {connectedConfigurationObject.stripManagers[i].gameObject.name} reelstrip info with total positions {reelstrips_configuration.reelstrips[i].total_positions}");
+                Debug.Log($"Setting {connectedConfigurationObject.stripManagers[i].gameObject.name} reelstrip info with total positions {stripsConfiguration.strips[i].total_positions}");
                 //Set ReelStrip Configuration
-                connectedConfigurationObject.stripManagers[i].SetReelConfigurationTo(reelstrips_configuration.reelstrips[i]);
+                connectedConfigurationObject.stripManagers[i].SetReelConfigurationTo(stripsConfiguration.strips[i]);
                 //Generate Slot Objects
-                GenerateStripSlotObjects(ref connectedConfigurationObject.stripManagers[i], reelstrips_configuration.reelstrips[i]);
+                GenerateStripSlotObjects(ref connectedConfigurationObject.stripManagers[i], stripsConfiguration.strips[i]);
             }
         }
 
@@ -365,19 +368,19 @@ namespace Slot_Engine.Matrix
             //for each display zone - generate a cover only for any padding and backing for any active
             for (int strip = 0; strip < connectedConfigurationObject.configurationSettings.displayZones.Length; strip++)
             {
-                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before; position++)
+                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].paddingBefore; position++)
                 {
                     GenerateCoverPrefab(connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, position);
                 }
-                positionTemp = connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before;
-                for (int displayZoneStrip = 0; displayZoneStrip < connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone.Length; displayZoneStrip++)
+                positionTemp = connectedConfigurationObject.configurationSettings.displayZones[strip].paddingBefore;
+                for (int displayZoneStrip = 0; displayZoneStrip < connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZones.Length; displayZoneStrip++)
                 {
                     //Will generate objects based on active of inactive display zone and increment position
-                    GenerateCoverOrBackplate(connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZone[displayZoneStrip], connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, ref positionTemp);
+                    GenerateCoverOrBackplate(connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZones[displayZoneStrip], connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, ref positionTemp);
                 }
-                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].padding_after; position++)
+                for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].paddingAfter; position++)
                 {
-                    GenerateCoverPrefab(connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZonePositionsTotal + connectedConfigurationObject.configurationSettings.displayZones[strip].padding_before + position);
+                    GenerateCoverPrefab(connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZonePositionsTotal + connectedConfigurationObject.configurationSettings.displayZones[strip].paddingBefore + position);
                 }
             }
             //for (int item1 = 0; item1 < configurationObjectWorldPosition.Length; item1++)

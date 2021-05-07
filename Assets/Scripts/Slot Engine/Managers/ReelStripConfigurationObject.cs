@@ -58,7 +58,7 @@ namespace Slot_Engine.Matrix
             }
             if (GUILayout.Button("Set Reel Numbers"))
             {
-                myTarget.SetStripsInfoColumnNumber();
+                myTarget.SetStripInfoStruct();
             }
             if(GUILayout.Button("Set Weights from symbols data"))
             {
@@ -351,21 +351,21 @@ namespace Slot_Engine.Matrix
         internal async Task StopReels()
         {
             //Get the end display configuration and set per reel
-            ReelStripSpinStruct[] configuration_to_use = managers.endConfigurationManager.GetCurrentConfiguration();
+            StripSpinStruct[] configuration_to_use = managers.endConfigurationManager.GetCurrentConfiguration();
 
             //Get Order of stopping configuration objects from baseSpinSettingsScriptableObject - Independant reels will have to be taken into consideration
-            int[] orderStopObjects = managers.spin_manager.baseSpinSettingsScriptableObject.GetStopObjectOrder<StripManager>(ref managers.matrix.stripManagers);
+            int[] orderStopObjects = managers.spin_manager.baseSpinSettingsScriptableObject.GetStopObjectOrder<StripManager>(ref managers.configurationObject.stripManagers);
             //Determine whether to stop reels forwards or backwards.
             for (int i = 0; i < orderStopObjects.Length; i++)
             {
                 //If reel strip delays are enabled wait between strips to stop
-                if (managers.spin_manager.baseSpinSettingsScriptableObject.stripDelayEndEnabled)
+                if (managers.spin_manager.baseSpinSettingsScriptableObject.delayStartEnabled)
                 {
-                    await stripManagers[i].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
+                    await stripManagers[orderStopObjects[i]].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
                 }
                 else
                 {
-                    stripManagers[i].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
+                    stripManagers[orderStopObjects[i]].StopReel(configuration_to_use[i]);//Only use for specific reel stop features
                 }
             }
             //Wait for all reels to be in spin.end state before continuing
@@ -374,7 +374,7 @@ namespace Slot_Engine.Matrix
 
         internal int GetPaddingBeforeStrip(int stripColumn)
         {
-            return configurationSettings.displayZones[stripColumn].padding_before;
+            return configurationSettings.displayZones[stripColumn].paddingBefore;
         }
 
         private async Task WaitForAllReelsToStop(StripManager[] reel_strip_managers)
@@ -404,7 +404,7 @@ namespace Slot_Engine.Matrix
         internal async Task SpinReels()
         {
             //The end reel configuration is set when spin starts to the next item in the list
-            ReelStripSpinStruct[] end_reel_configuration = managers.endConfigurationManager.UseNextConfigurationInList();
+            StripSpinStruct[] end_reel_configuration = managers.endConfigurationManager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
             managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
 
@@ -413,22 +413,14 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Used to start spinning the reels
         /// </summary>
-        internal async Task SpinReels(ReelStripSpinStruct[] end_reel_configuration)
+        internal async Task SpinReels(StripSpinStruct[] end_reel_configuration)
         {
-            //If we want to use ReelStrips for the spin loop we need to stitch the end_reel_configuration and display symbols together
-            if (managers.spin_manager.baseSpinSettingsScriptableObject.usePreDefinesStripsForLoop)
-            {
-                //Generate Reel strips if none are present
-                GenerateReelStripsToLoop(ref end_reel_configuration);
-                //TODO Set each reelstripmanager to spin thru the strip
-                //TODO Insert end_reelstrips_to_display into generated reelstrips
-            }
+            int[] orderStopObjects = managers.spin_manager.baseSpinSettingsScriptableObject.GetStopObjectOrder<StripManager>(ref managers.configurationObject.stripManagers);
+            Debug.Log($"Spinning objects in order {String.Join("|", orderStopObjects)}");
             //Spin the reels - if there is a delay between reels then wait delay amount
-            for (int i = managers.spin_manager.baseSpinSettingsScriptableObject.startSpinFirstInFirstOut ? 0 : stripManagers.Length - 1; //Forward start at 0 - Backward start at length of reels_strip_managers.length - 1
-                managers.spin_manager.baseSpinSettingsScriptableObject.startSpinFirstInFirstOut ? i < stripManagers.Length : i >= 0;  //Forward set the iterator to < length of reel_strip_managers - Backward set iterator to >= 0
-                i = managers.spin_manager.baseSpinSettingsScriptableObject.startSpinFirstInFirstOut ? i + 1 : i - 1)                                     //Forward increment by 1 - Backwards Decrement by 1
+            for (int i = 0; i < orderStopObjects.Length; i++)
             {
-                await stripManagers[i].StartSpin();
+                await stripManagers[orderStopObjects[i]].StartSpin();
             }
         }
 
@@ -501,7 +493,7 @@ namespace Slot_Engine.Matrix
 
         private Animator SetOverlayFeatureAndReturnAnimatorFromNode(SuffixTreeNodeInfo SuffixTreeNodeInfo)
         {
-            return stripManagers[SuffixTreeNodeInfo.column].GetSlotsDecending()[stripManagers[SuffixTreeNodeInfo.column].stripInfo.padding_before + SuffixTreeNodeInfo.row].SetOverlayAnimatorToFeatureAndGet();
+            return stripManagers[SuffixTreeNodeInfo.column].GetSlotsDecending()[stripManagers[SuffixTreeNodeInfo.column].stripInfo.stripDisplayZonesSetting.paddingBefore + SuffixTreeNodeInfo.row].SetOverlayAnimatorToFeatureAndGet();
         }
 
         internal bool isSymbolOverlay(int symbol)
@@ -552,7 +544,7 @@ namespace Slot_Engine.Matrix
 
         private Vector3 ReturnPositionOnReelForPayline(ref StripManager reel, int slot_in_reel)
         {
-            return reel.transform.TransformPoint(reel.positions_in_path_v3_local[reel.stripInfo.padding_before+slot_in_reel] + (Vector3.back * 10));
+            return reel.transform.TransformPoint(reel.positions_in_path_v3_local[reel.stripInfo.stripDisplayZonesSetting.paddingBefore+slot_in_reel] + (Vector3.back * 10));
         }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
@@ -597,13 +589,13 @@ namespace Slot_Engine.Matrix
                 reel += winning_payline.payline.left_right ? 1 : -1)
             {
                 List<SlotManager> slots_decending_in_reel = reel_managers[reel].GetSlotsDecending();
-                int first_display_slot = reel_managers[reel].stripInfo.padding_before;
+                int first_display_slot = reel_managers[reel].stripInfo.stripDisplayZonesSetting.paddingBefore;
                 //Debug.Log(String.Format("first_display_slot for reel {0} = {1}", reel, first_display_slot));
                 for (int slot = first_display_slot; slot < slots_decending_in_reel.Count; slot++)
                 {
                     if (winning_symbols_added < winning_payline.payline.payline_configuration.payline.Length && !winning_slot_set)
                     {
-                        int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].stripInfo.padding_before;
+                        int winning_slot = winning_payline.payline.payline_configuration.payline[winning_symbols_added] + reel_managers[reel].stripInfo.stripDisplayZonesSetting.paddingBefore;
                         if (slot == winning_slot)
                         {
                             //Debug.Log(String.Format("Adding Winning Symbol on reel {0} slot {1}",reel, slot));
@@ -665,7 +657,7 @@ namespace Slot_Engine.Matrix
             Debug.Log("Preparing Slot Machine for Spin");
         }
 
-        internal void SetSymbolsToDisplayOnConfigurationObjectTo(ReelStripSpinStruct[] current_reelstrip_configuration)
+        internal void SetSymbolsToDisplayOnConfigurationObjectTo(StripSpinStruct[] current_reelstrip_configuration)
         {
             Debug.Log($"stripManagers.Length = {stripManagers.Length}");
             for (int reel = 0; reel < stripManagers.Length; reel++)
@@ -704,31 +696,23 @@ namespace Slot_Engine.Matrix
             return reelstrip_managers;
         }
 
-        internal void SetSpinParametersTo(StripSpinDirectionalConstantEvaluatorScriptableObject spin_parameters)
-        {
-            for (int reel = 0; reel < stripManagers.Length; reel++)
-            {
-                stripManagers[reel].SetSpinParametersTo(spin_parameters);
-            }
-        }
-
-        internal void GenerateReelStripsToLoop(ref ReelStripSpinStruct[] reelConfiguration)
+        internal void GenerateReelStripsToLoop(ref StripSpinStruct[] reelConfiguration)
         {
             //Generate reel strips based on number of reels and symbols per reel - Insert ending symbol configuration and hold reference for array range
             GenerateReelStripsFor(ref stripManagers, ref reelConfiguration, slotsPerStripLoop);
         }
 
-        private void GenerateReelStripsFor(ref StripManager[] reelStripManagers, ref ReelStripSpinStruct[] spinConfiguration, int slots_per_strip_onSpinLoop)
+        private void GenerateReelStripsFor(ref StripManager[] reelStripManagers, ref StripSpinStruct[] spinConfiguration, int slots_per_strip_onSpinLoop)
         {
             EndConfigurationManager temp;
             temp = managers.endConfigurationManager;
             //Loop over each reelstrip and assign reel strip
             for (int i = 0; i < reelStripManagers.Length; i++)
             {
-                if (spinConfiguration[i].reel_spin_symbols?.Length != slots_per_strip_onSpinLoop)
+                if (spinConfiguration[i].stripSpinSymbols?.Length != slots_per_strip_onSpinLoop)
                 {
                     //Generates reelstrip based on weights
-                    spinConfiguration[i].reel_spin_symbols = ReelStrip.GenerateReelStripStatic(StateManager.enCurrentMode,slots_per_strip_onSpinLoop, ref temp);
+                    spinConfiguration[i].stripSpinSymbols = Strip.GenerateReelStripStatic(StateManager.enCurrentMode,slots_per_strip_onSpinLoop, ref temp);
                 }
                 //Assign reelstrip to reel
                 reelStripManagers[i].stripInfo.SetSpinConfigurationTo(spinConfiguration[i]);
@@ -785,7 +769,7 @@ namespace Slot_Engine.Matrix
             managers.machine_info_manager.OffsetPlayerAmountBy(amount);
         }
 
-        private string PrintSpinSymbols(ref ReelStripSpinStruct[] stripInitial)
+        private string PrintSpinSymbols(ref StripSpinStruct[] stripInitial)
         {
             string output = "";
             for (int strip = 0; strip < stripInitial.Length; strip++)
@@ -795,7 +779,7 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        private string ReturnDisplaySymbolsPrint(ReelStripSpinStruct reelstrip_info)
+        private string ReturnDisplaySymbolsPrint(StripSpinStruct reelstrip_info)
         {
             return String.Join("|",reelstrip_info.displaySymbols);
         }
@@ -1591,14 +1575,17 @@ namespace Slot_Engine.Matrix
         {
             managers.machine_info_manager.SetPlayerWalletTo(to_value);
         }
-
-        internal void SetStripsInfoColumnNumber()
+        internal void SetStripInfoStruct()
         {
-            for (int reel = 0; reel < stripManagers.Length; reel++)
+            SetStripInfoStruct(managers.configurationObject);
+        }
+        internal void SetStripInfoStruct(ReelStripConfigurationObject configurationObject)
+        {
+            for (int strip = 0; strip < stripManagers.Length; strip++)
             {
-                StripStruct temp = stripManagers[reel].stripInfo;
-                temp.stripColumn = reel;
-                stripManagers[reel].stripInfo = temp;
+                StripStruct temp = stripManagers[strip].stripInfo;
+                temp.stripColumn = strip;
+                stripManagers[strip].stripInfo = temp;
             }
         }
 

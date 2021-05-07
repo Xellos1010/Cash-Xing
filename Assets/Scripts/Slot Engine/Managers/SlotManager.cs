@@ -135,19 +135,19 @@ namespace Slot_Engine.Matrix
             if (movement_enabled)
             {
                 Vector3 toPosition;
-
-                toPosition = GeneratePositionUpdateSpeed(reel_parent.stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().reel_spin_direction * reel_parent.reel_spin_speed_current);
+                StripSpinDirectionalConstantEvaluatorScriptableObject temp = reel_parent.stripInfo.GetSpinParametersAs() as StripSpinDirectionalConstantEvaluatorScriptableObject;
+                toPosition = GeneratePositionUpdateSpeed(temp.reel_spin_direction * reel_parent.reel_spin_speed_current);
                 //Check X Y and Z and move slot to opposite
 
                 //Check if to far left or right and move
 
                 //Check if to far down or up and move
-                if (reel_parent.stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().reel_spin_direction.y < 0)
+                if (temp.reel_spin_direction.y < 0)
                 {
                     if (toPosition.y <= reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], true);
                 }
-                else if (reel_parent.stripInfo.GetSpinParametersAs<StripSpinDirectionalConstantEvaluatorScriptableObject>().reel_spin_direction.y > 0)
+                else if (temp.reel_spin_direction.y > 0)
                 {
                     if (toPosition.y >= reel_parent.positions_in_path_v3_local[0].y)
                         ShiftToPositionBy(ref toPosition, reel_parent.positions_in_path_v3_local[reel_parent.positions_in_path_v3_local.Length - 1], false);
@@ -201,9 +201,9 @@ namespace Slot_Engine.Matrix
                 if (reel_parent.randomSetSymbolsOnTraverseReel)
                 {
                     //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
-                    if (reel_parent.stripInfo.spin_info.reel_spin_symbols != null)
+                    if (reel_parent.stripInfo.spin_info.stripSpinSymbols != null)
                     {
-                        if (reel_parent.stripInfo.spin_info.reel_spin_symbols.Length > 0)
+                        if (reel_parent.stripInfo.spin_info.stripSpinSymbols.Length > 0)
                         {
                             NodeDisplaySymbol symbol = reel_parent.ReturnNextSymbolInStrip();
                             SetDisplaySymbolTo(symbol);
@@ -296,7 +296,7 @@ namespace Slot_Engine.Matrix
 
         internal void SetDisplaySymbolTo(NodeDisplaySymbol symbol_to_display)
         {
-            Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primary_symbol}");
+            //Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primary_symbol}");
             SetPresentationSymbolTo(symbol_to_display.primary_symbol);
             ShowSymbolRenderer(symbol_to_display.primary_symbol);
             if (symbol_to_display.is_overlay)

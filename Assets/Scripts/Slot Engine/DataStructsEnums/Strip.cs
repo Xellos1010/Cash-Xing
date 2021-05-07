@@ -10,11 +10,10 @@ using static Slot_Engine.Matrix.EndConfigurationManager;
 namespace Slot_Engine.Matrix
 {
     [System.Serializable]
-    public class ReelStrip
+    public class Strip
     {
         [UnityEngine.SerializeField]
-        public StripStruct reelStrip;
-
+        public StripStruct stripInfo;
         internal static NodeDisplaySymbol[] GenerateReelStripStatic(GameModes currentMode, int slotsPerStrip, ref EndConfigurationManager endConfigurationManager)
         {
             //Generate new reel symbols array and assign based on weighted distribution - then add the display symbols at the end for now
@@ -28,30 +27,30 @@ namespace Slot_Engine.Matrix
 
         internal string ReturnDisplaySymbolsPrint()
         {
-            return String.Join(" ", reelStrip.spin_info.displaySymbols);
+            return String.Join(" ", stripInfo.spin_info.displaySymbols);
         }
     }
     [Serializable]
-    public struct ReelStripsStruct
+    public struct StripsStruct
     {
         [UnityEngine.SerializeField]
-        public StripStruct[] reelstrips;
+        public StripStruct[] strips;
 
-        public ReelStripsStruct(ConfigurationStripStructDisplayZones[] display_zones_per_reel) : this()
+        public StripsStruct(ref ConfigurationStripStructDisplayZones[] displayZonesPerStrip) : this()
         {
-            reelstrips = new StripStruct[display_zones_per_reel.Length];
-            for (int reel_number = 0; reel_number < reelstrips.Length; reel_number++)
+            strips = new StripStruct[displayZonesPerStrip.Length];
+            for (int reel_number = 0; reel_number < strips.Length; reel_number++)
             {
-                reelstrips[reel_number] = new StripStruct(reel_number,display_zones_per_reel[reel_number]);
+                strips[reel_number] = new StripStruct(reel_number,displayZonesPerStrip[reel_number]);
             }
         }
 
         internal string PrintDisplaySymbols()
         {
             string output = "";
-            for (int i = 0; i < reelstrips.Length; i++)
+            for (int i = 0; i < strips.Length; i++)
             {
-                output += "-" + String.Join("|", reelstrips[i].spin_info.displaySymbols);
+                output += "-" + String.Join("|", strips[i].spin_info.displaySymbols);
             }
             return output;
         }
@@ -66,36 +65,22 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal int stripColumn;
         /// <summary>
-        /// Holds information for spinning - direction speed etc
+        /// Display Zone Configuration for Strip
         /// </summary>
         [SerializeField]
-        internal StripSpinEvaluatorBaseScriptableObject spinParameters;
-        /// <summary>
-        /// Controls how many positions to generate after the display area for the slots to spin off-screen
-        /// </summary>
-        [SerializeField]
-        internal int padding_before;
-        /// <summary>
-        /// Controls the active display zones
-        /// </summary>
-        [UnityEngine.SerializeField]
-        internal ReelStripStructDisplayZone[] display_zones;
-        /// <summary>
-        /// Controls the empty positions generated after the display zone
-        /// </summary>
-        [UnityEngine.SerializeField]
-        internal int padding_after;
+        internal ConfigurationStripStructDisplayZones stripDisplayZonesSetting;
+
         /// <summary>
         /// spin_informatino for the reelstrip
         /// </summary>
         [UnityEngine.SerializeField]
-        internal ReelStripSpinStruct spin_info;
+        internal StripSpinStruct spin_info;
         internal int total_slot_objects
         {
             get
             {
                 int output = 0;
-                output += padding_before;
+                output += stripDisplayZonesSetting.paddingBefore;
                 GetTotalDisplaySlots(ref output);
                 return output;
             }
@@ -114,46 +99,41 @@ namespace Slot_Engine.Matrix
             get
             {
                 int output = 0;
-                output += padding_before;
+                output += stripDisplayZonesSetting.paddingBefore;
                 GetTotalDisplaySlots(ref output);
-                output += padding_after;
+                output += stripDisplayZonesSetting.paddingAfter;
                 return output;
             }
         }
 
         private void GetTotalDisplaySlots(ref int output)
         {
-            if (display_zones != null)
+            if (stripDisplayZonesSetting.stripDisplayZones != null)
             {
-                for (int display_zone = 0; display_zone < display_zones.Length; display_zone++)
+                for (int displayZone = 0; displayZone < stripDisplayZonesSetting.stripDisplayZones.Length; displayZone++)
                 {
-                    output += display_zones[display_zone].positionsInZone;
+                    output += stripDisplayZonesSetting.stripDisplayZones[displayZone].positionsInZone;
                 }
             }
         }
 
-        public StripStruct(int reel_number, ConfigurationStripStructDisplayZones display_zone) : this()
+        public StripStruct(int stripNumber, ConfigurationStripStructDisplayZones stripDisplayZonesSetting) : this()
         {
-            this.stripColumn = reel_number;
-            this.display_zones = display_zone.stripDisplayZone;
-            this.padding_before = display_zone.padding_before;
-            this.padding_after = display_zone.padding_after;
+            this.stripColumn = stripNumber;
+            Debug.Log($"display_zone number of zones = {stripDisplayZonesSetting.stripDisplayZones.Length}");
+            ConfigurationStripStructDisplayZones displayZoneTemp = new ConfigurationStripStructDisplayZones(stripDisplayZonesSetting);
+            this.stripDisplayZonesSetting = displayZoneTemp;
+            Debug.Log($"this.display_zone number of zones = {this.stripDisplayZonesSetting.stripDisplayZones.Length}");
         }
 
-        internal void SetSpinConfigurationTo(ReelStripSpinStruct reelStripStruct)
+        internal void SetSpinConfigurationTo(StripSpinStruct reelStripStruct)
         {
             spin_info = reelStripStruct;
         }
 
-        internal void SetSpinParametersTo(StripSpinDirectionalConstantEvaluatorScriptableObject spinParameters)
+        internal BaseSpinEvaluatorScriptableObject GetSpinParametersAs()
         {
-            this.spinParameters = spinParameters;
-        }
-
-        internal T GetSpinParametersAs<T>()
-        {
-            //object spinParameter = spinParameters;
-            return GetSpinParametersAs<T>(ref spinParameters);
+            return stripDisplayZonesSetting.spinParameters;
         }
         /// <summary>
         /// Gets the first instance of an evaluation object of sub-class
@@ -174,7 +154,7 @@ namespace Slot_Engine.Matrix
     /// The structure or the reel strip spin loop strip and the end configuration placed within the reelstrip
     /// </summary>
     [Serializable]
-    public struct ReelStripSpinStruct
+    public struct StripSpinStruct
     {
         /// <summary>
         /// end reel configuration symbols for this spin
@@ -185,14 +165,14 @@ namespace Slot_Engine.Matrix
         /// The display symbols reel will cycle thru on loop
         /// </summary>
         [UnityEngine.SerializeField]
-        public NodeDisplaySymbol[] reel_spin_symbols;
+        public NodeDisplaySymbol[] stripSpinSymbols;
         /// <summary>
         /// Holds the lower and upper range of array where ending symbols were placed in spin symbols
         /// </summary>
         [UnityEngine.SerializeField]
-        public int[] display_symbol_range;
+        public int[] endSymbolDisplayRangeOnStrip;
 
-        public ReelStripSpinStruct(NodeDisplaySymbol[] slotDisplaySymbols) : this()
+        public StripSpinStruct(NodeDisplaySymbol[] slotDisplaySymbols) : this()
         {
             displaySymbols = slotDisplaySymbols;
         }

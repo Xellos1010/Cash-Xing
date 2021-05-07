@@ -171,7 +171,7 @@ namespace Slot_Engine.Matrix.Managers
             return (T)Convert.ChangeType(output, typeof(T));
         }
 
-        internal async Task<WinningPayline[]> EvaluateWinningSymbols(ReelStripSpinStruct[] reelstrips_configuration)
+        internal async Task<WinningPayline[]> EvaluateWinningSymbols(StripSpinStruct[] reelstrips_configuration)
         {
             ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstrips_configuration.Length];
             for (int reel = 0; reel < reelstrips_configuration.Length; reel++)

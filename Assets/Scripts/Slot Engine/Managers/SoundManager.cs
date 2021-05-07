@@ -50,12 +50,12 @@ namespace Slot_Engine.Matrix
 
         private void SoundManager_reelStopSpin(int reelNumber)
         {
-            audioSource.PlayOneShot(machineSoundsReference.reelStops[reelNumber]);
+            //audioSource.PlayOneShot(machineSoundsReference.reelStops[reelNumber]);
         }
 
         private void SoundManager_reelStartSpin(int reelNumber)
         {
-            audioSource.PlayOneShot(machineSoundsReference.reelStarts[reelNumber]);
+            //audioSource.PlayOneShot(machineSoundsReference.reelStarts[reelNumber]);
         }
 
         void OnDisable()

@@ -27,7 +27,7 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("ManagersReference Controls");
             if (GUILayout.Button("Set All References"))
             {
-                Debug.Log(String.Format("myTarget.matrix = {0}", myTarget.matrix.gameObject.name));
+                Debug.Log(String.Format("myTarget.matrix = {0}", myTarget.configurationObject.gameObject.name));
                 Debug.Log(String.Format("myTarget.animator_statemachine_master = {0}", myTarget.animator_statemachine_master.gameObject.name));
                 Debug.Log(String.Format("myTarget.spin_manager = {0}", myTarget.spin_manager.gameObject.name));
                 Debug.Log(String.Format("myTarget.interaction_controller = {0}", myTarget.interaction_controller.gameObject.name));
@@ -41,7 +41,7 @@ namespace Slot_Engine.Matrix
 #endif
     public class ManagersReferenceScript : MonoBehaviour
     {
-        public ReelStripConfigurationObject matrix
+        public ReelStripConfigurationObject configurationObject
         {
             get
             {

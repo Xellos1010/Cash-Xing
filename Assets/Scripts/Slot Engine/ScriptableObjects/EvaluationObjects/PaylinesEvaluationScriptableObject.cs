@@ -213,7 +213,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             else
             {
                 SuffixTreeNodes parent_node = node; //First pass thru this will be nothing
-                ReelStripStructDisplayZone[] rows_in_next_column = reel_strip_managers[next_column].stripInfo.display_zones;
+                ReelStripStructDisplayZone[] rows_in_next_column = reel_strip_managers[next_column].stripInfo.stripDisplayZonesSetting.stripDisplayZones;
                 //First in is parent_node = 0 | Children Column = 1 | slots_per_reel = 5
                 node.InitializeNextNodes(next_column, ref rows_in_next_column, ref parent_node, node.left_right);
                 for (int child_nodes = 0; child_nodes < node.connected_nodes_struct.Length; child_nodes++)
@@ -263,9 +263,9 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             SuffixTreeNodes node;
             //Used to assign each row in the column - active or inactive payline evaluation
             int row = 0;
-            for (int display_zone = 0; display_zone < reel_strip_manager.stripInfo.display_zones.Length; display_zone++)
+            for (int display_zone = 0; display_zone < reel_strip_manager.stripInfo.stripDisplayZonesSetting.stripDisplayZones.Length; display_zone++)
             {
-                ReelStripStructDisplayZone reel_display_zone = reel_strip_manager.stripInfo.display_zones[display_zone];
+                ReelStripStructDisplayZone reel_display_zone = reel_strip_manager.stripInfo.stripDisplayZonesSetting.stripDisplayZones[display_zone];
                 if (reel_display_zone.active_payline_evaluations)
                 {
                     for (int slot = 0; slot < reel_display_zone.positionsInZone; slot++)

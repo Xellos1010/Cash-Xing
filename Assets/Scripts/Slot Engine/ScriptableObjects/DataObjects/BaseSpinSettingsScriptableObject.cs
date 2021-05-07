@@ -14,6 +14,14 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     public abstract class BaseSpinSettingsScriptableObject : ScriptableObject
     {
         /// <summary>
+        /// Cascading starting strips
+        /// </summary>
+        public bool delayStartEnabled = false;
+        /// <summary>
+        /// Cascading ending reels
+        /// </summary>
+        public bool delayEndEnabled = false;
+        /// <summary>
         /// Timer used to start each free spin
         /// </summary>
         public float timer_to_start_free_spin = 2.0f;

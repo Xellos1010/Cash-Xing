@@ -102,7 +102,7 @@ namespace WeightedDistribution
         {
             if (items == null)
                 items = new List<T_ITEM>();
-            Debug.Log(string.Format("Adding Value {0} with weight {1}",value,weight));
+            //Debug.Log(string.Format("Adding Value {0} with weight {1}",value,weight));
             items.Add(new T_ITEM { Value = value, Weight = weight });
             OnItemsChange(true);
         }

@@ -18,14 +18,6 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     public partial class StripSpinSettingsScriptableObject : BaseSpinSettingsScriptableObject
     {
         /// <summary>
-        /// Cascading starting strips
-        /// </summary>
-        public bool stripDelayStartEnabled = false;
-        /// <summary>
-        /// Cascading ending reels
-        /// </summary>
-        public bool stripDelayEndEnabled = false;
-        /// <summary>
         /// uses predefeined reelstrips to loop thru on spin loop
         /// </summary>
         public bool usePreDefinesStripsForLoop = false;
