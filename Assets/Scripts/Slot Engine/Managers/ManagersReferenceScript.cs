@@ -41,16 +41,16 @@ namespace Slot_Engine.Matrix
 #endif
     public class ManagersReferenceScript : MonoBehaviour
     {
-        public ReelStripConfigurationObject configurationObject
+        public StripConfigurationObject configurationObject
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = transform.parent.GetComponentInChildren<ReelStripConfigurationObject>();
+                    _matrix = transform.parent.GetComponentInChildren<StripConfigurationObject>();
                 return _matrix;
             }
         }
-        internal ReelStripConfigurationObject _matrix;
+        internal StripConfigurationObject _matrix;
         public AnimatorStateMachineManager animator_statemachine_master
         {
             get
@@ -78,15 +78,15 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Manages the reference for paylines_manager
         /// </summary>
-        public PaylinesManager paylines_manager
+        public WinningObjectManager paylines_manager
         {
             get
             {
-                return CheckReturnComponent<PaylinesManager>(ref _paylines_manager);
+                return CheckReturnComponent<WinningObjectManager>(ref _paylines_manager);
             }
         }
 
-        internal PaylinesManager _paylines_manager;
+        internal WinningObjectManager _paylines_manager;
         /// <summary>
         /// Manages the reference for end configuration manager
         /// </summary>

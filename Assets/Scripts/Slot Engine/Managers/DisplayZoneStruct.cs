@@ -15,10 +15,10 @@ using System;
 namespace Slot_Engine.Matrix
 {
     /// <summary>
-    /// Controls a display zone for a reel strip
+    /// Controls a display zone being defined
     /// </summary>
     [Serializable]
-    public struct ReelStripStructDisplayZone
+    public struct DisplayZoneStruct
     {
         /// <summary>
         /// The Reel strip slot amount

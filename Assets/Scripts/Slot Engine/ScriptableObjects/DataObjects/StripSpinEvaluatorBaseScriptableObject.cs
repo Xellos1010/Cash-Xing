@@ -10,7 +10,7 @@
 //
 using UnityEngine;
 
-public partial class StripSpinEvaluatorBaseScriptableObject : BaseSpinEvaluatorScriptableObject
+public abstract class StripSpinEvaluatorBaseScriptableObject : BasePathTransformSpinEvaluatorScriptableObject
 {//Needs to be abstract and every new scriptable object needs to evaluate vector 3 to from and percent along path to return slots spin value
     /// <summary>
     /// Controls the direction of the spin

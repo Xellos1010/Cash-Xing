@@ -35,10 +35,10 @@ namespace Slot_Engine.Matrix.Managers
             paylinesEvaluationObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref myTarget.coreEvaluationObjects);
             if (paylinesEvaluationObject != null)
             {
-                if (GUILayout.Button("Generate Paylines from Matrix"))
+                if (GUILayout.Button("Generate Evaluation from Configuration Object"))
                 {
                     //todo get matrix from script
-                    paylinesEvaluationObject.GenerateDynamicPaylinesFromMatrix(ref myTarget.matrix.stripManagers);
+                    paylinesEvaluationObject.GenerateDynamicPaylinesFromConfigurationObjectsGroupManagers(ref myTarget.configurationObject.configurationGroupManagers);
                     serializedObject.ApplyModifiedProperties();
                 }
 
@@ -53,7 +53,7 @@ namespace Slot_Engine.Matrix.Managers
                     }
                     if (GUILayout.Button("Show Current End Configuration On Reels"))
                     {
-                        myTarget.matrix.managers.endConfigurationManager.SetMatrixToReelConfiguration();
+                        myTarget.configurationObject.managers.endConfigurationManager.SetMatrixToReelConfiguration();
                     }
                     if (GUILayout.Button("Evaluate Paylines From current End Configuration"))
                     {
@@ -190,7 +190,7 @@ namespace Slot_Engine.Matrix.Managers
         public async void EvaluateWinningSymbolsFromCurrentConfiguration()
         {
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
-            await EvaluateWinningSymbols(matrix.managers.endConfigurationManager.currentReelstripConfiguration);
+            await EvaluateWinningSymbols(configurationObject.managers.endConfigurationManager.currentReelstripConfiguration);
         }
 
         internal bool DoesSymbolActivateFeature(SymbolObject symbolObject, Features feature)
@@ -233,25 +233,29 @@ namespace Slot_Engine.Matrix.Managers
             //Debug.Log($"Returning {output.Count}");
             return output.ToArray();
         }
-        internal WinningPayline[] ReturnWinningObjectsAsWinningPaylines()
+        internal T[] ReturnWinningObjectsAs<T>()
         {
-            List<WinningPayline> output = new List<WinningPayline>();
-            WinningObject[] temp;
+            T[] output = new T[0];
+            List<T> outputGather = new List<T>();
+            WinningObject[] objectsWonBase;
             //TODO Check that T pass is Subclass or same class as WinningObject
             for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
             {
                 //Debug.Log("Converting Type");
-                temp = coreEvaluationObjects[coreEvaluationObject].ReturnWinningObjects();
+                objectsWonBase = coreEvaluationObjects[coreEvaluationObject].ReturnWinningObjects();
 
                 //Debug.Log("Converted");
-                for (int i = 0; i < temp.Length; i++)
+                for (int i = 0; i < objectsWonBase.Length; i++)
                 {
-                    output.Add(temp[i] as WinningPayline);
+                    if(objectsWonBase[i] is T)
+                        outputGather.Add((T)Convert.ChangeType(objectsWonBase[i], typeof(T)));
                 }
             }
-            
-            //Debug.Log($"Returning {output.Count}");
-            return output.ToArray();
+            return output;
+        }
+        internal WinningPayline[] ReturnWinningObjectsAsWinningPaylines()
+        {
+            return ReturnWinningObjectsAs<WinningPayline>();
         }
 
         internal bool IsSymbolFeatureSymbol(SymbolObject symbolObject)

@@ -12,6 +12,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
@@ -70,12 +71,12 @@ namespace Slot_Engine.Matrix
                 if (GUILayout.Button("Generate Matrix From Current Configuration"))
                 {
                     //Will need to generate managers and all UI tools
-                    myTarget.CreateCurrentConfiguration();
+                    myTarget.CreateStripConfiguration();
                 }
             }
             else
             {
-                if (connectedConfigurationObject.objectReferenceValue == null && myTarget.transform.GetComponentInChildren<ReelStripConfigurationObject>())
+                if (connectedConfigurationObject.objectReferenceValue == null && myTarget.transform.GetComponentInChildren<StripConfigurationObject>())
                 {
                     EditorGUILayout.LabelField("Commands");
                     if (GUILayout.Button("Connect matrix generator to child matrix"))
@@ -84,13 +85,13 @@ namespace Slot_Engine.Matrix
                         serializedObject.Update();
                     }
                 }
-                else if (connectedConfigurationObject.objectReferenceValue == null && !myTarget.transform.GetComponentInChildren<ReelStripConfigurationObject>())
+                else if (connectedConfigurationObject.objectReferenceValue == null && !myTarget.transform.GetComponentInChildren<StripConfigurationObject>())
                 {
                     EditorGUILayout.LabelField("Child gameobject must have matrix component");
                     if (GUILayout.Button("Generate Matrix From Current Configuration"))
                     {
                         //Will need to generate managers and all UI tools
-                        myTarget.CreateCurrentConfiguration();
+                        myTarget.CreateStripConfiguration();
                     }
                 }
                 else if (connectedConfigurationObject.objectReferenceValue != null)
@@ -135,7 +136,7 @@ namespace Slot_Engine.Matrix
         public string configurationObjectLoadedName;
         //********
         //Associate the instance that gets updated with Generate Matrix
-        public ReelStripConfigurationObject connectedConfigurationObject;
+        public BaseConfigurationObject connectedConfigurationObject;
         /// <summary>
         /// Used to generate backplate and covers for the slots
         /// </summary>
@@ -143,26 +144,26 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Creates a configuration based on current settings
         /// </summary>
-        public async void CreateCurrentConfiguration() //Main matrix Create Function
+        public async void CreateStripConfiguration() //Main matrix Create Function
         {
             //Check for a child object. If there is then connect and modify otherwise create a new one
-            GenerateConfigurationObject(ref connectedConfigurationObject);
+            GenerateConfigurationObject<StripConfigurationObject>(ref connectedConfigurationObject);
             SetConnectedConfigurationObjectLoadedSettings(ref connectedConfigurationObject, ref configurationGeneratorSettings);
             SetSymbolDataForConfigurationObject(ref connectedConfigurationObject, ref configurationGeneratorSettings);
 
             await DisplayConfigurationSettings(ref configurationGeneratorSettings);
             //For Each Local position thats an active display slot generate a backplate prefab for grid effect for now
-            GenerateBackplateFromConfiguration(connectedConfigurationObject);
+            GenerateBackplateFromStripConfiguration(connectedConfigurationObject);
             //Update Payline Manager
             Debug.LogWarning($"Select Evaluation Manger Object and run Generate Paylines From Matrix to have update evaluation system");
         }
 
-        private void SetSymbolDataForConfigurationObject(ref ReelStripConfigurationObject connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
+        private void SetSymbolDataForConfigurationObject(ref BaseConfigurationObject connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
         {
             connectedConfigurationObject.symbolDataScriptableObject = configurationGeneratorSettings.symbolData;
         }
 
-        private void SetConnectedConfigurationObjectLoadedSettings(ref ReelStripConfigurationObject connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
+        private void SetConnectedConfigurationObjectLoadedSettings(ref BaseConfigurationObject connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
         {
             connectedConfigurationObject.configurationSettings = configurationGeneratorSettings;
             configurationObjectLoadedName = configurationGeneratorSettings.configurationName;
@@ -180,7 +181,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="displayZonesPerStrip">The display zone breakdown per reel</param>
         /// <returns></returns>
-        public Task SetConfigurationDisplayZones(ref ConfigurationStripStructDisplayZones[] displayZonesPerStrip)
+        public Task SetConfigurationDisplayZones(ref ConfigurationDisplayZonesStruct[] displayZonesPerStrip)
         {
             Debug.Log($"1 displayZonesPerStrip[0].paddingBefore = {displayZonesPerStrip[0].paddingBefore}");
             //Build reelstrip info 
@@ -199,48 +200,50 @@ namespace Slot_Engine.Matrix
         {
             //Ensure there are enough reel objects
             SetStripObjectsToLength(stripsConfiguration.strips.Length, ref connectedConfigurationObject);
-
+            StripConfigurationObject stripConfiguration = connectedConfigurationObject as StripConfigurationObject;
             //Ensure each strip knows its column position
-            connectedConfigurationObject.SetStripInfoStruct(connectedConfigurationObject);
+            stripConfiguration.SetStripInfoStruct(stripConfiguration);
 
             //Ensure the strips are positioned in
-            SetStripObjectsInitialPositions(ref connectedConfigurationObject);
+            SetStripObjectsInitialPositions(ref stripConfiguration);
 
             //Set each Reels Configuration - each reel will take care of generating slots
             for (int i = 0; i < stripsConfiguration.strips.Length; i++)
             {
-                Debug.Log($"Setting {connectedConfigurationObject.stripManagers[i].gameObject.name} reelstrip info with total positions {stripsConfiguration.strips[i].total_positions}");
-                //Set ReelStrip Configuration
-                connectedConfigurationObject.stripManagers[i].SetReelConfigurationTo(stripsConfiguration.strips[i]);
+                Debug.Log($"Setting {connectedConfigurationObject.configurationGroupManagers[i].gameObject.name} reelstrip info with total positions {stripsConfiguration.strips[i].total_positions}");
+                StripStruct temp = stripsConfiguration.strips[i];
+                BaseObjectGroupManager temp2 = connectedConfigurationObject.configurationGroupManagers[i];
                 //Generate Slot Objects
-                GenerateStripSlotObjects(ref connectedConfigurationObject.stripManagers[i], stripsConfiguration.strips[i]);
+                GenerateStripSlotObjects(ref temp2, temp);
             }
         }
 
-        private void GenerateStripSlotObjects(ref StripManager reelStripManager, StripStruct reelStripStruct)
+        private void GenerateStripSlotObjects(ref BaseObjectGroupManager objectManager, StripStruct reelStripStruct)
         {
             //gather slot object child if any
-            List<SlotManager> childSlots = new List<SlotManager>();
-            childSlots.AddRange(reelStripManager.transform.GetComponentsInChildren<SlotManager>());
+            List<StripObjectManager> childSlots = new List<StripObjectManager>();
+            childSlots.AddRange(objectManager.transform.GetComponentsInChildren<StripObjectManager>());
             if(childSlots.Count < reelStripStruct.total_slot_objects)
             {
                 for (int slotToGenerate = childSlots.Count; slotToGenerate < reelStripStruct.total_slot_objects; slotToGenerate++)
                 {
-                    childSlots.Add(GenerateSlotObject(slotToGenerate,ref reelStripManager));
+                    childSlots.Add(GenerateSlotObject(slotToGenerate,ref objectManager) as StripObjectManager);
                 }
             }
-            reelStripManager.slotsInStrip = childSlots.ToArray();
+            //ToDo refactor to make generic
+            objectManager.objectsInGroup = childSlots.ToArray();
         }
 
         /// <summary>
         /// Sets Strip Objects Initial Positions
         /// </summary>
         /// <param name="connectedConfigurationObject"></param>
-        private void SetStripObjectsInitialPositions(ref ReelStripConfigurationObject connectedConfigurationObject)
+        private void SetStripObjectsInitialPositions(ref StripConfigurationObject connectedConfigurationObject)
         {
-            for (int strip = 0; strip < connectedConfigurationObject.stripManagers.Length; strip++)
+            for (int strip = 0; strip < connectedConfigurationObject.configurationGroupManagers.Length; strip++)
             {
-                connectedConfigurationObject.stripManagers[strip].transform.localPosition = GenerateLocalPositionForStrip(strip, connectedConfigurationObject.stripManagers.Length, connectedConfigurationObject.configurationSettings);
+                //Generates the local position for the strip. Slot Movements are calculcated and applied to localPosition;
+                connectedConfigurationObject.configurationGroupManagers[strip].transform.localPosition = GenerateLocalPositionForStrip(strip, connectedConfigurationObject.configurationGroupManagers.Length, connectedConfigurationObject.configurationSettings);
             }
         }
 
@@ -312,11 +315,16 @@ namespace Slot_Engine.Matrix
                 return (T)oFormatter.Deserialize(oStream);
             }
         }
-
-        private void GenerateBackplateFromConfiguration(ReelStripConfigurationObject connectedConfigurationObject)
+        /// <summary>
+        /// Generates Backplates from configuration - todo Generic class
+        /// </summary>
+        /// <param name="connectedConfigurationObject"></param>
+        private void GenerateBackplateFromStripConfiguration(BaseConfigurationObject connectedConfigurationObject)
         {
+            //TODO Refactor to create generic reference
+            StripConfigurationObject connectedStripConfigurationObject = connectedConfigurationObject as StripConfigurationObject;
             //The positions here need to include the reels X value - will run a replacement for now
-            Vector3[][] configurationObjectWorldPosition = connectedConfigurationObject.positions_in_path_v3_local;
+            Vector3[][] configurationObjectWorldPosition = connectedStripConfigurationObject.positions_in_path_v3_local;
             //Copy the list without keeping references - Reels are positioned with X & y offset - strips handle positons locally
             List<Vector3> tempFirstDimension = new List<Vector3>();
             List<Vector3[]> tempSecondDimension = new List<Vector3[]>();
@@ -342,7 +350,7 @@ namespace Slot_Engine.Matrix
                     tempSecondDimension[strip][position].y += stripXVector.y;
                 }
             }
-            Debug.LogWarning($"connectedConfigurationObject.positions_in_path_v3_local length = {connectedConfigurationObject.positions_in_path_v3_local.Length}");
+            //Debug.LogWarning($"connectedConfigurationObject.positions_in_path_v3_local length = {connectedConfigurationObject.positions_in_path_v3_local.Length}");
             CoverFacePlateGameobjectManager temp = null;
             //Ensure there is a Backplate and Cover Object - If not generate one and place as child
             if (backPlateCoverSceneObject == null)
@@ -373,14 +381,14 @@ namespace Slot_Engine.Matrix
                     GenerateCoverPrefab(connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, position);
                 }
                 positionTemp = connectedConfigurationObject.configurationSettings.displayZones[strip].paddingBefore;
-                for (int displayZoneStrip = 0; displayZoneStrip < connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZones.Length; displayZoneStrip++)
+                for (int displayZoneStrip = 0; displayZoneStrip < connectedConfigurationObject.configurationSettings.displayZones[strip].displayZones.Length; displayZoneStrip++)
                 {
                     //Will generate objects based on active of inactive display zone and increment position
-                    GenerateCoverOrBackplate(connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZones[displayZoneStrip], connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, ref positionTemp);
+                    GenerateCoverOrBackplate(connectedConfigurationObject.configurationSettings.displayZones[strip].displayZones[displayZoneStrip], connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, ref positionTemp);
                 }
                 for (int position = 0; position < connectedConfigurationObject.configurationSettings.displayZones[strip].paddingAfter; position++)
                 {
-                    GenerateCoverPrefab(connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, connectedConfigurationObject.configurationSettings.displayZones[strip].stripDisplayZonePositionsTotal + connectedConfigurationObject.configurationSettings.displayZones[strip].paddingBefore + position);
+                    GenerateCoverPrefab(connectedConfigurationObject, tempSecondDimension.ToArray(), temp, strip, connectedConfigurationObject.configurationSettings.displayZones[strip].displayZonesPositionsTotal + connectedConfigurationObject.configurationSettings.displayZones[strip].paddingBefore + position);
                 }
             }
             //for (int item1 = 0; item1 < configurationObjectWorldPosition.Length; item1++)
@@ -405,7 +413,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void GenerateCoverOrBackplate(ReelStripStructDisplayZone reelStripStructDisplayZone, ReelStripConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, ref int positionInStrip)
+        private void GenerateCoverOrBackplate(DisplayZoneStruct reelStripStructDisplayZone, BaseConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, ref int positionInStrip)
         {
             for (int i = 0; i < reelStripStructDisplayZone.positionsInZone; i++)
             {
@@ -422,7 +430,7 @@ namespace Slot_Engine.Matrix
             positionInStrip += reelStripStructDisplayZone.positionsInZone;
         }
 
-        private void GenerateCoverPrefab(ReelStripConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
+        private void GenerateCoverPrefab(BaseConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
         {
             //Debug.LogWarning($"Generating Cover for position {configurationObjectWorldPosition[strip][position]}");
             //Debug.LogWarning($"Using Cover Prefab {connectedConfigurationObject.configurationSettings.symbolCover.name}");
@@ -430,7 +438,7 @@ namespace Slot_Engine.Matrix
             GeneratePrefabAtPosition(configurationObjectWorldPosition[strip][position] + Vector3.back, connectedConfigurationObject.configurationSettings.symbolCover, temp.coverPlateParent);
         }
 
-        private void GenerateBackPlatePrefab(ReelStripConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
+        private void GenerateBackPlatePrefab(BaseConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
         {
             //Debug.LogWarning($"Generating Backplate for position {configurationObjectWorldPosition[strip][position]}");
             //Debug.LogWarning($"Using Backplate Prefab {connectedConfigurationObject.configurationSettings.symbolBackplatePrefab.name}");
@@ -445,44 +453,39 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="slot_position_in_reel">the slot in reel generating the object for</param>
         /// <returns></returns>
-        private SlotManager GenerateSlotObject(int slot_position_in_reel, ref StripManager reelStripManager)
+        internal virtual BaseObjectManager GenerateSlotObject(int slot_position_in_reel, ref BaseObjectGroupManager objectGroupManager)
         {
+            Debug.Log($"objectGroupManager name = {objectGroupManager.gameObject.name}");
+            StripObjectGroupManager reelStripManager = objectGroupManager as StripObjectGroupManager;
+            //Slot position in group needs to be abstracted
             //Local positions are already generated by this point
-            Vector3 slot_position_on_path = reelStripManager.positions_in_path_v3_local[slot_position_in_reel];
-            SlotManager generated_slot = InstantiateSlotGameobject(slot_position_in_reel, reelStripManager, slot_position_on_path, Vector3.one, Quaternion.identity);
-            generated_slot.reel_parent = reelStripManager;
+            Vector3 slot_position_on_path = reelStripManager.localPositionsInStrip[slot_position_in_reel];
+            StripObjectManager generated_slot = InstantiateSlotGameobject(slot_position_in_reel, reelStripManager, slot_position_on_path, Vector3.one, Quaternion.identity);
+            generated_slot.startPositionIndex = slot_position_in_reel;
             //Generate a random symbol prefab
             generated_slot.ShowRandomSymbol();
-            if (slot_position_in_reel >= reelStripManager.positions_in_path_v3_local.Length)
-            {
-                Debug.LogWarning($"{reelStripManager.gameObject.name}.positions_in_path_v3_local.Length {reelStripManager.positions_in_path_v3_local.Length} is lower than the slot position in reel passed - trying to make it work.");
-                reelStripManager.positions_in_path_v3_local = reelStripManager.positions_in_path_v3_local.AddAt<Vector3>(slot_position_in_reel, slot_position_on_path);
-            }
-            else
-            {
-                reelStripManager.positions_in_path_v3_local[slot_position_in_reel] = slot_position_on_path;
-            }
             return generated_slot;
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="slot_number"></param>
-        /// <param name="parent_reel"></param>
-        /// <param name="start_position"></param>
+        /// <param name="numberInStrip"></param>
+        /// <param name="parentStrip"></param>
+        /// <param name="startPosition"></param>
         /// <param name="scale"></param>
         /// <returns>Slot Manager Reference</returns>
-        internal SlotManager InstantiateSlotGameobject(int slot_number, StripManager parent_reel, Vector3 start_position, Vector3 scale, Quaternion start_rotation)
+        internal StripObjectManager InstantiateSlotGameobject(int numberInStrip, StripObjectGroupManager parentStrip, Vector3 startPosition, Vector3 scale, Quaternion startRotation)
         {
 #if UNITY_EDITOR
             GameObject ReturnValue = PrefabUtility.InstantiatePrefab(Resources.Load("Core/Prefabs/Slot-Container")) as GameObject; // TODO Refactor to include custom sot container passable argument
-            ReturnValue.gameObject.name = String.Format("Slot_{0}", slot_number);
-            ReturnValue.transform.parent = parent_reel.transform;
-            SlotManager return_component = ReturnValue.GetComponent<SlotManager>();
+            ReturnValue.gameObject.name = String.Format("Slot_{0}", numberInStrip);
+            ReturnValue.transform.parent = parentStrip.transform;
+            StripObjectManager return_component = ReturnValue.GetComponent<StripObjectManager>();
+            return_component.baseObjectGroupParent = parentStrip;
             //ReturnValue.transform.GetChild(0).localScale = scale;
-            ReturnValue.transform.localPosition = start_position;
-            ReturnValue.transform.localRotation = start_rotation;
+            ReturnValue.transform.localPosition = startPosition;
+            ReturnValue.transform.localRotation = startRotation;
             return return_component;
 #endif
             //Intended - we want to only instantiate these objects in unity_editor
@@ -496,36 +499,36 @@ namespace Slot_Engine.Matrix
         ///// <param name="before_display_slots">amount of slots before display slots to generate objects for - minimum 1</param>
         //internal void UpdateSlotObjectsInReelStrip(int slots_in_reelstrip)
         //{
-        //    List<SlotManager> slotsInStrip = new List<SlotManager>();
-        //    if (this.slotsInStrip == null)
+        //    List<SlotManager> objectsInGroup = new List<SlotManager>();
+        //    if (this.objectsInGroup == null)
         //    {
         //        SlotManager[] slots_initialized = transform.GetComponentsInChildren<SlotManager>();
         //        if (slots_initialized.Length > 0)
         //        {
-        //            this.slotsInStrip = slots_initialized;
+        //            this.objectsInGroup = slots_initialized;
         //        }
         //        else
         //        {
-        //            this.slotsInStrip = new SlotManager[0];
+        //            this.objectsInGroup = new SlotManager[0];
         //        }
         //    }
-        //    slotsInStrip.AddRange(this.slotsInStrip);
+        //    objectsInGroup.AddRange(this.objectsInGroup);
 
         //    int total_slot_objects_required = slots_in_reelstrip;
 
-        //    SetSlotObjectsInStripTo(ref slotsInStrip, total_slot_objects_required);
+        //    SetSlotObjectsInStripTo(ref objectsInGroup, total_slot_objects_required);
 
-        //    this.slotsInStrip = slotsInStrip.ToArray();
+        //    this.objectsInGroup = objectsInGroup.ToArray();
         //}
 
         //internal void RegenerateSlotObjects()
         //{
-        //    for (int slot = 0; slot < slotsInStrip.Length; slot++)
+        //    for (int slot = 0; slot < objectsInGroup.Length; slot++)
         //    {
         //        Debug.Log(String.Format("Reel {0} deleteing slot {1}", reelstrip_info.reel_number, slot));
-        //        if (slotsInStrip[slot] != null)
-        //            DestroyImmediate(slotsInStrip[slot].gameObject);
-        //        slotsInStrip[slot] = GenerateSlotObject(slot);
+        //        if (objectsInGroup[slot] != null)
+        //            DestroyImmediate(objectsInGroup[slot].gameObject);
+        //        objectsInGroup[slot] = GenerateSlotObject(slot);
         //    }
         ////}
         //internal void SetSlotObjectsInStripTo(ref List<SlotManager> slots_in_reel, int total_slot_objects_required)
@@ -605,58 +608,59 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="lengthOfReels">Reels in Configuration</param>
         /// <param name="connectedConfigurationObject.reelStripManagers">reference var to cached reelstrip_managers</param>
-        internal void SetStripObjectsToLength(int lengthOfReels, ref ReelStripConfigurationObject connectedConfigurationObject)
+        internal void SetStripObjectsToLength(int lengthOfReels, ref BaseConfigurationObject connectedConfigurationObject)
         {
             //Ensure Connected Reel Managers 
             EnsureConnectedConfigurationObjectStripManagersSet(ref connectedConfigurationObject);
             //Add or subtract reel obejcts as needed
-            if(lengthOfReels - connectedConfigurationObject.stripManagers.Length < 0)
+            if(lengthOfReels - connectedConfigurationObject.configurationGroupManagers.Length < 0)
             {
-                StripManager temp;
+                //Refactor to make generic
+                BaseObjectGroupManager temp;
                 //Remove strip objects
-                for (int strip = connectedConfigurationObject.stripManagers.Length - 1; strip >= lengthOfReels ; strip--)
+                for (int strip = connectedConfigurationObject.configurationGroupManagers.Length - 1; strip >= lengthOfReels ; strip--)
                 {
-                    temp = connectedConfigurationObject.stripManagers[strip];
-                    connectedConfigurationObject.stripManagers = connectedConfigurationObject.stripManagers.RemoveAt<StripManager>(strip);
+                    temp = connectedConfigurationObject.configurationGroupManagers[strip];
+                    connectedConfigurationObject.configurationGroupManagers = connectedConfigurationObject.configurationGroupManagers.RemoveAt<BaseObjectGroupManager>(strip);
                     Destroy(temp.gameObject);
                 }
             }
             else
             {
-                List<StripManager> strips = new List<StripManager>();
-                strips.AddRange(connectedConfigurationObject.stripManagers);
+                List<StripObjectGroupManager> strips = new List<StripObjectGroupManager>();
+                strips.AddRange(connectedConfigurationObject.configurationGroupManagers.Cast<StripObjectGroupManager>());
                 //Add strip objects
-                for (int strip = connectedConfigurationObject.stripManagers.Length; strip < lengthOfReels; strip++)
+                for (int strip = connectedConfigurationObject.configurationGroupManagers.Length; strip < lengthOfReels; strip++)
                 {
-                    strips.Add(GenerateStrip(strip));
+                    strips.Add(GenerateStripObject(strip));
                 }
-                connectedConfigurationObject.stripManagers = strips.ToArray();
+                connectedConfigurationObject.configurationGroupManagers = strips.ToArray();
             }
         }
 
-        private static void EnsureConnectedConfigurationObjectStripManagersSet(ref ReelStripConfigurationObject connectedConfigurationObject)
+        private static void EnsureConnectedConfigurationObjectStripManagersSet(ref BaseConfigurationObject connectedConfigurationObject)
         {
-            if (connectedConfigurationObject.stripManagers?.Length > 0)
+            if (connectedConfigurationObject.configurationGroupManagers?.Length > 0)
             {
-                for (int manager = 0; manager < connectedConfigurationObject.stripManagers.Length; manager++)
+                for (int manager = 0; manager < connectedConfigurationObject.configurationGroupManagers.Length; manager++)
                 {
-                    if (connectedConfigurationObject.stripManagers[manager] == null)
+                    if (connectedConfigurationObject.configurationGroupManagers[manager] == null)
                     {
-                        connectedConfigurationObject.stripManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<StripManager>();
+                        connectedConfigurationObject.configurationGroupManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<BaseObjectGroupManager>();
                     }
                 }
             }
             else
             {
-                connectedConfigurationObject.stripManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<StripManager>();
+                connectedConfigurationObject.configurationGroupManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<BaseObjectGroupManager>();
             }
         }
 
-        StripManager GenerateStrip(int columnNumber)
+        StripObjectGroupManager GenerateStripObject(int columnNumber)
         {
             Type[] reelComponents = new Type[1];
-            reelComponents[0] = typeof(StripManager);
-            StripManager output_reelstrip_manager = StaticUtilities.CreateGameobject<StripManager>(reelComponents, "Strip_" + columnNumber, connectedConfigurationObject.transform);
+            reelComponents[0] = typeof(StripObjectGroupManager);
+            StripObjectGroupManager output_reelstrip_manager = StaticUtilities.CreateGameobject<StripObjectGroupManager>(reelComponents, "Strip_" + columnNumber, connectedConfigurationObject.transform);
             return output_reelstrip_manager;
         }
 
@@ -664,16 +668,16 @@ namespace Slot_Engine.Matrix
         /// Generates a new matrix object child with reelstrips configured
         /// </summary>
         /// <returns>matrix reference for connected matrix</returns>
-        private void GenerateConfigurationObject(ref ReelStripConfigurationObject connectedConfigurationObject)
+        private void GenerateConfigurationObject<T>(ref BaseConfigurationObject connectedConfigurationObject)
         {
             if (connectedConfigurationObject == null)
             {
                 Type[] MatrixComponents = new Type[1];
-                MatrixComponents[0] = typeof(ReelStripConfigurationObject);
+                MatrixComponents[0] = typeof(T);
                 GameObject gameObject_to_return = new GameObject("ConfigurationObject", MatrixComponents);
                 gameObject_to_return.transform.tag = "ConfigurationObject";
                 gameObject_to_return.transform.parent = transform;
-                connectedConfigurationObject = gameObject_to_return.GetComponent<ReelStripConfigurationObject>();
+                connectedConfigurationObject = gameObject_to_return.GetComponent<T>() as BaseConfigurationObject;
             }
         }
 
@@ -682,7 +686,7 @@ namespace Slot_Engine.Matrix
         internal void ConnectMatrixToChild()
         {
             //Connect Matrix Child
-            connectedConfigurationObject = GetComponentInChildren<ReelStripConfigurationObject>();
+            connectedConfigurationObject = GetComponentInChildren<StripConfigurationObject>();
         }
 
         internal void UpdateSpinParameters()
@@ -696,7 +700,7 @@ namespace Slot_Engine.Matrix
             configurationObjectLoadedName = configurationGeneratorSettings.configurationName;
             connectedConfigurationObject.SetConfigurationSettings(configurationGeneratorSettings);
             //Ensure All Objects match Configuration
-            CreateCurrentConfiguration();
+            CreateStripConfiguration();
         }
         //******************
     }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -85,18 +86,18 @@ namespace Slot_Engine.Matrix
     [System.Serializable]
     public partial class EndConfigurationManager : MonoBehaviour
     {
-        internal ReelStripConfigurationObject configurationObject
+        internal StripConfigurationObject configurationObject
         {
             get
             {
                 if (_matrix == null)
                     //TODO hardcoded - will change
-                    _matrix = transform.parent.parent.GetComponentInChildren<ReelStripConfigurationObject>();
+                    _matrix = transform.parent.parent.GetComponentInChildren<StripConfigurationObject>();
                 return _matrix;
             }
         }
         [SerializeField]
-        private ReelStripConfigurationObject _matrix;
+        private StripConfigurationObject _matrix;
         public EndConfigurationsScriptableObject endConfigurationsScriptableObject;
         /// <summary>
         /// The current reelstrip display configuration
@@ -173,10 +174,10 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data = new List<SpinConfigurationStorage>();
             for (int i = 0; i < amount; i++)
             {
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, configurationObject.stripManagers).Result));
+                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, configurationObject.configurationGroupManagers).Result));
             }
         }
-        internal async Task<StripSpinStruct[]> GenerateReelStrips(GameModes gameState, StripManager[] reel_strip_managers)
+        internal async Task<StripSpinStruct[]> GenerateReelStrips(GameModes gameState, BaseObjectGroupManager[] reel_strip_managers)
         {
             StripSpinStruct[] output = new StripSpinStruct[reel_strip_managers.Length];
             for (int reel = 0; reel < reel_strip_managers.Length; reel++)
@@ -186,11 +187,11 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        private async Task<NodeDisplaySymbol[]> GenerateEndingReelStrip(GameModes mode, StripManager reelStripManager)
+        private async Task<NodeDisplaySymbol[]> GenerateEndingReelStrip(GameModes mode, BaseObjectGroupManager reelStripManager)
         {
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             //Generate a symbol for each display zone slot
-            for (int i = 0; i < reelStripManager.stripInfo.total_display_slots; i++)
+            for (int i = 0; i < reelStripManager.configurationGroupDisplayZones.totalPositions; i++)
             {
                 output.Add(await GetRandomWeightedSymbol(mode));
             }
@@ -269,7 +270,7 @@ namespace Slot_Engine.Matrix
             switch (feature)
             {
                 case Features.freespin:
-                    configuration = new StripSpinStruct[configurationObject.stripManagers.Length];
+                    configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
                         configuration[i].displaySymbols = new NodeDisplaySymbol[3]
@@ -288,7 +289,7 @@ namespace Slot_Engine.Matrix
                     AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 case Features.overlay:
-                    configuration = new StripSpinStruct[configurationObject.stripManagers.Length];
+                    configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
                     for (int i = 0; i < configuration.Length; i++)
                     {
                         configuration[i].displaySymbols = new NodeDisplaySymbol[3]

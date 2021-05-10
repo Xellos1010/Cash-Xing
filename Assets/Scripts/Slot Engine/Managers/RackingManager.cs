@@ -36,16 +36,16 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         private UITextManager ui_text_manager;
         [SerializeField]
-        private ReelStripConfigurationObject matrix
+        private StripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = GameObject.FindObjectOfType<ReelStripConfigurationObject>();
+                    _matrix = GameObject.FindObjectOfType<StripConfigurationObject>();
                 return _matrix;
             }
         }
-        private ReelStripConfigurationObject _matrix;
+        private StripConfigurationObject _matrix;
 
         public bool is_racking
         {

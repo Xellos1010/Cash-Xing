@@ -10,14 +10,32 @@
 //
 using UnityEngine;
 /// <summary>
-/// Creates the scriptable object for the reels spin parameters
+/// Creates the scriptable object for a stepper strip - Flow of Stepper Strip
+/// On Spin Start: Wait X Seconds - lerp x units (x = slotSize.y + padding.y) (tweening happens here with lerp % complete to -> from position) - repeat
+/// On Slam: Check X seconds remaining to step - step if below 1/2 time to step. Needs to be refactored if RMG requirements come into play
 /// </summary>
-[CreateAssetMenu(fileName = "ReelStripSpinStepperParameters", menuName = "BoomSportsScriptableObjects/ReelStripSpinParametersScriptableObject", order = 2)]
+[CreateAssetMenu(fileName = "StripSpinStepperParameters", menuName = "BoomSportsScriptableObjects/StripSpinStepperParametersScriptableObject", order = 2)]
 public partial class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEvaluatorBaseScriptableObject
 {
     /// <summary>
-    /// Controls the spin speed during looping state
+    /// Controls the amount of slots to traverse each lerp cycle
     /// </summary>
     [SerializeField]
-    public float spin_speed_constant;
+    public int slotsToTraverse = 1;
+    /// <summary>
+    /// Controls the spin amount during looping state
+    /// </summary>
+    [SerializeField]
+    public double timeTillStartLerp = 0.5;
+    /// <summary>
+    /// Controls the spin amount during looping state
+    /// </summary>
+    [SerializeField]
+    public double lerpOverTime= 0.6777;
+
+    public override Vector3 EvaluateSpin(double spinTimerCurrent, ref SpinPath positionPath)
+    {
+        Debug.LogWarning($"Evaluate Spin needs to be defined for stepper reel - auto returning Vector3.zero");
+        return Vector3.zero;
+    }
 }

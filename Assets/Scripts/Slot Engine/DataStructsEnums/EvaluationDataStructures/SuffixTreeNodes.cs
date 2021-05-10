@@ -350,7 +350,7 @@ namespace Slot_Engine.Matrix
             evaluationObject.winningEvaluationNodes.Add(new EvaluationNode(suffix_tree_node_info, symbol));
         }
 
-        internal void InitializeNextNodes(int current_column, ref ReelStripStructDisplayZone[] display_zones, ref SuffixTreeNodes parent_node, bool left_right)
+        internal void InitializeNextNodes(int current_column, ref DisplayZoneStruct[] display_zones, ref SuffixTreeNodes parent_node, bool left_right)
         {
             //Start in column 1
 
@@ -384,7 +384,7 @@ namespace Slot_Engine.Matrix
             connected_nodes = child_nodes.ToArray();
             connected_nodes_struct = children_nodes.ToArray();
         }
-        private bool IsInActiveDisplayZone(int v, ref ReelStripStructDisplayZone[] display_zones)
+        private bool IsInActiveDisplayZone(int v, ref DisplayZoneStruct[] display_zones)
         {
             int active_slot = 0;
             for (int i = 0; i < display_zones.Length; i++)
