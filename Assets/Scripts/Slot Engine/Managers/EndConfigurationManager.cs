@@ -174,24 +174,25 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data = new List<SpinConfigurationStorage>();
             for (int i = 0; i < amount; i++)
             {
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, configurationObject.configurationGroupManagers).Result));
+                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateStrips(gameState, configurationObject.configurationSettings.displayZones).Result));
             }
         }
-        internal async Task<StripSpinStruct[]> GenerateReelStrips(GameModes gameState, BaseObjectGroupManager[] reel_strip_managers)
+        internal async Task<StripSpinStruct[]> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones)
         {
-            StripSpinStruct[] output = new StripSpinStruct[reel_strip_managers.Length];
-            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            StripSpinStruct[] output = new StripSpinStruct[displayZones.Length];
+            for (int reel = 0; reel < displayZones.Length; reel++)
             {
-                output[reel] = new StripSpinStruct(await GenerateEndingReelStrip(gameState, reel_strip_managers[reel])); ;
+                output[reel] = new StripSpinStruct(await GenerateEndingStrip(gameState, displayZones[reel]));
             }
             return output;
         }
 
-        private async Task<NodeDisplaySymbol[]> GenerateEndingReelStrip(GameModes mode, BaseObjectGroupManager reelStripManager)
+        private async Task<NodeDisplaySymbol[]> GenerateEndingStrip(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct)
         {
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
+            //Debug.LogWarning($"reelStripManager.configurationGroupDisplayZones.totalPositions = {configurationDisplayZonesStruct.totalPositions}");
             //Generate a symbol for each display zone slot
-            for (int i = 0; i < reelStripManager.configurationGroupDisplayZones.totalPositions; i++)
+            for (int i = 0; i < configurationDisplayZonesStruct.totalPositions; i++)
             {
                 output.Add(await GetRandomWeightedSymbol(mode));
             }
