@@ -159,7 +159,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         }
 
         //Generating Paylines supported froma matrix
-        internal void GenerateDynamicPaylinesFromConfigurationObjectsGroupManagers(ref BaseObjectGroupManager[] configurationGroupManagers)
+        internal void GenerateDynamicPaylinesFromConfigurationObjectsGroupManagers(ref ConfigurationDisplayZonesStruct[] displayZones)
         {
             //        Initialize:
             //          Create a root node at column 0(off - screen, non - column part of all solutions)
@@ -183,9 +183,9 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             List<SuffixTreeNodes> finished_list = new List<SuffixTreeNodes>();
 
             number_of_paylines = 0;
-            dynamic_paylines.paylinesSupported = new Payline[0];
+            dynamic_paylines.paylinesSupported = new List<Payline>();
 
-            dynamic_paylines.rootNodes = InitializeRootNodes(ref configurationGroupManagers).ToArray();
+            dynamic_paylines.rootNodes = InitializeRootNodes(ref displayZones).ToArray();
             List<SuffixTreeNodes> to_finish_list = new List<SuffixTreeNodes>();
 
             for (int root_node = 0; root_node < dynamic_paylines.rootNodes.Length; root_node++)
@@ -193,17 +193,20 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 //Start a new payline that is going to be printed per root node
                 List<int> payline = new List<int>();
                 //Build all paylines
-                BuildPayline(ref payline, ref dynamic_paylines.rootNodes[root_node], ref configurationGroupManagers);
+                BuildPayline(ref payline, ref dynamic_paylines.rootNodes[root_node], ref displayZones);
             }
         }
-        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes node, ref BaseObjectGroupManager[] reel_strip_managers)
+        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes node, ref ConfigurationDisplayZonesStruct[] displayZones)
         {
+            //Debug.Log($"Payline before nodeInfo registered = {String.Join("|", payline)}");
             //Add current node to payline
             payline.Add(node.node_info.row);
+            //Debug.Log($"Payline after nodeInfo registered = {String.Join("|", payline)}");
             int next_column = node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;
+            //Debug.Log($"next_column {next_column } = {node.left_right}node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;");
             //Check the column is the last column and continue if it is
             if (node.left_right ?
-                next_column >= reel_strip_managers.Length :
+                next_column >= displayZones.Length :
                 next_column < 0)
             {
                 Debug.Log("Reached end of payline");
@@ -213,20 +216,20 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             else
             {
                 SuffixTreeNodes parent_node = node; //First pass thru this will be nothing
-                DisplayZoneStruct[] rows_in_next_column = reel_strip_managers[next_column].configurationGroupDisplayZones.displayZones;
+                ConfigurationDisplayZonesStruct displayZoneNextColumn = displayZones[next_column];
                 //First in is parent_node = 0 | Children Column = 1 | slots_per_reel = 5
-                node.InitializeNextNodes(next_column, ref rows_in_next_column, ref parent_node, node.left_right);
-                for (int child_nodes = 0; child_nodes < node.connected_nodes_struct.Length; child_nodes++)
+                node.InitializeNextNodes(next_column, ref displayZoneNextColumn, ref parent_node, node.left_right);
+                for (int child_nodes = 0; child_nodes < node.connectedNodes.Length; child_nodes++)
                 {
                     //Now build out the child refs
-                    BuildPayline(ref payline, ref node.connected_nodes_struct[child_nodes], ref reel_strip_managers);
+                    BuildPayline(ref payline, ref node.connectedNodes[child_nodes], ref displayZones);
                     //Remove payline buildup
                     payline.RemoveRange(node.parent_nodes.Length, payline.Count - node.parent_nodes.Length);
                 }
             }
         }
 
-        private List<SuffixTreeNodes> InitializeRootNodes(ref BaseObjectGroupManager[] configurationGroupManagers)
+        private List<SuffixTreeNodes> InitializeRootNodes(ref ConfigurationDisplayZonesStruct[] displayZones)
         {
             List<SuffixTreeNodes> root_nodes = new List<SuffixTreeNodes>();
             SuffixTreeNodes node;
@@ -234,20 +237,21 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             switch (evaluationDirection)
             {
                 case paylineDirection.left:
-                    root_nodes.AddRange(BuildRootNodes(0, ref configurationGroupManagers[0], true));
+                    root_nodes.AddRange(BuildRootNodes(0, displayZones[0], true));
                     break;
                 case paylineDirection.right:
-                    root_nodes.AddRange(BuildRootNodes(configurationGroupManagers.Length - 1, ref configurationGroupManagers[configurationGroupManagers.Length - 1], false));
+                    root_nodes.AddRange(BuildRootNodes(displayZones.Length - 1, displayZones[displayZones.Length - 1], false));
                     break;
                 case paylineDirection.both:
-                    root_nodes.AddRange(BuildRootNodes(0, ref configurationGroupManagers[0], true));
-                    root_nodes.AddRange(BuildRootNodes(configurationGroupManagers.Length - 1, ref configurationGroupManagers[configurationGroupManagers.Length - 1], false));
+                    root_nodes.AddRange(BuildRootNodes(0, displayZones[0], true));
+                    root_nodes.AddRange(BuildRootNodes(displayZones.Length - 1, displayZones[displayZones.Length - 1], false));
                     break;
                 case paylineDirection.customcolumns:
                     for (int column = 0; column < customColumnsDefine.Length; column++)
                     {
-                        root_nodes.AddRange(BuildRootNodes(customColumnsDefine[column].rootColumn, ref configurationGroupManagers[customColumnsDefine[column].rootColumn], customColumnsDefine[column].leftRight));
-                        Debug.Log($"root_nodes count = {root_nodes.Count}");
+                        //Debug.Log($"Building Custom Column {column} customColumnsDefine[column].rootColumn = {customColumnsDefine[column].rootColumn}");
+                        root_nodes.AddRange(BuildRootNodes(customColumnsDefine[column].rootColumn, displayZones[customColumnsDefine[column].rootColumn], customColumnsDefine[column].leftRight));
+                        //Debug.Log($"root_nodes count = {root_nodes.Count}");
                     }
                     break;
                 default:
@@ -256,19 +260,29 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             }
             return root_nodes;
         }
-
-        private List<SuffixTreeNodes> BuildRootNodes(int column, ref BaseObjectGroupManager configurationGroupManager, bool left_right)
+        /// <summary>
+        /// Each active payline zone is a root node for evaluation
+        /// </summary>
+        /// <param name="column"></param>
+        /// <param name="configurationDisplayZonesStruct"></param>
+        /// <param name="left_right"></param>
+        /// <returns></returns>
+        private List<SuffixTreeNodes> BuildRootNodes(int column, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct, bool left_right)
         {
             List<SuffixTreeNodes> root_nodes = new List<SuffixTreeNodes>();
             SuffixTreeNodes node;
-            //Used to assign each row in the column - active or inactive payline evaluation
-            int row = 0;
-            for (int display_zone = 0; display_zone < configurationGroupManager.configurationGroupDisplayZones.displayZones.Length; display_zone++)
+            DisplayZoneStruct displayZone;
+            //Row is automatically the first available node non padding node
+            int row = configurationDisplayZonesStruct.paddingBefore;
+            int totalPositions = 0;
+            //Loop through each display zone and build a root node for each active row
+            for (int display_zone = 0; display_zone < configurationDisplayZonesStruct.displayZones.Length; display_zone++)
             {
-                DisplayZoneStruct reel_display_zone = configurationGroupManager.configurationGroupDisplayZones.displayZones[display_zone];
-                if (reel_display_zone.active_payline_evaluations)
+                displayZone = configurationDisplayZonesStruct.displayZones[display_zone];
+                totalPositions += configurationDisplayZonesStruct.displayZones[display_zone].positionsInZone;
+                if (displayZone.activePaylineEvaluations)
                 {
-                    for (int slot = 0; slot < reel_display_zone.positionsInZone; slot++)
+                    for (int slot = 0; slot < displayZone.positionsInZone; slot++)
                     {
                         //Build my node
                         node = new SuffixTreeNodes(column, row, null, new SuffixTreeNodeInfo(-1, -1), left_right);
@@ -279,8 +293,8 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 }
                 else
                 {
-                    Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", reel_display_zone.positionsInZone));
-                    for (int slot = 0; slot < reel_display_zone.positionsInZone; slot++)
+                    Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", displayZone.positionsInZone));
+                    for (int slot = 0; slot < displayZone.positionsInZone; slot++)
                     {
                         //Register blank slot
                         Debug.Log(String.Format("Root Node {0} {1} not in active payzone", column, row));
@@ -318,7 +332,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             {
                 if (active_slot > node)
                     return false;
-                if (display_zones[i].active_payline_evaluations)
+                if (display_zones[i].activePaylineEvaluations)
                 {
                     for (int slot = 0; slot < display_zones[i].positionsInZone; slot++)
                     {
@@ -387,14 +401,14 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         private int GetPossiblePaylineCombinations(ref SuffixTreeNodes suffix_tree_node)
         {
             int paylines_supported = 0;
-            if (suffix_tree_node.connected_nodes_struct != null)
+            if (suffix_tree_node.connectedNodes != null)
             {
-                paylines_supported = suffix_tree_node.connected_nodes_struct.Length;
+                paylines_supported = suffix_tree_node.connectedNodes.Length;
                 if (suffix_tree_node.connected_nodes.Length > 0)
                 {
-                    for (int sub_node = 0; sub_node < suffix_tree_node.connected_nodes_struct.Length; sub_node++)
+                    for (int sub_node = 0; sub_node < suffix_tree_node.connectedNodes.Length; sub_node++)
                     {
-                        paylines_supported += GetPossiblePaylineCombinations(ref suffix_tree_node.connected_nodes_struct[sub_node]);
+                        paylines_supported += GetPossiblePaylineCombinations(ref suffix_tree_node.connectedNodes[sub_node]);
                     }
                 }
             }

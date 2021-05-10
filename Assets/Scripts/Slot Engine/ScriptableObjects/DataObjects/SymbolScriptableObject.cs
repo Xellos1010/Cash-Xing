@@ -26,7 +26,13 @@ public struct SymbolObject
     /// Name of the Symbol
     /// </summary>
     [SerializeField]
-    public string symbolName;
+    public string symbolName
+    {
+        get
+        {
+            return symbolPrefab.name;
+        }
+    }
     /// <summary>
     /// Symbol Prefab
     /// </summary>

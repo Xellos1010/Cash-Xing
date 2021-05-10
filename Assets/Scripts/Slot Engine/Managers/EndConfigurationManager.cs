@@ -271,44 +271,44 @@ namespace Slot_Engine.Matrix
             switch (feature)
             {
                 case Features.freespin:
-                    configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
-                    for (int i = 0; i < configuration.Length; i++)
-                    {
-                        configuration[i].displaySymbols = new NodeDisplaySymbol[3]
-                        {
-                            new NodeDisplaySymbol(i % 2 == 0
-                        ? (int)Symbol.SA01 : (int)Symbol.RO03),
-                            new NodeDisplaySymbol((int)Symbol.RO01),
-                            new NodeDisplaySymbol((int)Symbol.RO02)
-                        };
+                    //configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
+                    //for (int i = 0; i < configuration.Length; i++)
+                    //{
+                    //    //configuration[i].displaySymbols = new NodeDisplaySymbol[3]
+                    //    //{
+                    //    //    new NodeDisplaySymbol(i % 2 == 0
+                    //    //? (int)Symbol.SA01 : (int)Symbol.RO03),
+                    //    //    new NodeDisplaySymbol((int)Symbol.RO01),
+                    //    //    new NodeDisplaySymbol((int)Symbol.RO02)
+                    //    //};
 
-                        if (i % 2 == 0)
-                        {
-                            configuration[i].displaySymbols[0].AddFeature(Features.freespin);
-                        }
-                    }
-                    AddConfigurationToSequence(GameModes.baseGame, configuration);
+                    //    //if (i % 2 == 0)
+                    //    //{
+                    //    //    configuration[i].displaySymbols[0].AddFeature(Features.freespin);
+                    //    //}
+                    //}
+                    //AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 case Features.overlay:
-                    configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
-                    for (int i = 0; i < configuration.Length; i++)
-                    {
-                        configuration[i].displaySymbols = new NodeDisplaySymbol[3]
-                        {
-                            new NodeDisplaySymbol(i % 2 == 0
-                        ? (int)Symbol.SA02 : (int)Symbol.RO03),
-                            new NodeDisplaySymbol((int)Symbol.RO01),
-                            new NodeDisplaySymbol((int)Symbol.RO02)
-                        };
-                        if (i % 2 == 0)
-                        {
-                            configuration[i].displaySymbols[0].primary_symbol = (int)Symbol.RO03;
-                            configuration[i].displaySymbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
-                            configuration[i].displaySymbols[0].AddFeature(Features.overlay);
-                            configuration[i].displaySymbols[0].is_overlay = true;
-                        }
-                    }
-                    AddConfigurationToSequence(GameModes.baseGame, configuration);
+                    //configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
+                    //for (int i = 0; i < configuration.Length; i++)
+                    //{
+                    //    configuration[i].displaySymbols = new NodeDisplaySymbol[3]
+                    //    {
+                    //        new NodeDisplaySymbol(i % 2 == 0
+                    //    ? (int)Symbol.SA02 : (int)Symbol.RO03),
+                    //        new NodeDisplaySymbol((int)Symbol.RO01),
+                    //        new NodeDisplaySymbol((int)Symbol.RO02)
+                    //    };
+                    //    if (i % 2 == 0)
+                    //    {
+                    //        configuration[i].displaySymbols[0].primary_symbol = (int)Symbol.RO03;
+                    //        configuration[i].displaySymbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
+                    //        configuration[i].displaySymbols[0].AddFeature(Features.overlay);
+                    //        configuration[i].displaySymbols[0].is_overlay = true;
+                    //    }
+                    //}
+                    //AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 default:
                     break;

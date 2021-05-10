@@ -38,18 +38,18 @@ namespace Slot_Engine.Matrix.Managers
                 if (GUILayout.Button("Generate Evaluation from Configuration Object"))
                 {
                     //todo get matrix from script
-                    paylinesEvaluationObject.GenerateDynamicPaylinesFromConfigurationObjectsGroupManagers(ref myTarget.configurationObject.configurationGroupManagers);
+                    paylinesEvaluationObject.GenerateDynamicPaylinesFromConfigurationObjectsGroupManagers(ref myTarget.configurationObject.configurationSettings.displayZones);
                     serializedObject.ApplyModifiedProperties();
                 }
 
-                if (paylinesEvaluationObject.dynamic_paylines.paylinesSupported.Length > 0)
+                if (paylinesEvaluationObject.dynamic_paylines.paylinesSupported.Count > 0)
                 {
                     EditorGUILayout.LabelField("Dynamic Paylines Commands");
                     EditorGUI.BeginChangeCheck();
-                    payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, paylinesEvaluationObject.dynamic_paylines.paylinesSupported.Length - 1);
+                    payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, paylinesEvaluationObject.dynamic_paylines.paylinesSupported.Count - 1);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        //myTarget.ShowDynamicPaylineRaw(payline_to_show);
+                        myTarget.configurationObject.managers.paylines_manager.ShowDynamicPaylineRaw(payline_to_show);
                     }
                     if (GUILayout.Button("Show Current End Configuration On Reels"))
                     {

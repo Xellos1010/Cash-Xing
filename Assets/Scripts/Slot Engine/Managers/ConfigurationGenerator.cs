@@ -418,7 +418,7 @@ namespace Slot_Engine.Matrix
             for (int i = 0; i < reelStripStructDisplayZone.positionsInZone; i++)
             {
                 //Active generate back
-                if (reelStripStructDisplayZone.active_payline_evaluations)
+                if (reelStripStructDisplayZone.activePaylineEvaluations)
                 {
                     GenerateBackPlatePrefab(connectedConfigurationObject, configurationObjectWorldPosition, temp, strip, positionInStrip + i);
                 }

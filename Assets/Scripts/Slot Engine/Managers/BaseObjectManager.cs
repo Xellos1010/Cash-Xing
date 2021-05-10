@@ -223,7 +223,7 @@ namespace Slot_Engine.Matrix
             for (int symbol = 0; symbol < symbolPrefabs.Length; symbol++)
             {
                 symbolPrefabs[symbol] = PrefabUtility.InstantiatePrefab(baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols[symbol].symbolPrefab) as Transform;
-                symbolPrefabs[symbol].gameObject.name = String.Format("Symbol_{0}", baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols[symbol].symbolName);
+                symbolPrefabs[symbol].gameObject.name = String.Format("{0}", baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols[symbol].symbolName);
                 symbolPrefabs[symbol].parent = transform;
                 symbolPrefabs[symbol].localPosition = Vector3.zero;
                 symbolPrefabs[symbol].localRotation = Quaternion.LookRotation(Vector3.back);
@@ -289,24 +289,31 @@ namespace Slot_Engine.Matrix
             {
                 InstantiateSymbolPrefabs();
             }
-            MeshRenderer renderer;
+            MeshRenderer[] renderers;
             for (int symbol_prefab = 0; symbol_prefab < symbolPrefabs.Length; symbol_prefab++)
             {
                 if (symbolPrefabs[symbol_prefab].gameObject.activeSelf == false)
                     symbolPrefabs[symbol_prefab].gameObject.SetActive(true);
                 if (force_hide_others)
                 {
-                    renderer = symbolPrefabs[symbol_prefab].GetChild(0).GetComponent<MeshRenderer>();
-                    if (renderer.enabled && symbol_prefab != symbol_to_show)
-                        renderer.enabled = false;
+                    renderers = symbolPrefabs[symbol_prefab].GetChild(0).GetComponentsInChildren<MeshRenderer>();
+                    for (int renderer = 0; renderer < renderers.Length; renderer++)
+                    {
+                        if (renderers[renderer].enabled && symbol_prefab != symbol_to_show)
+                            renderers[renderer].enabled = false;
+                    }
                 }
             }
-            symbolPrefabs[symbol_to_show].GetChild(0).GetComponent<MeshRenderer>().enabled = true;
+            renderers = symbolPrefabs[symbol_to_show].GetChild(0).GetComponentsInChildren<MeshRenderer>();
+            for (int renderer = 0; renderer < renderers.Length; renderer++)
+            {
+                renderers[renderer].enabled = true;
+            }
         }
 
         private string ReturnSymbolNameFromInt(int symbol)
         {
-            return ((Symbol)symbol).ToString();
+            return baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols[symbol].symbolName;
         }
 
         internal async void SetSymbolResolveWin()

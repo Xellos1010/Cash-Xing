@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 //************
 #if UNITY_EDITOR
@@ -16,18 +17,21 @@ namespace Slot_Engine.Matrix
         internal SuffixTreeNodes[] rootNodes;
         //TODO Abstract and remove - this is Payline mode only to literal for level of abstraction
         [SerializeField]
-        public Payline[] paylinesSupported;
+        public List<Payline> paylinesSupported;
 
         internal Payline ReturnPayline(int payline_to_show)
         {
             return paylinesSupported[payline_to_show];
         }
 
-        internal void AddPaylineSupported(int[] vs, bool leftRight)
+        internal void AddPaylineSupported(int[] payline, bool leftRight)
         {
+            Payline toAdd = new Payline(payline, leftRight);
             if (paylinesSupported == null)
-                paylinesSupported = new Payline[0];
-            paylinesSupported = paylinesSupported.AddAt<Payline>(paylinesSupported.Length, new Payline(vs, leftRight));
+                paylinesSupported = new List<Payline>();
+            //Debug.Log($"Raw Payline File = {String.Join("|", payline)}");
+            //Debug.Log($"Payline added configuration = {toAdd.PrintConfiguration()}");
+            paylinesSupported.Add(toAdd);
         }
     }
 }

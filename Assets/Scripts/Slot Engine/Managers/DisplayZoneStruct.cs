@@ -29,6 +29,6 @@ namespace Slot_Engine.Matrix
         /// Is this an active zone for payline evaluations?
         /// </summary>
         [SerializeField]
-        public bool active_payline_evaluations;
+        public bool activePaylineEvaluations;
     }
 }
