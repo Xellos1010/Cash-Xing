@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using System.Linq;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -85,18 +86,18 @@ namespace Slot_Engine.Matrix
     [System.Serializable]
     public partial class EndConfigurationManager : MonoBehaviour
     {
-        internal ReelStripConfigurationObject configurationObject
+        internal StripConfigurationObject configurationObject
         {
             get
             {
                 if (_matrix == null)
                     //TODO hardcoded - will change
-                    _matrix = transform.parent.parent.GetComponentInChildren<ReelStripConfigurationObject>();
+                    _matrix = transform.parent.parent.GetComponentInChildren<StripConfigurationObject>();
                 return _matrix;
             }
         }
         [SerializeField]
-        private ReelStripConfigurationObject _matrix;
+        private StripConfigurationObject _matrix;
         public EndConfigurationsScriptableObject endConfigurationsScriptableObject;
         /// <summary>
         /// The current reelstrip display configuration
@@ -173,24 +174,25 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data = new List<SpinConfigurationStorage>();
             for (int i = 0; i < amount; i++)
             {
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateReelStrips(gameState, configurationObject.stripManagers).Result));
+                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateStrips(gameState, configurationObject.configurationSettings.displayZones).Result));
             }
         }
-        internal async Task<StripSpinStruct[]> GenerateReelStrips(GameModes gameState, StripManager[] reel_strip_managers)
+        internal async Task<StripSpinStruct[]> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones)
         {
-            StripSpinStruct[] output = new StripSpinStruct[reel_strip_managers.Length];
-            for (int reel = 0; reel < reel_strip_managers.Length; reel++)
+            StripSpinStruct[] output = new StripSpinStruct[displayZones.Length];
+            for (int reel = 0; reel < displayZones.Length; reel++)
             {
-                output[reel] = new StripSpinStruct(await GenerateEndingReelStrip(gameState, reel_strip_managers[reel])); ;
+                output[reel] = new StripSpinStruct(await GenerateEndingStrip(gameState, displayZones[reel]));
             }
             return output;
         }
 
-        private async Task<NodeDisplaySymbol[]> GenerateEndingReelStrip(GameModes mode, StripManager reelStripManager)
+        private async Task<NodeDisplaySymbol[]> GenerateEndingStrip(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct)
         {
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
+            //Debug.LogWarning($"reelStripManager.configurationGroupDisplayZones.totalPositions = {configurationDisplayZonesStruct.totalPositions}");
             //Generate a symbol for each display zone slot
-            for (int i = 0; i < reelStripManager.stripInfo.total_display_slots; i++)
+            for (int i = 0; i < configurationDisplayZonesStruct.totalPositions; i++)
             {
                 output.Add(await GetRandomWeightedSymbol(mode));
             }
@@ -269,44 +271,44 @@ namespace Slot_Engine.Matrix
             switch (feature)
             {
                 case Features.freespin:
-                    configuration = new StripSpinStruct[configurationObject.stripManagers.Length];
-                    for (int i = 0; i < configuration.Length; i++)
-                    {
-                        configuration[i].displaySymbols = new NodeDisplaySymbol[3]
-                        {
-                            new NodeDisplaySymbol(i % 2 == 0
-                        ? (int)Symbol.SA01 : (int)Symbol.RO03),
-                            new NodeDisplaySymbol((int)Symbol.RO01),
-                            new NodeDisplaySymbol((int)Symbol.RO02)
-                        };
+                    //configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
+                    //for (int i = 0; i < configuration.Length; i++)
+                    //{
+                    //    //configuration[i].displaySymbols = new NodeDisplaySymbol[3]
+                    //    //{
+                    //    //    new NodeDisplaySymbol(i % 2 == 0
+                    //    //? (int)Symbol.SA01 : (int)Symbol.RO03),
+                    //    //    new NodeDisplaySymbol((int)Symbol.RO01),
+                    //    //    new NodeDisplaySymbol((int)Symbol.RO02)
+                    //    //};
 
-                        if (i % 2 == 0)
-                        {
-                            configuration[i].displaySymbols[0].AddFeature(Features.freespin);
-                        }
-                    }
-                    AddConfigurationToSequence(GameModes.baseGame, configuration);
+                    //    //if (i % 2 == 0)
+                    //    //{
+                    //    //    configuration[i].displaySymbols[0].AddFeature(Features.freespin);
+                    //    //}
+                    //}
+                    //AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 case Features.overlay:
-                    configuration = new StripSpinStruct[configurationObject.stripManagers.Length];
-                    for (int i = 0; i < configuration.Length; i++)
-                    {
-                        configuration[i].displaySymbols = new NodeDisplaySymbol[3]
-                        {
-                            new NodeDisplaySymbol(i % 2 == 0
-                        ? (int)Symbol.SA02 : (int)Symbol.RO03),
-                            new NodeDisplaySymbol((int)Symbol.RO01),
-                            new NodeDisplaySymbol((int)Symbol.RO02)
-                        };
-                        if (i % 2 == 0)
-                        {
-                            configuration[i].displaySymbols[0].primary_symbol = (int)Symbol.RO03;
-                            configuration[i].displaySymbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
-                            configuration[i].displaySymbols[0].AddFeature(Features.overlay);
-                            configuration[i].displaySymbols[0].is_overlay = true;
-                        }
-                    }
-                    AddConfigurationToSequence(GameModes.baseGame, configuration);
+                    //configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
+                    //for (int i = 0; i < configuration.Length; i++)
+                    //{
+                    //    configuration[i].displaySymbols = new NodeDisplaySymbol[3]
+                    //    {
+                    //        new NodeDisplaySymbol(i % 2 == 0
+                    //    ? (int)Symbol.SA02 : (int)Symbol.RO03),
+                    //        new NodeDisplaySymbol((int)Symbol.RO01),
+                    //        new NodeDisplaySymbol((int)Symbol.RO02)
+                    //    };
+                    //    if (i % 2 == 0)
+                    //    {
+                    //        configuration[i].displaySymbols[0].primary_symbol = (int)Symbol.RO03;
+                    //        configuration[i].displaySymbols[0].SetOverlaySymbolTo((int)Symbol.SA02);
+                    //        configuration[i].displaySymbols[0].AddFeature(Features.overlay);
+                    //        configuration[i].displaySymbols[0].is_overlay = true;
+                    //    }
+                    //}
+                    //AddConfigurationToSequence(GameModes.baseGame, configuration);
                     break;
                 default:
                     break;

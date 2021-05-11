@@ -4,7 +4,7 @@ namespace Slot_Engine.Matrix
 {
     public class SoundManager : MonoBehaviour
     {
-        public ReelStripConfigurationObject matrix;
+        public StripConfigurationObject matrix;
         public MachineSoundsReferenceScriptableObject machineSoundsReference;
 
         public AudioSource audioSource
@@ -24,10 +24,10 @@ namespace Slot_Engine.Matrix
         void OnEnable()
         {
             //Setup Reel Start and Stop Spin
-            for (int reel = 0; reel < matrix.stripManagers.Length; reel++)
+            for (int reel = 0; reel < matrix.configurationGroupManagers.Length; reel++)
             {
-                matrix.stripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
-                matrix.stripManagers[reel].reelStopSpin += SoundManager_reelStopSpin;
+                matrix.configurationGroupManagers[reel].objectGroupStartSpin += SoundManager_reelStartSpin;
+                matrix.configurationGroupManagers[reel].objectGroupEndSpin += SoundManager_reelStopSpin;
             }
             matrix.managers.racking_manager.rackStart += Racking_manager_rackStart;
             matrix.managers.racking_manager.rackEnd += Racking_manager_rackEnd;
@@ -60,10 +60,14 @@ namespace Slot_Engine.Matrix
 
         void OnDisable()
         {
-            for (int reel = 0; reel < matrix.stripManagers.Length; reel++)
+            //Setup Reel Start and Stop Spin
+            for (int reel = 0; reel < matrix.configurationGroupManagers.Length; reel++)
             {
-                matrix.stripManagers[reel].reelStartSpin += SoundManager_reelStartSpin;
+                matrix.configurationGroupManagers[reel].objectGroupStartSpin -= SoundManager_reelStartSpin;
+                matrix.configurationGroupManagers[reel].objectGroupEndSpin -= SoundManager_reelStopSpin;
             }
+            matrix.managers.racking_manager.rackStart -= Racking_manager_rackStart;
+            matrix.managers.racking_manager.rackEnd -= Racking_manager_rackEnd;
         }
 
         internal void PlayAudioForWinningPayline(WinningPayline winningPayline)

@@ -38,7 +38,7 @@ public partial class ConfigurationSettingsScriptableObject : ScriptableObject
     /// <summary>
     /// Display Zones per reel. stacked 2x5 inverted pyramid matrix requires ReelStripStructDisplayZone[5]{2x1x2x0x2x0,2x0x2x1x2x0,2x1x2x0x2x1,2x0x2x1x2x0, 2x1x2x0x2x0}
     /// </summary>
-    public ConfigurationStripStructDisplayZones[] displayZones;
+    public ConfigurationDisplayZonesStruct[] displayZones;
     /// <summary>
     /// Shape of the slot on the matrix. eg. Square, hex, etc...
     /// </summary>

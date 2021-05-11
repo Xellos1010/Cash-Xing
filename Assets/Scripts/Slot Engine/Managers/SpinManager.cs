@@ -58,19 +58,19 @@ namespace Slot_Engine.Matrix.Managers
         /// <summary>
         /// Class get for connected Configuration Object
         /// </summary>
-        public ReelStripConfigurationObject configurationObject
+        public StripConfigurationObject configurationObject
         {
             get
             {
                 if (_configurationObject == null)
-                    _configurationObject = GameObject.FindGameObjectWithTag("ConfigurationObject").GetComponent<ReelStripConfigurationObject>();
+                    _configurationObject = GameObject.FindGameObjectWithTag("ConfigurationObject").GetComponent<StripConfigurationObject>();
                 return _configurationObject;
             }
         }
         /// <summary>
         /// Reference for configuration object
         /// </summary>
-        public ReelStripConfigurationObject _configurationObject;
+        public StripConfigurationObject _configurationObject;
         /// <summary>
         /// The Base Settings - how long till autospin - timer for spin loop to switch to spin outro - etc...
         /// </summary>
@@ -97,7 +97,7 @@ namespace Slot_Engine.Matrix.Managers
         /// Counter used to measure time passed in loop state - TODO refactor into call with clock
         /// </summary>
         [SerializeField]
-        private float timeCounter = 0.0f;
+        internal float timeCounter = 0.0f;
         /// <summary>
         /// For reference only to what state our spin manager is in
         /// </summary>
@@ -193,7 +193,7 @@ namespace Slot_Engine.Matrix.Managers
         internal void TriggerSpinWin(int[] symbols, int numberOfSymbols)
         {
             StripSpinStruct[] configuration = new StripSpinStruct[0];
-            configuration = new StripSpinStruct[configurationObject.stripManagers.Length];
+            configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
             for (int i = 0; i < configuration.Length; i++)
             {
                 configuration[i].displaySymbols = new NodeDisplaySymbol[3]

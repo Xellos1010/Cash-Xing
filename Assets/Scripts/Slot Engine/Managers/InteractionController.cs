@@ -46,12 +46,12 @@ namespace Slot_Engine.Matrix
         }
         public AnimatorStateMachineManager _StateMachineController;
         [SerializeField]
-        private ReelStripConfigurationObject matrix
+        private StripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = transform.parent.parent.GetComponentInChildren<ReelStripConfigurationObject>();
+                    _matrix = transform.parent.parent.GetComponentInChildren<StripConfigurationObject>();
                 return _matrix;
             }
         }
@@ -65,7 +65,7 @@ namespace Slot_Engine.Matrix
             ChangeLayout
         }
 
-        private ReelStripConfigurationObject _matrix;
+        private StripConfigurationObject _matrix;
         public bool can_spin_slam = false;
 
         public bool locked = false;

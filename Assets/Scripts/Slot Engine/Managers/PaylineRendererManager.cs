@@ -53,11 +53,11 @@ namespace Slot_Engine.Matrix
                 {
                     _payline_renderers = GetComponentsInChildren<PaylineRenderer>();
                 }
-                if (_payline_renderers.Length != matrix.stripManagers.Length - 1)
+                if (_payline_renderers.Length != matrix.configurationGroupManagers.Length - 1)
                 {
                     List<PaylineRenderer> renderers = new List<PaylineRenderer>();
                     renderers.AddRange(_payline_renderers);
-                    for (int i = 0; i < matrix.stripManagers.Length - 1; i++)
+                    for (int i = 0; i < matrix.configurationGroupManagers.Length - 1; i++)
                     {
                         renderers.Add(GenerateNewPaylineObject());
                     }
@@ -83,16 +83,16 @@ namespace Slot_Engine.Matrix
             return (PaylineRenderer)new_game_object.AddComponent(typeof(PaylineRenderer));
         }
 
-        private Slot_Engine.Matrix.ReelStripConfigurationObject matrix
+        private Slot_Engine.Matrix.StripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = GameObject.FindObjectOfType<Slot_Engine.Matrix.ReelStripConfigurationObject>();
+                    _matrix = GameObject.FindObjectOfType<Slot_Engine.Matrix.StripConfigurationObject>();
                 return _matrix;
             }
         }
-        public ReelStripConfigurationObject _matrix;
+        public StripConfigurationObject _matrix;
         public int line_renderers_to_use = 1;
 
         internal void SetWidth(float start, float end, ref PaylineRenderer payline_renderer)
@@ -135,12 +135,12 @@ namespace Slot_Engine.Matrix
             //initialize the line positions list and 
             List<Vector3> linePositions;
             Payline toShowPayline = new Payline(payline_to_show.payline);
-            if(payline_to_show.payline.payline_configuration.payline.Length < matrix.stripManagers.Length)
+            if(payline_to_show.payline.payline_configuration.payline.Length < matrix.configurationGroupManagers.Length)
             {
                 List<int> paylineTemp = new List<int>();
                 paylineTemp.AddRange(toShowPayline.payline_configuration.payline);
                 int newNumber = paylineTemp[paylineTemp.Count-1];
-                for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.stripManagers.Length; paylineNode++)
+                for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.configurationGroupManagers.Length; paylineNode++)
                 {
                     paylineTemp.Add(newNumber);
                 }

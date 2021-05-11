@@ -1,9 +1,5 @@
 ﻿using Slot_Engine.Matrix.ScriptableObjects;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-//For Parsing Purposes
-using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.Threading;
@@ -11,25 +7,20 @@ using System.Threading;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-/// <summary>
-/// This holds all payline information. Paylines are processed in the Slot Engine Script by cycling through the iPayLines and comparing whether symbols match on those paylines.
-/// </summary>
 
 namespace Slot_Engine.Matrix.Managers
 {
+    /// <summary>
+    /// Display's Winning Objects and Manages Debug Rendering of Winning Objects and winable configurations. 
+    /// </summary>
 #if UNITY_EDITOR
-    [CustomEditor(typeof(PaylinesManager))]
+    [CustomEditor(typeof(WinningObjectManager))]
     class PayLinesEditor : BoomSportsEditor
     {
-        PaylinesManager myTarget;
-        SerializedProperty winning_paylines;
-
-        private int payline_to_show;
-        private int winning_payline_to_show;
+        WinningObjectManager myTarget;
         public void OnEnable()
         {
-            myTarget = (PaylinesManager)target;
-            winning_paylines = serializedObject.FindProperty("winning_paylines");
+            myTarget = (WinningObjectManager)target;
         }
 
         public override void OnInspectorGUI()
@@ -42,14 +33,17 @@ namespace Slot_Engine.Matrix.Managers
         }
     }
 #endif
-    public class PaylinesManager : MonoBehaviour
+    /// <summary>
+    /// Store's Winning Paylines and Manages Rendering. 
+    /// </summary>
+    public class WinningObjectManager : MonoBehaviour
     {
         [SerializeField]
-        internal WinningPayline[] winningPaylines
+        internal WinningPayline[] winningObjects
         {
             get
             {
-                return matrix.managers.evaluationManager.ReturnWinningObjectsAsWinningPaylines();
+                return configurationObject.managers.evaluationManager.ReturnWinningObjectsAsWinningPaylines();
             }
         }
         public int current_winning_payline_shown = -1;
@@ -57,8 +51,11 @@ namespace Slot_Engine.Matrix.Managers
         public bool paylines_evaluated = false;
         public bool cycle_paylines = true;
         //TODO Change this to access animator length of state
-        public float delay_between_wininng_payline = .5f;
-        public float wininng_payline_highlight_time = 2;
+        public float delayBetweenWinningObjectDisplayed = .5f;
+        public float winningObjectDisplayTime = 2;
+
+        [SerializeField]
+        internal PaylinesEvaluationScriptableObject? dynamicPaylineObject;
         public PaylineRendererManager payline_renderer_manager
         {
             get
@@ -71,17 +68,17 @@ namespace Slot_Engine.Matrix.Managers
             }
         }
         public PaylineRendererManager _payline_renderer_manager;
-        internal ReelStripConfigurationObject matrix
+        internal StripConfigurationObject configurationObject
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = GameObject.FindObjectOfType<ReelStripConfigurationObject>();
+                    _matrix = GameObject.FindObjectOfType<StripConfigurationObject>();
                 return _matrix;
             }
         }
         [SerializeField]
-        private ReelStripConfigurationObject _matrix;
+        private StripConfigurationObject _matrix;
 
         public CancellationToken cancelTaskToken;
         public Task cycle_paylines_task;
@@ -92,10 +89,10 @@ namespace Slot_Engine.Matrix.Managers
         internal float GetTotalWinAmount()
         {
             float output = 0;
-            for (int i = 0; i < winningPaylines.Length; i++)
+            for (int i = 0; i < winningObjects.Length; i++)
             {
                 //Debug.Log($"Get Total Win Amount = {output}");
-                output += winningPaylines[i].GetTotalWin(matrix);
+                output += winningObjects[i].GetTotalWin(configurationObject);
             }
             //Debug.Log($"Returning Total Win Amount = {output}");
             return output;
@@ -103,7 +100,7 @@ namespace Slot_Engine.Matrix.Managers
 
         private int GetSupportedGeneratedPaylines()
         {
-            return (int)EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.managers.evaluationManager.coreEvaluationObjects).ReturnEvaluationObjectSupportedRootCount();
+            return (int)EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref configurationObject.managers.evaluationManager.coreEvaluationObjects).ReturnEvaluationObjectSupportedRootCount();
         }
 
         internal async Task CancelCycleWins()
@@ -116,7 +113,7 @@ namespace Slot_Engine.Matrix.Managers
 
         private async Task SymbolAnimatorsAtEndOfState(string state)
         {
-            await matrix.WaitForSymbolToResolveState(state);
+            await configurationObject.WaitForSymbolToResolveState(state);
         }
 
         /// <summary>
@@ -129,26 +126,10 @@ namespace Slot_Engine.Matrix.Managers
         {
             //If first time thru then lerp money to bank
             payline_renderer_manager.ShowWinningPayline(payline_to_show);
-            matrix.managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
-            matrix.SetSymbolsForWinConfigurationDisplay(payline_to_show);
+            configurationObject.managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
+            configurationObject.SetSymbolsForWinConfigurationDisplay(payline_to_show);
             return Task.CompletedTask;
         }
-
-        //internal async Task EvaluateWinningSymbols(ReelStripSpinStruct[] reelstripsConfiguration)
-        //{
-        //    ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstripsConfiguration.Length];
-        //    for (int reel = 0; reel < reelstripsConfiguration.Length; reel++)
-        //    {
-        //        symbols_configuration[reel].SetColumnSymbolsTo(reelstripsConfiguration[reel].displaySymbols);
-        //    }
-        //    await EvaluateWinningSymbols(symbols_configuration);
-        //}
-
-        //public async Task EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
-        //{
-        //    winningPaylines = await matrix.slotMachineManagers.evaluationManager.EvaluateSymbolConfigurationForWinningPaylines(symbols_configuration);
-        //    paylines_evaluated = true;
-        //}
 
         internal void PlayCycleWins()
         {
@@ -178,29 +159,29 @@ namespace Slot_Engine.Matrix.Managers
         {
             //On First Pass thru
             //matrix.InitializeSymbolsForWinConfigurationDisplay();
-            int payline_to_show = current_winning_payline_shown + 1 < winningPaylines.Length ? current_winning_payline_shown + 1 : 0;
+            int payline_to_show = current_winning_payline_shown + 1 < winningObjects.Length ? current_winning_payline_shown + 1 : 0;
             //Debug.Log(String.Format("Showing Payline {0}", payline_to_show));
             ShowWinningPayline(payline_to_show);
             //Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
-            yield return new WaitForSeconds(wininng_payline_highlight_time);
+            yield return new WaitForSeconds(winningObjectDisplayTime);
             //Debug.Log("Hiding Payline");
             yield return HideWinningPayline();
             //Debug.Log(String.Format("Delaying for {0} seconds", delay_between_wininng_payline));
-            yield return new WaitForSeconds(delay_between_wininng_payline);
+            yield return new WaitForSeconds(delayBetweenWinningObjectDisplayed);
         }
 
         private IEnumerator HideWinningPayline()
         {
-            yield return matrix.InitializeSymbolsForWinConfigurationDisplay();
+            yield return configurationObject.InitializeSymbolsForWinConfigurationDisplay();
         }
 
         internal Task ShowWinningPayline(int v)
         {
-            if (v < winningPaylines.Length)
+            if (v < winningObjects.Length)
             {
                 current_winning_payline_shown = v;
                 //Debug.Log(String.Format("Current wining payline shown = {0}", v));
-                RenderWinningPayline(winningPaylines[current_winning_payline_shown]);
+                RenderWinningPayline(winningObjects[current_winning_payline_shown]);
             }
             return Task.CompletedTask;
         }
@@ -239,22 +220,21 @@ namespace Slot_Engine.Matrix.Managers
             //TODO Task Managment system
             //cycle_paylines_task?.Dispose();
         }
-
-        PaylinesEvaluationScriptableObject? dynamicPaylineObject;
         //TODO move into Evaluation Manager
         internal void GenerateDynamicPaylinesFromMatrix()
         {
-            dynamicPaylineObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref matrix.managers.evaluationManager.coreEvaluationObjects);
-            dynamicPaylineObject.GenerateDynamicPaylinesFromMatrix(ref matrix.stripManagers);
+            dynamicPaylineObject = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref configurationObject.managers.evaluationManager.coreEvaluationObjects);
+            dynamicPaylineObject.GenerateDynamicPaylinesFromConfigurationObjectsGroupManagers(ref configurationObject.configurationSettings.displayZones);
         }
 
-        internal void ShowDynamicPaylineRaw(int payline_to_show)
+        internal void ShowDynamicPaylineRaw(int paylineToShow)
         {
+            Debug.Log($"Showing Payline {paylineToShow} - dynamicPaylineObject?.dynamic_paylines.rootNodes.Length = {dynamicPaylineObject?.dynamic_paylines.rootNodes.Length}");
             if (dynamicPaylineObject?.dynamic_paylines.rootNodes.Length > 0)
             {
-                if (payline_to_show >= 0 && payline_to_show < GetSupportedGeneratedPaylines()) // TODO have a number of valid paylines printed
+                if (paylineToShow >= 0 && paylineToShow < GetSupportedGeneratedPaylines()) // TODO have a number of valid paylines printed
                 {
-                    payline_renderer_manager.ShowPayline(dynamicPaylineObject?.dynamic_paylines.ReturnPayline(payline_to_show));
+                    payline_renderer_manager.ShowPayline(dynamicPaylineObject?.dynamic_paylines.ReturnPayline(paylineToShow));
                 }
             }
         }

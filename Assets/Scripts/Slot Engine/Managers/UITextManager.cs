@@ -37,17 +37,17 @@ namespace Slot_Engine.Matrix
     public class UITextManager : MonoBehaviour
     {
         [SerializeField]
-        private ReelStripConfigurationObject matrix
+        private StripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = transform.parent.parent.GetComponentInChildren<ReelStripConfigurationObject>();
+                    _matrix = transform.parent.parent.GetComponentInChildren<StripConfigurationObject>();
                 return _matrix;
             }
         }
         [SerializeField]
-        internal ReelStripConfigurationObject _matrix;
+        internal StripConfigurationObject _matrix;
         public TextMeshPro bank, bigWin, multiplier, freespin_info, player_wallet, bet_amount;
         public void SetBankTo(double value)
         {

@@ -26,7 +26,7 @@ namespace Slot_Engine.Matrix
     /// A stackable display zone active display zones will be affected by payline evaluations. in-active zones will be omitted from paylien evaluations
     /// </summary>
     [Serializable]
-    public struct ConfigurationStripStructDisplayZones
+    public struct ConfigurationDisplayZonesStruct
     {
         /// <summary>
         /// Padding before display zone
@@ -42,42 +42,45 @@ namespace Slot_Engine.Matrix
         /// This is where you can stack display zones that are affected or not affected by payline evaluations
         /// </summary>
         [SerializeField]
-        public ReelStripStructDisplayZone[] stripDisplayZones;
+        public DisplayZoneStruct[] displayZones;
         /// <summary>
         /// Type of Spin to use on this reel. Constant Lerp - Step 1 slot over time.
         /// </summary>
         [SerializeField]
-        public BaseSpinEvaluatorScriptableObject spinParameters;
+        public BasePathTransformSpinEvaluatorScriptableObject spinParameters;
 
-        public ConfigurationStripStructDisplayZones(ConfigurationStripStructDisplayZones stripDisplayZonesSetting) : this()
+        public ConfigurationDisplayZonesStruct(ConfigurationDisplayZonesStruct displayZonesSetting) : this()
         {
-            spinParameters = stripDisplayZonesSetting.spinParameters;
-            stripDisplayZones = stripDisplayZonesSetting.stripDisplayZones;
-            paddingBefore = stripDisplayZonesSetting.paddingBefore;
-            paddingAfter = stripDisplayZonesSetting.paddingAfter;
+            spinParameters = displayZonesSetting.spinParameters;
+            displayZones = displayZonesSetting.displayZones;
+            paddingBefore = displayZonesSetting.paddingBefore;
+            paddingAfter = displayZonesSetting.paddingAfter;
         }
 
         /// <summary>
-        /// strip display zone's total
+        /// Display zone's total positions
         /// </summary>
         [SerializeField]
-        public int stripDisplayZonePositionsTotal
+        public int displayZonesPositionsTotal
         {
             get
             {
                 int output = 0;
-                for (int displayZone = 0; displayZone < stripDisplayZones.Length; displayZone++)
+                for (int displayZone = 0; displayZone < displayZones.Length; displayZone++)
                 {
-                    output += stripDisplayZones[displayZone].positionsInZone;
+                    output += displayZones[displayZone].positionsInZone;
                 }
                 return output;
             }
         }
+        /// <summary>
+        /// Total positions with padding
+        /// </summary>
         internal int totalPositions
         {
             get
             {
-                return paddingBefore + paddingBefore + stripDisplayZonePositionsTotal;
+                return paddingBefore + paddingBefore + displayZonesPositionsTotal;
             }
         }
     }

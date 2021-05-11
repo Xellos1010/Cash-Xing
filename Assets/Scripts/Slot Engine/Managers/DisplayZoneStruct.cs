@@ -15,10 +15,10 @@ using System;
 namespace Slot_Engine.Matrix
 {
     /// <summary>
-    /// Controls a display zone for a reel strip
+    /// Controls a display zone being defined
     /// </summary>
     [Serializable]
-    public struct ReelStripStructDisplayZone
+    public struct DisplayZoneStruct
     {
         /// <summary>
         /// The Reel strip slot amount
@@ -29,6 +29,6 @@ namespace Slot_Engine.Matrix
         /// Is this an active zone for payline evaluations?
         /// </summary>
         [SerializeField]
-        public bool active_payline_evaluations;
+        public bool activePaylineEvaluations;
     }
 }

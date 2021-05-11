@@ -26,7 +26,7 @@ namespace Slot_Engine.Matrix
         internal int[] connected_nodes;
 
         [SerializeField]
-        internal SuffixTreeNodes[] connected_nodes_struct;
+        internal SuffixTreeNodes[] connectedNodes;
 
         public SuffixTreeNodes(int primary_node, SuffixTreeNodeInfo[] parent_nodes, SuffixTreeNodeInfo parent_node, int column) : this()
         {
@@ -78,7 +78,7 @@ namespace Slot_Engine.Matrix
             List<WinningPayline> winning_paylines = new List<WinningPayline>();
             Debug.Log(String.Format("Starting check for winning paylines from node {0}", node_info.Print()));
             //Check all connected nodes for a win using dfs (depth first search) search
-            CheckConnectedNodesForWin(ref node_info, ref connected_nodes_struct, ref evaluationObject, ref winning_paylines, linewin_symbol);
+            CheckConnectedNodesForWin(ref node_info, ref connectedNodes, ref evaluationObject, ref winning_paylines, linewin_symbol);
             evaluationObject.winningEvaluationNodes.Clear();
             return winning_paylines.ToArray();
         }
@@ -178,7 +178,7 @@ namespace Slot_Engine.Matrix
                 if (evaluationObject.winningEvaluationNodes.Count < evaluationObject.gridConfiguration.Length)
                 {
                     //Check each connected node
-                    CheckConnectedNodesForWin(ref nodeToCheck.node_info, ref nodeToCheck.connected_nodes_struct, ref evaluationObject, ref winning_paylines, nextDisplaySymbol);
+                    CheckConnectedNodesForWin(ref nodeToCheck.node_info, ref nodeToCheck.connectedNodes, ref evaluationObject, ref winning_paylines, nextDisplaySymbol);
                 }
                 else
                 {
@@ -350,63 +350,67 @@ namespace Slot_Engine.Matrix
             evaluationObject.winningEvaluationNodes.Add(new EvaluationNode(suffix_tree_node_info, symbol));
         }
 
-        internal void InitializeNextNodes(int current_column, ref ReelStripStructDisplayZone[] display_zones, ref SuffixTreeNodes parent_node, bool left_right)
+        internal void InitializeNextNodes(int current_column, ref ConfigurationDisplayZonesStruct displayZoneNextColumn, ref SuffixTreeNodes parent_node, bool left_right)
         {
             //Start in column 1
-
-            List<SuffixTreeNodes> children_nodes = new List<SuffixTreeNodes>();
-            List<int> child_nodes = new List<int>();
+            List<SuffixTreeNodes> connectedNodes = new List<SuffixTreeNodes>();
+            List<int> connectedNodesList = new List<int>();
             //Check if within range of primary node
             if (parent_node.node_info.row == -1)
             {
+                Debug.Log($"parent_node.node_info.row == -1");
                 throw new NotImplementedException();
             }
             else
             {
-
-                if (IsInActiveDisplayZone(parent_node.node_info.row - 1, ref display_zones))
+                if (parent_node.node_info.row - 1 > -1)
                 {
-                    child_nodes.Add(parent_node.node_info.row - 1);
-                    children_nodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row - 1, parent_node.parent_nodes, parent_node.node_info, left_right));
-                }
-                if (IsInActiveDisplayZone(parent_node.node_info.row, ref display_zones))
-                {
-                    child_nodes.Add(parent_node.node_info.row);
-                    children_nodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row, parent_node.parent_nodes, parent_node.node_info, left_right));
-                }
-
-                if (IsInActiveDisplayZone(parent_node.node_info.row + 1, ref display_zones))
-                {
-                    child_nodes.Add(parent_node.node_info.row + 1);
-                    children_nodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row + 1, parent_node.parent_nodes, parent_node.node_info, left_right));
-                }
-            }
-            connected_nodes = child_nodes.ToArray();
-            connected_nodes_struct = children_nodes.ToArray();
-        }
-        private bool IsInActiveDisplayZone(int v, ref ReelStripStructDisplayZone[] display_zones)
-        {
-            int active_slot = 0;
-            for (int i = 0; i < display_zones.Length; i++)
-            {
-                if (active_slot > v)
-                    return false;
-                if (display_zones[i].active_payline_evaluations)
-                {
-                    for (int slot = 0; slot < display_zones[i].positionsInZone; slot++)
+                    Debug.Log($"parent_node.node_info.row - 1 = {parent_node.node_info.row - 1}");
+                    if (IsInActiveDisplayZone(parent_node.node_info.row - 1, ref displayZoneNextColumn))
                     {
-                        if (v == active_slot)
-                        {
-                            return true;
-                        }
-                        active_slot += 1;
+                        connectedNodesList.Add(parent_node.node_info.row - 1);
+                        connectedNodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row - 1, parent_node.parent_nodes, parent_node.node_info, left_right));
                     }
                 }
-                else
+                Debug.Log($"parent_node.node_info.row = {parent_node.node_info.row}");
+                if (IsInActiveDisplayZone(parent_node.node_info.row, ref displayZoneNextColumn))
                 {
-                    active_slot += display_zones[i].positionsInZone;
+                    connectedNodesList.Add(parent_node.node_info.row);
+                    connectedNodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row, parent_node.parent_nodes, parent_node.node_info, left_right));
+                }
+                Debug.Log($"parent_node.node_info.row + 1= {parent_node.node_info.row + 1}");
+                if (IsInActiveDisplayZone(parent_node.node_info.row + 1, ref displayZoneNextColumn))
+                {
+                    connectedNodesList.Add(parent_node.node_info.row + 1);
+                    connectedNodes.Add(new SuffixTreeNodes(current_column, parent_node.node_info.row + 1, parent_node.parent_nodes, parent_node.node_info, left_right));
                 }
             }
+            connected_nodes = connectedNodesList.ToArray();
+            this.connectedNodes = connectedNodes.ToArray();
+        }
+        private bool IsInActiveDisplayZone(int slotToCheck, ref ConfigurationDisplayZonesStruct displayZoneNextColumn)
+        {
+            //Below padding or above total display zones + padding before
+            if (slotToCheck < displayZoneNextColumn.paddingBefore || slotToCheck > (displayZoneNextColumn.displayZonesPositionsTotal + displayZoneNextColumn.paddingBefore))
+            {
+                Debug.LogWarning($"Position does not fall within display range default return false is positon Active Display Zone");
+                return false;
+            }
+            else
+            {
+                //Remove the padding before the slot to check since we are checking the first object within an active/inactive payzone
+                slotToCheck -= displayZoneNextColumn.paddingBefore;
+                int positionsInZone = 0;
+                for (int i = 0; i < displayZoneNextColumn.displayZones.Length; i++)
+                {
+                    positionsInZone += displayZoneNextColumn.displayZones[i].positionsInZone;
+                    if (slotToCheck < positionsInZone) // Is within that zone - return active or inactive
+                    {
+                        return displayZoneNextColumn.displayZones[i].activePaylineEvaluations;
+                    }
+                }
+            }
+            Debug.LogWarning($"Position is not valid - default return false is positon Active Display Zone");
             return false;
         }
 

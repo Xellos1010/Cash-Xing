@@ -17,7 +17,7 @@ public partial class WinningPayline : WinningObject
     /// Calculates total win of payline then returns final value
     /// </summary>
     /// <returns></returns>
-    internal float GetTotalWin(ReelStripConfigurationObject matrix)
+    internal float GetTotalWin(StripConfigurationObject matrix)
     {
         float output = 0;
         for (int i = 0; i < winningNodes.Length; i++)
@@ -27,7 +27,7 @@ public partial class WinningPayline : WinningObject
         return output;
     }
 
-    private float CalculateTotalWin(int win_value, ref ReelStripConfigurationObject matrix)
+    private float CalculateTotalWin(int win_value, ref StripConfigurationObject matrix)
     {
         //if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
         //{

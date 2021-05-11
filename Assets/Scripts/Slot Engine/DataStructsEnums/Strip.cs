@@ -36,7 +36,7 @@ namespace Slot_Engine.Matrix
         [UnityEngine.SerializeField]
         public StripStruct[] strips;
 
-        public StripsStruct(ref ConfigurationStripStructDisplayZones[] displayZonesPerStrip) : this()
+        public StripsStruct(ref ConfigurationDisplayZonesStruct[] displayZonesPerStrip) : this()
         {
             strips = new StripStruct[displayZonesPerStrip.Length];
             for (int reel_number = 0; reel_number < strips.Length; reel_number++)
@@ -68,7 +68,7 @@ namespace Slot_Engine.Matrix
         /// Display Zone Configuration for Strip
         /// </summary>
         [SerializeField]
-        internal ConfigurationStripStructDisplayZones stripDisplayZonesSetting;
+        internal ConfigurationDisplayZonesStruct stripDisplayZonesSetting;
 
         /// <summary>
         /// spin_informatino for the reelstrip
@@ -108,22 +108,22 @@ namespace Slot_Engine.Matrix
 
         private void GetTotalDisplaySlots(ref int output)
         {
-            if (stripDisplayZonesSetting.stripDisplayZones != null)
+            if (stripDisplayZonesSetting.displayZones != null)
             {
-                for (int displayZone = 0; displayZone < stripDisplayZonesSetting.stripDisplayZones.Length; displayZone++)
+                for (int displayZone = 0; displayZone < stripDisplayZonesSetting.displayZones.Length; displayZone++)
                 {
-                    output += stripDisplayZonesSetting.stripDisplayZones[displayZone].positionsInZone;
+                    output += stripDisplayZonesSetting.displayZones[displayZone].positionsInZone;
                 }
             }
         }
 
-        public StripStruct(int stripNumber, ConfigurationStripStructDisplayZones stripDisplayZonesSetting) : this()
+        public StripStruct(int stripNumber, ConfigurationDisplayZonesStruct stripDisplayZonesSetting) : this()
         {
             this.stripColumn = stripNumber;
-            Debug.Log($"display_zone number of zones = {stripDisplayZonesSetting.stripDisplayZones.Length}");
-            ConfigurationStripStructDisplayZones displayZoneTemp = new ConfigurationStripStructDisplayZones(stripDisplayZonesSetting);
+            Debug.Log($"display_zone number of zones = {stripDisplayZonesSetting.displayZones.Length}");
+            ConfigurationDisplayZonesStruct displayZoneTemp = new ConfigurationDisplayZonesStruct(stripDisplayZonesSetting);
             this.stripDisplayZonesSetting = displayZoneTemp;
-            Debug.Log($"this.display_zone number of zones = {this.stripDisplayZonesSetting.stripDisplayZones.Length}");
+            Debug.Log($"this.display_zone number of zones = {this.stripDisplayZonesSetting.displayZones.Length}");
         }
 
         internal void SetSpinConfigurationTo(StripSpinStruct reelStripStruct)
@@ -131,7 +131,7 @@ namespace Slot_Engine.Matrix
             spin_info = reelStripStruct;
         }
 
-        internal BaseSpinEvaluatorScriptableObject GetSpinParametersAs()
+        internal BasePathTransformSpinEvaluatorScriptableObject GetSpinParameters()
         {
             return stripDisplayZonesSetting.spinParameters;
         }
