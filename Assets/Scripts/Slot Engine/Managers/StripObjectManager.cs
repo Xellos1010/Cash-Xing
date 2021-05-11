@@ -25,6 +25,9 @@ namespace Slot_Engine.Matrix
     class SlotEditor : BoomSportsEditor
     {
         StripObjectManager myTarget;
+        [Range(0,50)]
+        float sliderTimerSpin;
+        BasePathTransformSpinEvaluatorScriptableObject temp;
         public void OnEnable()
         {
             myTarget = (StripObjectManager)target;
@@ -49,8 +52,14 @@ namespace Slot_Engine.Matrix
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
+            EditorGUI.BeginChangeCheck();
+            temp = myTarget.stripManager.stripInfo.GetSpinParameters();
+            sliderTimerSpin = EditorGUILayout.Slider(sliderTimerSpin, 0, 2*(temp.GetTotalTime() * myTarget.stripManager.localPositionsInStrip.Length -1));
+            if(EditorGUI.EndChangeCheck())
+            {
+                myTarget.MoveObjectToSpinPosition(sliderTimerSpin);
+            }
             base.OnInspectorGUI();
-
         }
     }
 
@@ -79,17 +88,27 @@ namespace Slot_Engine.Matrix
             }
         }
         /// <summary>
+        /// Used to pass a test constant spin timer update
+        /// </summary>
+        internal bool test = false;
+        /// <summary>
         /// Starts a Spin
         /// </summary>
-        public override void StartSpin()
+        public override void StartSpin( bool test = false)
         {
             ResetAllVars();
             timesReachedEndOfPath = 0;
             SetObjectMovementEnabledTo(true);
+            this.test = test;
         }
-
+        Vector3 SetPositionTo(Vector3 amount) //Needs to be positive to move forwards and negative to move backwards
+        {
+            Debug.Log($"Setting transform.localPosition = {amount}");
+            return amount; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
+        }
         Vector3 OffsetPositionBy(Vector3 amountToAdd) //Needs to be positive to move forwards and negative to move backwards
         {
+            Debug.Log($"Offsetting transform.localPosition {transform.localPosition} by {amountToAdd}");
             return transform.localPosition + amountToAdd; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
         }
         internal override void Update()
@@ -105,17 +124,30 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         internal Vector3 MoveObjectToSpinPosition()
         {
-            toPosition = Vector3.zero;
-            BasePathTransformSpinEvaluatorScriptableObject temp = stripManager.stripInfo.GetSpinParameters();
             if (Application.isPlaying)
             {
-                UpdateSpinTimerFromSpinManager();
+                if (!test)
+                    UpdateSpinTimerFromSpinManager();
+                else
+                {
+                    spinCurrentTimer += Time.deltaTime;
+                }
             }
+            return MoveObjectToSpinPosition(spinCurrentTimer);
+        }
+        /// <summary>
+        /// Moves an objects along SpinCycle (Spin Sequence/Path) and returns the calculated to position based on spinCurrentTimer;
+        /// </summary>
+        /// <returns></returns>
+        internal Vector3 MoveObjectToSpinPosition(float spinCurrentTimer)
+        {
+            toPosition = Vector3.zero;
+            BasePathTransformSpinEvaluatorScriptableObject temp = stripManager.stripInfo.GetSpinParameters();
             StripObjectGroupManager temp2 = baseObjectGroupParent as StripObjectGroupManager;
-            SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex);
+            SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
             temp.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
             toPosition = pathToEvaluate.toPositionEvaluated;
-            Debug.Log($"Offsetting Position by {toPosition.ToString()}");
+            Debug.Log($"Setting Position to {toPosition.ToString()}");
             Debug.Log($"Times reached end of path =  {pathToEvaluate.timesReachedEndOfPath} timesReachedEndOfPath supplied = {timesReachedEndOfPath}");
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
             {
@@ -124,7 +156,10 @@ namespace Slot_Engine.Matrix
                     SetSymbolGraphics();
             }
             if (Application.isPlaying)
-                toPosition = OffsetPositionBy(toPosition);
+            {
+                toPosition = SetPositionTo(toPosition);
+                transform.localPosition = toPosition;
+            }
             return toPosition;
         }
 

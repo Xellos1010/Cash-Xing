@@ -23,6 +23,21 @@ public struct SpinPath
     [SerializeField]
     public Vector3[] path;
     /// <summary>
+    /// Size of the slot - used to determine amount to move for stepper
+    /// </summary>
+    [SerializeField]
+    public Vector3 slotSize;
+    /// <summary>
+    /// Padding for slot - used to determine amount to move for stepper
+    /// </summary>
+    [SerializeField]
+    public Vector3 slotPadding;
+    /// <summary>
+    /// tells the calling object whether to change symbol graphic
+    /// </summary>
+    [SerializeField]
+    public bool changeSymbolGraphic;
+    /// <summary>
     /// The starting position evaluating position on path from
     /// </summary>
     [SerializeField]
@@ -62,11 +77,14 @@ public struct SpinPath
     /// Takes in the path and auto calculates the total sqr magnitude required for evaluating distance to travel on spin
     /// </summary>
     /// <param name="path"></param>
-    public SpinPath(Vector3[] path, int startPosition)
+    public SpinPath(Vector3[] path, int startPosition, Vector3 slotSize, Vector3 slotPadding)
     {
         this.path = path;
         this.startPosition = startPosition;
         this.timesReachedEndOfPath = 0;
+        this.slotSize = slotSize;
+        this.slotPadding = slotPadding;
+        changeSymbolGraphic = false;
         toPositionEvaluated = Vector3.zero;
         float totalAbsSqrMagnitudePath = 0;
         Debug.Log($"path length = {path.Length}");

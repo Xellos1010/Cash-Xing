@@ -106,7 +106,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Starts a Spin
         /// </summary>
-        public virtual void StartSpin()
+        public virtual void StartSpin(bool test = false)
         {
             ResetAllVars();
             SetObjectMovementEnabledTo(true);

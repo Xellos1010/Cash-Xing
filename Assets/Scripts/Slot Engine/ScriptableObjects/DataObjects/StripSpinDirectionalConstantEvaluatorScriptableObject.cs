@@ -15,7 +15,7 @@ using UnityEngine;
 /// Creates the scriptable object for the reels spin parameters
 /// </summary>
 [CreateAssetMenu(fileName = "StripSpinDirectionalConstantScriptableObject", menuName = "BoomSportsScriptableObjects/ReelStripSpinParametersScriptableObject", order = 2)]
-public partial class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEvaluatorBaseScriptableObject
+public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEvaluatorBaseScriptableObject
 {
     /// <summary>
     /// Controls the strip spin speed during looping state - traverse the length of the path over time
@@ -37,9 +37,9 @@ public partial class StripSpinDirectionalConstantEvaluatorScriptableObject : Str
     /// <param name="timesReachedEndPath">Times object has reached path before trying to evaluate spin</param>
     /// <returns></returns>
     /// https://docs.unity3d.com/Manual/VectorCookbook.html
-    public override Vector3 EvaluateSpin(double spinTimerCurrent, ref SpinPath pathPositions)
+    public override Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath pathPositions)
     {
-        Debug.Log("Evaluating Directional Spin");
+        Debug.Log("Evaluating Constant Directional Spin");
         Vector3 output = Vector3.zero;
         //If start position is the last positoin then we will test for position output to be >= last position in path magnitude and reset
         if (pathPositions.startPosition < pathPositions.path.Length)
@@ -53,63 +53,39 @@ public partial class StripSpinDirectionalConstantEvaluatorScriptableObject : Str
             Vector3 rawToPosition = pathPositions.path[pathPositions.startPosition] + (reel_spin_direction * calculatedDistanceTravelRaw);
             //Since sqr operation is cpu heavy we will sqr our distance to travel to make comparison easier
 
-
             //Get Total Distance to travel from start position to next position in path
             float sqrMagnitudeEndOfPath = pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude;
             float rawPositionSqrMagnitude = rawToPosition.sqrMagnitude;
             Debug.Log($"calculatedDistanceTravelRaw = {calculatedDistanceTravelRaw} rawToPosition = {rawToPosition.ToString()} rawToPosition.sqrMagnitude = {rawToPosition.sqrMagnitude} sqrMagnitudeTillNextPointInPath = {sqrMagnitudeEndOfPath} last position in path = {pathPositions.path[pathPositions.path.Length - 1]} last position in path sqr magnitude = {pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude}");
 
             Vector3 distanceFirstLast = pathPositions.distanceFirstLastPositionInPath;
-            ///times reached end of path check will occur on the calling object
-            pathPositions.timesReachedEndOfPath = 0;
+            int timesReachedEndOfPath = 0;
             //Directional only for now
             while (rawPositionSqrMagnitude >= sqrMagnitudeEndOfPath)
             {
-                pathPositions.timesReachedEndOfPath += 1;
+                timesReachedEndOfPath += 1;
                 // Calculate distance between first and last position in path and add to final output
                 rawToPosition += distanceFirstLast;
                 rawPositionSqrMagnitude = rawToPosition.sqrMagnitude;
                 Debug.Log($"Added {distanceFirstLast.ToString()} to raw position. rawToPosition = {rawToPosition.ToString()} rawToPosition.sqrMagnitude = {rawToPosition.sqrMagnitude} last position in path = {pathPositions.path[pathPositions.path.Length - 1]} last position in path sqr magnitude = {pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude}");
             }
+            if(timesReachedEndOfPath != pathPositions.timesReachedEndOfPath)
+            {
+                pathPositions.changeSymbolGraphic = true;
+                pathPositions.timesReachedEndOfPath = timesReachedEndOfPath;
+            }
             pathPositions.toPositionEvaluated = rawToPosition;
             return rawToPosition;
-            //To be scalable we need the toPosition to calculate from one to the next - if the distance between one position in path to the next is < total distance traveled then calculate distance to next
-
-            //This is the raw calculation - need to clamp to within the path area is distance is >
-            //    output = pathPositions.path[startPositionInPath] + (reel_spin_direction * calculatedDistanceTravelRaw);
-
-            //    //We need the absolute output distance - if we are debuging the operation we need to return point on path given spinTimerCurrent
-            //    float absOutputDistance = Mathf.Abs(toPosition.sqrMagnitude);
-
-            //    //Remove the total distance of the path from the amount of times previously reached end of path
-            //    float rawMaxDistanceOfPositionsInPath = GetDistanceOfPath();
-
-            //// Clamp the output distance to be between the distance of the positions in path - Can never end with a slot in the last position since it's needed to spin again ontop the matrix
-            //    if (absOutputDistance >= absSqrLengthLastPositionInPath)
-            //    {
-            //        //Track the amount of times end of path is reached - if the end of the path is 
-            //        int localTimesReachedEndPath = 0;
-            //        while (absOutputDistance >= absSqrLengthLastPositionInPath)
-            //        {
-            //            localTimesReachedEndPath += 1;
-            //            //Change Symbol Graphic. If pre-defined strips then 
-            //            //Ex: output = 1000 distance or -1000 distance lastItem in position is either -500.0 or 500
-            //            if (setToPresentationSymbolNextSpinCycle && presentationSymbolSetToEnd)
-            //                if (toPosition.y <= stopSpinEndPosition.y) //TODO refactor for Omni Spin
-            //                {
-            //                    toPosition = stopSpinEndPosition;
-            //                    objectInEndPosition = true;
-            //                    ResetAllVars();
-            //                }
-            //            if (Application.isPlaying)
-            //                transform.localPosition = toPosition;
-            //        }
-            //    }
         }
         else
         {
             Debug.LogWarning($"Start position supplied {pathPositions.startPosition} is > path positions Length {pathPositions.path.Length}");
         }
         return output;
+    }
+
+    internal override float GetTotalTime()
+    {
+        return distancePerSecond;
     }
 }

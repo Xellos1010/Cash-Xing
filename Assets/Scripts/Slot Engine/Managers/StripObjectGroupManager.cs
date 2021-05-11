@@ -60,7 +60,7 @@ namespace Slot_Engine.Matrix
             {
                 if (GUILayout.Button("Spin Reel Test"))
                 {
-                    my_target.SpinReelsNow();
+                    my_target.SpinGroupNow(true);
                 }
                 
             }

@@ -150,7 +150,7 @@ namespace Slot_Engine.Matrix
         /// Spin the Reels
         /// </summary>
         /// <returns>async task to track</returns>
-        public void SpinReelsNow()
+        public void SpinGroupNow(bool test = false)
         {
             InitializeVarsForNewSpin();
             //When reel is generated it's vector3[] path is generated for reference from slots
@@ -159,7 +159,7 @@ namespace Slot_Engine.Matrix
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
                 //Last slot needs to ease in and out to the "next position" but 
-                objectsInGroup[i].StartSpin(); // Tween to the same position then evaluate
+                objectsInGroup[i].StartSpin(test); // Tween to the same position then evaluate
             }
             //Task.Delay(time_to_enter_loop);
             //TODO Implement Ease In for Starting spin

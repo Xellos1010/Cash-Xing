@@ -20,5 +20,6 @@ public abstract class BasePathTransformSpinEvaluatorScriptableObject : Scriptabl
     /// <param name="positionPath"></param>
     /// <param name="timesReachedEndOfPath"></param>
     /// <returns></returns>
-    public abstract Vector3 EvaluateSpin(double spinTimerCurrent, ref SpinPath positionPath);
+    public abstract Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath positionPath);
+    internal abstract float GetTotalTime();
 }
