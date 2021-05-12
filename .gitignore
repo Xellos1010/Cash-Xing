@@ -58,3 +58,4 @@ Corridor/Library/metadata/
 #Required to import Game Packages Seperate from the environment
 #Assets/Resources/GameAssets/*
 #Assets/Resources/GameAssets.meta
+*.psd
