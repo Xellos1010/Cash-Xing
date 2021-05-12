@@ -192,7 +192,7 @@ namespace Slot_Engine.Matrix
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             //Debug.LogWarning($"reelStripManager.configurationGroupDisplayZones.totalPositions = {configurationDisplayZonesStruct.totalPositions}");
             //Generate a symbol for each display zone slot
-            for (int i = 0; i < configurationDisplayZonesStruct.totalPositions; i++)
+            for (int i = 0; i < configurationDisplayZonesStruct.displayZonesPositionsTotal; i++)
             {
                 output.Add(await GetRandomWeightedSymbol(mode));
             }

@@ -92,7 +92,7 @@ namespace Slot_Engine.Matrix
         {
             get
             {
-                return paddingBefore + paddingBefore + displayZonesPositionsTotal;
+                return paddingBefore + paddingAfter + displayZonesPositionsTotal;
             }
         }
     }

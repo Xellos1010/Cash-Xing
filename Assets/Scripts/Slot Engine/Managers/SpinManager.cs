@@ -357,9 +357,9 @@ namespace Slot_Engine.Matrix.Managers
                     InterruptSpin();
                     break;
                 case SpinStates.spin_outro:
-                    ResetUseTimer();
                     Debug.Log("Timer Reset");
                     await ReelsStopSpinning();
+                    ResetUseTimer();
                     configurationObject.SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, false);
                     Debug.Log("All reels Stopped Spinning");
                     StateManager.SetStateTo(States.Spin_End);

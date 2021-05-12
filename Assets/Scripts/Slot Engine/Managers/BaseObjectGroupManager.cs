@@ -223,6 +223,7 @@ namespace Slot_Engine.Matrix
 
             SetEndingSymbolsTo(symbolsToDisplay.ToArray());
 
+            Debug.Log($"configurationGroupDisplayZones.paddingBefore {configurationGroupDisplayZones.paddingBefore}");
             //Get padding before reel and set slots for all slots on matrix
             for (int slot = configurationGroupDisplayZones.paddingBefore; slot < slotsDecendingOrder.Length; slot++)
             {

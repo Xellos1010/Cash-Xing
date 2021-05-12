@@ -197,6 +197,14 @@ namespace Slot_Engine.Matrix
             }
             Debug.Log($"SetConfigurationDisplayZones to total positions{printMessage}");
             SetReelsAndSlotsPerReel(stripConfiguration);
+            ConfigurationDisplayZonesStruct temp;
+            for (int group = 0; group < connectedConfigurationObject.configurationGroupManagers.Length; group++)
+            {
+                Debug.Log($"displayZonesPerStrip[group].paddingBefore {displayZonesPerStrip[group].paddingBefore}");
+                temp = new ConfigurationDisplayZonesStruct(displayZonesPerStrip[group]);
+                connectedConfigurationObject.configurationGroupManagers[group].configurationGroupDisplayZones = temp;
+                Debug.Log($"connectedConfigurationObject.configurationGroupManagers[group].configurationGroupDisplayZones.paddingBefore{connectedConfigurationObject.configurationGroupManagers[group].configurationGroupDisplayZones.paddingBefore}");
+            }
             return Task.CompletedTask;
         }
 

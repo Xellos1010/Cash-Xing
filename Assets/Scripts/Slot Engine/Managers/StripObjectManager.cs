@@ -168,6 +168,7 @@ namespace Slot_Engine.Matrix
             if (setToPresentationSymbolNextSpinCycle)
             {
                 //Set Graphics and end position
+                Debug.Log($"Setting {gameObject.name} end symbol in reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
                 presentationSymbolSetToEnd = true;
                 stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
 
