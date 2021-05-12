@@ -57,10 +57,10 @@ namespace Slot_Engine.Matrix
                 {
                     List<PaylineRenderer> renderers = new List<PaylineRenderer>();
                     renderers.AddRange(_payline_renderers);
-                    for (int i = 0; i < matrix.configurationGroupManagers.Length - 1; i++)
-                    {
-                        renderers.Add(GenerateNewPaylineObject());
-                    }
+                    //for (int i = 0; i < matrix.configurationGroupManagers.Length - 1; i++)
+                    //{
+                    //    renderers.Add(GenerateNewPaylineObject());
+                    //}
                     _payline_renderers = renderers.ToArray();
                 }
                 return _payline_renderers;
@@ -100,10 +100,11 @@ namespace Slot_Engine.Matrix
             payline_renderer.SetWidth(start, end);
         }
 
-        internal void ShowPayline(Payline paylines_supported)
+        internal void ShowPayline(Payline paylineToShow)
         {
             List<Vector3> linePositions;
-            matrix.ReturnPositionsBasedOnPayline(ref paylines_supported, out linePositions);
+            matrix.ReturnPositionsBasedOnPayline(ref paylineToShow, out linePositions);
+            Debug.Log($"Line Positions = {linePositions.PrintElements<Vector3>()}");
             if (line_renderers_to_use > 1)
             {
                 for (int i = 0; i < linePositions.Count - 1; i++) //Don't include end linePositions since your get 2 out for array range

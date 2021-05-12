@@ -229,8 +229,8 @@ namespace Slot_Engine.Matrix.Managers
 
         internal void ShowDynamicPaylineRaw(int paylineToShow)
         {
-            Debug.Log($"Showing Payline {paylineToShow} - dynamicPaylineObject?.dynamic_paylines.rootNodes.Length = {dynamicPaylineObject?.dynamic_paylines.rootNodes.Length}");
-            if (dynamicPaylineObject?.dynamic_paylines.rootNodes.Length > 0)
+            Debug.Log($"Showing Payline {paylineToShow} - dynamicPaylineObject?.dynamic_paylines.rootNodes.Length = {dynamicPaylineObject?.dynamic_paylines.paylineNodes.Length}");
+            if (dynamicPaylineObject?.dynamic_paylines.paylineNodes.Length > 0)
             {
                 if (paylineToShow >= 0 && paylineToShow < GetSupportedGeneratedPaylines()) // TODO have a number of valid paylines printed
                 {

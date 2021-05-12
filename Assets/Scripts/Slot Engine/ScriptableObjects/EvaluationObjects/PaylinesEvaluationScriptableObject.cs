@@ -32,6 +32,11 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         [SerializeField]
         public int rootColumn;
         /// <summary>
+        /// Evaluate nodes in this column adjacent left right only
+        /// </summary>
+        [SerializeField]
+        public bool evaluateAdjacentRightLeftOnly;
+        /// <summary>
         /// Whether you evaluate left or right - abstract to support different directions
         /// </summary>
         [SerializeField]
@@ -70,12 +75,12 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             evaluationUsed = evaluationObject;
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();
-            Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.rootNodes.Length}");
+            Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.paylineNodes.Length}");
             //Filter thru each node and check the active feature conditions for activating a feature
-            for (int rootNode = 0; rootNode < dynamic_paylines.rootNodes.Length; rootNode++)
+            for (int rootNode = 0; rootNode < dynamic_paylines.paylineNodes.Length; rootNode++)
             {
-                Debug.Log($"Checking Root Node {dynamic_paylines.rootNodes[rootNode].node_info.Print()}");
-                output_raw.AddRange(dynamic_paylines.rootNodes[rootNode].InitializeAndCheckForWinningPaylines(ref evaluationObject));
+                Debug.Log($"Checking Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
+                output_raw.AddRange(dynamic_paylines.paylineNodes[rootNode].InitializeAndCheckForWinningPaylines(ref evaluationObject));
                 //Don't add the same full line win both ways
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw,evaluationObject.maxLength);
                 output_filtered.AddRange(output_raw);
@@ -185,46 +190,46 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             number_of_paylines = 0;
             dynamic_paylines.paylinesSupported = new List<Payline>();
 
-            dynamic_paylines.rootNodes = InitializeRootNodes(ref displayZones).ToArray();
+            dynamic_paylines.paylineNodes = InitializeRootNodes(ref displayZones).ToArray();
             List<SuffixTreeNodes> to_finish_list = new List<SuffixTreeNodes>();
 
-            for (int root_node = 0; root_node < dynamic_paylines.rootNodes.Length; root_node++)
+            for (int root_node = 0; root_node < dynamic_paylines.paylineNodes.Length; root_node++)
             {
                 //Start a new payline that is going to be printed per root node
                 List<int> payline = new List<int>();
                 //Build all paylines
-                BuildPayline(ref payline, ref dynamic_paylines.rootNodes[root_node], ref displayZones);
+                BuildPayline(ref payline, ref dynamic_paylines.paylineNodes[root_node], ref displayZones, evaluationDirection, ref dynamic_paylines.paylineNodes[root_node], customColumnsDefine);
             }
         }
-        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes node, ref ConfigurationDisplayZonesStruct[] displayZones)
+        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes currentPaylineNode, ref ConfigurationDisplayZonesStruct[] displayZones, paylineDirection evaluationDirection, ref SuffixTreeNodes rootNode, CustomColumns[] customColumnsDefine = null)
         {
-            //Debug.Log($"Payline before nodeInfo registered = {String.Join("|", payline)}");
+            Debug.Log($"Payline before nodeInfo registered = {String.Join("|", payline)}");
             //Add current node to payline
-            payline.Add(node.node_info.row);
+            payline.Add(currentPaylineNode.nodeInfo.row);
             //Debug.Log($"Payline after nodeInfo registered = {String.Join("|", payline)}");
-            int next_column = node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;
-            //Debug.Log($"next_column {next_column } = {node.left_right}node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;");
+            int next_column = currentPaylineNode.leftRight ? currentPaylineNode.nodeInfo.column + 1 : currentPaylineNode.nodeInfo.column - 1;
+            Debug.Log($"next_column from {currentPaylineNode.nodeInfo.Print()} {next_column } = {currentPaylineNode.leftRight} node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;");
             //Check the column is the last column and continue if it is
-            if (node.left_right ?
+            if (currentPaylineNode.leftRight ?
                 next_column >= displayZones.Length :
                 next_column < 0)
             {
                 Debug.Log("Reached end of payline");
-                dynamic_paylines.AddPaylineSupported(payline.ToArray(), node.left_right);
+                dynamic_paylines.AddPaylineSupported(payline.ToArray(), currentPaylineNode.leftRight, rootNode);
                 number_of_paylines += 1;
             }
             else
             {
-                SuffixTreeNodes parent_node = node; //First pass thru this will be nothing
+                SuffixTreeNodes parentNode = currentPaylineNode;
                 ConfigurationDisplayZonesStruct displayZoneNextColumn = displayZones[next_column];
-                //First in is parent_node = 0 | Children Column = 1 | slots_per_reel = 5
-                node.InitializeNextNodes(next_column, ref displayZoneNextColumn, ref parent_node, node.left_right);
-                for (int child_nodes = 0; child_nodes < node.connectedNodes.Length; child_nodes++)
+                //Next Node needs to initialize ndes further down the tree
+                currentPaylineNode.InitializeConnectedNodes(next_column, ref displayZoneNextColumn, ref parentNode, currentPaylineNode.leftRight,evaluationDirection, customColumnsDefine);
+                for (int child_nodes = 0; child_nodes < currentPaylineNode.connectedNodes.Length; child_nodes++)
                 {
                     //Now build out the child refs
-                    BuildPayline(ref payline, ref node.connectedNodes[child_nodes], ref displayZones);
+                    BuildPayline(ref payline, ref currentPaylineNode.connectedNodes[child_nodes], ref displayZones, evaluationDirection,ref rootNode, customColumnsDefine);
                     //Remove payline buildup
-                    payline.RemoveRange(node.parent_nodes.Length, payline.Count - node.parent_nodes.Length);
+                    payline.RemoveRange(currentPaylineNode.parent_nodes.Length, payline.Count - currentPaylineNode.parent_nodes.Length);
                 }
             }
         }

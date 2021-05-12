@@ -146,23 +146,35 @@ namespace Slot_Engine.Matrix
         {
             out_positions = new List<Vector3>();
             int payline_positions_set = 0;
+            bool rootNodeHit = false;
+            Vector3 payline_posiiton_on_reel;
             for (int reel = payline.left_right ? 0 : configurationGroupManagers.Length-1; 
                 payline.left_right? reel < configurationGroupManagers.Length : reel >= 0; 
                 reel += payline.left_right? 1:-1)
             {
-                Vector3 payline_posiiton_on_reel = Vector3.zero;
-                try
+                //need to see if root node is on reel - if not then next reel
+                if (!rootNodeHit)
                 {
-                    if (payline_positions_set < payline.payline_configuration.payline.Length)
-                    { 
-                        payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[reel], payline.payline_configuration.payline[payline_positions_set]);
-                        payline_positions_set += 1;
-                        out_positions.Add(payline_posiiton_on_reel);
+                    if (reel == payline.rootNode.column)
+                    {
+                        rootNodeHit = true;
                     }
                 }
-                catch (Exception e)
+                if (rootNodeHit)
                 {
-                    Debug.LogWarning(e.Message);
+                    try
+                    {
+                        if (payline_positions_set < payline.payline_configuration.payline.Length)
+                        {
+                            payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[reel], payline.payline_configuration.payline[payline_positions_set]);
+                            payline_positions_set += 1;
+                            out_positions.Add(payline_posiiton_on_reel);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogWarning(e.Message);
+                    }
                 }
             }
         }
@@ -262,7 +274,8 @@ namespace Slot_Engine.Matrix
         private Vector3 ReturnPositionOnStripForPayline(ref BaseObjectGroupManager group, int indexInGroup)
         {
             StripObjectGroupManager temp = group as StripObjectGroupManager;
-            return group.transform.TransformPoint(temp.localPositionsInStrip[group.configurationGroupDisplayZones.paddingBefore+indexInGroup] + (Vector3.back * 10));
+            //Debug.Log($"Transforming Local Position temp.localPositionsInStrip[{indexInGroup}]{temp.localPositionsInStrip[indexInGroup]} to world space {group.transform.TransformPoint(temp.localPositionsInStrip[indexInGroup] + (Vector3.back * 10))}");
+            return group.transform.TransformPoint(temp.localPositionsInStrip[indexInGroup] + (Vector3.back * 10));
         }
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
@@ -496,7 +509,6 @@ namespace Slot_Engine.Matrix
             StateManager.StateChangedTo += StateManager_StateChangedTo;
             StateManager.featureTransition += StateManager_FeatureTransition;
             StateManager.gameModeSetTo += StateManager_gameModeSetTo;
-            //StateManager.add_to_multiplier += StateManager_add_to_multiplierAsync;
         }
 
         private void StateManager_gameModeSetTo(GameModes modeActivated)
@@ -586,7 +598,6 @@ namespace Slot_Engine.Matrix
             StateManager.featureTransition -= StateManager_FeatureTransition;
             StateManager.gameModeSetTo -= StateManager_gameModeSetTo;
             managers.racking_manager.rackEnd -= Racking_manager_rackEnd;
-            managers.multiplierLerpToMe.lerpComplete -= MultiplierLerpToMe_lerpComplete;
         }
         /// <summary>
         /// Matrix State Machine

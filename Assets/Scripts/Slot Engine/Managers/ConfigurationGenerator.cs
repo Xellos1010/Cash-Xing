@@ -197,6 +197,7 @@ namespace Slot_Engine.Matrix
             }
             Debug.Log($"SetConfigurationDisplayZones to total positions{printMessage}");
             SetReelsAndSlotsPerReel(stripConfiguration);
+            //Set each reel display zone information
             ConfigurationDisplayZonesStruct temp;
             for (int group = 0; group < connectedConfigurationObject.configurationGroupManagers.Length; group++)
             {
@@ -224,8 +225,9 @@ namespace Slot_Engine.Matrix
                 Debug.Log($"strips[{i}] info with total positions {stripsConfiguration.strips[i].total_positions} connectedConfigurationObject.configurationSettings.displayZones[i].totalPositions = {connectedConfigurationObject.configurationSettings.displayZones[i].totalPositions}");
                 stripConfiguration.SetStripInfoStruct(i, stripsConfiguration.strips[i]);
             }
-            //Ensure the strips are positioned in
-            SetStripObjectsInitialPositions(ref stripConfiguration);
+            if(setStripsInitialPositionFromCode)
+                //Ensure the strips are positioned - Will mess with artists modifications in the future
+                SetStripObjectsInitialPositions(ref stripConfiguration);
             StripObjectGroupManager objectGroupManager;
             Vector3[] arrayCopy;
             //Set each Reels Configuration - each reel will take care of generating slots
@@ -283,6 +285,8 @@ namespace Slot_Engine.Matrix
         } 
 
         public eAnchor anchor = eAnchor.MiddleCenter;
+        public bool setStripsInitialPositionFromCode;
+
         /// <summary>
         /// Need to control how strips are placed. in future implement anchor point - Anchor Default to top Center
         /// </summary>

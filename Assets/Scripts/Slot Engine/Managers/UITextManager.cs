@@ -48,20 +48,20 @@ namespace Slot_Engine.Matrix
         }
         [SerializeField]
         internal StripConfigurationObject _matrix;
-        public TextMeshPro bank, bigWin, multiplier, freespin_info, player_wallet, bet_amount;
+        public TextMeshPro bank, freespin_info, player_wallet, bet_amount;
         public void SetBankTo(double value)
         {
             //Set the bank text
             SetTextMeshProTextTo(ref bank, String.Format("{0:C2}", value));
             //bank.enabled = value > 0 && StateManager.enCurrentMode != GameModes.baseGame? true : false;
 
-            SetTextMeshProTextTo(ref bigWin, String.Format("{0:C2}", value));
+            //SetTextMeshProTextTo(ref bigWin, String.Format("{0:C2}", value));
         }
         public void SetMultiplierTo(float value)
         {
-            SetTextMeshProTextTo(ref multiplier, String.Format("{0}x", value));
+            //SetTextMeshProTextTo(ref multiplier, String.Format("{0}x", value));
             //Testing Purposes Only - To be animated
-            multiplier.enabled = value < 1  ? false : true;
+            //multiplier.enabled = value < 1  ? false : true;
         }
 
         public void SetFreeSpinRemainingTo(int value)

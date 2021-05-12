@@ -13,20 +13,22 @@ namespace Slot_Engine.Matrix
     [Serializable]
     public struct SuffixTreeRootNodes
     {
+
         [SerializeField]
-        internal SuffixTreeNodes[] rootNodes;
+        internal SuffixTreeNodes[] paylineNodes;
         //TODO Abstract and remove - this is Payline mode only to literal for level of abstraction
         [SerializeField]
         public List<Payline> paylinesSupported;
 
         internal Payline ReturnPayline(int payline_to_show)
         {
+            Debug.Log($"Payline being returned = {paylinesSupported[payline_to_show].PrintConfiguration()}");
             return paylinesSupported[payline_to_show];
         }
 
-        internal void AddPaylineSupported(int[] payline, bool leftRight)
+        internal void AddPaylineSupported(int[] payline, bool leftRight, SuffixTreeNodes rootNode)
         {
-            Payline toAdd = new Payline(payline, leftRight);
+            Payline toAdd = new Payline(payline, leftRight, rootNode.nodeInfo);
             if (paylinesSupported == null)
                 paylinesSupported = new List<Payline>();
             //Debug.Log($"Raw Payline File = {String.Join("|", payline)}");

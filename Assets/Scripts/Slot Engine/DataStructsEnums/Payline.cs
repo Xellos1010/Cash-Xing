@@ -2,7 +2,9 @@
 //  @ Author : Evan McCall
 #if UNITY_EDITOR
 #endif
+using Slot_Engine.Matrix;
 using System;
+using UnityEngine;
 
 [System.Serializable]
 public class Payline
@@ -11,17 +13,21 @@ public class Payline
     public PaylineConfiguration payline_configuration;
     [UnityEngine.SerializeField]
     public bool left_right;
-
+    /// <summary>
+    /// Root node connected to this payline
+    /// </summary>
+    public SuffixTreeNodeInfo rootNode;
     public Payline(Payline payline)
     {
         left_right = payline.left_right;
         payline_configuration = payline.payline_configuration;
     }
 
-    public Payline(int[] vs, bool left_right)
+    public Payline(int[] vs, bool left_right, SuffixTreeNodeInfo rootNode)
     {
         payline_configuration.payline = vs;
         this.left_right = left_right;
+        this.rootNode = rootNode;
     }
 
     internal string PrintConfiguration()
