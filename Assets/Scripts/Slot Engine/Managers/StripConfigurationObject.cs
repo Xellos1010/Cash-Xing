@@ -1280,24 +1280,42 @@ namespace Slot_Engine.Matrix
         }
         internal void SetStripInfoStruct()
         {
+            Debug.Log($"Base call for SetStripInfoStruct in {gameObject.name} Display Zones in Base Call = {managers.configurationObject.configurationSettings.PrintDisplayZones()}");
             SetStripInfoStruct(managers.configurationObject);
         }
         internal void SetStripInfoStruct(StripConfigurationObject configurationObject)
         {
             for (int strip = 0; strip < configurationGroupManagers.Length; strip++)
             {
-                StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
-                configurationGroupManagers[strip].indexInGroupManager = strip;
-                StripStruct temp2 = temp.stripInfo;
-                temp2.stripColumn = strip;
-                //Display Zone settings gets set later
-                temp2.stripDisplayZonesSetting = configurationObject.configurationSettings.displayZones[strip];
-                temp.stripInfo = temp2;
-                temp.InitializeLocalPositions();
+                Debug.Log($"configurationObject.configurationSettings.displayZones[{strip}] = {configurationObject.configurationSettings.displayZones[strip]}");
+                SetStripInfoStruct(strip, configurationObject.configurationSettings.displayZones[strip]);
             }
         }
 
-
+        internal void SetStripInfoStruct(int strip, ConfigurationDisplayZonesStruct displayZone)
+        {
+            StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
+            configurationGroupManagers[strip].indexInGroupManager = strip;
+            StripStruct temp2 = temp.stripInfo;
+            temp2.stripColumn = strip;
+            ConfigurationDisplayZonesStruct temp3 = new ConfigurationDisplayZonesStruct(displayZone);
+            //Display Zone settings gets set later
+            temp2.stripDisplayZonesSetting = temp3;
+            temp.stripInfo = temp2;
+            Debug.Log($"temp3 as displayZone.totalPositions {temp3.totalPositions}");
+            temp.InitializeLocalPositions(temp2);
+        }
+        internal void SetStripInfoStruct(int strip,StripStruct stripStruct)
+        {
+            StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
+            configurationGroupManagers[strip].indexInGroupManager = strip;
+            ConfigurationDisplayZonesStruct temp3 = new ConfigurationDisplayZonesStruct(stripStruct);
+            StripStruct tempStripStruct = new StripStruct(stripStruct);
+            tempStripStruct.stripColumn = strip;
+            temp.stripInfo = tempStripStruct;
+            Debug.Log($"temp3 as displayZone.totalPositions {temp3.totalPositions}");
+            temp.InitializeLocalPositions(tempStripStruct);
+        }
         internal void ClearSubStatesAllSlotAnimatorStateMachines()
         {
             for (int reel = 0; reel < configurationGroupManagers.Length; reel++)

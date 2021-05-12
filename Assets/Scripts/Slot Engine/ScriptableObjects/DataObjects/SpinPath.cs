@@ -87,7 +87,7 @@ public struct SpinPath
         changeSymbolGraphic = false;
         toPositionEvaluated = Vector3.zero;
         float totalAbsSqrMagnitudePath = 0;
-        Debug.Log($"path length = {path.Length}");
+        //Debug.Log($"path length = {path.Length}");
         //Find distance between each point in path. end 1 iteration early - compare 2nd to last and last
         for (int point = 1; point < path.Length; point++)
         {

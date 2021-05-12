@@ -103,12 +103,12 @@ namespace Slot_Engine.Matrix
         }
         Vector3 SetPositionTo(Vector3 amount) //Needs to be positive to move forwards and negative to move backwards
         {
-            Debug.Log($"Setting transform.localPosition = {amount}");
+            //Debug.Log($"Setting transform.localPosition = {amount}");
             return amount; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
         }
         Vector3 OffsetPositionBy(Vector3 amountToAdd) //Needs to be positive to move forwards and negative to move backwards
         {
-            Debug.Log($"Offsetting transform.localPosition {transform.localPosition} by {amountToAdd}");
+            //Debug.Log($"Offsetting transform.localPosition {transform.localPosition} by {amountToAdd}");
             return transform.localPosition + amountToAdd; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
         }
         internal override void Update()
@@ -147,8 +147,8 @@ namespace Slot_Engine.Matrix
             SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
             temp.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
             toPosition = pathToEvaluate.toPositionEvaluated;
-            Debug.Log($"Setting Position to {toPosition.ToString()}");
-            Debug.Log($"Times reached end of path =  {pathToEvaluate.timesReachedEndOfPath} timesReachedEndOfPath supplied = {timesReachedEndOfPath}");
+            //Debug.Log($"Setting Position to {toPosition.ToString()}");
+            //Debug.Log($"Times reached end of path =  {pathToEvaluate.timesReachedEndOfPath} timesReachedEndOfPath supplied = {timesReachedEndOfPath}");
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
             {
                 timesReachedEndOfPath = pathToEvaluate.timesReachedEndOfPath;

@@ -10,6 +10,7 @@
 //
 using UnityEngine;
 using Slot_Engine.Matrix;
+using System;
 #if UNITY_EDITOR
 #endif
 public partial class ConfigurationSettingsScriptableObject : ScriptableObject
@@ -47,4 +48,14 @@ public partial class ConfigurationSettingsScriptableObject : ScriptableObject
     /// Symbol Data used for the Configuration Object
     /// </summary>
     public SymbolScriptableObject symbolData;
+
+    internal string PrintDisplayZones()
+    {
+        string output = "";
+        for (int zone = 0; zone < displayZones.Length; zone++)
+        {
+            output += "+ " + displayZones[zone].totalPositions;
+        }
+        return output;
+    }
 }

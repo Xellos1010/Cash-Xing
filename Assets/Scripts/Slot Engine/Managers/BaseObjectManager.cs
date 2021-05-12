@@ -273,7 +273,7 @@ namespace Slot_Engine.Matrix
         internal void ShowRandomSymbol()
         {
             //Debug.Log($"baseObjectGroupParent = {baseObjectGroupParent.gameObject.name}");
-            Debug.Log($"baseObjectGroupParent.configurationObjectParent = {baseObjectGroupParent.configurationObjectParent.gameObject.name}");
+            //Debug.Log($"baseObjectGroupParent.configurationObjectParent = {baseObjectGroupParent.configurationObjectParent.gameObject.name}");
             ShowSymbolRenderer(baseObjectGroupParent.configurationObjectParent.DrawRandomSymbolFromCurrentMode());
         }
         /// <summary>

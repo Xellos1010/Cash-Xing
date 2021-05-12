@@ -315,13 +315,15 @@ namespace Slot_Engine.Matrix
             configurationObjectParent._managers.endConfigurationManager.SetMatrixToReelConfiguration();
         }
 
-        internal void InitializeLocalPositions()
+        internal void InitializeLocalPositions(StripStruct tempStripStruct)
         {
-            localPositionsInStrip = new Vector3[stripInfo.stripDisplayZonesSetting.totalPositions];
-            for (int i = 0; i < stripInfo.stripDisplayZonesSetting.totalPositions; i++)
+            Debug.Log($"{gameObject.name} Initializing local positions for displayZone.totalPositions {tempStripStruct.stripDisplayZonesSetting.totalPositions}");
+            localPositionsInStrip = new Vector3[tempStripStruct.stripDisplayZonesSetting.totalPositions];
+            for (int i = 0; i < localPositionsInStrip.Length; i++)
             {
                 localPositionsInStrip[i] = GetSlotPositionInStrip(i);
             }
+            Debug.Log($"localPositionsInStrip.Lengh = {localPositionsInStrip.Length}");
         }
     }
 }

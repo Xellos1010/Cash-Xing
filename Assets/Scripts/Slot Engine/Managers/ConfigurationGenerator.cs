@@ -150,7 +150,12 @@ namespace Slot_Engine.Matrix
             GenerateConfigurationObject<StripConfigurationObject>(ref connectedConfigurationObject);
             SetConnectedConfigurationObjectLoadedSettings(ref connectedConfigurationObject, ref configurationGeneratorSettings);
             SetSymbolDataForConfigurationObject(ref connectedConfigurationObject, ref configurationGeneratorSettings);
-
+            string printMessage = "";
+            for (int i = 0; i < configurationGeneratorSettings.displayZones.Length; i++)
+            {
+                printMessage += "+ " + configurationGeneratorSettings.displayZones[i].totalPositions;
+            }
+            Debug.Log($"Configuration Generator is generating total positions per zone {printMessage}");
             await DisplayConfigurationSettings(ref configurationGeneratorSettings);
             //For Each Local position thats an active display slot generate a backplate prefab for grid effect for now
             GenerateBackplateFromStripConfiguration(connectedConfigurationObject);
@@ -171,7 +176,7 @@ namespace Slot_Engine.Matrix
 
         private Task DisplayConfigurationSettings(ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
         {
-            Debug.Log($"High level configurationGeneratorSettings.displayZones[0].paddingBefore = {configurationGeneratorSettings.displayZones[0].paddingBefore}");
+            Debug.Log($"High level configurationGeneratorSettings.PrintDisplayZones() = {configurationGeneratorSettings.PrintDisplayZones()}");
             SetConfigurationDisplayZones(ref configurationGeneratorSettings.displayZones);
             return Task.CompletedTask;
         }
@@ -183,11 +188,14 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         public Task SetConfigurationDisplayZones(ref ConfigurationDisplayZonesStruct[] displayZonesPerStrip)
         {
-            Debug.Log($"1 displayZonesPerStrip[0].paddingBefore = {displayZonesPerStrip[0].paddingBefore}");
             //Build reelstrip info 
             StripsStruct stripConfiguration = new StripsStruct(ref displayZonesPerStrip);
-            Debug.Log($"1 stripConfiguration.strips[0].stripDisplayZonesSetting.paddingBefore = {stripConfiguration.strips[0].stripDisplayZonesSetting.paddingBefore}");
-            //Debug.Log($"stripConfiguration.reelstrips.Length = {stripConfiguration.reelstrips.Length}");
+            string printMessage = "";
+            for (int i = 0; i < displayZonesPerStrip.Length; i++)
+            {
+                printMessage += $"displayZonesPerStrip[{i}].totalPositions = " + displayZonesPerStrip[i].totalPositions;
+            }
+            Debug.Log($"SetConfigurationDisplayZones to total positions{printMessage}");
             SetReelsAndSlotsPerReel(stripConfiguration);
             return Task.CompletedTask;
         }
@@ -198,23 +206,35 @@ namespace Slot_Engine.Matrix
         /// <param name="slots_per_reelstrip"></param>
         internal void SetReelsAndSlotsPerReel(StripsStruct stripsConfiguration)
         {
+            Debug.Log($"Setting ReelsAndSlotsPerReel reelstrip info with total positions {stripsConfiguration.PrintStrips()}");
             //Ensure there are enough reel objects
-            SetStripObjectsToLength(stripsConfiguration.strips.Length, ref connectedConfigurationObject);
+            SetStripObjectsToLength(stripsConfiguration.strips.Length,ref connectedConfigurationObject);
             StripConfigurationObject stripConfiguration = connectedConfigurationObject as StripConfigurationObject;
             //Ensure each strip knows its column position
-            stripConfiguration.SetStripInfoStruct(stripConfiguration);
-
+            for (int i = 0; i < stripsConfiguration.strips.Length; i++)
+            {
+                Debug.Log($"strips[{i}] info with total positions {stripsConfiguration.strips[i].total_positions} connectedConfigurationObject.configurationSettings.displayZones[i].totalPositions = {connectedConfigurationObject.configurationSettings.displayZones[i].totalPositions}");
+                stripConfiguration.SetStripInfoStruct(i, stripsConfiguration.strips[i]);
+            }
             //Ensure the strips are positioned in
             SetStripObjectsInitialPositions(ref stripConfiguration);
-
+            StripObjectGroupManager objectGroupManager;
+            Vector3[] arrayCopy;
             //Set each Reels Configuration - each reel will take care of generating slots
             for (int i = 0; i < stripsConfiguration.strips.Length; i++)
             {
                 Debug.Log($"Setting {connectedConfigurationObject.configurationGroupManagers[i].gameObject.name} reelstrip info with total positions {stripsConfiguration.strips[i].total_positions}");
-                StripStruct temp = stripsConfiguration.strips[i];
                 BaseObjectGroupManager temp2 = connectedConfigurationObject.configurationGroupManagers[i];
                 //Generate Slot Objects
-                GenerateStripSlotObjects(ref temp2, temp);
+                Debug.Log($"Generate Slot Objects for stripsConfiguration.strips[{i}]{stripsConfiguration.strips[i]}");
+                GenerateStripSlotObjects(ref temp2, stripsConfiguration.strips[i]);
+                objectGroupManager = connectedConfigurationObject.configurationGroupManagers[i] as StripObjectGroupManager;
+                arrayCopy = new Vector3[stripsConfiguration.strips[i].total_positions];
+                for (int j = 0; j < arrayCopy.Length; j++)
+                {
+                    arrayCopy[j] = objectGroupManager.localPositionsInStrip[j];
+                }
+                objectGroupManager.localPositionsInStrip = arrayCopy;
             }
         }
 
@@ -455,7 +475,7 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         internal virtual BaseObjectManager GenerateSlotObject(int slot_position_in_reel, ref BaseObjectGroupManager objectGroupManager)
         {
-            Debug.Log($"objectGroupManager name = {objectGroupManager.gameObject.name}");
+            //Debug.Log($"objectGroupManager name = {objectGroupManager.gameObject.name}");
             StripObjectGroupManager reelStripManager = objectGroupManager as StripObjectGroupManager;
             //Slot position in group needs to be abstracted
             //Local positions are already generated by this point
@@ -593,16 +613,6 @@ namespace Slot_Engine.Matrix
             output.tag = "cover_plate";
             return temp;
         }
-
-        /// <summary>
-        /// Generate or remove reelstrip objects based on number of reels set
-        /// </summary>
-        /// <param name="reels">Reels in Configuration</param>
-        internal void SetReelsTo(int reels)
-        {
-            SetStripObjectsToLength(reels, ref connectedConfigurationObject);
-        }   
-
         /// <summary>
         /// Generate or remove reelstrip objects based on number of reels set
         /// </summary>

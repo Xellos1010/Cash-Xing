@@ -57,6 +57,18 @@ namespace Slot_Engine.Matrix
             paddingAfter = displayZonesSetting.paddingAfter;
         }
 
+        public ConfigurationDisplayZonesStruct(StripStruct stripStruct) : this()
+        {
+            paddingBefore = stripStruct.stripDisplayZonesSetting.paddingBefore;
+            paddingAfter = stripStruct.stripDisplayZonesSetting.paddingBefore;
+            displayZones = new DisplayZoneStruct[stripStruct.stripDisplayZonesSetting.displayZones.Length];
+            for (int i = 0; i < stripStruct.stripDisplayZonesSetting.displayZones.Length; i++)
+            {
+                displayZones[i] = new DisplayZoneStruct(stripStruct.stripDisplayZonesSetting.displayZones[i]);
+            }
+            displayZones = stripStruct.stripDisplayZonesSetting.displayZones;
+        }
+
         /// <summary>
         /// Display zone's total positions
         /// </summary>

@@ -74,7 +74,7 @@ namespace Slot_Engine.Matrix
             //The end reel configuration is set when spin starts to the next item in the list
             StripSpinStruct[] end_reel_configuration = managers.endConfigurationManager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
-            managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
+            //managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
 
             await SpinReels(end_reel_configuration);
         }
@@ -313,7 +313,7 @@ namespace Slot_Engine.Matrix
         }
         internal int DrawRandomSymbolFromCurrentMode()
         {
-            Debug.Log($"Drawing random symbol for state {StateManager.enCurrentMode}");
+            //Debug.Log($"Drawing random symbol for state {StateManager.enCurrentMode}");
             return DrawRandomSymbol(StateManager.enCurrentMode).Result;
         }
 

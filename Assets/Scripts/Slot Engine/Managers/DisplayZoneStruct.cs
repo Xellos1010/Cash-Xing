@@ -30,5 +30,11 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         public bool activePaylineEvaluations;
+
+        public DisplayZoneStruct(DisplayZoneStruct displayZoneStruct) : this()
+        {
+            positionsInZone = displayZoneStruct.positionsInZone;
+            activePaylineEvaluations = displayZoneStruct.activePaylineEvaluations;
+        }
     }
 }

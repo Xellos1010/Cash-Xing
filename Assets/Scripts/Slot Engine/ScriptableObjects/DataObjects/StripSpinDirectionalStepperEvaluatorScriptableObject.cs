@@ -46,7 +46,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
     /// <returns></returns>
     public override Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath pathPositions)
     {
-        Debug.Log("Evaluating Stepper Directional Spin");
+        //Debug.Log("Evaluating Stepper Directional Spin");
         //The amount movement 1 cycle of lerpOverTime evaluates raw
         Vector3 rawDistanceTravelTotalActive = pathPositions.slotSize + pathPositions.slotPadding;
         //The amount of movement to pauses for timeTillStartLerp
@@ -58,7 +58,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
             reel_spin_direction.z * rawDistanceTravelTotalActive.z
             );
         
-        Debug.Log($"amountToTraverseDuringStep = {amountToTraverseDuringStep.ToString()}");
+        //Debug.Log($"amountToTraverseDuringStep = {amountToTraverseDuringStep.ToString()}");
 
         amountToSkipDuringPauseStep = new Vector3(
             reel_spin_direction.x * rawDistanceTravelTotalInactive.x,
@@ -70,7 +70,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
         Vector3 output = pathPositions.path[pathPositions.startPosition];
         //Initialize Steps completed sequence - used to compare whether to change symbol or not
         //Start Poisition index is corelated to Steps completed in path
-        int timesStepWasCompletedInitial = pathPositions.startPosition;
+        int stepsCompletedSoFar = pathPositions.startPosition;
         int stepsToCompletePath = pathPositions.path.Length - 1;
 
         //Calling object passes previously evaluated Steps that have been compelted - SpinPath will contain the times path has reached end position.
@@ -78,76 +78,65 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
         //(lerpOverTime + timeTillStartLerp) gets the total time of a sequence * the steps to complete the sequence * stepsToCompletePath + 1 - change symbol if >
         float lerpTimeToCompletePath = ((lerpOverTime + timeTillStartLerp) * stepsToCompletePath) * (pathPositions.timesReachedEndOfPath + 1);
         int timesReachedEndOfPath = 0;
-        float initialTimeOnPath = ((lerpOverTime + timeTillStartLerp) * timesStepWasCompletedInitial);
-        Debug.Log($"Adding initialTimeOnPath {initialTimeOnPath} to spinCurrent {spinTimerCurrent}");
+        float initialTimeOnPath = ((lerpOverTime + timeTillStartLerp) * stepsCompletedSoFar);
+        //Debug.Log($"Adding initialTimeOnPath {initialTimeOnPath} to spinCurrent {spinTimerCurrent}");
         spinTimerCurrent += initialTimeOnPath; //SpinTimer now in realtime
 
         //Initial check to see if the spin timer supplied is > Initial end of path
         if (spinTimerCurrent > lerpTimeToCompletePath)
         {
-            Debug.Log($"SpinTimerCurrent {spinTimerCurrent} > end of path {lerpTimeToCompletePath}. SpinTimerCurrent{spinTimerCurrent} > lerpOverTime {lerpOverTime} + timeTillStartLerp {timeTillStartLerp} = {lerpOverTime + timeTillStartLerp}");
+            //Debug.Log($"SpinTimerCurrent {spinTimerCurrent} > end of path {lerpTimeToCompletePath}");
             //Set the path to the start
-            Debug.Log($"output being set to {pathPositions.path[0].ToString()}");
-            output = pathPositions.path[0];
-
             //For debug purposes can pass the path x times and evaluate further in sequence - First Increment Steps and Path
             while (spinTimerCurrent > lerpTimeToCompletePath)
             {
-                //Add a step for every point to point in path then at end add times reached end of path.
-                Debug.Log($"Step was completed. Adding {amountToTraverseDuringStep} to output");
-                timesStepWasCompletedInitial += 1;
-                //start positions time to reach end of path
-                if (timesStepWasCompletedInitial > stepsToCompletePath)
-                {
-                    //Increment times reached end of path for each time end of path is reached
-                    timesReachedEndOfPath += 1;
-                    //Make initial time on path the completed path time now
-                    initialTimeOnPath = lerpTimeToCompletePath;
-                    lerpTimeToCompletePath += ((lerpOverTime + timeTillStartLerp) * stepsToCompletePath) * (timesReachedEndOfPath + 1);
-                    Debug.Log($"Path End reached. output{output} lerpTimeToCompletePath = {lerpTimeToCompletePath} initialTimeOnPath = {initialTimeOnPath} timesReachedEndOfPath = {timesReachedEndOfPath} timesStepWasCompleted = {timesStepWasCompletedInitial}");
-                }
+                //Debug.Log($"Path End Reached. Output being set to path start {pathPositions.path[0].ToString()} initialTimeOnPath {initialTimeOnPath} = lerpTimeToCompletePath {lerpTimeToCompletePath}");
+                output = pathPositions.path[0];
+                //Increment times reached end of path for each time end of path is reached
+                timesReachedEndOfPath += 1;
+                stepsCompletedSoFar = 0; //May be used later
+                //Make initial time on path the completed path time now
+                initialTimeOnPath = lerpTimeToCompletePath;
+                lerpTimeToCompletePath += ((lerpOverTime + timeTillStartLerp) * stepsToCompletePath);
+                //Debug.Log($" lerpTimeToCompletePath updated to {lerpTimeToCompletePath}");
             }
         }
-        Debug.Log("Now entering current sequence");
+        //Debug.Log($"Now entering current sequence output = {output}");
         //At beggining of last sequence - add
         while (initialTimeOnPath < spinTimerCurrent)
         {
-            Debug.Log($"{initialTimeOnPath} < {spinTimerCurrent}"); 
+            //Debug.Log($"{initialTimeOnPath} < {spinTimerCurrent}"); 
             //first step from 0 - lerpOverTime
             if (spinTimerCurrent > initialTimeOnPath + lerpOverTime)
             {
-                Debug.Log($"amountToTraverseDuringStep {amountToTraverseDuringStep.ToString()} being added to output {output.ToString()}");
+                //Debug.Log($"amountToTraverseDuringStep {amountToTraverseDuringStep.ToString()} being added to output {output.ToString()}");
                 initialTimeOnPath += lerpOverTime;
                 //If you are in a pause period only moving to the next position;
                 output += amountToTraverseDuringStep;
                 if(spinTimerCurrent > initialTimeOnPath + timeTillStartLerp)
                 {
-                    Debug.Log($"We are in next step - add pause time to lerpTime. {initialTimeOnPath} += {timeTillStartLerp}");
+                    //Debug.Log($"We are in next step - add pause time to lerpTime. {initialTimeOnPath} += {timeTillStartLerp}");
                     initialTimeOnPath += timeTillStartLerp;
                 }
                 else
                 {
-                    Debug.Log($"We are setting final position step - add pause time to lerpTime. {initialTimeOnPath} += {timeTillStartLerp}");
+                    //Debug.Log($"We are setting final position step - add pause time to lerpTime. {initialTimeOnPath} += {timeTillStartLerp}");
                     initialTimeOnPath += spinTimerCurrent - initialTimeOnPath;
                 }
             }
             else
             {
-                Debug.Log($"Adding amountToTraverseDuringStep {amountToTraverseDuringStep} * ((float)(spinTimerCurrent{spinTimerCurrent}/lerpOverTime{lerpOverTime})){(spinTimerCurrent / lerpOverTime)} = {amountToTraverseDuringStep * (spinTimerCurrent / lerpOverTime)} being added to output {output.ToString()}");
+                //Debug.Log($"Adding amountToTraverseDuringStep {amountToTraverseDuringStep} * ((float)(spinTimerCurrent{spinTimerCurrent}/lerpOverTime{lerpOverTime})){(spinTimerCurrent / lerpOverTime)} = {amountToTraverseDuringStep * (spinTimerCurrent / lerpOverTime)} being added to output {output.ToString()}");
                 output += amountToTraverseDuringStep * ((spinTimerCurrent - initialTimeOnPath) / lerpOverTime);
                 initialTimeOnPath += spinTimerCurrent - initialTimeOnPath;
             }
-        }
-        if(Mathf.Abs(output.sqrMagnitude) > Mathf.Abs(pathPositions.path[pathPositions.path.Length-1].sqrMagnitude))
-        {
-            output += pathPositions.path[0];
         }
         if(timesReachedEndOfPath != pathPositions.timesReachedEndOfPath)
         {
             pathPositions.timesReachedEndOfPath = timesReachedEndOfPath;
             pathPositions.changeSymbolGraphic = true;
         }
-        Debug.Log($"Position Evaluated in stepper spin - output = {output.ToString()}");
+        //Debug.Log($"Position Evaluated in stepper spin - output = {output.ToString()}");
         //Need to calculate time till end of path
         pathPositions.toPositionEvaluated = output;
         return output;

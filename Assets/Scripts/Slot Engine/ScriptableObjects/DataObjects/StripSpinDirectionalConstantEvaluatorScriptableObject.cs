@@ -39,7 +39,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEv
     /// https://docs.unity3d.com/Manual/VectorCookbook.html
     public override Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath pathPositions)
     {
-        Debug.Log("Evaluating Constant Directional Spin");
+        //Debug.Log("Evaluating Constant Directional Spin");
         Vector3 output = Vector3.zero;
         //If start position is the last positoin then we will test for position output to be >= last position in path magnitude and reset
         if (pathPositions.startPosition < pathPositions.path.Length)
@@ -56,7 +56,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEv
             //Get Total Distance to travel from start position to next position in path
             float sqrMagnitudeEndOfPath = pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude;
             float rawPositionSqrMagnitude = rawToPosition.sqrMagnitude;
-            Debug.Log($"calculatedDistanceTravelRaw = {calculatedDistanceTravelRaw} rawToPosition = {rawToPosition.ToString()} rawToPosition.sqrMagnitude = {rawToPosition.sqrMagnitude} sqrMagnitudeTillNextPointInPath = {sqrMagnitudeEndOfPath} last position in path = {pathPositions.path[pathPositions.path.Length - 1]} last position in path sqr magnitude = {pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude}");
+            //Debug.Log($"calculatedDistanceTravelRaw = {calculatedDistanceTravelRaw} rawToPosition = {rawToPosition.ToString()} rawToPosition.sqrMagnitude = {rawToPosition.sqrMagnitude} sqrMagnitudeTillNextPointInPath = {sqrMagnitudeEndOfPath} last position in path = {pathPositions.path[pathPositions.path.Length - 1]} last position in path sqr magnitude = {pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude}");
 
             Vector3 distanceFirstLast = pathPositions.distanceFirstLastPositionInPath;
             int timesReachedEndOfPath = 0;
@@ -67,7 +67,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEv
                 // Calculate distance between first and last position in path and add to final output
                 rawToPosition += distanceFirstLast;
                 rawPositionSqrMagnitude = rawToPosition.sqrMagnitude;
-                Debug.Log($"Added {distanceFirstLast.ToString()} to raw position. rawToPosition = {rawToPosition.ToString()} rawToPosition.sqrMagnitude = {rawToPosition.sqrMagnitude} last position in path = {pathPositions.path[pathPositions.path.Length - 1]} last position in path sqr magnitude = {pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude}");
+                //Debug.Log($"Added {distanceFirstLast.ToString()} to raw position. rawToPosition = {rawToPosition.ToString()} rawToPosition.sqrMagnitude = {rawToPosition.sqrMagnitude} last position in path = {pathPositions.path[pathPositions.path.Length - 1]} last position in path sqr magnitude = {pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude}");
             }
             if(timesReachedEndOfPath != pathPositions.timesReachedEndOfPath)
             {
