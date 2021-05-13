@@ -126,12 +126,8 @@ namespace Slot_Engine.Matrix
         {
             if (Application.isPlaying)
             {
-                if (!test)
-                    UpdateSpinTimerFromSpinManager();
-                else
-                {
-                    spinCurrentTimer += Time.deltaTime;
-                }
+                //This is where you add functionality for reel reveal control
+                spinCurrentTimer += Time.deltaTime;
             }
             return MoveObjectToSpinPosition(spinCurrentTimer);
         }
@@ -157,6 +153,15 @@ namespace Slot_Engine.Matrix
             }
             if (Application.isPlaying)
             {
+                if(setToPresentationSymbolNextSpinCycle && presentationSymbolSetToEnd)
+                {
+                    if(Mathf.Abs(toPosition.sqrMagnitude) >= Mathf.Abs(stopSpinEndPosition.sqrMagnitude))
+                    {
+                        toPosition = stopSpinEndPosition;
+                        objectInEndPosition = true;
+                        spinMovementEnabled = false;
+                    }
+                }
                 toPosition = SetPositionTo(toPosition);
                 transform.localPosition = toPosition;
             }
@@ -168,14 +173,17 @@ namespace Slot_Engine.Matrix
             if (setToPresentationSymbolNextSpinCycle)
             {
                 //Set Graphics and end position
-                Debug.Log($"Setting {gameObject.name} end symbol in reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
+                //Debug.Log($"Setting {gameObject.name} end symbol in reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
                 presentationSymbolSetToEnd = true;
                 stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
 
                 if (stripManager.endSymbolsSetFromConfiguration < stripManager.ending_symbols.Length)
                 {
                     SetDisplaySymbolTo(stripManager.ending_symbols[stripManager.ending_symbols.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
+                    stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
                     stripManager.endSymbolsSetFromConfiguration += 1;
+                    //Set end position to paddig after = stripManager.endSymbolsSetFromConfiguration
+
                 }
                 else
                 {
@@ -186,25 +194,33 @@ namespace Slot_Engine.Matrix
             else
             {
                 bool symbol_set = false;
-                if (stripManager.randomSetSymbolOnEndOfSequence)
+                NodeDisplaySymbol symbol = new NodeDisplaySymbol();
+                if (stripManager.nextSymbolToAppear != -1)
                 {
-                    //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
-                    if (stripManager.stripInfo.spin_info.stripSpinSymbols != null)
+                    symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToAppear).Result;
+                    stripManager.nextSymbolToAppear = -1;
+                }
+                else
+                {
+                    if (stripManager.randomSetSymbolOnEndOfSequence)
                     {
-                        if (stripManager.stripInfo.spin_info.stripSpinSymbols.Length > 0)
+                        //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
+                        if (stripManager.stripInfo.spin_info.stripSpinSymbols != null)
                         {
-                            NodeDisplaySymbol symbol = stripManager.ReturnNextSymbolInStrip();
-                            SetDisplaySymbolTo(symbol);
-                            symbol_set = true;
+                            if (stripManager.stripInfo.spin_info.stripSpinSymbols.Length > 0)
+                            {
+                                symbol = stripManager.ReturnNextSymbolInStrip();
+                                symbol_set = true;
+                            }
+                        }
+                        if (!symbol_set)
+                        {
+                            //Determines an overlay symbol
+                            symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
                         }
                     }
-                    if (!symbol_set)
-                    {
-                        //Determines an overlay symbol
-                        NodeDisplaySymbol symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
-                        SetDisplaySymbolTo(symbol);
-                    }
                 }
+                SetDisplaySymbolTo(symbol);
             }
         }
 

@@ -268,6 +268,7 @@ namespace Slot_Engine.Matrix
         /// <param name="ending_symbols">the symbols to land on</param>
         public async Task StopReel(NodeDisplaySymbol[] ending_symbols)
         {
+            //If not directional constant then whatever symbol is on reel right now use that
             SetEndingSymbolsTo(ending_symbols);
             SetSlotsToStopSpinning(); //When slots move to the top of the reel then assign the next symbol in list as name and delete from list
             await AllSlotsStoppedSpinning();
@@ -311,6 +312,7 @@ namespace Slot_Engine.Matrix
         }
         internal async Task AllSlotsStoppedSpinning()
         {
+            Debug.Log($"Waiting for group {gameObject.name} to stop spinning");
             bool task_lock = true;
             while (task_lock)
             {
@@ -321,6 +323,7 @@ namespace Slot_Engine.Matrix
                     task_lock = false;
                 }
             }
+            Debug.Log($"group {gameObject.name} stopped spinning");
         }
 
         //internal virtual void GenerateLocalPositions(ConfigurationSettingsScriptableObject configurationSettings)
@@ -361,6 +364,13 @@ namespace Slot_Engine.Matrix
                 keys.AddRange(objectsInGroup[slot].stateMachine.animator_state_machines.sub_state_machines_keys);
             }
             return keys.ToArray();
+        }
+
+
+        public int nextSymbolToAppear = -1;
+        internal void SetNextSymbolToAppear(int selectedSymbolToGenerate)
+        {
+            nextSymbolToAppear = selectedSymbolToGenerate;
         }
     }
 }

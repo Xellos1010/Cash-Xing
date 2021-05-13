@@ -54,6 +54,19 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         internal List<BaseObjectManager> winning_slots, losing_slots;
+        internal string[] supportedSymbols
+        {
+            get
+            {
+                string[] symbols = new string[symbolDataScriptableObject.symbols.Length];
+                for (int symbol = 0; symbol < symbols.Length; symbol++)
+                {
+                    symbols[symbol] = symbolDataScriptableObject.symbols[symbol].symbolName;
+                }
+                return symbols;
+            }
+        }
+
         public async void Start()
         {
             //Initialize game mode

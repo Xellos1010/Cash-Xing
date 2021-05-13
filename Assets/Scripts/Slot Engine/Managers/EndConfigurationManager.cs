@@ -204,8 +204,16 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         public async Task<NodeDisplaySymbol> GetRandomWeightedSymbol(GameModes currentMode)
         {
+            int symbol = await configurationObject.DrawRandomSymbol(currentMode);
+            return await GetNodeDisplaySymbol(symbol);
+        }
+        /// <summary>
+        /// Generate a random symbol based on weights defined
+        /// </summary>
+        /// <returns></returns>
+        public async Task<NodeDisplaySymbol> GetNodeDisplaySymbol(int symbol)
+        {
             NodeDisplaySymbol output = new NodeDisplaySymbol();
-            int symbol = await configurationObject .DrawRandomSymbol(currentMode);
             //Debug.LogWarning($"End Configuration Draw Random Symbol returned {symbol}");
             if (configurationObject.isSymbolOverlay(symbol))
             {

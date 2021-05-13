@@ -982,7 +982,8 @@ namespace Slot_Engine.Matrix
 
         private void SetAnimatorOverrideControllerTo(ref Animator character, ref AnimatorOverrideController[] characterTier, int v)
         {
-            character.runtimeAnimatorController = characterTier[v];
+            Debug.Log("No Character Controllers in this project");
+            //character.runtimeAnimatorController = characterTier[v];
         }
 
         private void PlayAnimationOnAllSlots(string v)

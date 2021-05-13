@@ -30,11 +30,11 @@ namespace Slot_Engine.Matrix
     [CustomEditor(typeof(StripObjectGroupManager))]
     class ReelStripManagerEditor : BoomSportsEditor
     {
-        StripObjectGroupManager my_target;
-
+        StripObjectGroupManager myTarget;
+        int selectedSymbolToGenerate = 0;
         public void OnEnable()
         {
-            my_target = (StripObjectGroupManager)target;
+            myTarget = (StripObjectGroupManager)target;
         }
 
         public override void OnInspectorGUI()
@@ -45,34 +45,38 @@ namespace Slot_Engine.Matrix
             {
                 if (GUILayout.Button("Set Slot Positions Initial"))
                 {
-                    my_target.SetSlotPositionToStart();
+                    myTarget.SetSlotPositionToStart();
                 }
                 if (GUILayout.Button("Update Slot objects and positions local world reference"))
                 {
-                    my_target.UpdateStripPositions();
+                    myTarget.UpdateStripPositions();
                 }
                 if (GUILayout.Button("Update sub state machines slot managers"))
                 {
-                    my_target.UpdateSlotManagersSubStateMachines();
+                    myTarget.UpdateSlotManagersSubStateMachines();
                 }
             }
-            if (my_target.isSpinning)
+            if (myTarget.isSpinning)
             {
                 if (GUILayout.Button("Spin Reel Test"))
                 {
-                    my_target.SpinGroupNow(true);
+                    myTarget.SpinGroupNow(true);
                 }
-                
+                selectedSymbolToGenerate = EditorGUILayout.Popup(selectedSymbolToGenerate, myTarget.configurationObjectParent.supportedSymbols);
+                if (GUILayout.Button("Set Next Symbol to Appear On Reel To:"))
+                {
+                    myTarget.SetNextSymbolToAppear(selectedSymbolToGenerate);
+                }
             }
             else
             {
                 if (GUILayout.Button("Enable Movement"))
                 {
-                    my_target.SetSlotsMovementEnabled(true);
+                    myTarget.SetSlotsMovementEnabled(true);
                 }
                 if (GUILayout.Button("Disable Movement"))
                 {
-                    my_target.SetSlotsMovementEnabled(false);
+                    myTarget.SetSlotsMovementEnabled(false);
                 }
             }
             BoomEditorUtilities.DrawUILine(Color.white);
