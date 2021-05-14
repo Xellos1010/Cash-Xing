@@ -131,24 +131,26 @@ namespace Slot_Engine.Matrix
         /// <param name="createAndReturnTextObject">Should we generate and return payline text to be destroyed?</param>
         internal GameObject ShowWinningPayline(WinningPayline payline_to_show, bool createAndReturnTextObject = false)
         {
+            Debug.Log($"rendering Winning Payline - {payline_to_show.payline.PrintConfiguration()} root node = {payline_to_show.payline.rootNode.Print()}");
             GameObject output;
             ToggleRenderer(true);
             //initialize the line positions list and 
             List<Vector3> linePositions;
             Payline toShowPayline = new Payline(payline_to_show.payline);
-            if(payline_to_show.payline.payline_configuration.payline.Length < matrix.configurationGroupManagers.Length)
-            {
-                List<int> paylineTemp = new List<int>();
-                paylineTemp.AddRange(toShowPayline.payline_configuration.payline);
-                int newNumber = paylineTemp[paylineTemp.Count-1];
-                for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.configurationGroupManagers.Length; paylineNode++)
-                {
-                    paylineTemp.Add(newNumber);
-                }
-                toShowPayline.payline_configuration.payline = paylineTemp.ToArray();
-            }
+            //Hack - Used to add payline nodes
+            //if(payline_to_show.payline.payline_configuration.payline.Length < matrix.configurationGroupManagers.Length)
+            //{
+            //    List<int> paylineTemp = new List<int>();
+            //    paylineTemp.AddRange(toShowPayline.payline_configuration.payline);
+            //    int newNumber = paylineTemp[paylineTemp.Count-1];
+            //    for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.configurationGroupManagers.Length; paylineNode++)
+            //    {
+            //        paylineTemp.Add(newNumber);
+            //    }
+            //    toShowPayline.payline_configuration.payline = paylineTemp.ToArray();
+            //}
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
-            matrix.ReturnPositionsBasedOnPayline(ref toShowPayline, out linePositions);
+            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline, out linePositions);
             Vector3[] winningSymbolPositions = new Vector3[payline_to_show.payline.payline_configuration.payline.Length];
             linePositions.CopyTo(0,winningSymbolPositions,0, winningSymbolPositions.Length);
             //Is this even or odd? use middle position if odd - use lerp half for even

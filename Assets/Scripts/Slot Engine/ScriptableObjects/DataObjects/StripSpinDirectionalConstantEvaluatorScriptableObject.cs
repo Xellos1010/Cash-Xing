@@ -88,4 +88,10 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEv
     {
         return distancePerSecond;
     }
+
+    internal override bool isTimeInPauseState(float spinCurrentTimer)
+    {
+        Debug.LogWarning("Spin Directional Constant has no pause state");
+        throw new NotImplementedException();
+    }
 }

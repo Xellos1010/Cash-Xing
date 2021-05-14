@@ -233,7 +233,7 @@ namespace Slot_Engine.Matrix
             {
                 output.SetWildTo(symbol);
             }
-            output.primary_symbol = symbol;
+            output.primarySymbol = symbol;
             //Debug.Log(String.Format("Symbol Generated form Weighted Distribution is {0}", ((Symbol)output).ToString()));
             return output;
         }

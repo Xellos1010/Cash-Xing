@@ -26,18 +26,17 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
     /// Controls the spin amount during looping state
     /// </summary>
     [SerializeField]
-    public float timeTillStartLerp = 0.5f;
+    public float pauseBetweenStepsFor = 0.5f;
     /// <summary>
     /// Controls the spin amount during looping state
     /// </summary>
     [SerializeField]
-    public float lerpOverTime = 0.6777f;
+    public float activeLerpTimeToCompleteStep = 0.6777f;
     /// <summary>
     /// = slot (spinDirection * Slot Width Height + Slot.padding) * slotsToTraverse
     /// </summary>
     public Vector3 amountToTraverseDuringStep;
     public Vector3 amountToSkipDuringPauseStep;
-    float distanceToTravelRaw;
     /// <summary>
     /// Sequence for evaluation - spin timer 0 -> lerpOverTime 
     /// </summary>
@@ -50,7 +49,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
         //The amount movement 1 cycle of lerpOverTime evaluates raw
         Vector3 rawDistanceTravelTotalActive = pathPositions.slotSize + pathPositions.slotPadding;
         //The amount of movement to pauses for timeTillStartLerp
-        Vector3 rawDistanceTravelTotalInactive = (pathPositions.slotSize + pathPositions.slotPadding) * (float)(timeTillStartLerp / lerpOverTime);
+        Vector3 rawDistanceTravelTotalInactive = (pathPositions.slotSize + pathPositions.slotPadding) * (float)(pauseBetweenStepsFor / activeLerpTimeToCompleteStep);
 
         amountToTraverseDuringStep = new Vector3(
             reel_spin_direction.x * rawDistanceTravelTotalActive.x,
@@ -76,9 +75,9 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
         //Calling object passes previously evaluated Steps that have been compelted - SpinPath will contain the times path has reached end position.
         //If the current spin timer is over a sequence step total then we need to pre-determine based on times reached end where in position 
         //(lerpOverTime + timeTillStartLerp) gets the total time of a sequence * the steps to complete the sequence * stepsToCompletePath + 1 - change symbol if >
-        float lerpTimeToCompletePath = ((lerpOverTime + timeTillStartLerp) * stepsToCompletePath) * (pathPositions.timesReachedEndOfPath + 1);
+        float lerpTimeToCompletePath = ((activeLerpTimeToCompleteStep + pauseBetweenStepsFor) * stepsToCompletePath) * (pathPositions.timesReachedEndOfPath + 1);
         int timesReachedEndOfPath = 0;
-        float initialTimeOnPath = ((lerpOverTime + timeTillStartLerp) * stepsCompletedSoFar);
+        float initialTimeOnPath = ((activeLerpTimeToCompleteStep + pauseBetweenStepsFor) * stepsCompletedSoFar);
         //Debug.Log($"Adding initialTimeOnPath {initialTimeOnPath} to spinCurrent {spinTimerCurrent}");
         spinTimerCurrent += initialTimeOnPath; //SpinTimer now in realtime
 
@@ -97,7 +96,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
                 stepsCompletedSoFar = 0; //May be used later
                 //Make initial time on path the completed path time now
                 initialTimeOnPath = lerpTimeToCompletePath;
-                lerpTimeToCompletePath += ((lerpOverTime + timeTillStartLerp) * stepsToCompletePath);
+                lerpTimeToCompletePath += ((activeLerpTimeToCompleteStep + pauseBetweenStepsFor) * stepsToCompletePath);
                 //Debug.Log($" lerpTimeToCompletePath updated to {lerpTimeToCompletePath}");
             }
         }
@@ -107,16 +106,16 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
         {
             //Debug.Log($"{initialTimeOnPath} < {spinTimerCurrent}"); 
             //first step from 0 - lerpOverTime
-            if (spinTimerCurrent > initialTimeOnPath + lerpOverTime)
+            if (spinTimerCurrent > initialTimeOnPath + activeLerpTimeToCompleteStep)
             {
                 //Debug.Log($"amountToTraverseDuringStep {amountToTraverseDuringStep.ToString()} being added to output {output.ToString()}");
-                initialTimeOnPath += lerpOverTime;
+                initialTimeOnPath += activeLerpTimeToCompleteStep;
                 //If you are in a pause period only moving to the next position;
                 output += amountToTraverseDuringStep;
-                if(spinTimerCurrent > initialTimeOnPath + timeTillStartLerp)
+                if(spinTimerCurrent > initialTimeOnPath + pauseBetweenStepsFor)
                 {
                     //Debug.Log($"We are in next step - add pause time to lerpTime. {initialTimeOnPath} += {timeTillStartLerp}");
-                    initialTimeOnPath += timeTillStartLerp;
+                    initialTimeOnPath += pauseBetweenStepsFor;
                 }
                 else
                 {
@@ -127,7 +126,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
             else
             {
                 //Debug.Log($"Adding amountToTraverseDuringStep {amountToTraverseDuringStep} * ((float)(spinTimerCurrent{spinTimerCurrent}/lerpOverTime{lerpOverTime})){(spinTimerCurrent / lerpOverTime)} = {amountToTraverseDuringStep * (spinTimerCurrent / lerpOverTime)} being added to output {output.ToString()}");
-                output += amountToTraverseDuringStep * ((spinTimerCurrent - initialTimeOnPath) / lerpOverTime);
+                output += amountToTraverseDuringStep * ((spinTimerCurrent - initialTimeOnPath) / activeLerpTimeToCompleteStep);
                 initialTimeOnPath += spinTimerCurrent - initialTimeOnPath;
             }
         }
@@ -145,6 +144,20 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
     internal override float GetTotalTime()
     {
         //Only returns amount to take for 1 step - calling object needs to multiply by point to point in path array Length-1;
-        return (lerpOverTime + timeTillStartLerp);
+        return (activeLerpTimeToCompleteStep + pauseBetweenStepsFor);
+    }
+
+    internal override bool isTimeInPauseState(float spinCurrentTimer)
+    {
+        float tempTimer = 0;
+        bool addActiveTimerAmount = true;
+        //Add active time and inactive time until time is > current time
+        while (tempTimer < spinCurrentTimer)
+        {
+            tempTimer += addActiveTimerAmount ? activeLerpTimeToCompleteStep : pauseBetweenStepsFor;
+            addActiveTimerAmount = !addActiveTimerAmount;
+        }
+        //Last added time was active - the time passed is in active state
+        return !addActiveTimerAmount;
     }
 }

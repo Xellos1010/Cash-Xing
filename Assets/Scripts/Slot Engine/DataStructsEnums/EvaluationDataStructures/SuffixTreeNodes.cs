@@ -18,6 +18,7 @@ namespace Slot_Engine.Matrix
         internal bool leftRight;
         [SerializeField]
         internal SuffixTreeNodeInfo nodeInfo;
+        internal SuffixTreeNodeInfo rootNode;
 
         [SerializeField]
         internal SuffixTreeNodeInfo[] parent_nodes;
@@ -69,14 +70,15 @@ namespace Slot_Engine.Matrix
             //Initialize the node with the grid configuration lookup information
             evaluationObject.InitializeWinningSymbolsFeaturesActiveCollections();
             //This could be a wild or overlay - evaluate the feature and add to list
+            //Temporary Work Around - Since we are sending configuration from matrix remove 1 from row - Original evaluation mechanic needs
             NodeDisplaySymbol linewin_symbol = evaluationObject.gridConfiguration[nodeInfo.column].displaySymbols[nodeInfo.row];
             //Checks the first symbol for a feature condition
             CheckSlotNeedsFeatureEvaluated(linewin_symbol, ref evaluationObject, ref nodeInfo);
             //Adds the first symbol as a lineWin and makes the primary symbol to track for
-            AddWinningSymbol(linewin_symbol.primary_symbol, ref evaluationObject, ref nodeInfo);
+            AddWinningSymbol(linewin_symbol.primarySymbol, ref evaluationObject, ref nodeInfo);
             //Initialize Winning Paylines
             List<WinningPayline> winning_paylines = new List<WinningPayline>();
-            Debug.Log(String.Format("Starting check for winning paylines from node {0}", nodeInfo.Print()));
+            Debug.Log(String.Format($"Primary Linewin Symbol = {linewin_symbol.primarySymbol} - Starting check for winning paylines from node {nodeInfo.Print()}"));
             //Check all connected nodes for a win using dfs (depth first search) search
             CheckConnectedNodesForWin(ref nodeInfo, ref connectedNodes, ref evaluationObject, ref winning_paylines, linewin_symbol);
             evaluationObject.winningEvaluationNodes.Clear();
@@ -158,6 +160,7 @@ namespace Slot_Engine.Matrix
         /// <param name="winning_symbols">winning symbols list</param>
         private void CheckForDynamicWinningPaylinesOnNode(ref SuffixTreeNodes nodeToCheck, ref EvaluationObjectStruct evaluationObject, NodeDisplaySymbol nextDisplaySymbol, ref List<WinningPayline> winning_paylines)
         {
+            Debug.Log($"Checking node {nodeToCheck.nodeInfo.Print()}"); 
             //Get current node symbol display struct
             NodeDisplaySymbol currentDisplaySymbol = evaluationObject.gridConfiguration[nodeToCheck.nodeInfo.column].displaySymbols[nodeToCheck.nodeInfo.row];
 
@@ -168,8 +171,9 @@ namespace Slot_Engine.Matrix
             //First Level Check - Wilds - TODO Refactor to abstract logic - Need to build in wild support
             if (SymbolsMatch(currentDisplaySymbol, nextDisplaySymbol))
             {
+                Debug.Log($"{nextDisplaySymbol}Match's! Winning Symbol in Node {nodeToCheck.nodeInfo.Print()}");
                 //Add the winning symbol to the payline
-                AddWinningSymbol(currentDisplaySymbol.primary_symbol, ref evaluationObject, ref nodeToCheck.nodeInfo);
+                AddWinningSymbol(currentDisplaySymbol.primarySymbol, ref evaluationObject, ref nodeToCheck.nodeInfo);
 
                 //Current payline index - to remove symbol from payline after checking later nodes
                 int winningSymbolIndex = evaluationObject.winningEvaluationNodes.Count - 1;
@@ -190,6 +194,7 @@ namespace Slot_Engine.Matrix
             }
             else
             {
+                Debug.Log($"Reached end of Payline - evaluationObject.winningEvaluationNodes.Count {evaluationObject.winningEvaluationNodes.Count} >= 3 == {evaluationObject.winningEvaluationNodes.Count >= 3}");
                 if (evaluationObject.winningEvaluationNodes.Count >= 3)
                 {
                     InitializeAndAddDynamicWinningPayline(nodeToCheck, ref evaluationObject.winningEvaluationNodes, ref winning_paylines);
@@ -215,19 +220,20 @@ namespace Slot_Engine.Matrix
             //Debug.Log(String.Format("Payline {0} won!", PrintDynamicPayline(ref winning_symbols)));
             int[] payline = new int[winning_symbols.Count];
             List<EvaluationNode> winning_symbol_row = new List<EvaluationNode>();
+            SuffixTreeNodeInfo rootNode = winning_symbols[0].nodeInfo;
             for (int symbol = 0; symbol < winning_symbols.Count; symbol++)
             {
                 payline[symbol] = winning_symbols[symbol].nodeInfo.row;
                 winning_symbol_row.Add(winning_symbols[symbol]);
             }
-            AddDynamicWinningPayline(payline, winning_symbol_row, suffix_tree_node.leftRight, ref winning_paylines);
+            AddDynamicWinningPayline(payline, winning_symbol_row, suffix_tree_node.leftRight, ref winning_paylines, rootNode);
         }
 
-        internal void AddDynamicWinningPayline(int[] payline, List<EvaluationNode> matching_symbols_list, bool left_right, ref List<WinningPayline> winning_paylines)
+        internal void AddDynamicWinningPayline(int[] payline, List<EvaluationNode> matching_symbols_list, bool left_right, ref List<WinningPayline> winning_paylines, SuffixTreeNodeInfo rootNode)
         {
             Payline payline_won = new Payline(payline, left_right, matching_symbols_list[0].nodeInfo);
+            payline_won.rootNode = rootNode;
             WinningPayline new_winning_payline = new WinningPayline(payline_won, matching_symbols_list.ToArray());
-
             //If we have a payline that is similiar enough to our current payline to submit then we need to keep highest value payline
             WinningPayline duplicate_payline;
             //Check if Payline symbol configuration are already the list - keep highest winning payline
@@ -543,7 +549,7 @@ namespace Slot_Engine.Matrix
 
         private bool PrimarySymbolCheck(NodeDisplaySymbol currentDisplaySymbol, NodeDisplaySymbol nextDisplaySymbol)
         {
-            return currentDisplaySymbol.primary_symbol == nextDisplaySymbol.primary_symbol;
+            return currentDisplaySymbol.primarySymbol == nextDisplaySymbol.primarySymbol;
         }
     }
 }

@@ -14,4 +14,15 @@ public struct ReelSymbolConfiguration
     {
         this.displaySymbols = displaySymbols;
     }
+
+    internal string PrintDisplaySymbols()
+    {
+        //Debug.Log($"displaySymbols.Length = {displaySymbols.Length}");
+        string output = "";
+        for (int i = 0; i < displaySymbols.Length; i++)
+        {
+            output += "|" + displaySymbols[i].primarySymbol;
+        }
+        return output;
+    }
 }

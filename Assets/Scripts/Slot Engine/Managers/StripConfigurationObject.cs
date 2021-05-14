@@ -36,7 +36,11 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.EnumPopup(StateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
-            if(GUILayout.Button("Create Empty Animation Container"))
+            if (GUILayout.Button("Ensure Slots Display PresentationID for symbol currently active"))
+            {
+                myTarget.SyncCurrentSymbolDisplayed();
+            }
+            if (GUILayout.Button("Create Empty Animation Container"))
             {
                 myTarget.CreateEmptyAnimationContainer();
             }
@@ -73,10 +77,10 @@ namespace Slot_Engine.Matrix
     public class StripConfigurationObject : BaseConfigurationObject
     {
         //Hacks for InstaSpin
-        public AnimatorOverrideController[] characterTier;
-        public Animator character;
-        public AnimatorOverrideController[] multiplierTier;
-        public Animator multiplierChar;
+        //public AnimatorOverrideController[] characterTier;
+        //public Animator character;
+        //public AnimatorOverrideController[] multiplierTier;
+        //public Animator multiplierChar;
 
         public Animator background;
         public AnimatorOverrideController[] backgroundACO;
@@ -148,15 +152,16 @@ namespace Slot_Engine.Matrix
             int payline_positions_set = 0;
             bool rootNodeHit = false;
             Vector3 payline_posiiton_on_reel;
-            for (int reel = payline.left_right ? 0 : configurationGroupManagers.Length-1; 
-                payline.left_right? reel < configurationGroupManagers.Length : reel >= 0; 
-                reel += payline.left_right? 1:-1)
+            for (int strip = payline.left_right ? 0 : configurationGroupManagers.Length-1; 
+                payline.left_right? strip < configurationGroupManagers.Length : strip >= 0; 
+                strip += payline.left_right? 1:-1)
             {
                 //need to see if root node is on reel - if not then next reel
                 if (!rootNodeHit)
                 {
-                    if (reel == payline.rootNode.column)
+                    if (strip == payline.rootNode.column)
                     {
+                        Debug.Log($"reel = {strip} payline.rootNode.column = {payline.rootNode.column}");
                         rootNodeHit = true;
                     }
                 }
@@ -166,7 +171,7 @@ namespace Slot_Engine.Matrix
                     {
                         if (payline_positions_set < payline.payline_configuration.payline.Length)
                         {
-                            payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[reel], payline.payline_configuration.payline[payline_positions_set]);
+                            payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[strip], payline.payline_configuration.payline[payline_positions_set]);
                             payline_positions_set += 1;
                             out_positions.Add(payline_posiiton_on_reel);
                         }
@@ -182,7 +187,7 @@ namespace Slot_Engine.Matrix
 
         internal async Task PlayFeatureAnimation(List<SuffixTreeNodeInfo> overlaySymbols)
         {
-            this.multiplierChar.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), true);
+            //this.multiplierChar.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), true);
             Debug.Log("Playing Feature Animation");
             List<Animator> symbolAnimators = new List<Animator>(); 
             for (int i = 0; i < overlaySymbols.Count; i++)
@@ -208,15 +213,15 @@ namespace Slot_Engine.Matrix
                     }
                 }
             }
-            //Lerp to Multiplier Bank
-            for (int i = 0; i < overlaySymbols.Count; i++)
-            {
-                await LerpToMeFinished(symbolAnimators[i].transform);
-                _managers.machine_info_manager.SetMultiplierTo(_managers.machine_info_manager.machineInfoScriptableObject.multiplier + 1);
-            }
+            ////Lerp to Multiplier Bank
+            //for (int i = 0; i < overlaySymbols.Count; i++)
+            //{
+            //    await LerpToMeFinished(symbolAnimators[i].transform);
+            //    _managers.machine_info_manager.SetMultiplierTo(_managers.machine_info_manager.machineInfoScriptableObject.multiplier + 1);
+            //}
 
-            await isAnimatorThruStateAndAtPauseState(this.multiplierChar, "Feature_Outro");
-            this.multiplierChar.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), false);
+            //await isAnimatorThruStateAndAtPauseState(this.multiplierChar, "Feature_Outro");
+            //this.multiplierChar.SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), false);
             for (int i = 0; i < symbolAnimators.Count; i++)
             {
                 symbolAnimators[i].SetBool(supportedAnimatorBools.FeatureTrigger.ToString(), false);
@@ -626,7 +631,7 @@ namespace Slot_Engine.Matrix
                     if (CheckForWin()) //If overlay has won will have winning payline
                     {
                         await CycleWinningPaylinesOneShot();
-                        await CheckForOverlayAndPlay();
+                        //await CheckForOverlayAndPlay();
                         //Bonus Game needs to be set before entering freespins mode and after last spin is accounted for
                         if (!StateManager.bonusGameTriggered)
                         {
@@ -767,9 +772,9 @@ namespace Slot_Engine.Matrix
                     await isAllAnimatorsThruStateAndAtPauseState("Resolve_Outro");
                     await isAllSlotAnimatorsReady("Resolve_Outro");
                     //Need to refactor to integrate
-                    await isAnimatorThruStateAndAtPauseState(this.multiplierChar,"Resolve_Outro");
+                    //await isAnimatorThruStateAndAtPauseState(this.multiplierChar,"Resolve_Outro");
                     SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.ResolveEnd,true);
-                    this.multiplierChar.SetTrigger(supportedAnimatorTriggers.ResolveEnd.ToString());
+                    //this.multiplierChar.SetTrigger(supportedAnimatorTriggers.ResolveEnd.ToString());
                     if (!StateManager.bonusGameTriggered)
                     {                        //TODO wait for all animators to go thru idle_intro state
                         StateManager.SetStateTo(States.Idle_Intro);
@@ -799,19 +804,19 @@ namespace Slot_Engine.Matrix
         managers.paylines_manager.GetTotalWinAmount() > managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
                 {
                     Debug.Log("Present Character Big Win");
-                    SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 2);
+                    //SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 2);
                 }
                 else if (managers.machine_info_manager.machineInfoScriptableObject.bank > managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
                     managers.paylines_manager.GetTotalWinAmount() > managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
                 {
                     Debug.Log("Present Character Medium Win");
-                    SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 1);
+                    //SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 1);
 
                 }
                 else
                 {
                     Debug.Log("Present Character Small Win");
-                    SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 0);
+                    //SetAnimatorOverrideControllerTo(ref this.multiplierChar, ref multiplierTier, 0);
                 }
                 await PlayFeatureAnimation(managers.evaluationManager.overlaySymbols);
                 Debug.Log("All Overlay Animators are finished");
@@ -853,7 +858,7 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        public Animator plateGraphicAnimatorWinBank;
+        //public Animator plateGraphicAnimatorWinBank;
         private async Task DisplayWinAmount(double spinWinAmount, double bankAmount)
         {
             SetFreespinTextTo(String.Format("{0:C2} {1}", spinWinAmount, " Won This Spin!"));
@@ -865,15 +870,15 @@ namespace Slot_Engine.Matrix
                 PresentBigWinDisplayAnimator();
                 managers.racking_manager.rackEnd += CloseBigWinDisplay;
                 //This is a special feature for instaspin - multiplier smash. Need to build in UI based event sequencer
-                if (managers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
-                {
-                    //await Smash together the Multiplier and Bank text Field.
-                    Animator[] winbankMultiplier = new Animator[1] { plateGraphicAnimatorWinBank };
-                    SetAnimatorsToTriggerFeature(winbankMultiplier, true);
-                    await isAllAnimatorsThruStateAndAtPauseStateTriggerEventAt(winbankMultiplier, States.Resolve_Win_Idle.ToString(), 1f, PresentBigWinDisplayAnimator);
-                    SetAnimatorsToTriggerFeature(winbankMultiplier, false);
-                    spinWinAmount = (bankAmount + spinWinAmount) * managers.machine_info_manager.machineInfoScriptableObject.multiplier;
-                }
+                //if (managers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
+                //{
+                //    //await Smash together the Multiplier and Bank text Field.
+                //    Animator[] winbankMultiplier = new Animator[1] { plateGraphicAnimatorWinBank };
+                //    SetAnimatorsToTriggerFeature(winbankMultiplier, true);
+                //    await isAllAnimatorsThruStateAndAtPauseStateTriggerEventAt(winbankMultiplier, States.Resolve_Win_Idle.ToString(), 1f, PresentBigWinDisplayAnimator);
+                //    SetAnimatorsToTriggerFeature(winbankMultiplier, false);
+                //    spinWinAmount = (bankAmount + spinWinAmount) * managers.machine_info_manager.machineInfoScriptableObject.multiplier;
+                //}
             }
             SetRackingtextTo(spinWinAmount);
             ToggleMeshRendererForGameObject(rackingRollupText.gameObject, true);
@@ -964,19 +969,19 @@ namespace Slot_Engine.Matrix
                 managers.paylines_manager.GetTotalWinAmount() > managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 9)
             {
                 Debug.Log("Present Big Win First");
-                SetAnimatorOverrideControllerTo(ref character, ref characterTier,2);
+                //SetAnimatorOverrideControllerTo(ref character, ref characterTier,2);
             }
             else if (managers.machine_info_manager.machineInfoScriptableObject.bank > managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5 ||
                 managers.paylines_manager.GetTotalWinAmount() > managers.machine_info_manager.machineInfoScriptableObject.bet_amount * 5)
             {
                 Debug.Log("Presenting Medium win");
-                SetAnimatorOverrideControllerTo(ref character, ref characterTier, 1);
+                //SetAnimatorOverrideControllerTo(ref character, ref characterTier, 1);
 
             }
             else
             {
                 Debug.Log("Presenting Small win");
-                SetAnimatorOverrideControllerTo(ref character, ref characterTier, 0);
+                //SetAnimatorOverrideControllerTo(ref character, ref characterTier, 0);
             }
         }
 
@@ -1392,6 +1397,14 @@ namespace Slot_Engine.Matrix
             AnimationUtility.SetEditorCurve(clip, binding, curve);
             AssetDatabase.CreateAsset(clip, "Assets/" + name + ".anim");
 #endif
+        }
+
+        internal void SyncCurrentSymbolDisplayed()
+        {
+            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            {
+                configurationGroupManagers[i].SyncDisplaySymbolInformation();
+            }
         }
     }
 }

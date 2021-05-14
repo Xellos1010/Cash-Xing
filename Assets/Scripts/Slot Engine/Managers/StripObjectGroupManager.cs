@@ -235,13 +235,13 @@ namespace Slot_Engine.Matrix
         internal override List<BaseObjectManager> GetSlotsDecending()
         {
             List<BaseObjectManager> output = new List<BaseObjectManager>();
-            Debug.Log($"localPositionsInStrip.Length == {localPositionsInStrip.Length} - objectsInGroup.Length == {objectsInGroup.Length}");
+            //Debug.Log($"localPositionsInStrip.Length == {localPositionsInStrip.Length} - objectsInGroup.Length == {objectsInGroup.Length}");
             for (int position_to_check = 0; position_to_check < localPositionsInStrip.Length; position_to_check++)
             {
                 for (int slot = 0; slot < objectsInGroup.Length; slot++)
                 {
-                    //Debug.Log($"objectsInGroup[slot].transform.localPosition {objectsInGroup[slot].transform.localPosition} == {positions_in_path_v3_local[position_to_check]} positions_in_path_v3_local[position_to_check] is {objectsInGroup[slot].transform.localPosition == positions_in_path_v3_local[position_to_check]}");
-                    if(objectsInGroup[slot].transform.localPosition == localPositionsInStrip[position_to_check])
+                    //Debug.Log($"objectsInGroup[{slot}].transform.localPosition {objectsInGroup[slot].transform.localPosition} == {localPositionsInStrip[position_to_check]} localPositionsInStrip[position_to_check] is {objectsInGroup[slot].transform.localPosition == localPositionsInStrip[position_to_check]}");
+                    if (objectsInGroup[slot].transform.localPosition == localPositionsInStrip[position_to_check])
                         output.Add(objectsInGroup[slot]);
                 }
             }

@@ -91,6 +91,8 @@ namespace Slot_Engine.Matrix
         /// Used to pass a test constant spin timer update
         /// </summary>
         internal bool test = false;
+        internal bool endSpin;
+
         /// <summary>
         /// Starts a Spin
         /// </summary>
@@ -99,12 +101,14 @@ namespace Slot_Engine.Matrix
             ResetAllVars();
             timesReachedEndOfPath = 0;
             SetObjectMovementEnabledTo(true);
+            endSpin = false;
             this.test = test;
         }
-        Vector3 SetPositionTo(Vector3 amount) //Needs to be positive to move forwards and negative to move backwards
+        Vector3 SetPositionTo(Vector3 toPosition) //Needs to be positive to move forwards and negative to move backwards
         {
             //Debug.Log($"Setting transform.localPosition = {amount}");
-            return amount; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
+            transform.localPosition = toPosition;
+            return toPosition; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
         }
         Vector3 OffsetPositionBy(Vector3 amountToAdd) //Needs to be positive to move forwards and negative to move backwards
         {
@@ -143,8 +147,6 @@ namespace Slot_Engine.Matrix
             SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
             temp.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
             toPosition = pathToEvaluate.toPositionEvaluated;
-            //Debug.Log($"Setting Position to {toPosition.ToString()}");
-            //Debug.Log($"Times reached end of path =  {pathToEvaluate.timesReachedEndOfPath} timesReachedEndOfPath supplied = {timesReachedEndOfPath}");
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
             {
                 timesReachedEndOfPath = pathToEvaluate.timesReachedEndOfPath;
@@ -153,17 +155,25 @@ namespace Slot_Engine.Matrix
             }
             if (Application.isPlaying)
             {
-                if(setToPresentationSymbolNextSpinCycle && presentationSymbolSetToEnd)
+                if (setToPresentationSymbolNextSpinCycle && presentationSymbolSetToEnd)
                 {
-                    if(Mathf.Abs(toPosition.sqrMagnitude) >= Mathf.Abs(stopSpinEndPosition.sqrMagnitude))
+                    if (Mathf.Abs(toPosition.sqrMagnitude) >= Mathf.Abs(stopSpinEndPosition.sqrMagnitude))
                     {
                         toPosition = stopSpinEndPosition;
                         objectInEndPosition = true;
                         spinMovementEnabled = false;
                     }
                 }
+                else if (endSpin == true)
+                { 
+                    if (!temp.isTimeInPauseState(spinCurrentTimer))
+                    {
+                        stopSpinEndPosition = toPosition;
+                        objectInEndPosition = true;
+                        spinMovementEnabled = false;
+                    }
+                }
                 toPosition = SetPositionTo(toPosition);
-                transform.localPosition = toPosition;
             }
             return toPosition;
         }
@@ -239,6 +249,22 @@ namespace Slot_Engine.Matrix
             }
             return null;
         }
-
+        /// <summary>
+        /// Used to set the slot to go to end position
+        /// </summary>
+        internal override void SetToStopSpin()
+        {
+            if (stripManager.stripInfo.stripDisplayZonesSetting.spinParameters.GetType() == typeof(StripSpinDirectionalStepperEvaluatorScriptableObject))
+            {
+                Debug.Log($"{stripManager.gameObject.name} {gameObject.name} spin parameters = {stripManager.stripInfo.stripDisplayZonesSetting.spinParameters.GetType()}");
+                endSpin = true;
+            }
+            else
+            {
+                setToPresentationSymbolNextSpinCycle = true;
+                objectInEndPosition = false;
+                presentationSymbolSetToEnd = false;
+            }
+        }
     }
 }

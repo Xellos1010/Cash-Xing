@@ -25,7 +25,6 @@ namespace Slot_Engine.Matrix.Managers
         public void OnEnable()
         {
             myTarget = (EvaluationManager)target;
-            winning_paylines = serializedObject.FindProperty("winning_paylines");
         }
 
         public override void OnInspectorGUI()
@@ -50,6 +49,16 @@ namespace Slot_Engine.Matrix.Managers
                     if (EditorGUI.EndChangeCheck())
                     {
                         myTarget.configurationObject.managers.paylines_manager.ShowDynamicPaylineRaw(payline_to_show);
+                    }
+                    if (paylinesEvaluationObject.winningObjects.Count > 0)
+                    {
+                        EditorGUI.BeginChangeCheck();
+                        winning_payline_to_show = EditorGUILayout.IntSlider(winning_payline_to_show, 0, paylinesEvaluationObject.winningObjects.Count - 1);
+                        myTarget.configurationObject.managers.paylines_manager._winningObjects = paylinesEvaluationObject.winningObjects.ToArray();
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            myTarget.configurationObject.managers.paylines_manager.ShowWinningPayline(winning_payline_to_show);
+                        }
                     }
                     if (GUILayout.Button("Show Current End Configuration On Reels"))
                     {
@@ -78,6 +87,10 @@ namespace Slot_Engine.Matrix.Managers
         /// </summary>
         public SlotEvaluationScriptableObject[] slotEvaluationObjects;
         /// <summary>
+        /// Has the evaluation manager evaluated this spin?
+        /// </summary>
+        public bool evaluated = false;
+        /// <summary>
         /// This is either ways lines or grouped.
         /// </summary>
         public EvaluationScriptableObject[] coreEvaluationObjects;
@@ -105,6 +118,7 @@ namespace Slot_Engine.Matrix.Managers
 
             //Clear all feature conditions of activated nodes previously
 
+            Debug.Log($"Symbol Configuration being evaluated = {PrintConfiguration(symbols_configuration)}");
 
             for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
             {
@@ -127,6 +141,17 @@ namespace Slot_Engine.Matrix.Managers
             //Check that feature conditions are met and activated
             return Task.FromResult<WinningPayline[]>(output_filtered.ToArray());
         }
+
+        private string PrintConfiguration(ReelSymbolConfiguration[] symbols_configuration)
+        {
+            string output = "";
+            for (int i = 0; i < symbols_configuration.Length; i++)
+            {
+                output += "||" + symbols_configuration[i].PrintDisplaySymbols();
+            }
+            return output;
+        }
+
         /// <summary>
         /// Gets the first instance of an evaluation object of sub-class
         /// </summary>
@@ -185,12 +210,25 @@ namespace Slot_Engine.Matrix.Managers
         {
             return await EvaluateSymbolConfigurationForWinningPaylines(symbols_configuration);
         }
-
-        public bool evaluated = false;
-        public async void EvaluateWinningSymbolsFromCurrentConfiguration()
+        /// <summary>
+        /// Evaluates configuration from either the symbols displayed or pre-generated. bug with use preGenerated with stepper reels since they don't symbol replace
+        /// </summary>
+        /// <param name="usePreGenerated"></param>
+        public async void EvaluateWinningSymbolsFromCurrentConfiguration(bool usePreGenerated = false)
         {
+            StripSpinStruct[] temp = usePreGenerated ? configurationObject.managers.endConfigurationManager.currentReelstripConfiguration : BuildStripSpinStructArrayFromSymbolsOnDisplay();
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
-            await EvaluateWinningSymbols(configurationObject.managers.endConfigurationManager.currentReelstripConfiguration);
+            await EvaluateWinningSymbols(temp);
+        }
+
+        private StripSpinStruct[] BuildStripSpinStructArrayFromSymbolsOnDisplay()
+        {
+            StripSpinStruct[] output = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
+            for (int i = 0; i < output.Length; i++)
+            {
+                output[i] = new StripSpinStruct(configurationObject.configurationGroupManagers[i].GetNodeDisplaySymbols());
+            }
+            return output;
         }
 
         internal bool DoesSymbolActivateFeature(SymbolObject symbolObject, Features feature)

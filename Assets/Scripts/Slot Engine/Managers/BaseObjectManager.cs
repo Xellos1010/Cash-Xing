@@ -359,6 +359,23 @@ namespace Slot_Engine.Matrix
             return true;
         }
 
+        internal void SyncCurrentDisplaySymbolInfo()
+        {
+            MeshRenderer activeMeshrenderer = null;
+            //Get sub symbol active
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                activeMeshrenderer = transform.GetChild(i).GetComponentInChildren<MeshRenderer>();
+                if (activeMeshrenderer.enabled)
+                {
+                    break;
+                }
+            }
+            //Debug.Log($"activeMeshrenderer.transform.parent.name = ");
+            currentPresentingSymbolID = activeMeshrenderer.transform.parent.GetSiblingIndex();
+            currentPresentingSymbolName = activeMeshrenderer.transform.parent.name;
+        }
+
         internal void SetBoolTo(ref Animator animator, supportedAnimatorBools supportedBool, bool value)
         {
             //Debug.Log(String.Format("{0} bool {1} is {2}", animator.gameObject.name, supportedBool.ToString(), value));
@@ -382,8 +399,8 @@ namespace Slot_Engine.Matrix
         internal void SetDisplaySymbolTo(NodeDisplaySymbol symbol_to_display)
         {
             //Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primary_symbol}");
-            SetPresentationSymbolTo(symbol_to_display.primary_symbol);
-            ShowSymbolRenderer(symbol_to_display.primary_symbol);
+            SetPresentationSymbolTo(symbol_to_display.primarySymbol);
+            ShowSymbolRenderer(symbol_to_display.primarySymbol);
             if (symbol_to_display.is_overlay)
             {
                 ShowSymbolRenderer(symbol_to_display.overlay_symbol, false);

@@ -43,9 +43,27 @@ namespace Slot_Engine.Matrix.Managers
         {
             get
             {
+                if(_winningObjects == null)
+                {
+                    _winningObjects = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref configurationObject.managers.evaluationManager.coreEvaluationObjects).winningObjects.ToArray();
+                }
+                if (_winningObjects.Length > 0)
+                {
+                    WinningPayline[] output = new WinningPayline[_winningObjects.Length];
+                    for (int i = 0; i < output.Length; i++)
+                    {
+                        output[i] = _winningObjects[i] as WinningPayline;
+                    }
+                    return output;
+                }
                 return configurationObject.managers.evaluationManager.ReturnWinningObjectsAsWinningPaylines();
             }
+            set
+            {
+                _winningObjects = value;
+            }
         }
+        internal WinningObject[] _winningObjects;
         public int current_winning_payline_shown = -1;
         //**
         public bool paylines_evaluated = false;
@@ -161,6 +179,8 @@ namespace Slot_Engine.Matrix.Managers
             //matrix.InitializeSymbolsForWinConfigurationDisplay();
             int payline_to_show = current_winning_payline_shown + 1 < winningObjects.Length ? current_winning_payline_shown + 1 : 0;
             //Debug.Log(String.Format("Showing Payline {0}", payline_to_show));
+            _winningObjects = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref configurationObject.managers.evaluationManager.coreEvaluationObjects).winningObjects.ToArray();
+            
             ShowWinningPayline(payline_to_show);
             //Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
             yield return new WaitForSeconds(winningObjectDisplayTime);
@@ -177,10 +197,11 @@ namespace Slot_Engine.Matrix.Managers
 
         internal Task ShowWinningPayline(int v)
         {
+            Debug.Log($"winningObjects.Length = {winningObjects.Length}");
             if (v < winningObjects.Length)
             {
                 current_winning_payline_shown = v;
-                //Debug.Log(String.Format("Current wining payline shown = {0}", v));
+                Debug.Log($"Current wining payline shown = {v}");
                 RenderWinningPayline(winningObjects[current_winning_payline_shown]);
             }
             return Task.CompletedTask;

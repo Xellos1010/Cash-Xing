@@ -75,7 +75,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             evaluationUsed = evaluationObject;
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();
-            Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.paylineNodes.Length}");
+            //Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.paylineNodes.Length}");
             //Filter thru each node and check the active feature conditions for activating a feature
             for (int rootNode = 0; rootNode < dynamic_paylines.paylineNodes.Length; rootNode++)
             {
@@ -85,7 +85,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw,evaluationObject.maxLength);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
-                //Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count,rootNode, dynamic_paylines.rootNodes[rootNode].node_info.Print()));
+                Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count, rootNode, dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()));
             }
             if (evaluationObject.featureEvaluationActiveCount != null)
             {
@@ -93,7 +93,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 foreach (KeyValuePair<Features, List<SuffixTreeNodeInfo>> item in evaluationObject.featureEvaluationActiveCount)
                 {
                     //Multiplier calculated first then mode is applied
-                    Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
+                    //Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
                     if ((item.Key == Features.overlay || item.Key == Features.multiplier))
                     {
                         OverlayEvaluationScriptableObject overlayLogic = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);

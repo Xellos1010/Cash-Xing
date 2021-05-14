@@ -22,4 +22,5 @@ public abstract class BasePathTransformSpinEvaluatorScriptableObject : Scriptabl
     /// <returns></returns>
     public abstract Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath positionPath);
     internal abstract float GetTotalTime();
+    internal abstract bool isTimeInPauseState(float spinCurrentTimer);
 }

@@ -13,7 +13,7 @@ namespace Slot_Engine.Matrix
     public struct NodeDisplaySymbol
     {
         [SerializeField]
-        internal int primary_symbol;
+        internal int primarySymbol;
         [SerializeField]
         internal int overlay_symbol;
         [SerializeField]
@@ -41,7 +41,7 @@ namespace Slot_Engine.Matrix
 
         public NodeDisplaySymbol(int primary_symbol) : this()
         {
-            this.primary_symbol = primary_symbol;
+            this.primarySymbol = primary_symbol;
         }
 
         internal void SetOverlaySymbolTo(int symbol)

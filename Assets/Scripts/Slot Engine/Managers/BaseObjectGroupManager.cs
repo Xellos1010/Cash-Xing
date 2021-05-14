@@ -245,8 +245,12 @@ namespace Slot_Engine.Matrix
 
         internal virtual List<BaseObjectManager> GetSlotsDecending()
         {
+            //Use sqr magnitude
             List<BaseObjectManager> output = new List<BaseObjectManager>();
-            Debug.LogWarning("Not Implemented for base class");
+            output.AddRange(objectsInGroup);
+            output.Sort(); // Temporary sorting method - only ascending
+            //Not efficient but gets the job done for 5-7 objects
+            
             return output;
         }
         /// <summary>
@@ -260,6 +264,30 @@ namespace Slot_Engine.Matrix
             //Waits until all slots have stopped spinning
             await StopReel(reelStrip.displaySymbols); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
+        }
+
+        internal NodeDisplaySymbol[] GetNodeDisplaySymbols()
+        {
+            List<BaseObjectManager> tempOutput = GetSlotsDecending();
+            //Debug.Log($"tempOutput.Count = {tempOutput.Count}");
+            List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
+            for (int i = 0; i < tempOutput.Count; i++)
+            {
+                //Debug.Log($"tempOutput[{i}].currentPresentingSymbolID = {tempOutput[i].currentPresentingSymbolID}");
+                output.Add(new NodeDisplaySymbol(tempOutput[i].currentPresentingSymbolID));
+            }
+            //Debug.Log($"Node Display Symbols from {gameObject.name} = {PrintNodeDisplaySymbols( output.ToArray())}");
+            return output.ToArray();
+        }
+
+        private string PrintNodeDisplaySymbols(NodeDisplaySymbol[] nodeDisplaySymbols)
+        {
+            string output = "";
+            for (int i = 0; i < nodeDisplaySymbols.Length; i++)
+            {
+                output += "|" + nodeDisplaySymbols[i].primarySymbol;
+            }
+            return output;
         }
 
         /// <summary>
@@ -290,7 +318,7 @@ namespace Slot_Engine.Matrix
             List<int> output = new List<int>();
             for (int endingSymbol = 0; endingSymbol < endingSymbols.Length; endingSymbol++)
             {
-                output.Add(endingSymbols[endingSymbol].primary_symbol);
+                output.Add(endingSymbols[endingSymbol].primarySymbol);
             }
             return String.Join("|", output);
         }
@@ -371,6 +399,14 @@ namespace Slot_Engine.Matrix
         internal void SetNextSymbolToAppear(int selectedSymbolToGenerate)
         {
             nextSymbolToAppear = selectedSymbolToGenerate;
+        }
+
+        internal void SyncDisplaySymbolInformation()
+        {
+            for (int i = 0; i < objectsInGroup.Length; i++)
+            {
+                objectsInGroup[i].SyncCurrentDisplaySymbolInfo();
+            }
         }
     }
 }

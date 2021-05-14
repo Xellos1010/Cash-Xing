@@ -37,7 +37,7 @@ public struct StripSpinStruct
         List<int> output = new List<int>();
         for (int i = 0; i < displaySymbols.Length; i++)
         {
-            output.Add(displaySymbols[i].primary_symbol);
+            output.Add(displaySymbols[i].primarySymbol);
         }
         return output;
     }
