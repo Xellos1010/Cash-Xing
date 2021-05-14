@@ -79,13 +79,13 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             //Filter thru each node and check the active feature conditions for activating a feature
             for (int rootNode = 0; rootNode < dynamic_paylines.paylineNodes.Length; rootNode++)
             {
-                Debug.Log($"Checking Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
+                // Debug.Log($"Checking Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
                 output_raw.AddRange(dynamic_paylines.paylineNodes[rootNode].InitializeAndCheckForWinningPaylines(ref evaluationObject));
                 //Don't add the same full line win both ways
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw,evaluationObject.maxLength);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
-                Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count, rootNode, dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()));
+                // Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count, rootNode, dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()));
             }
             if (evaluationObject.featureEvaluationActiveCount != null)
             {
@@ -203,18 +203,18 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         }
         internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes currentPaylineNode, ref ConfigurationDisplayZonesStruct[] displayZones, paylineDirection evaluationDirection, ref SuffixTreeNodes rootNode, CustomColumns[] customColumnsDefine = null)
         {
-            Debug.Log($"Payline before nodeInfo registered = {String.Join("|", payline)}");
+            //Debug.Log($"Payline before nodeInfo registered = {String.Join("|", payline)}");
             //Add current node to payline
             payline.Add(currentPaylineNode.nodeInfo.row);
             //Debug.Log($"Payline after nodeInfo registered = {String.Join("|", payline)}");
             int next_column = currentPaylineNode.leftRight ? currentPaylineNode.nodeInfo.column + 1 : currentPaylineNode.nodeInfo.column - 1;
-            Debug.Log($"next_column from {currentPaylineNode.nodeInfo.Print()} {next_column } = {currentPaylineNode.leftRight} node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;");
+            //Debug.Log($"next_column from {currentPaylineNode.nodeInfo.Print()} {next_column } = {currentPaylineNode.leftRight} node.left_right ? node.node_info.column + 1 : node.node_info.column - 1;");
             //Check the column is the last column and continue if it is
             if (currentPaylineNode.leftRight ?
                 next_column >= displayZones.Length :
                 next_column < 0)
             {
-                Debug.Log("Reached end of payline");
+                //Debug.Log("Reached end of payline");
                 dynamic_paylines.AddPaylineSupported(payline.ToArray(), currentPaylineNode.leftRight, rootNode);
                 number_of_paylines += 1;
             }
@@ -260,7 +260,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                     }
                     break;
                 default:
-                    Debug.Log("Please set the evaluation direciton to left, right or both");
+                    // Debug.Log("Please set the evaluation direciton to left, right or both");
                     break;
             }
             return root_nodes;
@@ -298,11 +298,11 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 }
                 else
                 {
-                    Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", displayZone.positionsInZone));
+                    // Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", displayZone.positionsInZone));
                     for (int slot = 0; slot < displayZone.positionsInZone; slot++)
                     {
                         //Register blank slot
-                        Debug.Log(String.Format("Root Node {0} {1} not in active payzone", column, row));
+                        // Debug.Log(String.Format("Root Node {0} {1} not in active payzone", column, row));
                         row += 1;
                     }
                 }

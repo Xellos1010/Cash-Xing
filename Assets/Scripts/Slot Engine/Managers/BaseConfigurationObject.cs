@@ -127,8 +127,18 @@ namespace Slot_Engine.Matrix
             }
             //Wait for all reels to be in spin.end state before continuing
             await WaitForGroupManagersToStopSpin(configurationGroupManagers);
+            //ensure symbols have proper id's set
+            SyncCurrentSymbolDisplayed();
             //Evaluate the reels - 
             managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
+        }
+
+        internal void SyncCurrentSymbolDisplayed()
+        {
+            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            {
+                configurationGroupManagers[i].SyncDisplaySymbolInformation();
+            }
         }
 
         internal int GetPaddingBeforeStrip(int stripColumn)

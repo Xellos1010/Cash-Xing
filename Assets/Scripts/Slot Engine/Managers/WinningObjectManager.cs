@@ -43,10 +43,7 @@ namespace Slot_Engine.Matrix.Managers
         {
             get
             {
-                if(_winningObjects == null)
-                {
-                    _winningObjects = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref configurationObject.managers.evaluationManager.coreEvaluationObjects).winningObjects.ToArray();
-                }
+                _winningObjects = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref configurationObject.managers.evaluationManager.coreEvaluationObjects).winningObjects.ToArray();
                 if (_winningObjects.Length > 0)
                 {
                     WinningPayline[] output = new WinningPayline[_winningObjects.Length];
@@ -56,6 +53,7 @@ namespace Slot_Engine.Matrix.Managers
                     }
                     return output;
                 }
+                Debug.Log("Trying to return winning paylines from evaluation manager");
                 return configurationObject.managers.evaluationManager.ReturnWinningObjectsAsWinningPaylines();
             }
             set

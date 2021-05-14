@@ -78,7 +78,7 @@ namespace Slot_Engine.Matrix
             AddWinningSymbol(linewin_symbol.primarySymbol, ref evaluationObject, ref nodeInfo);
             //Initialize Winning Paylines
             List<WinningPayline> winning_paylines = new List<WinningPayline>();
-            Debug.Log(String.Format($"Primary Linewin Symbol = {linewin_symbol.primarySymbol} - Starting check for winning paylines from node {nodeInfo.Print()}"));
+            //Debug.Log(String.Format($"Primary Linewin Symbol = {linewin_symbol.primarySymbol} - Starting check for winning paylines from node {nodeInfo.Print()}"));
             //Check all connected nodes for a win using dfs (depth first search) search
             CheckConnectedNodesForWin(ref nodeInfo, ref connectedNodes, ref evaluationObject, ref winning_paylines, linewin_symbol);
             evaluationObject.winningEvaluationNodes.Clear();
@@ -122,19 +122,19 @@ namespace Slot_Engine.Matrix
                                     evaluationObject.featureEvaluationActiveCount = new Dictionary<Features, List<SuffixTreeNodeInfo>>();
                                 }
                                 //Store that the node has a feature. After Paylines are evaluated we take the nodes in evaluationObject.featureEvaluationActiveCount[feature] and ensure the winning 
-                                Debug.Log($"slotEvaluationActivated = {slotEvaluationActivated} Slot Evaluating Feature Condition");
+                                //Debug.Log($"slotEvaluationActivated = {slotEvaluationActivated} Slot Evaluating Feature Condition");
                                 if (!evaluationObject.featureEvaluationActiveCount.ContainsKey(evaluationDisplaySymbol.features[feature]))
                                     evaluationObject.featureEvaluationActiveCount[evaluationDisplaySymbol.features[feature]] = new List<SuffixTreeNodeInfo>();
                                 if (!evaluationObject.featureEvaluationActiveCount[evaluationDisplaySymbol.features[feature]].Contains(nodeInfo))
                                 {
-                                    Debug.Log($"node {nodeInfo.Print()} has feature and needs to evaluate if feature activates");
+                                    //Debug.Log($"node {nodeInfo.Print()} has feature and needs to evaluate if feature activates");
                                     evaluationObject.featureEvaluationActiveCount[evaluationDisplaySymbol.features[feature]].Add(nodeInfo);
                                 }
                                 else
                                 {
-                                    Debug.Log($"node is already in list");
+                                    //Debug.Log($"node is already in list");
                                 }
-                                Debug.Log($"evaluationObject.featureEvaluationActiveCount.Count = {evaluationObject.featureEvaluationActiveCount.Count} node info = {nodeInfo.Print()}");
+                                //Debug.Log($"evaluationObject.featureEvaluationActiveCount.Count = {evaluationObject.featureEvaluationActiveCount.Count} node info = {nodeInfo.Print()}");
                             }
                         }
                     }
@@ -160,7 +160,7 @@ namespace Slot_Engine.Matrix
         /// <param name="winning_symbols">winning symbols list</param>
         private void CheckForDynamicWinningPaylinesOnNode(ref SuffixTreeNodes nodeToCheck, ref EvaluationObjectStruct evaluationObject, NodeDisplaySymbol nextDisplaySymbol, ref List<WinningPayline> winning_paylines)
         {
-            Debug.Log($"Checking node {nodeToCheck.nodeInfo.Print()}"); 
+            //Debug.Log($"Checking node {nodeToCheck.nodeInfo.Print()}"); 
             //Get current node symbol display struct
             NodeDisplaySymbol currentDisplaySymbol = evaluationObject.gridConfiguration[nodeToCheck.nodeInfo.column].displaySymbols[nodeToCheck.nodeInfo.row];
 
@@ -171,7 +171,7 @@ namespace Slot_Engine.Matrix
             //First Level Check - Wilds - TODO Refactor to abstract logic - Need to build in wild support
             if (SymbolsMatch(currentDisplaySymbol, nextDisplaySymbol))
             {
-                Debug.Log($"{nextDisplaySymbol}Match's! Winning Symbol in Node {nodeToCheck.nodeInfo.Print()}");
+                //Debug.Log($"{nextDisplaySymbol}Match's! Winning Symbol in Node {nodeToCheck.nodeInfo.Print()}");
                 //Add the winning symbol to the payline
                 AddWinningSymbol(currentDisplaySymbol.primarySymbol, ref evaluationObject, ref nodeToCheck.nodeInfo);
 
@@ -194,7 +194,7 @@ namespace Slot_Engine.Matrix
             }
             else
             {
-                Debug.Log($"Reached end of Payline - evaluationObject.winningEvaluationNodes.Count {evaluationObject.winningEvaluationNodes.Count} >= 3 == {evaluationObject.winningEvaluationNodes.Count >= 3}");
+                //Debug.Log($"Reached end of Payline - evaluationObject.winningEvaluationNodes.Count {evaluationObject.winningEvaluationNodes.Count} >= 3 == {evaluationObject.winningEvaluationNodes.Count >= 3}");
                 if (evaluationObject.winningEvaluationNodes.Count >= 3)
                 {
                     InitializeAndAddDynamicWinningPayline(nodeToCheck, ref evaluationObject.winningEvaluationNodes, ref winning_paylines);
@@ -366,7 +366,7 @@ namespace Slot_Engine.Matrix
         /// <param name="customColumnsDefine"></param>
         internal void InitializeConnectedNodes(int nextColumn, ref ConfigurationDisplayZonesStruct displayZoneNextColumn, ref SuffixTreeNodes parentNode, bool leftRight, paylineDirection evaluationDirection, CustomColumns[] customColumnsDefine = null)
         {
-            Debug.Log($"Initializing connected nodes for {parentNode.nodeInfo.Print()} - nextColumn = {nextColumn}");
+            //Debug.Log($"Initializing connected nodes for {parentNode.nodeInfo.Print()} - nextColumn = {nextColumn}");
 
             List<SuffixTreeNodes> connectedNodes = new List<SuffixTreeNodes>();
             List<int> connectedNodesList = new List<int>();
@@ -374,7 +374,7 @@ namespace Slot_Engine.Matrix
             //validate previous node is non-negatice
             if (parentNode.nodeInfo.row < 0)
             {
-                Debug.Log($"parent_node.node_info.row < 0 - Not a valid row - Check your code");
+                //Debug.Log($"parent_node.node_info.row < 0 - Not a valid row - Check your code");
                 throw new NotImplementedException();
             }
             else
@@ -382,13 +382,13 @@ namespace Slot_Engine.Matrix
                 //Evaluation happens here - check if custom columns 
                 if (evaluationDirection != paylineDirection.customcolumns)
                 {
-                    Debug.Log($"Evaluation Direction not custom - using spider tree method {parentNode.nodeInfo.Print()}");
+                    //Debug.Log($"Evaluation Direction not custom - using spider tree method {parentNode.nodeInfo.Print()}");
                     Spider1NodeBuildTree(nextColumn, displayZoneNextColumn, parentNode, leftRight, connectedNodes, connectedNodesList);
                 }
                 else
                 {
                     //If parent node falls within a custom column for or the current then respect both
-                    Debug.Log($"Checking Node column {nextColumn} row {parentNode.nodeInfo.row} Checking for custom Column in parent node");
+                    //Debug.Log($"Checking Node column {nextColumn} row {parentNode.nodeInfo.row} Checking for custom Column in parent node");
                     //Need to build nodes based on custom columns
                     bool useSpider = true;
                     //Check current Column for custom Column
@@ -414,12 +414,12 @@ namespace Slot_Engine.Matrix
                     }
                     if (useSpider)
                     {
-                        Debug.Log($"column {nextColumn} row {parentNode.nodeInfo.row} using Spider Node Build Tree");
+                        //Debug.Log($"column {nextColumn} row {parentNode.nodeInfo.row} using Spider Node Build Tree");
                         Spider1NodeBuildTree(nextColumn, displayZoneNextColumn, parentNode, leftRight, connectedNodes, connectedNodesList);
                     }
                     else
                     {
-                        Debug.Log($"column {nextColumn} row {parentNode.nodeInfo.row} Adding Adjacent node only");
+                        //Debug.Log($"column {nextColumn} row {parentNode.nodeInfo.row} Adding Adjacent node only");
                         AddAdjacentNode(nextColumn, displayZoneNextColumn, parentNode, leftRight, connectedNodes, connectedNodesList);
                     }
                 }
@@ -437,10 +437,10 @@ namespace Slot_Engine.Matrix
 
         private void AddDiagonalBottomNode(int current_column, ConfigurationDisplayZonesStruct displayZoneNextColumn, SuffixTreeNodes parent_node, bool left_right, List<SuffixTreeNodes> connectedNodes, List<int> connectedNodesList)
         {
-            Debug.Log($"Checking Bottom Diagonal Node Column:{current_column} parent_node.node_info.row + 1 = {parent_node.nodeInfo.row + 1} is in active display zone");
+            //Debug.Log($"Checking Bottom Diagonal Node Column:{current_column} parent_node.node_info.row + 1 = {parent_node.nodeInfo.row + 1} is in active display zone");
             if (IsInActiveDisplayZone(parent_node.nodeInfo.row + 1, ref displayZoneNextColumn))
             {
-                Debug.Log($"Adding Bottom Diagonal Node Column:{current_column} parent_node.node_info.row + 1 = {parent_node.nodeInfo.row + 1} is in active display zone");
+                //Debug.Log($"Adding Bottom Diagonal Node Column:{current_column} parent_node.node_info.row + 1 = {parent_node.nodeInfo.row + 1} is in active display zone");
                 connectedNodesList.Add(parent_node.nodeInfo.row + 1);
                 connectedNodes.Add(new SuffixTreeNodes(current_column, parent_node.nodeInfo.row + 1, parent_node.parent_nodes, parent_node.nodeInfo, left_right));
             }
@@ -448,12 +448,12 @@ namespace Slot_Engine.Matrix
 
         private void AddDiagonalTopNode(int current_column, ConfigurationDisplayZonesStruct displayZoneNextColumn, SuffixTreeNodes parent_node, bool left_right, List<SuffixTreeNodes> connectedNodes, List<int> connectedNodesList)
         {
-            Debug.Log($"Checking Top Diagonal Node Column:{current_column} parent_node.node_info.row - 1 = {parent_node.nodeInfo.row - 1} is in active display zone");
+            //Debug.Log($"Checking Top Diagonal Node Column:{current_column} parent_node.node_info.row - 1 = {parent_node.nodeInfo.row - 1} is in active display zone");
             if (parent_node.nodeInfo.row - 1 > -1)
             {
                 if (IsInActiveDisplayZone(parent_node.nodeInfo.row - 1, ref displayZoneNextColumn))
                 {
-                    Debug.Log($"Adding Top Diagonal Node Column:{current_column} parent_node.node_info.row - 1 = {parent_node.nodeInfo.row - 1} is in active display zone");
+                    //Debug.Log($"Adding Top Diagonal Node Column:{current_column} parent_node.node_info.row - 1 = {parent_node.nodeInfo.row - 1} is in active display zone");
                     connectedNodesList.Add(parent_node.nodeInfo.row - 1);
                     connectedNodes.Add(new SuffixTreeNodes(current_column, parent_node.nodeInfo.row - 1, parent_node.parent_nodes, parent_node.nodeInfo, left_right));
                 }
@@ -462,10 +462,10 @@ namespace Slot_Engine.Matrix
 
         private void AddAdjacentNode(int current_column, ConfigurationDisplayZonesStruct displayZoneNextColumn, SuffixTreeNodes parent_node, bool left_right, List<SuffixTreeNodes> connectedNodes, List<int> connectedNodesList)
         {
-            Debug.Log($"Checking if adjacent row to parent is in an active display zone");
+            //Debug.Log($"Checking if adjacent row to parent is in an active display zone");
             if (IsInActiveDisplayZone(parent_node.nodeInfo.row, ref displayZoneNextColumn))
             {
-                Debug.Log($"Adjecent Node Column:{current_column} parent_node.node_info.row = {parent_node.nodeInfo.row} is in active display zone");
+                //Debug.Log($"Adjecent Node Column:{current_column} parent_node.node_info.row = {parent_node.nodeInfo.row} is in active display zone");
                 connectedNodesList.Add(parent_node.nodeInfo.row);
                 connectedNodes.Add(new SuffixTreeNodes(current_column, parent_node.nodeInfo.row, parent_node.parent_nodes, parent_node.nodeInfo, left_right));
             }
@@ -481,7 +481,7 @@ namespace Slot_Engine.Matrix
                 if(customColumnsDefine[i].rootColumn == column)
                 {
                     columnIndex = i;
-                    Debug.Log($"Column {column} has Custom Columns {i}");
+                    //Debug.Log($"Column {column} has Custom Columns {i}");
                     return true;
                 }
             }
@@ -493,33 +493,35 @@ namespace Slot_Engine.Matrix
             //Below padding or above total display zones + padding before
             if (row < displayZoneNextColumn.paddingBefore || row > (displayZoneNextColumn.displayZonesPositionsTotal + displayZoneNextColumn.paddingBefore))
             {
-                Debug.LogWarning($"Position does not fall within display range default return false is positon Active Display Zone");
+                //Debug.LogWarning($"Position does not fall within display range default return false is positon Active Display Zone");
                 return false;
             }
             else
             {
-                Debug.Log($"Checking if row {row} is in active display zone padding = {displayZoneNextColumn.paddingBefore} displayZoneNextColumn.displayZonesPositionsTotal = {displayZoneNextColumn.displayZonesPositionsTotal}");
+                //Debug.Log($"Checking if row {row} is in active display zone padding = {displayZoneNextColumn.paddingBefore} displayZoneNextColumn.displayZonesPositionsTotal = {displayZoneNextColumn.displayZonesPositionsTotal}");
                 int positionsInZone = 0;
                 //Check each position in zone - if slot to check falls within active payzone return tru
                 for (int i = 0; i < displayZoneNextColumn.displayZones.Length; i++)
                 {
                     positionsInZone += displayZoneNextColumn.displayZones[i].positionsInZone;
-                    Debug.Log($"displayZoneNextColumn.displayZones[i].activePaylineEvaluations = {displayZoneNextColumn.displayZones[i].activePaylineEvaluations}");
+                    //Debug.Log($"displayZoneNextColumn.displayZones[i].activePaylineEvaluations = {displayZoneNextColumn.displayZones[i].activePaylineEvaluations}");
                     if (displayZoneNextColumn.displayZones[i].activePaylineEvaluations)
                     {
-                        Debug.Log($"Checking row {row} in displayZoneNextColumn.displayZones[i].positionsInZone = {displayZoneNextColumn.displayZones[i].positionsInZone}");
-                        Debug.Log($"{row} >= {displayZoneNextColumn.paddingBefore} = {row >= displayZoneNextColumn.paddingBefore} : {row} < {displayZoneNextColumn.paddingBefore + positionsInZone} {row < displayZoneNextColumn.paddingBefore + positionsInZone}");
-                        if (row >= displayZoneNextColumn.paddingBefore && row < displayZoneNextColumn.paddingBefore+positionsInZone) // Is within that zone - return active or inactive
+                        //Debug.Log($"Checking row {row} in displayZoneNextColumn.displayZones[i].positionsInZone = {displayZoneNextColumn.displayZones[i].positionsInZone}");
+                        //Debug.Log($"{row} >= {displayZoneNextColumn.paddingBefore} = {row >= displayZoneNextColumn.paddingBefore} : {row} < {displayZoneNextColumn.paddingBefore + positionsInZone} {row < displayZoneNextColumn.paddingBefore + positionsInZone}");
+                        if (row >= displayZoneNextColumn.paddingBefore && row < displayZoneNextColumn.paddingBefore + positionsInZone) // Is within that zone - return active or inactive
                         {
-                            Debug.Log("Returning Active Zone");
+                            //Debug.Log("Returning Active Zone");
                             return displayZoneNextColumn.displayZones[i].activePaylineEvaluations;
                         }
                         else
-                            Debug.Log("not in active zone - check next zone");
+                        {
+                            //Debug.Log("not in active zone - check next zone");
+                        }
                     }
                 }
             }
-            Debug.LogWarning($"Position is not valid - default return false is positon Active Display Zone");
+            //Debug.LogWarning($"Position is not valid - default return false is positon Active Display Zone");
             return false;
         }
 

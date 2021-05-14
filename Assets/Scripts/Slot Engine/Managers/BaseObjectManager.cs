@@ -413,7 +413,7 @@ namespace Slot_Engine.Matrix
                 currentPresentingSymbolName = "Not on Matrix";
             else
                 currentPresentingSymbolName = ReturnSymbolNameFromInt(to_symbol);
-            currentPresentingSymbolID = to_symbol;
+            currentPresentingSymbolID = to_symbol; 
         }
         internal void UpdateSpinTimerFromSpinManager()
         {

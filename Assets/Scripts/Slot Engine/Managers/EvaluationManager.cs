@@ -216,6 +216,7 @@ namespace Slot_Engine.Matrix.Managers
         /// <param name="usePreGenerated"></param>
         public async void EvaluateWinningSymbolsFromCurrentConfiguration(bool usePreGenerated = false)
         {
+            Debug.Log($"Evaluating Wins - using PreGenerated reels = {usePreGenerated}");
             StripSpinStruct[] temp = usePreGenerated ? configurationObject.managers.endConfigurationManager.currentReelstripConfiguration : BuildStripSpinStructArrayFromSymbolsOnDisplay();
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
             await EvaluateWinningSymbols(temp);
