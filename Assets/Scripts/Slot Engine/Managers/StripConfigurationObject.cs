@@ -146,6 +146,12 @@ namespace Slot_Engine.Matrix
                 return null;
             }
         }
+
+        public override void Start()
+        {
+            base.Start();
+        }
+
         /// <summary>
         /// 
         /// </summary>

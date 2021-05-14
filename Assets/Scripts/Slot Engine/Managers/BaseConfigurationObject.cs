@@ -67,18 +67,21 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        public async void Start()
+        public async virtual void Start()
         {
             //Initialize game mode
             StateManager.SetGameModeActiveTo(GameModes.baseGame);
             await CheckSymbolWeightsWork();
-
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
             InitializeStateMachine();
             //Initialize Machine and Player  Information
             managers.machineInfoManager.InitializeTestMachineValues(10000.0f, 0.0f, managers.machineInfoManager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 - 1, 0, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
+            SyncCurrentSymbolDisplayed();
+            managers.endConfigurationManager.ClearConfigurations();
+            await managers.endConfigurationManager.GenerateMultipleEndReelStripsConfiguration(GameModes.baseGame,20);
+
             StateManager.SetStateTo(States.Idle_Intro);
         }
 
