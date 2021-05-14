@@ -100,10 +100,25 @@ namespace Slot_Engine.Matrix
         {
             ResetAllVars();
             timesReachedEndOfPath = 0;
+            startPositionIndex = GetIndexFromLocalPositions();
             SetObjectMovementEnabledTo(true);
             endSpin = false;
             this.test = test;
         }
+
+        private int GetIndexFromLocalPositions()
+        {
+            for (int i = 0; i < stripManager.localPositionsInStrip.Length; i++)
+            {
+                if(transform.localPosition.sqrMagnitude == stripManager.localPositionsInStrip[i].sqrMagnitude)
+                {
+                    return i;
+                }
+            }
+            Debug.LogWarning("Position not found in local position manager. returning -1");
+            return -1;
+        }
+
         Vector3 SetPositionTo(Vector3 toPosition) //Needs to be positive to move forwards and negative to move backwards
         {
             //Debug.Log($"Setting transform.localPosition = {amount}");
@@ -145,6 +160,7 @@ namespace Slot_Engine.Matrix
             BasePathTransformSpinEvaluatorScriptableObject temp = stripManager.stripInfo.GetSpinParameters();
             StripObjectGroupManager temp2 = baseObjectGroupParent as StripObjectGroupManager;
             SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
+            //The Evaluating Object checks if you have a set amount of steps or rotations to make in spin then to return constant value
             temp.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
             toPosition = pathToEvaluate.toPositionEvaluated;
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)

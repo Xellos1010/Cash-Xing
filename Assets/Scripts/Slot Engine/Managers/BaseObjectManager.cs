@@ -124,6 +124,11 @@ namespace Slot_Engine.Matrix
                 objectInEndPosition = false;
                 presentationSymbolSetToEnd = false;
                 startPosition = transform.localPosition;
+                setToPresentationSymbolNextSpinCycle = false;
+                objectInEndPosition = false;
+                presentationSymbolSetToEnd = false;
+                stopSpinEndPosition = Vector3.zero;
+                spinCurrentTimer = 0.0f;
             }
         }
 
@@ -428,7 +433,6 @@ namespace Slot_Engine.Matrix
         internal virtual void ResetAllVars()
         {
             SetObjectMovementEnabledTo(false);
-            setToPresentationSymbolNextSpinCycle = false;
         }
 
         /// <summary>

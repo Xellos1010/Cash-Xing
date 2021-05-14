@@ -234,7 +234,7 @@ namespace Slot_Engine.Matrix
             else
             {
                 winningPaylineText.enabled = false;
-                Transform winingPaylineTextGameObjectObject = PrefabUtility.InstantiatePrefab(winningPaylinePrefab) as Transform;
+                Transform winingPaylineTextGameObjectObject = GameObject.Instantiate(winningPaylinePrefab) as Transform;
                 //Debug.Log($"winningPaylineText null = {winningPaylineText == null}");
 
                 //winingPaylineTextGameObjectObject.transform.SetParent(transform.parent);
