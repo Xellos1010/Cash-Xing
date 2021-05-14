@@ -121,8 +121,8 @@ namespace Slot_Engine.Matrix.Managers
                     if (timeCounter > 1)
                     {
                         ResetUseTimer();
-                        configurationObject.managers.interaction_controller.LockInteractions();
-                        configurationObject.managers.interaction_controller.CheckStateToSpinSlam();
+                        configurationObject.managers.interactionController.LockInteractions();
+                        configurationObject.managers.interactionController.CheckStateToSpinSlam();
                     }
                 }
                 else
@@ -179,7 +179,7 @@ namespace Slot_Engine.Matrix.Managers
             //Add configuration to the sequence to trigger feature
             configurationObject._managers.endConfigurationManager.AddConfigurationToSequence(feature);
             //Go through interaction controller to disable slamming during transition to idle_outro
-            configurationObject.managers.interaction_controller.CheckStateToSpinSlam();
+            configurationObject.managers.interactionController.CheckStateToSpinSlam();
         }
 
         internal void SetReelsLastConfigurationAndSpin()
@@ -187,7 +187,7 @@ namespace Slot_Engine.Matrix.Managers
             //Add configuration to the sequence to trigger feature
             configurationObject._managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame,configurationObject.managers.endConfigurationManager.endConfigurationsScriptableObject.currentReelstripConfiguration);
             //Go through interaction controller to disable slamming during transition to idle_outro
-            configurationObject.managers.interaction_controller.CheckStateToSpinSlam();
+            configurationObject.managers.interactionController.CheckStateToSpinSlam();
         }
 
         internal void TriggerSpinWin(int[] symbols, int numberOfSymbols)
@@ -204,7 +204,7 @@ namespace Slot_Engine.Matrix.Managers
                 };
             }
                 configurationObject.managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame, configuration);
-            configurationObject.managers.interaction_controller.CheckStateToSpinSlam();
+            configurationObject.managers.interactionController.CheckStateToSpinSlam();
 
         }
 

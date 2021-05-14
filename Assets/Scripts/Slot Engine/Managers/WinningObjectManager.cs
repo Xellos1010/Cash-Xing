@@ -3,6 +3,7 @@ using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.Threading;
+using System.Collections.Generic;
 //************
 #if UNITY_EDITOR
 using UnityEditor;
@@ -132,6 +133,9 @@ namespace Slot_Engine.Matrix.Managers
             await configurationObject.WaitForSymbolToResolveState(state);
         }
 
+        //If first time thru then lerp money to bank
+        [SerializeField]
+        internal List<Vector3> linePositions;
         /// <summary>
         /// Renderes the line for winniing payline
         /// </summary>
@@ -140,12 +144,11 @@ namespace Slot_Engine.Matrix.Managers
         [ExecuteInEditMode]
         public Task RenderWinningPayline(WinningPayline payline_to_show)
         {
-            //If first time thru then lerp money to bank
-            payline_renderer_manager.ShowWinningPayline(payline_to_show);
+            payline_renderer_manager.ShowWinningPayline(payline_to_show,out linePositions);
             if (Application.isPlaying)
             {
                 configurationObject.managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
-                configurationObject.SetSymbolsForWinConfigurationDisplay(payline_to_show);
+                configurationObject.SetSymbolsForWinConfigurationDisplay(payline_to_show, linePositions);
             }
             return Task.CompletedTask;
         }

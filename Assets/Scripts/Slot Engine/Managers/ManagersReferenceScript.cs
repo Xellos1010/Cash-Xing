@@ -28,12 +28,12 @@ namespace Slot_Engine.Matrix
             if (GUILayout.Button("Set All References"))
             {
                 Debug.Log(String.Format("myTarget.matrix = {0}", myTarget.configurationObject.gameObject.name));
-                Debug.Log(String.Format("myTarget.animator_statemachine_master = {0}", myTarget.animator_statemachine_master.gameObject.name));
-                Debug.Log(String.Format("myTarget.spin_manager = {0}", myTarget.spin_manager.gameObject.name));
-                Debug.Log(String.Format("myTarget.interaction_controller = {0}", myTarget.interaction_controller.gameObject.name));
-                Debug.Log(String.Format("myTarget.paylines_manager = {0}", myTarget.paylines_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.animator_statemachine_master = {0}", myTarget.animatorStateMachineMaster.gameObject.name));
+                Debug.Log(String.Format("myTarget.spin_manager = {0}", myTarget.spinManager.gameObject.name));
+                Debug.Log(String.Format("myTarget.interaction_controller = {0}", myTarget.interactionController.gameObject.name));
+                Debug.Log(String.Format("myTarget.paylines_manager = {0}", myTarget.winningObjectsManager.gameObject.name));
                 Debug.Log(String.Format("myTarget.end_configuration_manager = {0}", myTarget.endConfigurationManager.gameObject.name));
-                Debug.Log(String.Format("myTarget.racking_manager = {0}", myTarget.racking_manager.gameObject.name));
+                Debug.Log(String.Format("myTarget.racking_manager = {0}", myTarget.rackingManager.gameObject.name));
             }
             base.OnInspectorGUI();
         }
@@ -51,42 +51,42 @@ namespace Slot_Engine.Matrix
             }
         }
         internal StripConfigurationObject _matrix;
-        public AnimatorStateMachineManager animator_statemachine_master
+        public AnimatorStateMachineManager animatorStateMachineMaster
         {
             get
             {
-                return CheckReturnComponent<AnimatorStateMachineManager>(ref _animator_statemachine_master);
+                return CheckReturnComponent<AnimatorStateMachineManager>(ref _animatorStateMachineMaster);
             }
         }
-        internal AnimatorStateMachineManager _animator_statemachine_master;
-        public SpinManager spin_manager
+        internal AnimatorStateMachineManager _animatorStateMachineMaster;
+        public SpinManager spinManager
         {
             get
             {
-                return CheckReturnComponent<SpinManager>(ref _spin_manager);
+                return CheckReturnComponent<SpinManager>(ref _spinManager);
             }
         }
-        internal SpinManager _spin_manager;
-        public InteractionController interaction_controller
+        internal SpinManager _spinManager;
+        public InteractionController interactionController
         {
             get
             {
-                return CheckReturnComponent<InteractionController>(ref _interaction_controller);
+                return CheckReturnComponent<InteractionController>(ref _interactionController);
             }
         }
-        internal InteractionController _interaction_controller;
+        internal InteractionController _interactionController;
         /// <summary>
         /// Manages the reference for paylines_manager
         /// </summary>
-        public WinningObjectManager paylines_manager
+        public WinningObjectManager winningObjectsManager
         {
             get
             {
-                return CheckReturnComponent<WinningObjectManager>(ref _paylines_manager);
+                return CheckReturnComponent<WinningObjectManager>(ref _winningObjectsManager);
             }
         }
 
-        internal WinningObjectManager _paylines_manager;
+        internal WinningObjectManager _winningObjectsManager;
         /// <summary>
         /// Manages the reference for end configuration manager
         /// </summary>
@@ -102,34 +102,34 @@ namespace Slot_Engine.Matrix
         /// Manages the reference for symbols_material_manager
         /// </summary>
         public SoundManager soundManager;
-        public RackingManager racking_manager
+        public RackingManager rackingManager
         {
             get
             {
-                return CheckReturnComponent<RackingManager>(ref _racking_manager);
+                return CheckReturnComponent<RackingManager>(ref _rackingManager);
             }
         }
-        internal RackingManager _racking_manager;
+        internal RackingManager _rackingManager;
         /// <summary>
         /// Manages the reference for the machine information manager
         /// </summary>
-        public MachineInfoManager machine_info_manager
+        public MachineInfoManager machineInfoManager
         {
             get
             {
-                return CheckReturnComponent<MachineInfoManager>(ref _machine_info_manager);
+                return CheckReturnComponent<MachineInfoManager>(ref _machineInfoManager);
             }
         }
-        internal MachineInfoManager _machine_info_manager;
+        internal MachineInfoManager _machineInfoManager;
 
         public EvaluationManager evaluationManager;
         public LerpToMe multiplierLerpToMe;
 
-        private T CheckReturnComponent<T>(ref T component_referenece)
+            private T CheckReturnComponent<T>(ref T componentReferenece)
         {
-            if (component_referenece == null)
-                component_referenece = GetComponentFromChild<T>();
-            return component_referenece;
+            if (componentReferenece == null)
+                componentReferenece = GetComponentFromChild<T>();
+            return componentReferenece;
         }
 
         public T GetComponentFromChild<T>()

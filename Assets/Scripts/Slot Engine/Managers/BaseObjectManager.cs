@@ -417,7 +417,7 @@ namespace Slot_Engine.Matrix
         }
         internal void UpdateSpinTimerFromSpinManager()
         {
-            SetLocalCurrentSpinTimerTo(baseObjectGroupParent.configurationObjectParent.managers.spin_manager.timeCounter);
+            SetLocalCurrentSpinTimerTo(baseObjectGroupParent.configurationObjectParent.managers.spinManager.timeCounter);
         }
 
         private void SetLocalCurrentSpinTimerTo(float toValue)

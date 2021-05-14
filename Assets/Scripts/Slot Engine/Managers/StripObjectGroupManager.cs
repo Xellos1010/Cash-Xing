@@ -235,7 +235,7 @@ namespace Slot_Engine.Matrix
         internal override List<BaseObjectManager> GetSlotsDecending()
         {
             List<BaseObjectManager> output = new List<BaseObjectManager>();
-            Debug.Log($"localPositionsInStrip.Length == {localPositionsInStrip.Length} - objectsInGroup.Length == {objectsInGroup.Length}");
+            //Debug.Log($"localPositionsInStrip.Length == {localPositionsInStrip.Length} - objectsInGroup.Length == {objectsInGroup.Length}");
             for (int position_to_check = 0; position_to_check < localPositionsInStrip.Length; position_to_check++)
             {
                 for (int slot = 0; slot < objectsInGroup.Length; slot++)

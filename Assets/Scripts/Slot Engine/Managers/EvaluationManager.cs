@@ -48,16 +48,16 @@ namespace Slot_Engine.Matrix.Managers
                     payline_to_show = EditorGUILayout.IntSlider(payline_to_show, 0, paylinesEvaluationObject.dynamic_paylines.paylinesSupported.Count - 1);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        myTarget.configurationObject.managers.paylines_manager.ShowDynamicPaylineRaw(payline_to_show);
+                        myTarget.configurationObject.managers.winningObjectsManager.ShowDynamicPaylineRaw(payline_to_show);
                     }
                     if (paylinesEvaluationObject.winningObjects.Count > 0)
                     {
                         EditorGUI.BeginChangeCheck();
                         winning_payline_to_show = EditorGUILayout.IntSlider(winning_payline_to_show, 0, paylinesEvaluationObject.winningObjects.Count - 1);
-                        myTarget.configurationObject.managers.paylines_manager._winningObjects = paylinesEvaluationObject.winningObjects.ToArray();
+                        myTarget.configurationObject.managers.winningObjectsManager._winningObjects = paylinesEvaluationObject.winningObjects.ToArray();
                         if (EditorGUI.EndChangeCheck())
                         {
-                            myTarget.configurationObject.managers.paylines_manager.ShowWinningPayline(winning_payline_to_show);
+                            myTarget.configurationObject.managers.winningObjectsManager.ShowWinningPayline(winning_payline_to_show);
                         }
                     }
                     if (GUILayout.Button("Show Current End Configuration On Reels"))

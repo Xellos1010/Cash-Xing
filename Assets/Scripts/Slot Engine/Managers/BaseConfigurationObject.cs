@@ -76,7 +76,7 @@ namespace Slot_Engine.Matrix
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
             InitializeStateMachine();
             //Initialize Machine and Player  Information
-            managers.machine_info_manager.InitializeTestMachineValues(10000.0f, 0.0f, managers.machine_info_manager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 - 1, 0, 0);
+            managers.machineInfoManager.InitializeTestMachineValues(10000.0f, 0.0f, managers.machineInfoManager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 - 1, 0, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             StateManager.SetStateTo(States.Idle_Intro);
@@ -96,7 +96,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal async Task SpinReels(StripSpinStruct[] end_reel_configuration)
         {
-            int[] orderStopObjects = managers.spin_manager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
+            int[] orderStopObjects = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
             Debug.Log($"Spinning objects in order {String.Join("|", orderStopObjects)}");
             //Spin the reels - if there is a delay between reels then wait delay amount
             for (int i = 0; i < orderStopObjects.Length; i++)
@@ -111,12 +111,12 @@ namespace Slot_Engine.Matrix
             StripSpinStruct[] configuration_to_use = managers.endConfigurationManager.GetCurrentConfiguration();
 
             //Get Order of stopping configuration objects from baseSpinSettingsScriptableObject - Independant reels will have to be taken into consideration
-            int[] orderStopObjects = managers.spin_manager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
+            int[] orderStopObjects = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
             //Determine whether to stop reels forwards or backwards.
             for (int i = 0; i < orderStopObjects.Length; i++)
             {
                 //If reel strip delays are enabled wait between strips to stop
-                if (managers.spin_manager.baseSpinSettingsScriptableObject.delayStartEnabled)
+                if (managers.spinManager.baseSpinSettingsScriptableObject.delayStartEnabled)
                 {
                     await configurationGroupManagers[orderStopObjects[i]].StopReel(configuration_to_use[i]);
                 }
@@ -197,7 +197,7 @@ namespace Slot_Engine.Matrix
         {
             string[] keys = GatherKeysFromSubStates();
             AnimatorSubStateMachine[] values = GatherValuesFromSubStates();
-            _managers.animator_statemachine_master.SetSubStateMachinesTo(keys, values);
+            _managers.animatorStateMachineMaster.SetSubStateMachinesTo(keys, values);
         }
 
         private string[] GatherKeysFromSubStates()

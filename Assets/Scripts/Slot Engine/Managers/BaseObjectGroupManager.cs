@@ -269,16 +269,16 @@ namespace Slot_Engine.Matrix
 
         internal NodeDisplaySymbol[] GetNodeDisplaySymbols()
         {
-            Debug.Log($"{gameObject.name} is generating Node Display Symbols");
+            //Debug.Log($"{gameObject.name} is generating Node Display Symbols");
             List<BaseObjectManager> tempOutput = GetSlotsDecending();
-            Debug.Log($"tempOutput.Count = {tempOutput.Count}");
+            //Debug.Log($"tempOutput.Count = {tempOutput.Count}");
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             for (int i = 0; i < tempOutput.Count; i++)
             {
-                Debug.Log($"tempOutput[{i}].currentPresentingSymbolID = {tempOutput[i].currentPresentingSymbolID}");
+                //Debug.Log($"tempOutput[{i}].currentPresentingSymbolID = {tempOutput[i].currentPresentingSymbolID}");
                 output.Add(new NodeDisplaySymbol(tempOutput[i].currentPresentingSymbolID));
             }
-            Debug.Log($"Node Display Symbols from {gameObject.name} = {PrintNodeDisplaySymbols(output.ToArray())}");
+            //Debug.Log($"Node Display Symbols from {gameObject.name} = {PrintNodeDisplaySymbols(output.ToArray())}");
             return output.ToArray();
         }
 

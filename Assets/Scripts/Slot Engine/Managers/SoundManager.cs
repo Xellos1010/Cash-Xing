@@ -29,8 +29,8 @@ namespace Slot_Engine.Matrix
                 matrix.configurationGroupManagers[reel].objectGroupStartSpin += SoundManager_reelStartSpin;
                 matrix.configurationGroupManagers[reel].objectGroupEndSpin += SoundManager_reelStopSpin;
             }
-            matrix.managers.racking_manager.rackStart += Racking_manager_rackStart;
-            matrix.managers.racking_manager.rackEnd += Racking_manager_rackEnd;
+            matrix.managers.rackingManager.rackStart += Racking_manager_rackStart;
+            matrix.managers.rackingManager.rackEnd += Racking_manager_rackEnd;
         }
 
         private void Racking_manager_rackEnd()
@@ -66,8 +66,8 @@ namespace Slot_Engine.Matrix
                 matrix.configurationGroupManagers[reel].objectGroupStartSpin -= SoundManager_reelStartSpin;
                 matrix.configurationGroupManagers[reel].objectGroupEndSpin -= SoundManager_reelStopSpin;
             }
-            matrix.managers.racking_manager.rackStart -= Racking_manager_rackStart;
-            matrix.managers.racking_manager.rackEnd -= Racking_manager_rackEnd;
+            matrix.managers.rackingManager.rackStart -= Racking_manager_rackStart;
+            matrix.managers.rackingManager.rackEnd -= Racking_manager_rackEnd;
         }
 
         internal void PlayAudioForWinningPayline(WinningPayline winningPayline)
