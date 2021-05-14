@@ -10,7 +10,7 @@ using UnityEngine;
 public class Payline
 {
     [UnityEngine.SerializeField]
-    public PaylineConfiguration payline_configuration;
+    public PaylineConfiguration configuration;
     [UnityEngine.SerializeField]
     public bool left_right;
     /// <summary>
@@ -20,29 +20,29 @@ public class Payline
     public Payline(Payline payline)
     {
         left_right = payline.left_right;
-        payline_configuration = payline.payline_configuration;
+        configuration = payline.configuration;
     }
 
     public Payline(int[] vs, bool left_right, SuffixTreeNodeInfo rootNode)
     {
-        payline_configuration.payline = vs;
+        configuration.payline = vs;
         this.left_right = left_right;
         this.rootNode = rootNode;
     }
 
     internal string PrintConfiguration()
     {
-        return String.Join("|", payline_configuration.payline);
+        return String.Join("|", configuration.payline);
     }
 
     internal int ReturnLeftRootNodeFromFullLineWin()
     {
-        return left_right ? payline_configuration.payline[0]:payline_configuration.payline[payline_configuration.payline.Length - 1];
+        return left_right ? configuration.payline[0]:configuration.payline[configuration.payline.Length - 1];
     }
 
     internal int ReturnRightRootNodeFromFullLineWin()
     {
-        return left_right ? payline_configuration.payline[payline_configuration.payline.Length - 1] : payline_configuration.payline[0];
+        return left_right ? configuration.payline[configuration.payline.Length - 1] : configuration.payline[0];
     }
 }
 

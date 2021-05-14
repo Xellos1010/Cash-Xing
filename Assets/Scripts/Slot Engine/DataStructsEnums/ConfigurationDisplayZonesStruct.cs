@@ -95,5 +95,33 @@ namespace Slot_Engine.Matrix
                 return paddingBefore + paddingAfter + displayZonesPositionsTotal;
             }
         }
+
+        internal bool IsRowInActiveDisplayZone(int row)
+        {
+            if(row < paddingBefore || row > paddingBefore + displayZonesPositionsTotal)
+            {
+                Debug.Log($"Auto fill row {row} is > {paddingBefore + displayZonesPositionsTotal}");
+                return false;
+            }
+            else
+            {
+                int iCurrentPositionCheck = paddingBefore;
+                //set to iCurrentPositionCheck + displayZones[i].positions
+                int iCurrentEndPositionCheck = iCurrentPositionCheck;
+
+                for (int i = 0; i < displayZones.Length; i++)
+                {
+                    iCurrentEndPositionCheck += displayZones[i].positionsInZone;
+                    if (row >= iCurrentPositionCheck && row < iCurrentEndPositionCheck)
+                    {
+                        Debug.Log($"row {row} >= iCurrentPositionCheck {iCurrentPositionCheck} && row {row} < iCurrentEndPositionCheck {iCurrentEndPositionCheck}");
+                        Debug.Log($"Returning displayZones[{i}].activePaylineEvaluations = {displayZones[i].activePaylineEvaluations}");
+                        return displayZones[i].activePaylineEvaluations;
+                    }
+                }
+            }
+            //Default return false
+            return false;
+        }
     }
 }

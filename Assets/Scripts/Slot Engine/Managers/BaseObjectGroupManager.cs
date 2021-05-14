@@ -192,6 +192,34 @@ namespace Slot_Engine.Matrix
                 objectsInGroup[i].SetObjectMovementEnabledTo(enable_disable);
             }
         }
+
+        internal int ReturnValidActiveDisplayFromRow(int row)
+        {
+            //Check if row entered passes active display zone - then check up and down
+            if(IsRowInActiveDisplayZone(row))
+            {
+                return row;
+            }
+            else if(IsRowInActiveDisplayZone(row+1))
+            {
+                return row + 1;
+            }
+            else if(IsRowInActiveDisplayZone(row-1))
+                return row - 1;
+            else
+            {
+                Debug.LogWarning($"ReturnValidActiveDisplayFromRow is returning -1 - no valid rows. may cause unforseen issues");
+                return -1;
+            }
+        }
+
+        private bool IsRowInActiveDisplayZone(int row)
+        {
+            bool output = configurationGroupDisplayZones.IsRowInActiveDisplayZone(row);
+            Debug.Log($"{gameObject.name} is row {row} in active display = {output}");
+            return output;
+        }
+
         /// <summary>
         /// Set slots to Stop Spin
         /// </summary>

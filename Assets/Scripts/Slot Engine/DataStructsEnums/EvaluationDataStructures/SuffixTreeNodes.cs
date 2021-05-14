@@ -266,14 +266,14 @@ namespace Slot_Engine.Matrix
         private bool IsWinningPaylineInList(WinningPayline new_winning_payline, ref List<WinningPayline> winning_paylines, out WinningPayline duplicate_payline_reference)
         {
             //Initialize vars for payline checking
-            int[] new_winning_payline_configuration = new_winning_payline.payline.payline_configuration.payline;
+            int[] new_winning_payline_configuration = new_winning_payline.payline.configuration.payline;
             int[] shortest_payline_configuration;
             int[] list_entry_winning_payline_configuration;
 
             //Iterate thru each winning payline to compare to new payline
             for (int winning_payline = 0; winning_payline < winning_paylines.Count; winning_payline++)
             {
-                list_entry_winning_payline_configuration = winning_paylines[winning_payline].payline.payline_configuration.payline;
+                list_entry_winning_payline_configuration = winning_paylines[winning_payline].payline.configuration.payline;
                 //if the paylines are the same up to the third symbol - and the new winning payline is a 4 symbol payline - keep the 4 symbol
 
                 //Compare both paylines until the shortest length. then keep the highest winning payling
@@ -320,7 +320,7 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         private int[] CompareReturnShortestPayline(Payline payline1, Payline payline2)
         {
-            return payline1.payline_configuration.payline.Length > payline2.payline_configuration.payline.Length ? payline2.payline_configuration.payline : payline1.payline_configuration.payline;
+            return payline1.configuration.payline.Length > payline2.configuration.payline.Length ? payline2.configuration.payline : payline1.configuration.payline;
         }
 
         private string PrintDynamicPayline(ref List<EvaluationNode> winning_symbols)

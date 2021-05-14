@@ -43,6 +43,9 @@ namespace Slot_Engine.Matrix
         public float standard_payline_width = 50;
         public float highlight_win_width = 100;
         public bool render_paylines = true;
+
+        public TMPro.TextMeshPro winningPaylineText;
+        public Transform winningPaylinePrefab;
         public PaylineRenderer[] _payline_renderers; //TODO make private - testing mode only
         private PaylineRenderer[] payline_renderers
         {
@@ -129,31 +132,78 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="payline_to_show">The Winning payline to show</param>
         /// <param name="createAndReturnTextObject">Should we generate and return payline text to be destroyed?</param>
-        internal GameObject ShowWinningPayline(WinningPayline payline_to_show, out List<Vector3> linePositions,bool createAndReturnTextObject = false, bool fillToEndOfLine = false)
+        internal GameObject ShowWinningPayline(WinningPayline payline_to_show, out List<Vector3> linePositions,bool createAndReturnTextObject = false, bool fillEndToEnd = true)
         {
-            Debug.Log($"rendering Winning Payline - {payline_to_show.payline.PrintConfiguration()} root node = {payline_to_show.payline.rootNode.Print()}");
             GameObject output; //Returns the text amount object so can lerp to bank if feature active
-
+            //Used to hold reference to active display slot next to current slot
+            int adjacentSlot = -1;
             ToggleRenderer(true);
-            
             Payline toShowPayline = new Payline(payline_to_show.payline);
-            //Hack - Used to add payline nodes
-            if(fillToEndOfLine)
-                if (payline_to_show.payline.payline_configuration.payline.Length < matrix.configurationGroupManagers.Length)
+            //Used to fill the payline end to end
+            List<int> paylineTemp = new List<int>();
+            paylineTemp.AddRange(toShowPayline.configuration.payline);
+            //Used to add payline nodes based on root node and group managers
+            if (fillEndToEnd)
+            {
+                //Check if the length of the payline is the length of the group managers
+                if (payline_to_show.payline.configuration.payline.Length < matrix.configurationGroupManagers.Length)
                 {
-                    List<int> paylineTemp = new List<int>();
-                    paylineTemp.AddRange(toShowPayline.payline_configuration.payline);
-                    int newNumber = paylineTemp[paylineTemp.Count - 1];
-                    //TODO rework to fill based on left/right and only with valid nodes
-                    for (int paylineNode = paylineTemp.Count - 1; paylineNode < matrix.configurationGroupManagers.Length; paylineNode++)
+                    //Check if evaluating left right
+                    if (payline_to_show.payline.left_right)
                     {
-                        paylineTemp.Add(newNumber);
+                        if (payline_to_show.payline.rootNode.column != 0)
+                        {
+                            //Fill the payline backwards - the amount difference but as straight line - In future base this off 
+                            for (int toFill = payline_to_show.payline.rootNode.column; toFill > 0; toFill--)
+                            {
+                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(payline_to_show.payline.rootNode.row);
+                                //Will fill anything before the root node with the node adjacent\
+                                paylineTemp.Insert(0, adjacentSlot);
+                            }
+                        }
+                        if (paylineTemp.Count < matrix.configurationGroupManagers.Length)
+                        {
+                            int toFillBase = paylineTemp.Count;
+                            //Will fill anything after end of payline raw with the node adjacent
+                            for (int toFill = toFillBase; toFill < matrix.configurationGroupManagers.Length; toFill++)
+                            {
+                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(paylineTemp[paylineTemp.Count - 1]);
+                                paylineTemp.Add(adjacentSlot);
+                            }
+                        }
                     }
-                    toShowPayline.payline_configuration.payline = paylineTemp.ToArray();
+                    else
+                    {
+                        Debug.Log($"payline_to_show.payline.rootNode.column {payline_to_show.payline.rootNode.column} != matrix.configurationGroupManagers.Length-1 {matrix.configurationGroupManagers.Length-1} = {payline_to_show.payline.rootNode.column != matrix.configurationGroupManagers.Length-1}");
+                        if (payline_to_show.payline.rootNode.column != matrix.configurationGroupManagers.Length-1) //using 0 indexing based rule. -1 from length to get index last object in array
+                        {
+                            //Fill the payline backwards - the amount difference but as straight line - In future base this off 
+                            for (int toFill = payline_to_show.payline.rootNode.column; toFill < matrix.configurationGroupManagers.Length-1; toFill++)
+                            {
+                                //Will fill anything before the root node with the node adjacent
+                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(payline_to_show.payline.rootNode.row);
+                                paylineTemp.Insert(0, adjacentSlot);
+                            }
+                        }
+                        if (paylineTemp.Count < matrix.configurationGroupManagers.Length)
+                        {
+                            int toFillBase = paylineTemp.Count;
+                            //Will fill anything before the root node with the node adjacent
+                            for (int toFill = toFillBase; toFill < matrix.configurationGroupManagers.Length; toFill++)
+                            {
+                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(paylineTemp[paylineTemp.Count - 1]);
+                                paylineTemp.Add(adjacentSlot);
+                            }
+                        }
+                    }
                 }
+                toShowPayline.configuration.payline = paylineTemp.ToArray();
+            }
+            Debug.Log($"rendering Winning Payline - {toShowPayline.PrintConfiguration()} root node = {toShowPayline.rootNode.Print()}");
+
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
-            matrix.ReturnPositionsBasedOnPayline(ref payline_to_show.payline, out linePositions);
-            Vector3[] winningSymbolPositions = new Vector3[payline_to_show.payline.payline_configuration.payline.Length];
+            matrix.ReturnPositionsBasedOnPayline(ref toShowPayline, out linePositions);
+            Vector3[] winningSymbolPositions = new Vector3[toShowPayline.configuration.payline.Length];
             linePositions.CopyTo(0,winningSymbolPositions,0, winningSymbolPositions.Length);
             //Is this even or odd? use middle position if odd - use lerp half for even
             Vector3 position = winningSymbolPositions.Length % 2 == 0 ?
@@ -172,8 +222,6 @@ namespace Slot_Engine.Matrix
             }
             return output;
         }
-        public TMPro.TextMeshPro winningPaylineText;
-        public Transform winningPaylinePrefab;
         private GameObject SetWinningAmountDisplay(Vector3 vector3, float v, bool createAndReturnTextObject)
         {
             if (!createAndReturnTextObject)

@@ -146,33 +146,59 @@ namespace Slot_Engine.Matrix
                 return null;
             }
         }
-
-        internal void ReturnPositionsBasedOnPayline(ref Payline payline, out List<Vector3> out_positions)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="payline"></param>
+        /// <param name="out_positions"></param>
+        /// <param name="fullLineWin">Used to determine if full line win was used</param>
+        internal void ReturnPositionsBasedOnPayline(ref Payline payline, out List<Vector3> out_positions, bool fullLineWin = true)
         {
             out_positions = new List<Vector3>();
             int payline_positions_set = 0;
             bool rootNodeHit = false;
             Vector3 payline_posiiton_on_reel;
+            Debug.Log($"returning Positions based on payline configuration = {payline.PrintConfiguration()}");
+
             for (int strip = payline.left_right ? 0 : configurationGroupManagers.Length - 1;
                 payline.left_right ? strip < configurationGroupManagers.Length : strip >= 0;
                 strip += payline.left_right ? 1 : -1)
             {
-                //need to see if root node is on reel - if not then next reel
-                if (!rootNodeHit)
+                if (!fullLineWin)
                 {
-                    if (strip == payline.rootNode.column)
+                    //need to see if root node is on reel - if not then next reel
+                    if (!rootNodeHit)
                     {
-                        Debug.Log($"reel = {strip} payline.rootNode.column = {payline.rootNode.column}");
-                        rootNodeHit = true;
+                        if (strip == payline.rootNode.column)
+                        {
+                            Debug.Log($"Strip = {strip} payline.rootNode.column = {payline.rootNode.column}");
+                            rootNodeHit = true;
+                        }
+                    }
+                    if (rootNodeHit)
+                    {
+                        try
+                        {
+                            if (payline_positions_set < payline.configuration.payline.Length)
+                            {
+                                payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[strip], payline.configuration.payline[payline_positions_set]);
+                                payline_positions_set += 1;
+                                out_positions.Add(payline_posiiton_on_reel);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogWarning(e.Message);
+                        }
                     }
                 }
-                if (rootNodeHit)
+                else
                 {
                     try
                     {
-                        if (payline_positions_set < payline.payline_configuration.payline.Length)
+                        if (payline_positions_set < payline.configuration.payline.Length)
                         {
-                            payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[strip], payline.payline_configuration.payline[payline_positions_set]);
+                            payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[strip], payline.configuration.payline[payline_positions_set]);
                             payline_positions_set += 1;
                             out_positions.Add(payline_posiiton_on_reel);
                         }
@@ -183,8 +209,19 @@ namespace Slot_Engine.Matrix
                     }
                 }
             }
+            Debug.Log($"Out Positions = {PrintVectorList(out_positions)}");
         }
 
+        private string PrintVectorList(List<Vector3> out_positions)
+        {
+            string output = "";
+
+            for (int i = 0; i < out_positions.Count; i++)
+            {
+                output += "|" + out_positions[i].ToString();
+            }
+            return output;
+        }
 
         internal async Task PlayFeatureAnimation(List<SuffixTreeNodeInfo> overlaySymbols)
         {
@@ -303,7 +340,7 @@ namespace Slot_Engine.Matrix
         private void ReturnWinLoseSlots(WinningPayline winningPayline, List<Vector3> linePositions, out List<BaseObjectManager> winningSlots, out List<BaseObjectManager> losingSlots, ref BaseObjectGroupManager[] objectGroupManagers)
         {
             //Wait until root node for payline is being evaluated - get slots in decending order - compare slot.transform.localposition != linePositions[strip] - get winning slot based on transform value held in linePositions
-            Debug.Log($"Returning Win Lose Slots for winning payline {winningPayline.payline.PrintConfiguration()} left_right = {winningPayline.payline.left_right}");
+            //Debug.Log($"Returning Win Lose Slots for winning payline {winningPayline.payline.PrintConfiguration()} left_right = {winningPayline.payline.left_right}");
             winningSlots = new List<BaseObjectManager>();
             losingSlots = new List<BaseObjectManager>();
             //Iterate over each reel and get the winning slot
@@ -329,7 +366,7 @@ namespace Slot_Engine.Matrix
                 {
                     if (strip == winningPayline.payline.rootNode.column)
                     {
-                        Debug.Log($"strip {strip} contains root node!");
+                        //Debug.Log($"strip {strip} contains root node!");
                         isReelOnRootNode = true;
                     }
                 }
@@ -338,29 +375,26 @@ namespace Slot_Engine.Matrix
 
                     //Return Slots decending and get the local position 
                     slotInStripGroupDecending = temp.GetSlotsDecending();
-                    Debug.Log($"Strip = {objectGroupManagers[strip].gameObject.name} Slots decending = {PrintDecendingSlots(slotInStripGroupDecending)}");
+                    //Debug.Log($"Strip = {objectGroupManagers[strip].gameObject.name} Slots decending = {PrintDecendingSlots(slotInStripGroupDecending)}");
                     //Accounts for any padding positions before the strip displays symbols - Efficiency
                     int firstDisplaySlot = objectGroupManagers[strip].configurationGroupDisplayZones.paddingBefore;
                     //Check we have winning symbols left to add and set new position in strip that is winning position
                     if (winningSymbolsAdded < winningPayline.winningNodes.Length)
                     {
                         //Debug.Log($"winningPayline.winningNodes.Count = {winningPayline.winningNodes.Length} strip < Length = {strip < winningPayline.winningNodes.Length}");
-                        Debug.Log($"winningLinePositionToCompareCurrent = temp.localPositionsInStrip[winningPayline.winningNodes[{winningSymbolsAdded}].nodeInfo.row {winningPayline.winningNodes[winningSymbolsAdded].nodeInfo.row} = {temp.localPositionsInStrip[winningPayline.winningNodes[winningSymbolsAdded].nodeInfo.row]}");
+                        //Debug.Log($"winningLinePositionToCompareCurrent = temp.localPositionsInStrip[winningPayline.winningNodes[{winningSymbolsAdded}].nodeInfo.row {winningPayline.winningNodes[winningSymbolsAdded].nodeInfo.row} = {temp.localPositionsInStrip[winningPayline.winningNodes[winningSymbolsAdded].nodeInfo.row]}");
                         winningLinePositionToCompareCurrent = temp.localPositionsInStrip[winningPayline.winningNodes[winningSymbolsAdded].nodeInfo.row];
                     }
                     for (int slot = firstDisplaySlot; slot < slotInStripGroupDecending.Count; slot++)
                     {
-                        if (winningSymbolsAdded < winningPayline.payline.payline_configuration.payline.Length && !winningSlotSet)
+                        if (winningSymbolsAdded < winningPayline.payline.configuration.payline.Length && !winningSlotSet)
                         {
-                            //Debug.Log($"winningPayline.payline.payline_configuration.payline[winning_symbols_added] {winningPayline.payline.payline_configuration.payline[winning_symbols_added]} + objectGroupManagers[strip].configurationGroupDisplayZones.paddingBefore {objectGroupManagers[strip].configurationGroupDisplayZones.paddingBefore};");
-                            //int winningSlot = winningPayline.payline.payline_configuration.payline[winning_symbols_added] + objectGroupManagers[strip].configurationGroupDisplayZones.paddingBefore;
                             if (linePositionIndex < linePositions.Count) //TODO remove reference replace with more stable reference
                             {
-                                Debug.Log($"Checking if slot {slotInStripGroupDecending[slot].gameObject.name} is a winning slot based on transform: {slotInStripGroupDecending[slot].transform.localPosition.sqrMagnitude} == {winningLinePositionToCompareCurrent.sqrMagnitude}] {slotInStripGroupDecending[slot].transform.localPosition.sqrMagnitude == winningLinePositionToCompareCurrent.sqrMagnitude}");
+                                //Debug.Log($"Checking if slot {slotInStripGroupDecending[slot].gameObject.name} is a winning slot based on transform: {slotInStripGroupDecending[slot].transform.localPosition.sqrMagnitude} == {winningLinePositionToCompareCurrent.sqrMagnitude}] {slotInStripGroupDecending[slot].transform.localPosition.sqrMagnitude == winningLinePositionToCompareCurrent.sqrMagnitude}");
                                 if (slotInStripGroupDecending[slot].transform.localPosition.sqrMagnitude == winningLinePositionToCompareCurrent.sqrMagnitude)
                                 {
                                     Debug.Log($"Adding Winning Slot {slotInStripGroupDecending[slot].gameObject.name} on strip {strip} slot{slot}");
-                                    //Making -1 due to evaluation
                                     winningSlots.Add(slotInStripGroupDecending[slot]);
                                     winningSymbolsAdded += 1;
                                     winningSlotSet = true;
@@ -522,7 +556,7 @@ namespace Slot_Engine.Matrix
                 //Get current slot order based on slot transform compared to positions in path.
                 List<BaseObjectManager> slots_decending_in_reel = configurationGroupManagers[reel].GetSlotsDecending();
                 //Cache the position of the slot that we need from this reel
-                linePositions.Add(ReturnSlotPositionOnPayline(payline.payline_configuration.payline[reel], ref slots_decending_in_reel, ref configurationGroupManagers[reel]));
+                linePositions.Add(ReturnSlotPositionOnPayline(payline.configuration.payline[reel], ref slots_decending_in_reel, ref configurationGroupManagers[reel]));
             }
         }
 
