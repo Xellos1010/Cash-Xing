@@ -168,6 +168,8 @@ namespace Slot_Engine.Matrix
                 { 
                     if (!temp.isTimeInPauseState(spinCurrentTimer))
                     {
+                        if (toPosition == stripManager.localPositionsInStrip[stripManager.localPositionsInStrip.Length - 1])
+                            toPosition = stripManager.localPositionsInStrip[0];
                         stopSpinEndPosition = toPosition;
                         objectInEndPosition = true;
                         spinMovementEnabled = false;
@@ -198,6 +200,8 @@ namespace Slot_Engine.Matrix
                 else
                 {
                     SetPresentationSymbolTo(-1); //TODO Define whether to set the top slot graphic
+                    stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
+                    stripManager.endSymbolsSetFromConfiguration += 1;
                 }
                 //Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
             }

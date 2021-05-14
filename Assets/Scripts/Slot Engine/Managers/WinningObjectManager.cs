@@ -144,8 +144,11 @@ namespace Slot_Engine.Matrix.Managers
         {
             //If first time thru then lerp money to bank
             payline_renderer_manager.ShowWinningPayline(payline_to_show);
-            configurationObject.managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
-            configurationObject.SetSymbolsForWinConfigurationDisplay(payline_to_show);
+            if (Application.isPlaying)
+            {
+                configurationObject.managers.soundManager.PlayAudioForWinningPayline(payline_to_show);
+                configurationObject.SetSymbolsForWinConfigurationDisplay(payline_to_show);
+            }
             return Task.CompletedTask;
         }
 
