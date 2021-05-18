@@ -156,11 +156,15 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         internal Vector3 MoveObjectToSpinPosition(float spinCurrentTimer)
         {
+            Debug.Log($"{gameObject.name} is MoveObjectToSpinPosition( spinCurrentTimer ={spinCurrentTimer})");
             toPosition = Vector3.zero;
             BasePathTransformSpinEvaluatorScriptableObject temp = stripManager.stripInfo.GetSpinParameters();
+            //TODO Test Generic Evaluate Spin - TODO Add abtract function to return positions in object group
             StripObjectGroupManager temp2 = baseObjectGroupParent as StripObjectGroupManager;
+            //Sets up our spin path - calculates sqr magnitudes between each point in path - Compare absolute sqr magnitude of object local position and last position in path to move to start of path
             SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
-            //The Evaluating Object checks if you have a set amount of steps or rotations to make in spin then to return constant value
+            
+            //Stepper Logic - The evaluating object checks if you have a set amount of steps or rotations to make in spin then to return constant value once ceiling has been reached 
             temp.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
             toPosition = pathToEvaluate.toPositionEvaluated;
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
@@ -225,10 +229,9 @@ namespace Slot_Engine.Matrix
             {
                 bool symbol_set = false;
                 NodeDisplaySymbol symbol = new NodeDisplaySymbol();
-                if (stripManager.nextSymbolToAppear != -1)
+                if (stripManager.nextSymbolToAppear.Count > 0)
                 {
-                    symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToAppear).Result;
-                    stripManager.nextSymbolToAppear = -1;
+                    symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToAppear.Pop<int>()).Result;
                 }
                 else
                 {

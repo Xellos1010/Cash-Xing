@@ -7,6 +7,9 @@ public enum supportedAnimatorTriggers
     ResolveEnd,
     StartSpin,
     TransitionToFromBonus,
+    FeatureIdle,
+    FeatureWin,
+    FeatureOff,
     End
 }
 public enum supportedAnimatorBools

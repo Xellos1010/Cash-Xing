@@ -163,14 +163,14 @@ namespace Slot_Engine.Matrix.Managers
         /// <returns></returns>
         public async Task StartSpinReels()
         {
-            await configurationObject.SpinReels();
+            await configurationObject.SpinStartGroupManagers();
         }
         /// <summary>
         /// Stop the reels - include display reel highlight if the feature is toggled
         /// </summary>
         internal async Task ReelsStopSpinning()
         {
-            await configurationObject.StopReels();
+            await configurationObject.SpinStopGroupManagers();
         }
         
 

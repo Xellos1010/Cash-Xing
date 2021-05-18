@@ -43,7 +43,11 @@ namespace Slot_Engine.Matrix
             EditorGUILayout.LabelField("Controls");
             if(!Application.isPlaying)
             {
-                if (GUILayout.Button("Set Slot Positions Initial"))
+                if(GUILayout.Button("Set Local Positions To Slot Current Positions"))
+                {
+                    myTarget.SetLocalPositionsBySlotPositions();
+                }
+                if (GUILayout.Button("Set Slot Positions To Initial Local Positions"))
                 {
                     myTarget.SetSlotPositionToStart();
                 }
@@ -62,11 +66,6 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.SpinGroupNow(true);
                 }
-                selectedSymbolToGenerate = EditorGUILayout.Popup(selectedSymbolToGenerate, myTarget.configurationObjectParent.supportedSymbols);
-                if (GUILayout.Button("Set Next Symbol to Appear On Reel To:"))
-                {
-                    myTarget.SetNextSymbolToAppear(selectedSymbolToGenerate);
-                }
             }
             else
             {
@@ -78,6 +77,13 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.SetSlotsMovementEnabled(false);
                 }
+            }
+            GUILayout.BeginHorizontal();
+            selectedSymbolToGenerate = EditorGUILayout.Popup(selectedSymbolToGenerate, myTarget.configurationObjectParent.supportedSymbols);
+            GUILayout.EndHorizontal();
+            if (GUILayout.Button("Set Next Symbol to Appear On Reel To:"))
+            {
+                myTarget.SetNextSymbolToAppear(selectedSymbolToGenerate);
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             base.OnInspectorGUI();
@@ -182,11 +188,11 @@ namespace Slot_Engine.Matrix
                     for (int i = 0; i < localPositionsInStrip.Length; i++)
                     {
                         if (i == 0)
-                            Gizmos.DrawSphere(transform.TransformPoint(localPositionsInStrip[i]), 100f);//String.Format("Slot Start Position {0}", i));
+                            Gizmos.DrawSphere(transform.TransformPoint(localPositionsInStrip[i]), 25f);//String.Format("Slot Start Position {0}", i));
                         else if (i == (localPositionsInStrip.Length - 1))
-                            Gizmos.DrawSphere(transform.TransformPoint(localPositionsInStrip[i]), 100f);//String.Format("Slot End Position {0}", i));
+                            Gizmos.DrawSphere(transform.TransformPoint(localPositionsInStrip[i]), 25f);//String.Format("Slot End Position {0}", i));
                         else
-                            Gizmos.DrawSphere(transform.TransformPoint(localPositionsInStrip[i]), 100f);//String.Format("Slot Display Position {0}", i));
+                            Gizmos.DrawSphere(transform.TransformPoint(localPositionsInStrip[i]), 25f);//String.Format("Slot Display Position {0}", i));
                     }
                 }
             }
@@ -328,6 +334,19 @@ namespace Slot_Engine.Matrix
                 localPositionsInStrip[i] = GetSlotPositionInStrip(i);
             }
             Debug.Log($"localPositionsInStrip.Lengh = {localPositionsInStrip.Length}");
+        }
+
+        internal void SetLocalPositionsBySlotPositions()
+        {
+            if(localPositionsInStrip.Length < objectsInGroup.Length+1)
+            {
+                Debug.LogWarning($"localPositionsInStrip.Length {localPositionsInStrip.Length} < objectsInGroup.Length {objectsInGroup.Length + 1} = {localPositionsInStrip.Length < objectsInGroup.Length+1} creating new array to fill - You need to set the end position - you have been warned");
+                localPositionsInStrip = new Vector3[objectsInGroup.Length + 1];
+            }
+            for (int slot = 0; slot < objectsInGroup.Length; slot++)
+            {
+                localPositionsInStrip[slot] = objectsInGroup[slot].transform.localPosition;
+            }
         }
     }
 }

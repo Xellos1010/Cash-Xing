@@ -102,7 +102,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// The current reelstrip display configuration
         /// </summary>
-        internal StripSpinStruct[] currentReelstripConfiguration
+        internal StripSpinStruct[] displayConfigurationInUse
         {
             get
             {
@@ -140,8 +140,8 @@ namespace Slot_Engine.Matrix
                 GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode, v);
             }
             //Save the strip used into the backlog
-            if (currentReelstripConfiguration?.Length > 0) ;
-            SaveReelstripUsed(currentReelstripConfiguration);
+            if (displayConfigurationInUse?.Length > 0) ;
+            SaveReelstripUsed(displayConfigurationInUse);
             //TODO Validate Data in Reel Strip then Generate if no valid data found
             SetCurrentConfigurationTo(endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data[v].data);
             endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data.RemoveAt(v);
@@ -154,7 +154,7 @@ namespace Slot_Engine.Matrix
 
         private void SetCurrentConfigurationTo(StripSpinStruct[] reelstrips)
         {
-            currentReelstripConfiguration = reelstrips;
+            displayConfigurationInUse = reelstrips;
         }
 
         private void SetEndingReelStripToDisplay(StripSpinStruct[] reelstrips_to_display)
@@ -255,14 +255,14 @@ namespace Slot_Engine.Matrix
             //{
             //    return current_reelstrip_configuration;
             //}
-            return currentReelstripConfiguration;
+            return displayConfigurationInUse;
         }
         /// <summary>
         /// Sets the matrix to the display current reelstrip configuration
         /// </summary>
         internal void SetMatrixToReelConfiguration()
         {
-            configurationObject.SetSymbolsToDisplayOnConfigurationObjectTo(currentReelstripConfiguration);
+            configurationObject.SetSymbolsToDisplayOnConfigurationObjectTo(displayConfigurationInUse);
         }
 
         internal void AddConfigurationToSequence(GameModes gameState, StripSpinStruct[] configuration)
