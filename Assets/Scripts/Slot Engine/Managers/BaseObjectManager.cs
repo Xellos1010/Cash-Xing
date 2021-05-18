@@ -294,6 +294,24 @@ namespace Slot_Engine.Matrix
             {
                 InstantiateSymbolPrefabs();
             }
+            //null check
+            for (int i = 0; i < symbolPrefabs.Length; i++)
+            {
+                if(symbolPrefabs[i] == null && transform.childCount != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
+                {
+                    //TODO delete all children and instantiate new prefabs
+                    InstantiateSymbolPrefabs();
+                    break;
+                }
+                else
+                {
+                    for (int j = 0; j < transform.childCount; j++)
+                    {
+                        symbolPrefabs[j] = transform.GetChild(j);
+                    }
+                    break;
+                }
+            }
             MeshRenderer[] renderers;
             for (int symbol_prefab = 0; symbol_prefab < symbolPrefabs.Length; symbol_prefab++)
             {

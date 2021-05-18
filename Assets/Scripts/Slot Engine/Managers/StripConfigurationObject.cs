@@ -45,6 +45,10 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.CreateEmptyAnimationContainer();
             }
+            if (GUILayout.Button("Generate Slot Prefab Objects"))
+            {
+                myTarget.GenerateSlotPrefabs();
+            }
             if (GUILayout.Button("Set Slot Container Animator sub states"))
             {
                 myTarget.SetSubStatesAllSlotAnimatorStateMachines();
@@ -1495,6 +1499,13 @@ namespace Slot_Engine.Matrix
 #endif
         }
 
+        internal void GenerateSlotPrefabs()
+        {
+            for (int group = 0; group < configurationGroupManagers.Length; group++)
+            {
+                configurationGroupManagers[group].SetRandomDisplaySymbolAll();
+            }
+        }
     }
 }
 public struct Matrix_Settings

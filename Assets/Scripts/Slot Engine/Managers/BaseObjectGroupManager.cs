@@ -56,6 +56,7 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal NodeDisplaySymbol[] ending_symbols;
 
+        public List<int> nextSymbolToAppear;
         /// <summary>
         /// Enables you to change the symbol graphic when slot exits the viewable area of a configuration to a predefined strip or random draw weighte distribution symbol
         /// </summary>
@@ -253,11 +254,18 @@ namespace Slot_Engine.Matrix
 
             Debug.Log($"configurationGroupDisplayZones.paddingBefore {configurationGroupDisplayZones.paddingBefore}");
             //Get padding before reel and set slots for all slots on matrix
-            for (int slot = configurationGroupDisplayZones.paddingBefore; slot < slotsDecendingOrder.Length; slot++)
+            for (int slot = 0; slot < slotsDecendingOrder.Length; slot++)
             {
-                Debug.Log($"Setting {slotsDecendingOrder[slot].gameObject.name} to symbol reelStripStruct.displaySymbols[{endSymbolsSetFromConfiguration}]");
-                slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[endSymbolsSetFromConfiguration]);
-                endSymbolsSetFromConfiguration += 1;
+                if (slot < configurationGroupDisplayZones.paddingBefore)
+                {
+                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[endSymbolsSetFromConfiguration]);
+                }
+                else
+                {
+                    Debug.Log($"Setting {slotsDecendingOrder[slot].gameObject.name} to symbol reelStripStruct.displaySymbols[{endSymbolsSetFromConfiguration}]");
+                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[endSymbolsSetFromConfiguration]);
+                    endSymbolsSetFromConfiguration += 1;
+                }
             }
         }
 
@@ -425,10 +433,11 @@ namespace Slot_Engine.Matrix
         }
 
 
-        public int nextSymbolToAppear = -1;
         internal void SetNextSymbolToAppear(int selectedSymbolToGenerate)
         {
-            nextSymbolToAppear = selectedSymbolToGenerate;
+            if (nextSymbolToAppear == null)
+                nextSymbolToAppear = new List<int>();
+            nextSymbolToAppear.Insert(0, selectedSymbolToGenerate);
         }
 
         internal void SyncDisplaySymbolInformation()
@@ -436,6 +445,14 @@ namespace Slot_Engine.Matrix
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
                 objectsInGroup[i].SyncCurrentDisplaySymbolInfo();
+            }
+        }
+
+        internal void SetRandomDisplaySymbolAll()
+        {
+            for (int groupObject = 0; groupObject < objectsInGroup.Length; groupObject++)
+            {
+                objectsInGroup[groupObject].ShowRandomSymbol(); 
             }
         }
     }
