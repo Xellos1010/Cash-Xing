@@ -83,7 +83,7 @@ namespace Slot_Engine.Matrix
             GUILayout.EndHorizontal();
             if (GUILayout.Button("Set Next Symbol to Appear On Reel To:"))
             {
-                myTarget.SetNextSymbolToAppear(selectedSymbolToGenerate);
+                myTarget.SetNextSymbolToSetOnLoopPath(selectedSymbolToGenerate);
             }
             BoomEditorUtilities.DrawUILine(Color.white);
             base.OnInspectorGUI();

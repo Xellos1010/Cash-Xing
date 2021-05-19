@@ -38,6 +38,11 @@ namespace Slot_Engine.Matrix.Managers
                     //This should put the reels into a spin state without relying on the Animator
                     myTarget.DebugSetSpinStateTo(SpinStates.spin_start);
                 }
+                if (GUILayout.Button("SA02 Trailing Multiplier Win Test"))
+                {
+                    //This should put the reels into a spin state without relying on the Animator
+                    myTarget.TestSpinFeature(Features.trailing);
+                }
                 if (GUILayout.Button("Test Spin - Last Spin Configuration"))
                 {
                     myTarget.SetReelsLastConfigurationAndSpin();
@@ -370,6 +375,18 @@ namespace Slot_Engine.Matrix.Managers
                 default:
                     break;
             }
+        }
+
+        internal void TestSpinFeature(Features featureToTest)
+        {
+            //TODO Build based on group objects spin type - Directional constant,stepper,etc...
+
+            //Build configuration
+            StripSpinStruct[] featureConfiguration = configurationObject.managers.endConfigurationManager.GenerateFeatureConfigurationAndAddToStateNextSpin(StateManager.enCurrentMode,featureToTest);
+            //Add to end Configuration Manager
+            
+            //Spin reels
+            configurationObject.managers.interactionController.CheckStateToSpinSlam();
         }
     }
 }

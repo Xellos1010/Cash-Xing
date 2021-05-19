@@ -432,12 +432,27 @@ namespace Slot_Engine.Matrix
             return keys.ToArray();
         }
 
-
-        internal void SetNextSymbolToAppear(int selectedSymbolToGenerate)
+        /// <summary>
+        /// Sets the next symbol when a symbol reachs end of path
+        /// </summary>
+        /// <param name="selectedSymbolToGenerate"></param>
+        internal void SetNextSymbolToSetOnLoopPath(int selectedSymbolToGenerate)
         {
-            if (nextSymbolToAppear == null)
-                nextSymbolToAppear = new List<int>();
-            nextSymbolToAppear.Insert(0, selectedSymbolToGenerate);
+            if (Application.isPlaying)
+            {
+                if (nextSymbolToAppear == null)
+                    nextSymbolToAppear = new List<int>();
+                nextSymbolToAppear.Insert(0, selectedSymbolToGenerate);
+            }
+            else
+            {
+                List<BaseObjectManager> temp = GetSlotsDecending();
+                Debug.Log($"Setting {gameObject.name} temp[0].gameObject.name = {temp[0].gameObject.name}");
+                //Get slots descending and set the first padding symbol to next symbol
+                NodeDisplaySymbol temp2 = new NodeDisplaySymbol(selectedSymbolToGenerate);
+                temp[0].SetDisplaySymbolTo(temp2);
+
+            }
         }
 
         internal void SyncDisplaySymbolInformation()
@@ -454,6 +469,25 @@ namespace Slot_Engine.Matrix
             {
                 objectsInGroup[groupObject].ShowRandomSymbol(); 
             }
+        }
+
+        internal void RegenerateSlots()
+        {
+            //Destroy Children
+            for (int slot = transform.childCount - 1; slot >= 0 ; slot--)
+            {
+                DestroyImmediate(transform.GetChild(slot).gameObject);
+            }
+            for (int slot = 0; slot < configurationGroupDisplayZones.slotsToGenerate; slot++)
+            {
+                BaseObjectGroupManager temp = this;
+                ConfigurationGenerator.GenerateSlotObject(slot,ref temp);
+            }
+        }
+
+        internal void SetSlotsReference()
+        {
+            objectsInGroup = GetComponentsInChildren<BaseObjectManager>();
         }
     }
 }

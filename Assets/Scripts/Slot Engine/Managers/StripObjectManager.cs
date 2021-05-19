@@ -202,37 +202,42 @@ namespace Slot_Engine.Matrix
 
         private void SetSymbolGraphics()
         {
-            if (setToPresentationSymbolNextSpinCycle)
+
+            bool symbol_set = false;
+            NodeDisplaySymbol symbol = new NodeDisplaySymbol();
+            //First we check if we have symbols in a list to present next - then we go based on set presentation symbol - This will break under certain conditions but works for now.
+            if (stripManager.nextSymbolToAppear.Count > 0)
             {
-                //Set Graphics and end position
-                //Debug.Log($"Setting {gameObject.name} end symbol in reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
-                presentationSymbolSetToEnd = true;
-                stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
-
-                if (stripManager.endSymbolsSetFromConfiguration < stripManager.ending_symbols.Length)
-                {
-                    SetDisplaySymbolTo(stripManager.ending_symbols[stripManager.ending_symbols.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
-                    stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
-                    stripManager.endSymbolsSetFromConfiguration += 1;
-                    //Set end position to paddig after = stripManager.endSymbolsSetFromConfiguration
-
-                }
-                else
-                {
-                    SetPresentationSymbolTo(-1); //TODO Define whether to set the top slot graphic
-                    stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
-                    stripManager.endSymbolsSetFromConfiguration += 1;
-                }
-                //Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
+                symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToAppear.Pop<int>()).Result;
             }
             else
             {
-                bool symbol_set = false;
-                NodeDisplaySymbol symbol = new NodeDisplaySymbol();
-                if (stripManager.nextSymbolToAppear.Count > 0)
+                if (setToPresentationSymbolNextSpinCycle)
                 {
-                    symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToAppear.Pop<int>()).Result;
+                    //Set Graphics and end position
+                    //Debug.Log($"Setting {gameObject.name} end symbol in reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
+                    presentationSymbolSetToEnd = true;
+                    stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
+
+                    if (stripManager.endSymbolsSetFromConfiguration < stripManager.ending_symbols.Length)
+                    {
+                        SetDisplaySymbolTo(stripManager.ending_symbols[stripManager.ending_symbols.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
+                        stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
+                        stripManager.endSymbolsSetFromConfiguration += 1;
+                        symbol_set = true;
+                        //Set end position to paddig after = stripManager.endSymbolsSetFromConfiguration
+
+                    }
+                    else
+                    {
+                        SetPresentationSymbolTo(-1); //TODO Define whether to set the top slot graphic
+                        stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
+                        stripManager.endSymbolsSetFromConfiguration += 1;
+                        symbol_set = true;
+                    }
+                    //Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
                 }
+
                 else
                 {
                     if (stripManager.randomSetSymbolOnEndOfSequence)
@@ -246,15 +251,19 @@ namespace Slot_Engine.Matrix
                                 symbol_set = true;
                             }
                         }
-                        if (!symbol_set)
-                        {
-                            //Determines an overlay symbol
-                            symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
-                        }
                     }
+                }
+
+                //In-case nothing was set set to random 
+                if (!symbol_set)
+                {
+                    Debug.LogWarning("Symbol was not set - auto setting random");
+                    //Determines an overlay symbol
+                    symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
                 }
                 SetDisplaySymbolTo(symbol);
             }
+            
         }
 
         internal Animator SetOverlayAnimatorToFeatureAndGet()

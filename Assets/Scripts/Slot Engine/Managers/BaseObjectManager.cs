@@ -224,6 +224,11 @@ namespace Slot_Engine.Matrix
         private void InstantiateSymbolPrefabs()
         {
 #if UNITY_EDITOR
+            //Clear all sub objects
+            for (int i = transform.childCount-1; i >= 0; i--)
+            {
+                DestroyImmediate(transform.GetChild(i).gameObject);
+            }
             symbolPrefabs = new Transform[baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length];
             for (int symbol = 0; symbol < symbolPrefabs.Length; symbol++)
             {
@@ -292,21 +297,31 @@ namespace Slot_Engine.Matrix
             //Ensure Symbol Prefab Objects are instantiated
             if (symbolPrefabs?.Length != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
             {
-                InstantiateSymbolPrefabs();
+                if (baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length == transform.childCount)
+                {
+                    //Set array to children
+                    SetPrefabArrayToChildren();
+                }
+                else
+                {
+                    InstantiateSymbolPrefabs();
+                }
             }
             //null check
             for (int i = 0; i < symbolPrefabs.Length; i++)
             {
                 if(symbolPrefabs[i] == null && transform.childCount != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
                 {
-                    //TODO delete all children and instantiate new prefabs
                     InstantiateSymbolPrefabs();
                     break;
                 }
                 else
                 {
+                    if (symbolPrefabs.Length != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
+                        symbolPrefabs = new Transform[baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length];
                     for (int j = 0; j < transform.childCount; j++)
                     {
+                        //Debug.Log($"transform.childCount = {transform.childCount} child getting = {j}");
                         symbolPrefabs[j] = transform.GetChild(j);
                     }
                     break;
@@ -331,6 +346,17 @@ namespace Slot_Engine.Matrix
             for (int renderer = 0; renderer < renderers.Length; renderer++)
             {
                 renderers[renderer].enabled = true;
+            }
+        }
+
+        private void SetPrefabArrayToChildren()
+        {
+            if (symbolPrefabs.Length != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
+                symbolPrefabs = new Transform[baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length];
+            for (int j = 0; j < transform.childCount; j++)
+            {
+                Debug.Log($"transform.childCount = {transform.childCount} child getting = {j}");
+                symbolPrefabs[j] = transform.GetChild(j);
             }
         }
 

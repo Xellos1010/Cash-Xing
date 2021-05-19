@@ -48,6 +48,13 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField]
         public BasePathTransformSpinEvaluatorScriptableObject spinParameters;
+        internal int slotsToGenerate
+        {
+            get
+            {
+                return displayZonesPositionsTotal + paddingBefore;
+            }
+        }
 
         public ConfigurationDisplayZonesStruct(ConfigurationDisplayZonesStruct displayZonesSetting) : this()
         {
