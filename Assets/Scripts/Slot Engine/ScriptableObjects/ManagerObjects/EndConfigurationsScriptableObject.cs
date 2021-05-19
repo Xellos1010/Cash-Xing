@@ -47,11 +47,15 @@ public class EndConfigurationsScriptableObject : ScriptableObject
     public List<StripSpinStruct[]> end_reelstrips_used;
 
     public StripSpinStruct[] savedReelConfiguration;
+    
     internal void AddReelstripToUsedList(StripSpinStruct[] current_reelstrip_configuration)
     {
         if (end_reelstrips_used == null)
             end_reelstrips_used = new List<StripSpinStruct[]>();
         end_reelstrips_used.Add(current_reelstrip_configuration);
     }
+
+    //TODO add Save reel Configuration
+
 }
 

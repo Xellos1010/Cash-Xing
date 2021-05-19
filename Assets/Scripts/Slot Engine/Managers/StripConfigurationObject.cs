@@ -49,6 +49,14 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.GenerateSlotPrefabs();
             }
+            if (GUILayout.Button("Re-Generate Slot Objects"))
+            {
+                myTarget.ReGenerateSlotPrefabs();
+            }
+            if (GUILayout.Button("Set Generate Slot Objects to strip children"))
+            {
+                myTarget.SetSlotReferences();
+            }
             if (GUILayout.Button("Set Slot Container Animator sub states"))
             {
                 myTarget.SetSubStatesAllSlotAnimatorStateMachines();
@@ -1504,6 +1512,24 @@ namespace Slot_Engine.Matrix
             for (int group = 0; group < configurationGroupManagers.Length; group++)
             {
                 configurationGroupManagers[group].SetRandomDisplaySymbolAll();
+            }
+        }
+
+        internal void ReGenerateSlotPrefabs()
+        {
+            //Set all new slots to local positions
+            for (int group = 0; group < configurationGroupManagers.Length; group++)
+            {
+                configurationGroupManagers[group].RegenerateSlots();
+            }
+        }
+
+        internal void SetSlotReferences()
+        {
+            //Set all new slots to local positions
+            for (int group = 0; group < configurationGroupManagers.Length; group++)
+            {
+                configurationGroupManagers[group].SetSlotsReference();
             }
         }
     }

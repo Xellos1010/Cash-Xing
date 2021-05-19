@@ -24,12 +24,12 @@ namespace Slot_Engine.Matrix
         SerializedProperty state;
         SerializedProperty endConfigurationsScriptableObject;
         SerializedProperty end_reelstrips_to_display_sequence;
-        SerializedProperty current_reelstrip_configuration;
+        SerializedProperty displayConfigurationInUse;
         public void OnEnable()
         {
             myTarget = (EndConfigurationManager)target;
             list = new ReorderableList(serializedObject,serializedObject.FindProperty("end_reelstrips_to_display_sequence"),true,true,true,true);
-            current_reelstrip_configuration = serializedObject.FindProperty("current_reelstrip_configuration");
+            displayConfigurationInUse = serializedObject.FindProperty("displayConfigurationInUse");
             endConfigurationsScriptableObject = serializedObject.FindProperty("endConfigurationsScriptableObject");
         }
         public override async void OnInspectorGUI()
@@ -70,7 +70,7 @@ namespace Slot_Engine.Matrix
                 {
                     Debug.Log(String.Format("current configuration was set with reelstrip length of {0}",myTarget.pop_end_reelstrips_to_display_sequence.Length));
                     serializedObject.Update();
-                    current_reelstrip_configuration = serializedObject.FindProperty("current_reelstrip_configuration");
+                    displayConfigurationInUse = serializedObject.FindProperty("displayConfigurationInUse");
                 }
                 if (GUILayout.Button("Set Matrix to Display End Reel Configuration"))
                 {
@@ -177,12 +177,27 @@ namespace Slot_Engine.Matrix
                 endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateStrips(gameState, configurationObject.configurationSettings.displayZones).Result));
             }
         }
+        /// <summary>
+        /// Generates Strips with random configuration - TODO - add logic to add symbols based on spin type - stepper, constant, etc...
+        /// </summary>
+        /// <param name="gameState"></param>
+        /// <param name="displayZones"></param>
+        /// <returns></returns>
         internal async Task<StripSpinStruct[]> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones)
         {
             StripSpinStruct[] output = new StripSpinStruct[displayZones.Length];
             for (int reel = 0; reel < displayZones.Length; reel++)
             {
                 output[reel] = new StripSpinStruct(await GenerateEndingStrip(gameState, displayZones[reel]));
+            }
+            return output;
+        }
+        internal async Task<StripSpinStruct[]> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones, Features featureToGenerate)
+        {
+            StripSpinStruct[] output = new StripSpinStruct[displayZones.Length];
+            for (int strip = 0; strip < displayZones.Length; strip++)
+            {
+                output[strip] = new StripSpinStruct(await GenerateEndingStrip(gameState, displayZones[strip], featureToGenerate, strip, displayZones.Length));
             }
             return output;
         }
@@ -198,6 +213,22 @@ namespace Slot_Engine.Matrix
             }
             return output.ToArray();
         }
+
+        private async Task<NodeDisplaySymbol[]> GenerateEndingStrip(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct,Features featureToGenerate, int strip, int lengthGroupManagers)
+        {
+            List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
+            //Debug.LogWarning($"reelStripManager.configurationGroupDisplayZones.totalPositions = {configurationDisplayZonesStruct.totalPositions}");
+
+            //Get ConfigurationDisplayZonesStruct Spin Type - Generate Symbols based on how many Symbols replace per spin
+
+            //Generate a symbol for each display zone slot
+            for (int i = 0; i < configurationDisplayZonesStruct.displayZonesPositionsTotal; i++)
+            {
+                output.Add(await GetRandomWeightedSymbol(mode));
+            }
+            return output.ToArray();
+        }
+
         /// <summary>
         /// Generate a random symbol based on weights defined
         /// </summary>
@@ -328,6 +359,13 @@ namespace Slot_Engine.Matrix
             {
                 weight.Value.data.Clear();
             }
+        }
+
+        internal StripSpinStruct[] GenerateFeatureConfigurationAndAddToStateNextSpin(GameModes gameState, Features featureToTest)
+        {
+            StripSpinStruct[] output = GenerateStrips(gameState, configurationObject.configurationSettings.displayZones,featureToTest).Result;
+            endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(output));
+            return output;
         }
     }
 }
