@@ -9,14 +9,14 @@ using System;
 public struct StripsStruct
 {
     [UnityEngine.SerializeField]
-    public StripStruct[] strips;
+    public GroupInformationStruct[] strips;
 
     public StripsStruct(ref ConfigurationDisplayZonesStruct[] displayZonesPerStrip) : this()
     {
-        strips = new StripStruct[displayZonesPerStrip.Length];
+        strips = new GroupInformationStruct[displayZonesPerStrip.Length];
         for (int reel_number = 0; reel_number < strips.Length; reel_number++)
         {
-            strips[reel_number] = new StripStruct(reel_number, displayZonesPerStrip[reel_number]);
+            strips[reel_number] = new GroupInformationStruct(reel_number);
         }
     }
 
@@ -25,18 +25,18 @@ public struct StripsStruct
         string output = "";
         for (int i = 0; i < strips.Length; i++)
         {
-            output += "-" + String.Join("|", strips[i].spin_info.displaySymbols);
+            output += "-" + String.Join("|", strips[i].spinInformation.displaySymbolSequence);
         }
         return output;
     }
 
-    internal string PrintStrips()
-    {
-        string output = "";
-        for (int i = 0; i < strips.Length; i++)
-        {
-            output += "-" + strips[i].stripDisplayZonesSetting.totalPositions;
-        }
-        return output;
-    }
+    //internal string PrintStrips()
+    //{
+    //    string output = "";
+    //    for (int i = 0; i < strips.Length; i++)
+    //    {
+    //        output += "-" + strips[i].displayZonesSetting.totalPositions;
+    //    }
+    //    return output;
+    //}
 }

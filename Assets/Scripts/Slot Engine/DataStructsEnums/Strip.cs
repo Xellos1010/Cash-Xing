@@ -11,7 +11,7 @@ using UnityEngine;
 public class Strip
 {
     [UnityEngine.SerializeField]
-    public StripStruct stripInfo;
+    public GroupInformationStruct stripInfo;
     internal static NodeDisplaySymbol[] GenerateReelStripStatic(GameModes currentMode, int slotsPerStrip, ref EndConfigurationManager endConfigurationManager)
     {
         //Generate new reel symbols array and assign based on weighted distribution - then add the display symbols at the end for now
@@ -25,6 +25,6 @@ public class Strip
 
     internal string ReturnDisplaySymbolsPrint()
     {
-        return String.Join(" ", stripInfo.spin_info.displaySymbols);
+        return String.Join(" ", stripInfo.spinInformation.displaySymbolSequence);
     }
 }

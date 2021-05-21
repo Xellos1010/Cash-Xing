@@ -10,10 +10,10 @@ using UnityEngine;
 public struct EvaluationObjectStruct
 {
     /// <summary>
-    /// Reel configuration and slots in reels
+    /// Display Configuration that's being evaluated
     /// </summary>
     [SerializeField]
-    public ReelSymbolConfiguration[] gridConfiguration;
+    public DisplayConfigurationContainer displayConfigurationContainerEvaluating;
     /// <summary>
     /// Core Evaluation Object Logic - Ways - Lines - etc...
     /// </summary>
@@ -32,9 +32,9 @@ public struct EvaluationObjectStruct
     [SerializeField]
     internal Dictionary<Features, List<SuffixTreeNodeInfo>> featureEvaluationActiveCount;
 
-    public EvaluationObjectStruct(EvaluationScriptableObject evaluationScriptableObject, SlotEvaluationScriptableObject[] slotEvaluationObjects, ReelSymbolConfiguration[] gridConfiguration) : this()
+    public EvaluationObjectStruct(EvaluationScriptableObject evaluationScriptableObject, SlotEvaluationScriptableObject[] slotEvaluationObjects, DisplayConfigurationContainer displayConfigurationContainerToEvaluate) : this()
     {
-        this.gridConfiguration = gridConfiguration;
+        this.displayConfigurationContainerEvaluating = displayConfigurationContainerToEvaluate;
         this.evaluationScriptableObject = evaluationScriptableObject;
         this.slotEvaluationObjects = slotEvaluationObjects;
     }
@@ -43,7 +43,7 @@ public struct EvaluationObjectStruct
     {
         get
         {
-            return gridConfiguration?.Length;
+            return displayConfigurationContainerEvaluating.configuration.Length;
         }
     }
 

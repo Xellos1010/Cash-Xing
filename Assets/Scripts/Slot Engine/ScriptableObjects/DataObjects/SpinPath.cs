@@ -48,6 +48,11 @@ public struct SpinPath
     [SerializeField]
     public int timesReachedEndOfPath;
     /// <summary>
+    /// current position of object in path
+    /// </summary>
+    [SerializeField]
+    public int currentToIndexInPath;
+    /// <summary>
     /// toPosition Evaluated when ran thru an Evaluator
     /// </summary>
     [SerializeField]
@@ -84,6 +89,7 @@ public struct SpinPath
         this.timesReachedEndOfPath = 0;
         this.slotSize = slotSize;
         this.slotPadding = slotPadding;
+        this.currentToIndexInPath = startPosition;
         changeSymbolGraphic = false;
         toPositionEvaluated = Vector3.zero;
         float totalAbsSqrMagnitudePath = 0;
@@ -121,6 +127,15 @@ public struct SpinPath
             Debug.LogWarning($"position in path supplied is end position or greater {startPositionInPath}");
             return 0;
         }
+    }
+
+    internal int FormatRawStepsToPositionInPath(int stepsCompletedSoFar,int stepsToCompletePath)
+    {
+        while(stepsCompletedSoFar > stepsToCompletePath)
+        {
+            stepsCompletedSoFar -= stepsToCompletePath;
+        }
+        return stepsCompletedSoFar;
     }
 }
     

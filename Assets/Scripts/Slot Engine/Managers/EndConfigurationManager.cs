@@ -12,23 +12,17 @@ using UnityEditorInternal;
 #endif
 namespace Slot_Engine.Matrix
 {
-
 #if UNITY_EDITOR
     [CustomEditor(typeof(EndConfigurationManager))]
     class EndConfigurationManagerEditor : BoomSportsEditor
     {
-        private ReorderableList list;
-
-        int current_configuration_showing = 0;
         EndConfigurationManager myTarget;
         SerializedProperty state;
         SerializedProperty endConfigurationsScriptableObject;
-        SerializedProperty end_reelstrips_to_display_sequence;
         SerializedProperty displayConfigurationInUse;
         public void OnEnable()
         {
             myTarget = (EndConfigurationManager)target;
-            list = new ReorderableList(serializedObject,serializedObject.FindProperty("end_reelstrips_to_display_sequence"),true,true,true,true);
             displayConfigurationInUse = serializedObject.FindProperty("displayConfigurationInUse");
             endConfigurationsScriptableObject = serializedObject.FindProperty("endConfigurationsScriptableObject");
         }
@@ -48,27 +42,26 @@ namespace Slot_Engine.Matrix
                 }
                 if (GUILayout.Button("Generate Reelstrips Basegame"))
                 {
-                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameModes.baseGame,20);
+                    await myTarget.GenerateMultipleDisplayConfigurations(GameModes.baseGame,20);
                     serializedObject.ApplyModifiedProperties();
                 }
                 if (GUILayout.Button("Generate Reelstrips Free-Spins"))
                 {
-                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameModes.freeSpin,20);
+                    await myTarget.GenerateMultipleDisplayConfigurations(GameModes.freeSpin,20);
                     serializedObject.ApplyModifiedProperties();
                 }
                 if (GUILayout.Button("Generate Reelstrips Overlay-Spins"))
                 {
-                    await myTarget.GenerateMultipleEndReelStripsConfiguration(GameModes.overlaySpin,20);
+                    await myTarget.GenerateMultipleDisplayConfigurations(GameModes.overlaySpin,20);
                     serializedObject.ApplyModifiedProperties();
                 }
                 if(GUILayout.Button("Clear end_reelstrips_to_display_sequence"))
                 {
                     myTarget.ClearConfigurations();
                 }
-            
                 if (GUILayout.Button("Pop Reel Configuration Test"))
                 {
-                    Debug.Log(String.Format("current configuration was set with reelstrip length of {0}",myTarget.pop_end_reelstrips_to_display_sequence.Length));
+                    Debug.Log(String.Format("current configuration was set with reelstrip length of {0}",myTarget.popEndDisplayConfiguration.configuration.Length));
                     serializedObject.Update();
                     displayConfigurationInUse = serializedObject.FindProperty("displayConfigurationInUse");
                 }
@@ -77,15 +70,50 @@ namespace Slot_Engine.Matrix
                     myTarget.SetMatrixToReelConfiguration();
                 }
             }
-            base.OnInspectorGUI();
+             base.OnInspectorGUI();
         }
 
 
     }
 #endif
-    [System.Serializable]
-    public partial class EndConfigurationManager : MonoBehaviour
+    /// <summary>
+    /// Used to track all custom managers
+    /// </summary>
+    public class BoomSportsManager : MonoBehaviour
     {
+        
+    }
+
+    [System.Serializable]
+    public class EndConfigurationManager : BoomSportsManager
+    {
+        /*Static Accessors used to have clean calls from scripts - will not allow multiple slot games in 1 scene. Would have to Unload Current Slot Game and Load Next Slot Game.*/
+        public static DisplayConfigurationContainer displayConfigurationInUse
+        {
+            get
+            {
+                Debug.Log(instance.gameObject.name);
+                Debug.Log(instance._displayConfigurationInUse.configuration.Length);
+
+                return instance._displayConfigurationInUse;
+            }
+        }
+
+        //Will need to refactor reference if more than 1 slot game will be present in scene
+        public static EndConfigurationManager instance
+        {
+            get
+            {
+                if (_instance == null)
+                    //Will not work if more than 1 object with script is in scene - first instance found
+                    _instance = GameObject.FindObjectOfType<EndConfigurationManager>();
+                return _instance;
+            }
+        }
+        public static EndConfigurationManager _instance;
+
+        /**/
+        /*Core*/
         internal StripConfigurationObject configurationObject
         {
             get
@@ -102,107 +130,126 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// The current reelstrip display configuration
         /// </summary>
-        internal StripSpinStruct[] displayConfigurationInUse
+        internal DisplayConfigurationContainer _displayConfigurationInUse
         {
             get
             {
-                return endConfigurationsScriptableObject.currentReelstripConfiguration;
+                return endConfigurationsScriptableObject.currentConfigurationInUse;
             }
             set
             {
-                endConfigurationsScriptableObject.currentReelstripConfiguration = value;
+                endConfigurationsScriptableObject.currentConfigurationInUse = value;
             }
         }
-        private StripSpinStruct[] nextConfiguration;
-        //Ending Reelstrips current
-        public StripSpinStruct[] pop_end_reelstrips_to_display_sequence
+        private DisplayConfigurationContainer nextConfiguration;
+        /// <summary>
+        /// Sets the currentConfigurationInUse to next configuration - generates configurations if none are present
+        /// </summary>
+        public DisplayConfigurationContainer popEndDisplayConfiguration
         {
             get
             {
                 try
                 {
-                    SetAndRemoveConfiguration(0);
+                    StoreCurrentConfigurationAndSetNewConfiguration(0);
                 }
                 catch (Exception e)
                 {
                     Debug.LogWarning(e.Message);
-                    GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode, 20);
-                    SetAndRemoveConfiguration(0);
+                    GenerateMultipleDisplayConfigurations(StateManager.enCurrentMode, 20);
+                    StoreCurrentConfigurationAndSetNewConfiguration(0);
                 }
-                return endConfigurationsScriptableObject.currentReelstripConfiguration;
+                return endConfigurationsScriptableObject.currentConfigurationInUse;
             }
         }
 
-        private void SetAndRemoveConfiguration(int v)
+        public void Start()
         {
-            if (v > endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data.Count)
+            _instance = this;
+        }
+
+        private void StoreCurrentConfigurationAndSetNewConfiguration(int v)
+        {
+            if (v > endConfigurationsScriptableObject.configurationsByState[StateManager.enCurrentMode].data.Count)
             {
-                GenerateMultipleEndReelStripsConfiguration(StateManager.enCurrentMode, v);
+                GenerateMultipleDisplayConfigurations(StateManager.enCurrentMode, v);
             }
             //Save the strip used into the backlog
-            if (displayConfigurationInUse?.Length > 0) ;
-            SaveReelstripUsed(displayConfigurationInUse);
+            if (_displayConfigurationInUse.configuration.Length > 0)
+                SaveReelstripUsed(_displayConfigurationInUse);
             //TODO Validate Data in Reel Strip then Generate if no valid data found
-            SetCurrentConfigurationTo(endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data[v].data);
-            endConfigurationsScriptableObject.endReelstripsPerState[StateManager.enCurrentMode].data.RemoveAt(v);
+            SetCurrentConfigurationTo(endConfigurationsScriptableObject.configurationsByState[StateManager.enCurrentMode].data[v].data);
+            endConfigurationsScriptableObject.configurationsByState[StateManager.enCurrentMode].data.RemoveAt(v);
         }
 
-        private void SaveReelstripUsed(StripSpinStruct[] current_reelstrip_configuration)
+        private void SaveReelstripUsed(DisplayConfigurationContainer currentReelstripConfiguration)
         {
-            endConfigurationsScriptableObject.AddReelstripToUsedList(current_reelstrip_configuration);
+            endConfigurationsScriptableObject.AddReelstripToUsedList(currentReelstripConfiguration);
         }
 
-        private void SetCurrentConfigurationTo(StripSpinStruct[] reelstrips)
+        private void SetCurrentConfigurationTo(DisplayConfigurationContainer newConfiguration)
         {
-            displayConfigurationInUse = reelstrips;
+            _displayConfigurationInUse = newConfiguration;
         }
 
-        private void SetEndingReelStripToDisplay(StripSpinStruct[] reelstrips_to_display)
+        private void SetNextConfigurationToDisplay(DisplayConfigurationContainer nextConfigurationToDisplay)
         {
-            nextConfiguration = reelstrips_to_display;
+            nextConfiguration = nextConfigurationToDisplay;
         }
 
         /// <summary>
         /// Generates the Display matrix then runs payline evaluation
         /// </summary>
         /// <returns>Task.Completed</returns>
-        internal async Task GenerateMultipleEndReelStripsConfiguration(GameModes gameState, int amount)
+        internal async Task GenerateMultipleDisplayConfigurations(GameModes gameState, int amount)
         {
-            if (!endConfigurationsScriptableObject.endReelstripsPerState.ContainsKey(gameState))
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState] = new GameStateConfigurationStorage();
-            if (endConfigurationsScriptableObject.endReelstripsPerState[gameState].data == null)
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data = new List<SpinConfigurationStorage>();
+            if (!endConfigurationsScriptableObject.configurationsByState.ContainsKey(gameState))
+                endConfigurationsScriptableObject.configurationsByState[gameState] = new GameStateConfigurationStorage();
+            if (endConfigurationsScriptableObject.configurationsByState[gameState].data == null)
+                endConfigurationsScriptableObject.configurationsByState[gameState].data = new List<SpinConfigurationStorage>();
+
+            //To generate for stepper strips need to feed strip back to make step increment by # of steps per spin
             for (int i = 0; i < amount; i++)
             {
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(GenerateStrips(gameState, configurationObject.configurationSettings.displayZones).Result));
+                endConfigurationsScriptableObject.configurationsByState[gameState].data.Add(new SpinConfigurationStorage(GenerateStrips(gameState, configurationObject.configurationSettings.displayZones).Result));
             }
         }
         /// <summary>
         /// Generates Strips with random configuration - TODO - add logic to add symbols based on spin type - stepper, constant, etc...
         /// </summary>
         /// <param name="gameState"></param>
-        /// <param name="displayZones"></param>
+        /// <param name="stripsDisplayZones"></param>
         /// <returns></returns>
-        internal async Task<StripSpinStruct[]> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones)
+        internal async Task<DisplayConfigurationContainer> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] stripsDisplayZones)
         {
-            StripSpinStruct[] output = new StripSpinStruct[displayZones.Length];
-            for (int reel = 0; reel < displayZones.Length; reel++)
+            //Strips need to be generated
+            DisplayConfigurationContainer output = new DisplayConfigurationContainer();
+            output.configuration = new GroupSpinInformationStruct[stripsDisplayZones.Length];
+            for (int strip = 0; strip < stripsDisplayZones.Length; strip++)
             {
-                output[reel] = new StripSpinStruct(await GenerateEndingStrip(gameState, displayZones[reel]));
-            }
-            return output;
-        }
-        internal async Task<StripSpinStruct[]> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones, Features featureToGenerate)
-        {
-            StripSpinStruct[] output = new StripSpinStruct[displayZones.Length];
-            for (int strip = 0; strip < displayZones.Length; strip++)
-            {
-                output[strip] = new StripSpinStruct(await GenerateEndingStrip(gameState, displayZones[strip], featureToGenerate, strip, displayZones.Length));
+                output.configuration[strip] = new GroupSpinInformationStruct(await GenerateStripConfiguration(gameState, stripsDisplayZones[strip]));
             }
             return output;
         }
 
-        private async Task<NodeDisplaySymbol[]> GenerateEndingStrip(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct)
+        internal void GetDisplaySymbolsGroupAtIndex(int indexInGroupManager)
+        {
+            
+        }
+
+        //Todo Refactor and combine function
+        internal async Task<DisplayConfigurationContainer> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones, Features featureToGenerate)
+        {
+            DisplayConfigurationContainer output = new DisplayConfigurationContainer();
+            output.configuration = new GroupSpinInformationStruct[displayZones.Length];
+            for (int strip = 0; strip < displayZones.Length; strip++)
+            {
+                output.configuration[strip] = new GroupSpinInformationStruct(await GenerateEndingStrip(gameState, displayZones[strip], featureToGenerate, strip, displayZones.Length));
+            }
+            return output;
+        }
+
+        private async Task<NodeDisplaySymbol[]> GenerateStripConfiguration(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct)
         {
             List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
             //Debug.LogWarning($"reelStripManager.configurationGroupDisplayZones.totalPositions = {configurationDisplayZonesStruct.totalPositions}");
@@ -269,44 +316,29 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        internal StripSpinStruct[] UseNextConfigurationInList()
+        internal DisplayConfigurationContainer UseNextConfigurationInList()
         {
-            return pop_end_reelstrips_to_display_sequence;
-        }
-
-        internal StripSpinStruct[] GetCurrentConfiguration()
-        {
-            //if(current_reelstrip_configuration.Length < 1)
-            //{
-            //    if (end_reelstrips_to_display_sequence.Length < 1)
-            //        GenerateMultipleEndReelStripsConfiguration(5);
-            //    return pop_end_reelstrips_to_display_sequence;
-            //}
-            //else
-            //{
-            //    return current_reelstrip_configuration;
-            //}
-            return displayConfigurationInUse;
+            return popEndDisplayConfiguration;
         }
         /// <summary>
         /// Sets the matrix to the display current reelstrip configuration
         /// </summary>
         internal void SetMatrixToReelConfiguration()
         {
-            configurationObject.SetSymbolsToDisplayOnConfigurationObjectTo(displayConfigurationInUse);
+            configurationObject.SetSymbolsToDisplayOnConfigurationObjectTo(_displayConfigurationInUse);
         }
 
-        internal void AddConfigurationToSequence(GameModes gameState, StripSpinStruct[] configuration)
+        internal void AddConfigurationToSequence(GameModes gameState, DisplayConfigurationContainer configuration)
         {
-            if (endConfigurationsScriptableObject.endReelstripsPerState[gameState] == null)
-                endConfigurationsScriptableObject.endReelstripsPerState[gameState] = new GameStateConfigurationStorage();
+            if (endConfigurationsScriptableObject.configurationsByState[gameState] == null)
+                endConfigurationsScriptableObject.configurationsByState[gameState] = new GameStateConfigurationStorage();
             //if valid configuration then add and move on
-            endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Insert(0, new SpinConfigurationStorage(configuration));
+            endConfigurationsScriptableObject.configurationsByState[gameState].data.Insert(0, new SpinConfigurationStorage(configuration));
         }
 
         internal void AddConfigurationToSequence(Features feature)
         {
-            StripSpinStruct[] configuration = new StripSpinStruct[0];
+            GroupSpinInformationStruct[] configuration = new GroupSpinInformationStruct[0];
             switch (feature)
             {
                 case Features.freespin:
@@ -355,16 +387,16 @@ namespace Slot_Engine.Matrix
         }
         internal void ClearConfigurations()
         {
-            foreach (KeyValuePair<GameModes, GameStateConfigurationStorage> weight in endConfigurationsScriptableObject.endReelstripsPerState)
+            foreach (KeyValuePair<GameModes, GameStateConfigurationStorage> weight in endConfigurationsScriptableObject.configurationsByState)
             {
                 weight.Value.data.Clear();
             }
         }
 
-        internal StripSpinStruct[] GenerateFeatureConfigurationAndAddToStateNextSpin(GameModes gameState, Features featureToTest)
+        internal DisplayConfigurationContainer GenerateFeatureConfigurationAndAddToStateNextSpin(GameModes gameState, Features featureToTest)
         {
-            StripSpinStruct[] output = GenerateStrips(gameState, configurationObject.configurationSettings.displayZones,featureToTest).Result;
-            endConfigurationsScriptableObject.endReelstripsPerState[gameState].data.Add(new SpinConfigurationStorage(output));
+            DisplayConfigurationContainer output = GenerateStrips(gameState, configurationObject.configurationSettings.displayZones,featureToTest).Result;
+            endConfigurationsScriptableObject.configurationsByState[gameState].data.Add(new SpinConfigurationStorage(output));
             return output;
         }
     }

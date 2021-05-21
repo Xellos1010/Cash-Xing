@@ -190,28 +190,32 @@ namespace Slot_Engine.Matrix.Managers
         internal void SetReelsLastConfigurationAndSpin()
         {
             //Add configuration to the sequence to trigger feature
-            configurationObject._managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame,configurationObject.managers.endConfigurationManager.endConfigurationsScriptableObject.currentReelstripConfiguration);
+            configurationObject._managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame,configurationObject.managers.endConfigurationManager.endConfigurationsScriptableObject.currentConfigurationInUse);
             //Go through interaction controller to disable slamming during transition to idle_outro
             configurationObject.managers.interactionController.CheckStateToSpinSlam();
         }
+        ///// <summary>
+        ///// Used to Trigger a specific symbol win and amount of symbols to pay out for win
+        ///// </summary>
+        ///// <param name="symbols"></param>
+        ///// <param name="numberOfSymbolsInPayout"></param>
+        //internal void TriggerSpinWin(int[] symbols, int numberOfSymbolsInPayout)
+        //{
+        //    SpinEndDisplayConfiguration configuration = new SpinEndDisplayConfiguration();
+        //    configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
+        //    for (int i = 0; i < configuration.Length; i++)
+        //    {
+        //        configuration[i].displaySymbols = new NodeDisplaySymbol[3]
+        //        {
+        //            new NodeDisplaySymbol(symbols[0]),
+        //            new NodeDisplaySymbol(symbols[1]),
+        //            new NodeDisplaySymbol(UnityEngine.Random.Range(0,9))
+        //        };
+        //    }
+        //        configurationObject.managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame, configuration);
+        //    configurationObject.managers.interactionController.CheckStateToSpinSlam();
 
-        internal void TriggerSpinWin(int[] symbols, int numberOfSymbols)
-        {
-            StripSpinStruct[] configuration = new StripSpinStruct[0];
-            configuration = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
-            for (int i = 0; i < configuration.Length; i++)
-            {
-                configuration[i].displaySymbols = new NodeDisplaySymbol[3]
-                {
-                    new NodeDisplaySymbol(symbols[0]),
-                    new NodeDisplaySymbol(symbols[1]),
-                    new NodeDisplaySymbol(UnityEngine.Random.Range(0,9))
-                };
-            }
-                configurationObject.managers.endConfigurationManager.AddConfigurationToSequence(GameModes.baseGame, configuration);
-            configurationObject.managers.interactionController.CheckStateToSpinSlam();
-
-        }
+        //}
 
         //This is where we hook into the state manager and listen for state specific events to sync with.
         //****Unity Default Functions
@@ -382,7 +386,7 @@ namespace Slot_Engine.Matrix.Managers
             //TODO Build based on group objects spin type - Directional constant,stepper,etc...
 
             //Build configuration
-            StripSpinStruct[] featureConfiguration = configurationObject.managers.endConfigurationManager.GenerateFeatureConfigurationAndAddToStateNextSpin(StateManager.enCurrentMode,featureToTest);
+            DisplayConfigurationContainer featureConfiguration = configurationObject.managers.endConfigurationManager.GenerateFeatureConfigurationAndAddToStateNextSpin(StateManager.enCurrentMode,featureToTest);
             //Add to end Configuration Manager
             
             //Spin reels

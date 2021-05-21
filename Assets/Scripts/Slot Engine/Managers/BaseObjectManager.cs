@@ -21,6 +21,14 @@ namespace Slot_Engine.Matrix
     /// </summary>
     public class BaseObjectManager : MonoBehaviour
     {
+        public delegate void ObjectPointOnPathEvent(BaseObjectManager objectManagerInGroup);
+        public event ObjectPointOnPathEvent startSpinCheckNextPointInPath;
+        public event ObjectPointOnPathEvent nextPointInPathChanged;
+        /// <summary>
+        /// Holds the display sequence for symbols. Stepper strips require length == steps allowed per spin. Directional Constant requires length == active display zone positions in group
+        /// </summary>
+        [SerializeField]
+        public List<int> symbolDisplaySequence;
         [SerializeField]
         internal BaseObjectGroupManager baseObjectGroupParent;
         /// <summary>
@@ -32,6 +40,10 @@ namespace Slot_Engine.Matrix
         /// the end position for the strip to calculate and land on
         /// </summary>
         public Vector3 stopSpinEndPosition;
+        /// <summary>
+        /// current position of slot in Path
+        /// </summary>
+        public int indexOnPath;
         /// <summary>
         /// Cached reference to calculate toPosition for the object within spin cycle
         /// </summary>
@@ -104,13 +116,25 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         internal double lockFramesSpeedTo = 30.0;
         /// <summary>
-        /// Starts a Spin
+        /// Starts a Spin - Resets previous vars - Sets object movement enabled to true - sends an evaluation check for the parent if symbol activates anything on slot enter for next slot in path
         /// </summary>
         public virtual void StartSpin(bool test = false)
         {
-            ResetAllVars();
+            ResetAllVarsFromPreviousSpin();
             SetObjectMovementEnabledTo(true);
+            //Cash Crossing Specific Feature - Stepper Strips will trigger Bonus Visuals thru Animator Trigger - may be repurposed for other things
+            SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol();
         }
+        /// <summary>
+        /// Check if next position in path activates a conditional event based on symbol
+        /// </summary>
+        internal void SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol()
+        {
+            //This is a work around to get Cash-Xing implemented and can be refined and integrated into a signaling system when an object changes index in path
+            Debug.Log($"{gameObject.name} is signaling {baseObjectGroupParent.gameObject.name} to check for evaluation conditions for next slot");
+            startSpinCheckNextPointInPath?.Invoke(this);
+        }
+
         /// <summary>
         /// Sets the objects movement enabled - OnTrue uses current local position as start position
         /// </summary>
@@ -349,6 +373,19 @@ namespace Slot_Engine.Matrix
             }
         }
 
+        internal void SetIndexOnPathfromCurrentPosition(ref Vector3[] localPositionsInStrip)
+        {
+            for (int position = 0; position < localPositionsInStrip.Length; position++)
+            {
+                //If the sqr magnitude of local position is 
+                if(Mathf.Abs(transform.localPosition.sqrMagnitude) <= Mathf.Abs(localPositionsInStrip[position].sqrMagnitude))
+                {
+                    indexOnPath = position;
+                    break;
+                }
+            }
+        }
+
         private void SetPrefabArrayToChildren()
         {
             if (symbolPrefabs.Length != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
@@ -474,7 +511,7 @@ namespace Slot_Engine.Matrix
             spinCurrentTimer = toValue;
         }
 
-        internal virtual void ResetAllVars()
+        internal virtual void ResetAllVarsFromPreviousSpin()
         {
             SetObjectMovementEnabledTo(false);
         }

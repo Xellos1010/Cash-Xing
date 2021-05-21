@@ -14,9 +14,9 @@ using System.Collections.Generic;
 using System;
 
 [Serializable]
-public class SpinConfigurationStorage : SerializableDictionary.Storage<StripSpinStruct[]>
+public class SpinConfigurationStorage : SerializableDictionary.Storage<DisplayConfigurationContainer>
 {
-    public SpinConfigurationStorage(StripSpinStruct[] result)
+    public SpinConfigurationStorage(DisplayConfigurationContainer result)
     {
          data = result;
     }
@@ -33,29 +33,38 @@ public class GameStateDistributionDictionary : SerializableDictionary<GameModes,
 [CreateAssetMenu(fileName = "EndConfigurationsObject", menuName = "BoomSportsScriptableObjects/EndConfigurationsScriptableObject", order = 3)]
 public class EndConfigurationsScriptableObject : ScriptableObject
 {
+    //A 
     /// <summary>
     /// Current end reelstrip configuration in use
     /// </summary>
-    public StripSpinStruct[] currentReelstripConfiguration;
+    public DisplayConfigurationContainer currentConfigurationInUse;
     /// <summary>
     /// end reelstrips to display in sequence
     /// </summary>
-    public GameStateConfigurationDictionary endReelstripsPerState;
+    public GameStateConfigurationDictionary configurationsByState;
     /// <summary>
     /// reelstrips that have been used
     /// </summary>
-    public List<StripSpinStruct[]> end_reelstrips_used;
-
-    public StripSpinStruct[] savedReelConfiguration;
+    public List<DisplayConfigurationContainer> configurationsUsed;
+    /// <summary>
+    /// Configuration saved for later loading
+    /// </summary>
+    public DisplayConfigurationContainer savedConfiguration;
     
-    internal void AddReelstripToUsedList(StripSpinStruct[] current_reelstrip_configuration)
+    internal void AddReelstripToUsedList(DisplayConfigurationContainer usedConfiguration)
     {
-        if (end_reelstrips_used == null)
-            end_reelstrips_used = new List<StripSpinStruct[]>();
-        end_reelstrips_used.Add(current_reelstrip_configuration);
+        if (configurationsUsed == null)
+            configurationsUsed = new List<DisplayConfigurationContainer>();
+        configurationsUsed.Add(usedConfiguration);
     }
-
-    //TODO add Save reel Configuration
+    /// <summary>
+    /// Saves a configuration for later loading
+    /// </summary>
+    /// <param name="toSave"></param>
+    internal void SaveConfiguration(DisplayConfigurationContainer toSave)
+    {
+        savedConfiguration = toSave;
+    }
 
 }
 
