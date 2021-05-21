@@ -49,24 +49,26 @@ namespace Slot_Engine.Matrix
         /// </summary>
         [SerializeField] //If base inspector enabled can check references
         internal BaseObjectManager[] objectsInGroup;
-
         /// <summary>
-        /// The Ending symbols to Set To 
+        /// Used to set the next symbol to display - stepper strip will set 1 # steps per spin - directional constant will set based on group length in active display zone
         /// </summary>
         [SerializeField]
-        internal NodeDisplaySymbol[] ending_symbols;
-
-        public List<int> nextSymbolToAppear;
+        internal NodeDisplaySymbol[] symbolsdisplaySymbolsSequence;
+        /// <summary>
+        /// When an object is moves from last position to first the symbol is changed.
+        /// </summary>
+        public List<int> nextSymbolToUseOnGoToStart;
         /// <summary>
         /// Enables you to change the symbol graphic when slot exits the viewable area of a configuration to a predefined strip or random draw weighte distribution symbol
         /// </summary>
+        [SerializeField]
         public bool randomSetSymbolOnEndOfSequence = true;
         /// <summary>
         /// UI Indicator to ensure operation for setting symbols to end configuration has performed
         /// </summary>
+        [SerializeField]
         internal int endSymbolsSetFromConfiguration = 0;
-
-        internal bool are_slots_spinning
+        internal bool areObjectsInEndPosition
         {
             get
             {
@@ -85,6 +87,69 @@ namespace Slot_Engine.Matrix
                 return output;
             }
         }
+        /// <summary>
+        /// Symbols that activate slot features - Trailing multiplier in cash crossing lights up the plus sign on enter
+        /// </summary>
+        public ObjectGroupConditionalActivatorsContainer objectGroupConditionalActivatorsContainer;
+        
+        ///// <summary>
+        ///// Structure for tracking slots in group that have symbols that activate features
+        ///// </summary>
+        //[Serializable]
+        //public struct ActivatorTracker
+        //{
+        //    /// <summary>
+        //    /// Symbol being tracked
+        //    /// </summary>
+        //    [SerializeField]
+        //    public int symbol;
+        //    /// <summary>
+        //    /// Tracks which index's on strip the symbol is currently on
+        //    /// </summary>
+        //    [SerializeField]
+        //    public int[] indexsSymbolResidesInStrip;
+        //}
+
+        ///// <summary>
+        ///// Tracks which index in object group symbol activator is in. if there are multiple will track by symbol
+        ///// </summary>
+        //internal List<ActivatorTracker> activatorObjectGroupSymbolIndex
+        //{
+        //    get
+        //    {
+        //        if (_activatorObjectGroupSymbolIndex == null)
+        //            _activatorObjectGroupSymbolIndex = new List<ActivatorTracker>();
+        //        return _activatorObjectGroupSymbolIndex;
+        //    }
+        //}
+        ///// <summary>
+        ///// Tracks which index in object group symbol activator is in. if there are multiple will track by symbol
+        ///// </summary>
+        //[SerializeField]
+        //internal List<ActivatorTracker> _activatorObjectGroupSymbolIndex;
+        ///// <summary>
+        ///// Used to recieve events from the strip with symbol that activated
+        ///// </summary>
+        //public void OnSlotActivatorEnterTriggered(int symbolEnter)
+        //{
+        //    //Find all index of slots triggering and trigger connected object
+        //}
+        /// <summary>
+        /// Used to recieve events from the strip with symbol that activated
+        /// </summary>
+        //public void OnSlotActivatorExitTriggered(int symbolExit)
+        //{
+        //    //Find the index of slot triggered and trigger feature bridge animator in slot
+        //}
+        
+
+        internal void ConditionalCheckNextSlotInPathFrom(BaseObjectManager baseObjectManager)
+        {
+            //get current position in path and next position in path
+            //baseObjectManager.
+            //Get position of object ini strip and check if next position in path Evaluates to true
+            //Conditional check for Multiplier - Always - OnSlotEnter - Symbol Name Contains SA02
+        }
 
         /// <summary>
         /// is the reel in a spin state
@@ -93,7 +158,7 @@ namespace Slot_Engine.Matrix
         {
             get
             {
-                bool is_spinning = true;
+                bool output = true;
                 if (objectsInGroup != null)
                 {
                     for (int slot = 0; slot <= objectsInGroup.Length; slot++)
@@ -104,7 +169,7 @@ namespace Slot_Engine.Matrix
                             {
                                 if (slot == objectsInGroup.Length)
                                 {
-                                    is_spinning = false;
+                                    output = false;
                                     break;
                                 }
                                 if (objectsInGroup[slot].spinMovementEnabled)
@@ -119,7 +184,63 @@ namespace Slot_Engine.Matrix
                 {
                     return false;
                 }
-                return is_spinning;
+                return output;
+            }
+        }
+        public bool registerStartSpinWithObjectsEvent = true;
+        public bool registerOnNextSymbolChangeWithObjectsEvent = false;
+        public void OnEnable()
+        {
+            RegisterWithObjectsInGroupEvents();
+        }
+
+        private void RegisterWithObjectsInGroupEvents()
+        {
+            if (registerStartSpinWithObjectsEvent || registerOnNextSymbolChangeWithObjectsEvent)
+            {
+                for (int groupedObject = 0; groupedObject < objectsInGroup.Length; groupedObject++)
+                {
+                    if(registerStartSpinWithObjectsEvent)
+                    {
+                        objectsInGroup[groupedObject].startSpinCheckNextPointInPath += BaseObjectGroupManager_startSpinCheckNextPointInPath;
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// Right now used for stepper reel specifically to check next symbol in path
+        /// </summary>
+        /// <param name="objectInPath"></param>
+        private void BaseObjectGroupManager_startSpinCheckNextPointInPath(BaseObjectManager objectInPath)
+        {
+            BaseSlotActivatorEventConditional[] conditionalsToCheck = objectGroupConditionalActivatorsContainer.GetAllConditionalChecks();
+            //Iterate thru evaluators and evaluate for a true condition
+            for (int i = 0; i < conditionalsToCheck.Length; i++)
+            {
+                if(conditionalsToCheck[i].EvaluateCondition(objectInPath))
+                {
+                    //Cash-Crossing Specific - Send signal to bridge manager to set bonus pulse to idle
+                    Debug.Log($"{gameObject.name} {objectInPath.gameObject.name} Activated Slot Condition -TODO label add slot conditional active");
+                }
+            }
+        }
+
+        public void OnDisable()
+        {
+            DeregisterWithObjectsInGroupEvents();
+        }
+
+        private void DeregisterWithObjectsInGroupEvents()
+        {
+            if (registerStartSpinWithObjectsEvent || registerOnNextSymbolChangeWithObjectsEvent)
+            {
+                for (int groupedObject = 0; groupedObject < objectsInGroup.Length; groupedObject++)
+                {
+                    if (registerStartSpinWithObjectsEvent)
+                    {
+                        objectsInGroup[groupedObject].startSpinCheckNextPointInPath -= BaseObjectGroupManager_startSpinCheckNextPointInPath;
+                    }
+                }
             }
         }
 
@@ -130,30 +251,31 @@ namespace Slot_Engine.Matrix
         public virtual Task StartSpin()
         {
             objectGroupStartSpin?.Invoke(indexInGroupManager);
-            //Debug.Log(string.Format("Spinning reel {0}",reelstrip_info.reel_number));
-            InitializeVarsForNewSpin();
+            //Clear Ending Symbols - Set new ending symbols
+            InitializeEndingDisplayForNewSpin();
+            //Switching to ObjectManager of spin object to invoke check of display symbol and row in strip.
+            //Check each symbols next position - any symbol activating a condition send event to recieving object
+            //CheckEvaluationConditionsFromEndDisplayConfiguration();
 
             SetSpinStateTo(SpinStates.spin_start);
 
-            //TODO hooks for reel state machine
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
-                //Last slot needs to ease in and out to the "next position" but 
-                objectsInGroup[i].StartSpin(); // Tween to the same position then evaluate
+                objectsInGroup[i].StartSpin();
             }
-            //Task.Delay(time_to_enter_loop);
-            //TODO Implement Ease In for Starting spin
+            //If event on symbol stop then evaluate if event conidtions were reached - ie SpinDirectionalStepper a bonus trigger will land on the strip and a + will glow symbo
             //TODO refactor check for interupt state
             SetSpinStateTo(SpinStates.spin_idle);
             return Task.CompletedTask;
         }
+
         /// <summary>
         /// Spin the Reels
         /// </summary>
         /// <returns>async task to track</returns>
         public void SpinGroupNow(bool test = false)
         {
-            InitializeVarsForNewSpin();
+            InitializeEndingDisplayForNewSpin();
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSpinStateTo(SpinStates.spin_start);
             //TODO hooks for reel state machine
@@ -176,12 +298,27 @@ namespace Slot_Engine.Matrix
             currentSpinState = state;
         }
         /// <summary>
-        /// Initializes variables requires for a new spin
+        /// Initializes Ending Display Symbols for Strip.
         /// </summary>
-        private void InitializeVarsForNewSpin()
+        private void InitializeEndingDisplayForNewSpin()
         {
-            ending_symbols = null;
+            symbolsdisplaySymbolsSequence = GetDisplaySymbolsForNextSpin();
         }
+        /// <summary>
+        /// Gets the display slots for the next spin - Stepper is partial clear depending on steps per spin - constant is full clear
+        /// </summary>
+        /// <returns></returns>
+        private NodeDisplaySymbol[] GetDisplaySymbolsForNextSpin()
+        {
+            //Hook into End Configuration Manager and get display symbols for this object manager
+            EndConfigurationManager.instance.GetDisplaySymbolsGroupAtIndex(indexInGroupManager);
+            //Used to get the symbol spin type and the set end display symbols for stepper strip what the strip will look like after 1 spin
+            Debug.Log("to be Implemented");
+
+            //Get from Spin type how many how many slots in object group to persist based on # steps per spin or full clear grouppping
+            return null;
+        }
+
         /// <summary>
         /// Set the slots in reel movement
         /// </summary>
@@ -236,17 +373,17 @@ namespace Slot_Engine.Matrix
         /// Instant sets a slot of reel to a configuration
         /// </summary>
         /// <param name="reelStripStruct"></param>
-        internal void SetSymbolEndSymbolsAndDisplay(StripSpinStruct reelStripStruct)
+        internal void SetSymbolEndSymbolsAndDisplay(GroupSpinInformationStruct reelStripStruct)
         {
             endSymbolsSetFromConfiguration = 0;
             BaseObjectManager[] slotsDecendingOrder = GetSlotsDecending().ToArray();
             Debug.Log($"{gameObject.name} slotsDecendingOrder.Length = {slotsDecendingOrder.Length} Slot Order = {PrintGameObjectNames(slotsDecendingOrder)}");
-            Debug.Log($"reelStripStruct.displaySymbols.Length = {reelStripStruct.displaySymbols.Length}");
+            Debug.Log($"reelStripStruct.displaySymbols.Length = {reelStripStruct.displaySymbolSequence.Length}");
 
             List<NodeDisplaySymbol> symbolsToDisplay = new List<NodeDisplaySymbol>();
-            for (int symbol = 0; symbol < reelStripStruct.displaySymbols.Length; symbol++)
+            for (int symbol = 0; symbol < reelStripStruct.displaySymbolSequence.Length; symbol++)
             {
-                symbolsToDisplay.Add(reelStripStruct.displaySymbols[symbol]);
+                symbolsToDisplay.Add(reelStripStruct.displaySymbolSequence[symbol]);
             }
             Debug.Log($"symbolsToDisplay.Count = {symbolsToDisplay.Count}");
 
@@ -258,12 +395,12 @@ namespace Slot_Engine.Matrix
             {
                 if (slot < configurationGroupDisplayZones.paddingBefore)
                 {
-                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[endSymbolsSetFromConfiguration]);
+                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbolSequence[endSymbolsSetFromConfiguration]);
                 }
                 else
                 {
                     Debug.Log($"Setting {slotsDecendingOrder[slot].gameObject.name} to symbol reelStripStruct.displaySymbols[{endSymbolsSetFromConfiguration}]");
-                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbols[endSymbolsSetFromConfiguration]);
+                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbolSequence[endSymbolsSetFromConfiguration]);
                     endSymbolsSetFromConfiguration += 1;
                 }
             }
@@ -293,13 +430,13 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public async Task StopReel(StripSpinStruct reelStrip)
+        public async Task StopReel(GroupSpinInformationStruct reelStrip)
         {
             endSymbolsSetFromConfiguration = 0;
             //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
             //Waits until all slots have stopped spinning
-            await StopReel(reelStrip.displaySymbols); //This will control ho wfast the reel goes to stop spin
+            await StopReel(reelStrip.displaySymbolSequence); //This will control ho wfast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
 
@@ -348,7 +485,7 @@ namespace Slot_Engine.Matrix
         private void SetEndingSymbolsTo(NodeDisplaySymbol[] endingSymbols)
         {
             Debug.Log($"Setting End Symbols To {PrintNodeDisplaySymbolArray(endingSymbols)}");
-            this.ending_symbols = endingSymbols;
+            this.symbolsdisplaySymbolsSequence = endingSymbols;
         }
 
         private string PrintNodeDisplaySymbolArray(NodeDisplaySymbol[] endingSymbols)
@@ -382,7 +519,7 @@ namespace Slot_Engine.Matrix
             bool task_lock = true;
             while (task_lock)
             {
-                if (are_slots_spinning)
+                if (areObjectsInEndPosition)
                     await Task.Delay(100);
                 else
                 {
@@ -440,9 +577,9 @@ namespace Slot_Engine.Matrix
         {
             if (Application.isPlaying)
             {
-                if (nextSymbolToAppear == null)
-                    nextSymbolToAppear = new List<int>();
-                nextSymbolToAppear.Insert(0, selectedSymbolToGenerate);
+                if (nextSymbolToUseOnGoToStart == null)
+                    nextSymbolToUseOnGoToStart = new List<int>();
+                nextSymbolToUseOnGoToStart.Insert(0, selectedSymbolToGenerate);
             }
             else
             {

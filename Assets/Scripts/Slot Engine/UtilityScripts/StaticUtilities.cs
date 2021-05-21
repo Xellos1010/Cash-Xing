@@ -5,6 +5,19 @@ using System.Collections.Generic;
 using UnityEngine;
 public static class StaticUtilities
 {
+    public static bool ContainsNull<T>(T[] array)
+     where T : class
+    {
+        for (int element = 0; element < array.Length; element++)
+        {
+            if(array[element] == null)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     [Serializable]
     public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
     {

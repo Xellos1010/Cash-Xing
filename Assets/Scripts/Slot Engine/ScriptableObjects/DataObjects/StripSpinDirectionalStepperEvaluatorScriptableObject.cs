@@ -220,6 +220,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : StripSpinEva
         }
         //Need to calculate time till end of path
         pathPositions.toPositionEvaluated = output;
+        pathPositions.currentToIndexInPath = pathPositions.FormatRawStepsToPositionInPath(stepsCompletedSoFar,stepsToCompletePath);
         return output;
     }
 

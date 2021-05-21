@@ -106,9 +106,9 @@ namespace Slot_Engine.Matrix.Managers
         /// <summary>
         /// Evaluates the symbols configuration for winning paylines
         /// </summary>
-        /// <param name="symbols_configuration"></param>
+        /// <param name="configurationToEvaluate"></param>
         /// <returns></returns>
-        internal Task<WinningPayline[]> EvaluateSymbolConfigurationForWinningPaylines(ReelSymbolConfiguration[] symbols_configuration)
+        internal Task<WinningPayline[]> EvaluateSymbolConfigurationForWinningPaylines(DisplayConfigurationContainer configurationToEvaluate)
         {
             //Build a list of evaluation objects based on feature evaluation and core evaluation objects
             List<object> output_raw = new List<object>();
@@ -118,11 +118,11 @@ namespace Slot_Engine.Matrix.Managers
 
             //Clear all feature conditions of activated nodes previously
 
-            Debug.Log($"Symbol Configuration being evaluated = {PrintConfiguration(symbols_configuration)}");
+            Debug.Log($"Symbol Configuration being evaluated = {PrintConfiguration(configurationToEvaluate)}");
 
             for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
             {
-                evaluationsToTake.Add(new EvaluationObjectStruct(coreEvaluationObjects[coreEvaluationObject], slotEvaluationObjects, symbols_configuration));
+                evaluationsToTake.Add(new EvaluationObjectStruct(coreEvaluationObjects[coreEvaluationObject], slotEvaluationObjects, configurationToEvaluate));
                 coreEvaluationObjects[coreEvaluationObject].ClearWinningObjects();
             }
             for (int slotEvaluationObject = 0; slotEvaluationObject < slotEvaluationObjects.Length; slotEvaluationObject++)
@@ -142,12 +142,12 @@ namespace Slot_Engine.Matrix.Managers
             return Task.FromResult<WinningPayline[]>(output_filtered.ToArray());
         }
 
-        private string PrintConfiguration(ReelSymbolConfiguration[] symbols_configuration)
+        private string PrintConfiguration(DisplayConfigurationContainer configurationContainer)
         {
             string output = "";
-            for (int i = 0; i < symbols_configuration.Length; i++)
+            for (int i = 0; i < configurationContainer.configuration.Length; i++)
             {
-                output += "||" + symbols_configuration[i].PrintDisplaySymbols();
+                output += "||" + configurationContainer.configuration[i].PrintDisplaySymbols();
             }
             return output;
         }
@@ -196,19 +196,20 @@ namespace Slot_Engine.Matrix.Managers
             return (T)Convert.ChangeType(output, typeof(T));
         }
 
-        internal async Task<WinningPayline[]> EvaluateWinningSymbols(StripSpinStruct[] reelstrips_configuration)
+        internal async Task<WinningPayline[]> EvaluateForWinningSymbolsFromConfiguration(DisplayConfigurationContainer configurationToEvaluateContainer)
         {
-            ReelSymbolConfiguration[] symbols_configuration = new ReelSymbolConfiguration[reelstrips_configuration.Length];
-            for (int reel = 0; reel < reelstrips_configuration.Length; reel++)
-            {
-                symbols_configuration[reel].SetColumnSymbolsTo(reelstrips_configuration[reel].displaySymbols);
-            }
-            return await EvaluateWinningSymbols(symbols_configuration);
+            //
+            //DisplayConfigurationSymbolsGroup[] displayConfiguration = new DisplayConfigurationSymbolsGroup[configurationToEvaluateContainer.configuration.Length];
+            //for (int symbolGroup = 0; symbolGroup < configurationToEvaluateContainer.configuration.Length; symbolGroup++)
+            //{
+            //    displayConfiguration[symbolGroup].SetColumnSymbolsTo(configurationToEvaluateContainer.configuration[symbolGroup].displaySymbols);
+            //}
+            return await EvaluateWinningSymbols(configurationToEvaluateContainer);
         }
 
-        public async Task<WinningPayline[]> EvaluateWinningSymbols(ReelSymbolConfiguration[] symbols_configuration)
+        public async Task<WinningPayline[]> EvaluateWinningSymbols(DisplayConfigurationContainer configurationContainer)
         {
-            return await EvaluateSymbolConfigurationForWinningPaylines(symbols_configuration);
+            return await EvaluateSymbolConfigurationForWinningPaylines(configurationContainer);
         }
         /// <summary>
         /// Evaluates configuration from either the symbols displayed or pre-generated. bug with use preGenerated with stepper reels since they don't symbol replace
@@ -217,17 +218,18 @@ namespace Slot_Engine.Matrix.Managers
         public async void EvaluateWinningSymbolsFromCurrentConfiguration(bool usePreGenerated = false)
         {
             Debug.Log($"Evaluating Wins - using PreGenerated reels = {usePreGenerated}");
-            StripSpinStruct[] temp = usePreGenerated ? configurationObject.managers.endConfigurationManager.displayConfigurationInUse : BuildStripSpinStructArrayFromSymbolsOnDisplay();
+            DisplayConfigurationContainer temp = usePreGenerated ? EndConfigurationManager.displayConfigurationInUse : BuildStripSpinStructArrayFromSymbolsOnDisplay();
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
-            await EvaluateWinningSymbols(temp);
+            await EvaluateSymbolConfigurationForWinningPaylines(temp);
         }
 
-        private StripSpinStruct[] BuildStripSpinStructArrayFromSymbolsOnDisplay()
+        private DisplayConfigurationContainer BuildStripSpinStructArrayFromSymbolsOnDisplay()
         {
-            StripSpinStruct[] output = new StripSpinStruct[configurationObject.configurationGroupManagers.Length];
-            for (int i = 0; i < output.Length; i++)
+            DisplayConfigurationContainer output = new DisplayConfigurationContainer();
+                output.configuration = new GroupSpinInformationStruct[configurationObject.configurationGroupManagers.Length];
+            for (int i = 0; i < output.configuration.Length; i++)
             {
-                output[i] = new StripSpinStruct(configurationObject.configurationGroupManagers[i].GetNodeDisplaySymbols());
+                output.configuration[i] = new GroupSpinInformationStruct(configurationObject.configurationGroupManagers[i].GetNodeDisplaySymbols());
             }
             return output;
         }

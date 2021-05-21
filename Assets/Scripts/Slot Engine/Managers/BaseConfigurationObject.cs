@@ -80,7 +80,7 @@ namespace Slot_Engine.Matrix
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
             SyncCurrentSymbolDisplayed();
             managers.endConfigurationManager.ClearConfigurations();
-            await managers.endConfigurationManager.GenerateMultipleEndReelStripsConfiguration(GameModes.baseGame,20);
+            await managers.endConfigurationManager.GenerateMultipleDisplayConfigurations(GameModes.baseGame,20);
 
             StateManager.SetStateTo(States.Idle_Intro);
         }
@@ -91,7 +91,7 @@ namespace Slot_Engine.Matrix
         internal async Task SpinStartGroupManagers()
         {
             //The end reel configuration is set when spin starts to the next item in the list
-            StripSpinStruct[] nextConfiguration = managers.endConfigurationManager.UseNextConfigurationInList();
+            DisplayConfigurationContainer nextConfiguration = managers.endConfigurationManager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
             //managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
 
@@ -102,15 +102,16 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="displayConfigurationToUse">Configuration to set the objects to display</param>
         /// <returns></returns>
-        internal async Task SpinStartGroupManagers(StripSpinStruct[] displayConfigurationToUse)
+        internal async Task SpinStartGroupManagers(DisplayConfigurationContainer displayConfigurationToUse)
         {
             int[] spinObjectsOrder = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
             //Set the end configuraiton manager current configuraiton in use to displayConfiguration
-            managers.endConfigurationManager.displayConfigurationInUse = displayConfigurationToUse;
+            managers.endConfigurationManager._displayConfigurationInUse = displayConfigurationToUse;
             Debug.Log($"Spinning objects in order {String.Join("|", spinObjectsOrder)}");
             //Spin the reels - if there is a delay between reels then wait delay amount
             for (int i = 0; i < spinObjectsOrder.Length; i++)
             {
+                //Each group will Start their spin and evaluate based on spin type. Slots need to evaluate incoming symbol for events or outgoing symbol events
                 await configurationGroupManagers[spinObjectsOrder[i]].StartSpin();
             }
         }
@@ -118,7 +119,7 @@ namespace Slot_Engine.Matrix
         internal async Task SpinStopGroupManagers()
         {
             //Get the end display configuration and set per reel
-            StripSpinStruct[] displayConfiguration = managers.endConfigurationManager.GetCurrentConfiguration();
+            DisplayConfigurationContainer displayConfiguration = EndConfigurationManager.displayConfigurationInUse;
 
             //Get Order of stopping configuration objects from baseSpinSettingsScriptableObject - Independant reels will have to be taken into consideration
             int[] orderStopObjects = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
@@ -128,11 +129,11 @@ namespace Slot_Engine.Matrix
                 //If reel strip delays are enabled wait between strips to stop
                 if (managers.spinManager.baseSpinSettingsScriptableObject.delayStartEnabled)
                 {
-                    await configurationGroupManagers[orderStopObjects[i]].StopReel(displayConfiguration[i]);
+                    await configurationGroupManagers[orderStopObjects[i]].StopReel(displayConfiguration.configuration[i]);
                 }
                 else
                 {
-                    configurationGroupManagers[orderStopObjects[i]].StopReel(displayConfiguration[i]);
+                    configurationGroupManagers[orderStopObjects[i]].StopReel(displayConfiguration.configuration[i]);
                 }
             }
             //Wait for all reels to be in spin.end state before continuing

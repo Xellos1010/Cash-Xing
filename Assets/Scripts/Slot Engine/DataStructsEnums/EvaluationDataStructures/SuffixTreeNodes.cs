@@ -71,16 +71,16 @@ namespace Slot_Engine.Matrix
             evaluationObject.InitializeWinningSymbolsFeaturesActiveCollections();
             //This could be a wild or overlay - evaluate the feature and add to list
             //Temporary Work Around - Since we are sending configuration from matrix remove 1 from row - Original evaluation mechanic needs
-            NodeDisplaySymbol linewin_symbol = evaluationObject.gridConfiguration[nodeInfo.column].displaySymbols[nodeInfo.row];
+            NodeDisplaySymbol primaryWinSymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nodeInfo.column].displaySymbolSequence[nodeInfo.row];
             //Checks the first symbol for a feature condition
-            CheckSlotNeedsFeatureEvaluated(linewin_symbol, ref evaluationObject, ref nodeInfo);
+            CheckSlotNeedsFeatureEvaluated(primaryWinSymbol, ref evaluationObject, ref nodeInfo);
             //Adds the first symbol as a lineWin and makes the primary symbol to track for
-            AddWinningSymbol(linewin_symbol.primarySymbol, ref evaluationObject, ref nodeInfo);
+            AddWinningSymbol(primaryWinSymbol.primarySymbol, ref evaluationObject, ref nodeInfo);
             //Initialize Winning Paylines
             List<WinningPayline> winning_paylines = new List<WinningPayline>();
             //Debug.Log(String.Format($"Primary Linewin Symbol = {linewin_symbol.primarySymbol} - Starting check for winning paylines from node {nodeInfo.Print()}"));
             //Check all connected nodes for a win using dfs (depth first search) search
-            CheckConnectedNodesForWin(ref nodeInfo, ref connectedNodes, ref evaluationObject, ref winning_paylines, linewin_symbol);
+            CheckConnectedNodesForWin(ref nodeInfo, ref connectedNodes, ref evaluationObject, ref winning_paylines, primaryWinSymbol);
             evaluationObject.winningEvaluationNodes.Clear();
             return winning_paylines.ToArray();
         }
@@ -162,7 +162,7 @@ namespace Slot_Engine.Matrix
         {
             //Debug.Log($"Checking node {nodeToCheck.nodeInfo.Print()}"); 
             //Get current node symbol display struct
-            NodeDisplaySymbol currentDisplaySymbol = evaluationObject.gridConfiguration[nodeToCheck.nodeInfo.column].displaySymbols[nodeToCheck.nodeInfo.row];
+            NodeDisplaySymbol currentDisplaySymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nodeToCheck.nodeInfo.column].displaySymbolSequence[nodeToCheck.nodeInfo.row];
 
             //Checks the node for a feature condition
             //Wild makes current node any symbol
@@ -179,7 +179,7 @@ namespace Slot_Engine.Matrix
                 int winningSymbolIndex = evaluationObject.winningEvaluationNodes.Count - 1;
 
                 //There is a match - move to the next node if the winning symbols don't equal total columns
-                if (evaluationObject.winningEvaluationNodes.Count < evaluationObject.gridConfiguration.Length)
+                if (evaluationObject.winningEvaluationNodes.Count < evaluationObject.displayConfigurationContainerEvaluating.configuration.Length)
                 {
                     //Check each connected node
                     CheckConnectedNodesForWin(ref nodeToCheck.nodeInfo, ref nodeToCheck.connectedNodes, ref evaluationObject, ref winning_paylines, nextDisplaySymbol);

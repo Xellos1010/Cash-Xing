@@ -490,13 +490,14 @@ namespace Slot_Engine.Matrix
             Debug.Log("Preparing Slot Machine for Spin");
         }
 
-        internal void SetSymbolsToDisplayOnConfigurationObjectTo(StripSpinStruct[] current_reelstrip_configuration)
+        internal void SetSymbolsToDisplayOnConfigurationObjectTo(DisplayConfigurationContainer currentConfiguration)
         {
-            Debug.Log($"stripManagers.Length = {configurationGroupManagers.Length}");
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            Debug.Log($"configurationGroupManagers.Length = {configurationGroupManagers.Length}");
+            Debug.Log($"currentConfiguration.configuration?.Length = {currentConfiguration.configuration?.Length}");
+            for (int groupManagerIndex = 0; groupManagerIndex < configurationGroupManagers.Length; groupManagerIndex++)
             {
-                Debug.Log($"stripManagers[{reel}].SetSymbolEndSymbolsAndDisplay({String.Join("|", current_reelstrip_configuration[reel].GetAllDisplaySymbols())})");
-                configurationGroupManagers[reel].SetSymbolEndSymbolsAndDisplay(current_reelstrip_configuration[reel]);
+                Debug.Log($"configurationGroupManagers[{groupManagerIndex}].SetSymbolEndSymbolsAndDisplay({String.Join("|", currentConfiguration.configuration[groupManagerIndex].GetAllDisplaySymbolsIndex())})");
+                configurationGroupManagers[groupManagerIndex].SetSymbolEndSymbolsAndDisplay(currentConfiguration.configuration[groupManagerIndex]);
             }
         }
 
@@ -529,23 +530,23 @@ namespace Slot_Engine.Matrix
             return reelstrip_managers;
         }
 
-        internal void GenerateReelStripsToLoop(ref StripSpinStruct[] reelConfiguration)
+        internal void GenerateReelStripsToLoop(ref GroupSpinInformationStruct[] reelConfiguration)
         {
             //Generate reel strips based on number of reels and symbols per reel - Insert ending symbol configuration and hold reference for array range
             GenerateReelStripsFor(configurationGroupManagers.Cast<StripObjectGroupManager>().ToArray(), ref reelConfiguration, slotsPerStripLoop);
         }
 
-        private void GenerateReelStripsFor(StripObjectGroupManager[] reelStripManagers, ref StripSpinStruct[] spinConfiguration, int slots_per_strip_onSpinLoop)
+        private void GenerateReelStripsFor(StripObjectGroupManager[] reelStripManagers, ref GroupSpinInformationStruct[] spinConfiguration, int slots_per_strip_onSpinLoop)
         {
             EndConfigurationManager temp;
             temp = managers.endConfigurationManager;
             //Loop over each reelstrip and assign reel strip
             for (int i = 0; i < reelStripManagers.Length; i++)
             {
-                if (spinConfiguration[i].stripSpinSymbols?.Length != slots_per_strip_onSpinLoop)
+                if (spinConfiguration[i].spinIdleSymbolSequence?.Length != slots_per_strip_onSpinLoop)
                 {
                     //Generates reelstrip based on weights
-                    spinConfiguration[i].stripSpinSymbols = Strip.GenerateReelStripStatic(StateManager.enCurrentMode, slots_per_strip_onSpinLoop, ref temp);
+                    spinConfiguration[i].spinIdleSymbolSequence = Strip.GenerateReelStripStatic(StateManager.enCurrentMode, slots_per_strip_onSpinLoop, ref temp);
                 }
                 //Assign reelstrip to reel
                 reelStripManagers[i].stripInfo.SetSpinConfigurationTo(spinConfiguration[i]);
@@ -602,7 +603,7 @@ namespace Slot_Engine.Matrix
             managers.machineInfoManager.OffsetPlayerAmountBy(amount);
         }
 
-        private string PrintSpinSymbols(ref StripSpinStruct[] stripInitial)
+        private string PrintSpinSymbols(ref GroupSpinInformationStruct[] stripInitial)
         {
             string output = "";
             for (int strip = 0; strip < stripInitial.Length; strip++)
@@ -612,9 +613,9 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        private string ReturnDisplaySymbolsPrint(StripSpinStruct reelstrip_info)
+        private string ReturnDisplaySymbolsPrint(GroupSpinInformationStruct reelstrip_info)
         {
-            return String.Join("|", reelstrip_info.displaySymbols);
+            return String.Join("|", reelstrip_info.displaySymbolSequence);
         }
 
         void OnEnable()
@@ -1357,7 +1358,7 @@ namespace Slot_Engine.Matrix
             {
                 for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
                 {
-                    if (configurationGroupManagers[reel].are_slots_spinning)
+                    if (configurationGroupManagers[reel].areObjectsInEndPosition)
                     {
                         await Task.Delay(100);
                     }
@@ -1421,25 +1422,21 @@ namespace Slot_Engine.Matrix
         {
             StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
             configurationGroupManagers[strip].indexInGroupManager = strip;
-            StripStruct temp2 = temp.stripInfo;
-            temp2.stripColumn = strip;
+            GroupInformationStruct temp2 = temp.stripInfo;
+            temp2.index = strip;
             ConfigurationDisplayZonesStruct temp3 = new ConfigurationDisplayZonesStruct(displayZone);
-            //Display Zone settings gets set later
-            temp2.stripDisplayZonesSetting = temp3;
             temp.stripInfo = temp2;
             Debug.Log($"temp3 as displayZone.totalPositions {temp3.totalPositions}");
-            temp.InitializeLocalPositions(temp2);
+            temp.InitializeLocalPositions();
         }
-        internal void SetStripInfoStruct(int strip, StripStruct stripStruct)
+        internal void SetStripInfoStruct(int strip, GroupInformationStruct stripStruct)
         {
             StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
             configurationGroupManagers[strip].indexInGroupManager = strip;
-            ConfigurationDisplayZonesStruct temp3 = new ConfigurationDisplayZonesStruct(stripStruct);
-            StripStruct tempStripStruct = new StripStruct(stripStruct);
-            tempStripStruct.stripColumn = strip;
+            GroupInformationStruct tempStripStruct = new GroupInformationStruct();
+            tempStripStruct.index = strip;
             temp.stripInfo = tempStripStruct;
-            Debug.Log($"temp3 as displayZone.totalPositions {temp3.totalPositions}");
-            temp.InitializeLocalPositions(tempStripStruct);
+            temp.InitializeLocalPositions();
         }
         internal void ClearSubStatesAllSlotAnimatorStateMachines()
         {

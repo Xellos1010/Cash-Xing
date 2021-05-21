@@ -47,14 +47,18 @@ namespace Slot_Engine.Matrix
                 {
                     myTarget.SetLocalPositionsBySlotPositions();
                 }
+                if (GUILayout.Button("Set positions on path for objects"))
+                {
+                    myTarget.SetPositionIndexOnPathForObjects();
+                }
                 if (GUILayout.Button("Set Slot Positions To Initial Local Positions"))
                 {
                     myTarget.SetSlotPositionToStart();
                 }
-                if (GUILayout.Button("Update Slot objects and positions local world reference"))
-                {
-                    myTarget.UpdateStripPositions();
-                }
+                //if (GUILayout.Button("Update Slot objects and positions local world reference"))
+                //{
+                //    myTarget.UpdateStripPositionsFromConfigurationSettings();
+                //}
                 if (GUILayout.Button("Update sub state machines slot managers"))
                 {
                     myTarget.UpdateSlotManagersSubStateMachines();
@@ -104,12 +108,8 @@ namespace Slot_Engine.Matrix
                 return base.configurationObjectParent;
             }
         }
-
-        /// <summary>
-        /// Holds the reel strip to cycle thru symbols for spin and end symbol configuration for reel
-        /// </summary>
         [SerializeField]
-        internal StripStruct stripInfo;
+        internal GroupInformationStruct stripInfo;
         /// <summary>
         /// Holds the reference for the slots position in path from entering to exiting reel area
         /// </summary>
@@ -197,11 +197,23 @@ namespace Slot_Engine.Matrix
                 }
             }
         }
-        internal void UpdateStripPositions()
+        /// <summary>
+        /// Return Spin Parameters from Configuration Settings
+        /// </summary>
+        /// <returns></returns>
+        internal BasePathTransformSpinEvaluatorScriptableObject GetSpinParameters()
         {
-            Debug.LogWarning($"reelstrip_info.total_positions = {stripInfo.total_positions} reelstrip_info.total_slot_objects = {stripInfo.total_slot_objects}");
-            UpdateLocalPositionsInPath(stripInfo.total_positions);
+            return configurationObjectParent.configurationSettings.displayZones[indexInGroupManager].spinParameters;
         }
+
+        ///// <summary>
+        ///// Get Initial Strip Positions from Configuration Settings
+        ///// </summary>
+        //internal void UpdateStripPositionsFromConfigurationSettings()
+        //{
+        //    Debug.LogWarning($"reelstrip_info.total_positions = {stripInfo.totalPositionsIngroup} reelstrip_info.total_slot_objects = {stripInfo.totalObjectsInGroup}");
+        //    UpdateLocalPositionsInPath(stripInfo.totalPositionsIngroup);
+        //}
 
         /// <summary>
         /// updates number of positions to store reference for based on reel length
@@ -267,8 +279,8 @@ namespace Slot_Engine.Matrix
         internal NodeDisplaySymbol ReturnNextSymbolInStrip()
         {
             int stripCounter = 0;
-            NodeDisplaySymbol output = stripInfo.spin_info.stripSpinSymbols[stripCounter];
-            if (stripCounter + 1 >= stripInfo.spin_info.stripSpinSymbols.Length)
+            NodeDisplaySymbol output = stripInfo.spinInformation.spinIdleSymbolSequence[stripCounter];
+            if (stripCounter + 1 >= stripInfo.spinInformation.spinIdleSymbolSequence.Length)
             {
                 stripCounter = 0;
             }
@@ -325,10 +337,10 @@ namespace Slot_Engine.Matrix
             configurationObjectParent._managers.endConfigurationManager.SetMatrixToReelConfiguration();
         }
 
-        internal void InitializeLocalPositions(StripStruct tempStripStruct)
+        internal void InitializeLocalPositions()
         {
-            Debug.Log($"{gameObject.name} Initializing local positions for displayZone.totalPositions {tempStripStruct.stripDisplayZonesSetting.totalPositions}");
-            localPositionsInStrip = new Vector3[tempStripStruct.stripDisplayZonesSetting.totalPositions];
+            Debug.Log($"{gameObject.name} Initializing local positions for displayZone.totalPositions {configurationGroupDisplayZones.totalPositions}");
+            localPositionsInStrip = new Vector3[configurationGroupDisplayZones.totalPositions];
             for (int i = 0; i < localPositionsInStrip.Length; i++)
             {
                 localPositionsInStrip[i] = GetSlotPositionInStrip(i);
@@ -346,6 +358,14 @@ namespace Slot_Engine.Matrix
             for (int slot = 0; slot < objectsInGroup.Length; slot++)
             {
                 localPositionsInStrip[slot] = objectsInGroup[slot].transform.localPosition;
+            }
+        }
+
+        internal void SetPositionIndexOnPathForObjects()
+        {
+            for (int groupedObject = 0; groupedObject < objectsInGroup.Length; groupedObject++)
+            {
+                objectsInGroup[groupedObject].SetIndexOnPathfromCurrentPosition(ref localPositionsInStrip);
             }
         }
     }

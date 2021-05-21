@@ -50,15 +50,19 @@ namespace Slot_Engine.Matrix
             {
                 myTarget.SetStateMachineAnimators();
             }
+            if (GUILayout.Button("Test Evaluate next path symbol Set Animators To Sync State Machine"))
+            {
+                myTarget.SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol();
+            }
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Editable Properties");
             EditorGUI.BeginChangeCheck();
-            temp = myTarget.stripManager.stripInfo.GetSpinParameters();
-            sliderTimerSpin = EditorGUILayout.Slider(sliderTimerSpin, 0, 2*(temp.GetTotalTime() * myTarget.stripManager.localPositionsInStrip.Length -1));
-            if(EditorGUI.EndChangeCheck())
-            {
-                myTarget.MoveObjectToSpinPosition(sliderTimerSpin);
-            }
+            //temp = myTarget.stripManager.GetSpinParameters();
+            //sliderTimerSpin = EditorGUILayout.Slider(sliderTimerSpin, 0, 2*(temp.GetTotalTime() * myTarget.stripManager.localPositionsInStrip.Length -1));
+            //if(EditorGUI.EndChangeCheck())
+            //{
+            //    myTarget.MoveObjectToSpinPosition(sliderTimerSpin);
+            //}
             base.OnInspectorGUI();
         }
     }
@@ -98,12 +102,11 @@ namespace Slot_Engine.Matrix
         /// </summary>
         public override void StartSpin( bool test = false)
         {
-            ResetAllVars();
             timesReachedEndOfPath = 0;
             startPositionIndex = GetIndexFromLocalPositions();
-            SetObjectMovementEnabledTo(true);
             endSpin = false;
             this.test = test;
+            base.StartSpin();
         }
 
         private int GetIndexFromLocalPositions()
@@ -156,16 +159,18 @@ namespace Slot_Engine.Matrix
         /// <returns></returns>
         internal Vector3 MoveObjectToSpinPosition(float spinCurrentTimer)
         {
-            Debug.Log($"{gameObject.name} is MoveObjectToSpinPosition( spinCurrentTimer ={spinCurrentTimer})");
+            //Debug.Log($"{gameObject.name} is MoveObjectToSpinPosition( spinCurrentTimer ={spinCurrentTimer})");
             toPosition = Vector3.zero;
-            BasePathTransformSpinEvaluatorScriptableObject temp = stripManager.stripInfo.GetSpinParameters();
+            BasePathTransformSpinEvaluatorScriptableObject temp = stripManager.GetSpinParameters();
             //TODO Test Generic Evaluate Spin - TODO Add abtract function to return positions in object group
             StripObjectGroupManager temp2 = baseObjectGroupParent as StripObjectGroupManager;
+            //Debug.Log($"new SpinPath({temp2.localPositionsInStrip}, {startPositionIndex},{temp2.configurationObjectParent.configurationSettings.slotSize}, {temp2.configurationObjectParent.configurationSettings.slotPadding});");
             //Sets up our spin path - calculates sqr magnitudes between each point in path - Compare absolute sqr magnitude of object local position and last position in path to move to start of path
             SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
-            
+            //Debug.Log($"pathToEvaluate.GetType() == null = {pathToEvaluate.GetType() == null}");
             //Stepper Logic - The evaluating object checks if you have a set amount of steps or rotations to make in spin then to return constant value once ceiling has been reached 
             temp.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
+            indexOnPath = pathToEvaluate.currentToIndexInPath;
             toPosition = pathToEvaluate.toPositionEvaluated;
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
             {
@@ -206,9 +211,9 @@ namespace Slot_Engine.Matrix
             bool symbol_set = false;
             NodeDisplaySymbol symbol = new NodeDisplaySymbol();
             //First we check if we have symbols in a list to present next - then we go based on set presentation symbol - This will break under certain conditions but works for now.
-            if (stripManager.nextSymbolToAppear.Count > 0)
+            if (stripManager.nextSymbolToUseOnGoToStart.Count > 0)
             {
-                symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToAppear.Pop<int>()).Result;
+                symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToUseOnGoToStart.Pop<int>()).Result;
             }
             else
             {
@@ -219,10 +224,10 @@ namespace Slot_Engine.Matrix
                     presentationSymbolSetToEnd = true;
                     stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
 
-                    if (stripManager.endSymbolsSetFromConfiguration < stripManager.ending_symbols.Length)
+                    if (stripManager.endSymbolsSetFromConfiguration < stripManager.symbolsdisplaySymbolsSequence.Length)
                     {
-                        SetDisplaySymbolTo(stripManager.ending_symbols[stripManager.ending_symbols.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
-                        stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
+                        SetDisplaySymbolTo(stripManager.symbolsdisplaySymbolsSequence[stripManager.symbolsdisplaySymbolsSequence.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
+                        stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.configurationGroupDisplayZones.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
                         stripManager.endSymbolsSetFromConfiguration += 1;
                         symbol_set = true;
                         //Set end position to paddig after = stripManager.endSymbolsSetFromConfiguration
@@ -231,7 +236,7 @@ namespace Slot_Engine.Matrix
                     else
                     {
                         SetPresentationSymbolTo(-1); //TODO Define whether to set the top slot graphic
-                        stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.stripInfo.stripDisplayZonesSetting.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
+                        stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.configurationGroupDisplayZones.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
                         stripManager.endSymbolsSetFromConfiguration += 1;
                         symbol_set = true;
                     }
@@ -243,9 +248,9 @@ namespace Slot_Engine.Matrix
                     if (stripManager.randomSetSymbolOnEndOfSequence)
                     {
                         //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
-                        if (stripManager.stripInfo.spin_info.stripSpinSymbols != null)
+                        if (stripManager.stripInfo.spinInformation.spinIdleSymbolSequence != null)
                         {
-                            if (stripManager.stripInfo.spin_info.stripSpinSymbols.Length > 0)
+                            if (stripManager.stripInfo.spinInformation.spinIdleSymbolSequence.Length > 0)
                             {
                                 symbol = stripManager.ReturnNextSymbolInStrip();
                                 symbol_set = true;
@@ -286,9 +291,9 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal override void SetToStopSpin()
         {
-            if (stripManager.stripInfo.stripDisplayZonesSetting.spinParameters.GetType() == typeof(StripSpinDirectionalStepperEvaluatorScriptableObject))
+            if (stripManager.configurationGroupDisplayZones.spinParameters.GetType() == typeof(StripSpinDirectionalStepperEvaluatorScriptableObject))
             {
-                Debug.Log($"{stripManager.gameObject.name} {gameObject.name} spin parameters = {stripManager.stripInfo.stripDisplayZonesSetting.spinParameters.GetType()}");
+                Debug.Log($"{stripManager.gameObject.name} {gameObject.name} spin parameters = {stripManager.configurationGroupDisplayZones.spinParameters.GetType()}");
                 endSpin = true;
             }
             else
