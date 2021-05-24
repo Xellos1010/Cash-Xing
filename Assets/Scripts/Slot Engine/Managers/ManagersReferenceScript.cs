@@ -2,12 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Slot_Engine.Matrix.Managers;
+using BoomSports.Prototype.Managers;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(ManagersReferenceScript))]
@@ -67,14 +67,14 @@ namespace Slot_Engine.Matrix
             }
         }
         internal SpinManager _spinManager;
-        public InteractionController interactionController
+        public InteractionManager interactionController
         {
             get
             {
-                return CheckReturnComponent<InteractionController>(ref _interactionController);
+                return CheckReturnComponent<InteractionManager>(ref _interactionController);
             }
         }
-        internal InteractionController _interactionController;
+        internal InteractionManager _interactionController;
         /// <summary>
         /// Manages the reference for paylines_manager
         /// </summary>

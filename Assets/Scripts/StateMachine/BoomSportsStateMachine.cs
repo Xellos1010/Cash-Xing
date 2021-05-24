@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using UnityEngine;
-
+using BoomSports.Prototype.Managers;
 class BoomSportsStateMachine : DTStateMachineBehaviour<StateMachineBehaviour>
 {
     public bool set_state_enter;
@@ -18,7 +18,7 @@ class BoomSportsStateMachine : DTStateMachineBehaviour<StateMachineBehaviour>
         if (set_state_enter)
         {
             //Debug.Log(String.Format("Is name Idle_Idle for animator? {0}",animator.GetCurrentAnimatorStateInfo(0).IsName("Idle_Idle")));
-            StateManager.SetStateTo(state_to_invoke_on_enter);
+            StaticStateManager.SetStateTo(state_to_invoke_on_enter);
         }
         if(set_trigger_on_enter)
         {
@@ -46,6 +46,6 @@ class BoomSportsStateMachine : DTStateMachineBehaviour<StateMachineBehaviour>
     {
         base.OnStateExited();
         if(set_state_exit)
-            StateManager.SetStateTo(state_to_invoke_on_exit);
+            StaticStateManager.SetStateTo(state_to_invoke_on_exit);
     }
 }

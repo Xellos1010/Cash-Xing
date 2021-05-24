@@ -7,7 +7,7 @@ using UnityEngine;
 /// This holds all payline information. Paylines are processed in the Slot Engine Script by cycling through the iPayLines and comparing whether symbols match on those paylines.
 /// </summary>
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype
 {
     [Serializable]
     public struct WinningNode

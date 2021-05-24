@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using WeightedDistribution;
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype
 {
     [Serializable]
     public struct WeightsForMode

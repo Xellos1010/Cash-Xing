@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
     /// <summary>
     /// Base class 
@@ -43,7 +43,7 @@ namespace Slot_Engine.Matrix
         [SerializeField]
         public ConfigurationDisplayZonesStruct configurationGroupDisplayZones;
         [SerializeField]
-        internal BaseConfigurationObject configurationObjectParent;
+        internal BaseConfigurationObjectManager configurationObjectParent;
         /// <summary>
         /// Object managers in Group
         /// </summary>
@@ -53,7 +53,7 @@ namespace Slot_Engine.Matrix
         /// Used to set the next symbol to display - stepper strip will set 1 # steps per spin - directional constant will set based on group length in active display zone
         /// </summary>
         [SerializeField]
-        internal NodeDisplaySymbol[] symbolsdisplaySymbolsSequence;
+        internal NodeDisplaySymbolContainer[] symbolsdisplaySymbolsSequence;
         /// <summary>
         /// When an object is moves from last position to first the symbol is changed.
         /// </summary>
@@ -308,12 +308,12 @@ namespace Slot_Engine.Matrix
         /// Gets the display slots for the next spin - Stepper is partial clear depending on steps per spin - constant is full clear
         /// </summary>
         /// <returns></returns>
-        private NodeDisplaySymbol[] GetDisplaySymbolsForNextSpin()
+        private NodeDisplaySymbolContainer[] GetDisplaySymbolsForNextSpin()
         {
             //Hook into End Configuration Manager and get display symbols for this object manager
             EndConfigurationManager.instance.GetDisplaySymbolsGroupAtIndex(indexInGroupManager);
             //Used to get the symbol spin type and the set end display symbols for stepper strip what the strip will look like after 1 spin
-            Debug.Log("to be Implemented");
+            Debug.Log("to be Implemented - get symbol display for next spin");
 
             //Get from Spin type how many how many slots in object group to persist based on # steps per spin or full clear grouppping
             return null;
@@ -354,7 +354,7 @@ namespace Slot_Engine.Matrix
         private bool IsRowInActiveDisplayZone(int row)
         {
             bool output = configurationGroupDisplayZones.IsRowInActiveDisplayZone(row);
-            Debug.Log($"{gameObject.name} is row {row} in active display = {output}");
+            //Debug.Log($"{gameObject.name} is row {row} in active display = {output}");
             return output;
         }
 
@@ -380,7 +380,7 @@ namespace Slot_Engine.Matrix
             Debug.Log($"{gameObject.name} slotsDecendingOrder.Length = {slotsDecendingOrder.Length} Slot Order = {PrintGameObjectNames(slotsDecendingOrder)}");
             Debug.Log($"reelStripStruct.displaySymbols.Length = {reelStripStruct.displaySymbolSequence.Length}");
 
-            List<NodeDisplaySymbol> symbolsToDisplay = new List<NodeDisplaySymbol>();
+            List<NodeDisplaySymbolContainer> symbolsToDisplay = new List<NodeDisplaySymbolContainer>();
             for (int symbol = 0; symbol < reelStripStruct.displaySymbolSequence.Length; symbol++)
             {
                 symbolsToDisplay.Add(reelStripStruct.displaySymbolSequence[symbol]);
@@ -440,22 +440,22 @@ namespace Slot_Engine.Matrix
             SetSpinStateTo(SpinStates.spin_end);
         }
 
-        internal NodeDisplaySymbol[] GetNodeDisplaySymbols()
+        internal NodeDisplaySymbolContainer[] GetNodeDisplaySymbols()
         {
             //Debug.Log($"{gameObject.name} is generating Node Display Symbols");
             List<BaseObjectManager> tempOutput = GetSlotsDecending();
             //Debug.Log($"tempOutput.Count = {tempOutput.Count}");
-            List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
-            for (int i = 0; i < tempOutput.Count; i++)
+            List<NodeDisplaySymbolContainer> output = new List<NodeDisplaySymbolContainer>();
+            for (int i = 0; i < tempOutput.Count; i++) //TODO Refactor evaluations manager to not include padding rowint i = configurationGroupDisplayZones.paddingBefore ; i < tempOutput.Count; i++)
             {
                 //Debug.Log($"tempOutput[{i}].currentPresentingSymbolID = {tempOutput[i].currentPresentingSymbolID}");
-                output.Add(new NodeDisplaySymbol(tempOutput[i].currentPresentingSymbolID));
+                output.Add(new NodeDisplaySymbolContainer(tempOutput[i].currentPresentingSymbolID));
             }
             //Debug.Log($"Node Display Symbols from {gameObject.name} = {PrintNodeDisplaySymbols(output.ToArray())}");
             return output.ToArray();
         }
 
-        private string PrintNodeDisplaySymbols(NodeDisplaySymbol[] nodeDisplaySymbols)
+        private string PrintNodeDisplaySymbols(NodeDisplaySymbolContainer[] nodeDisplaySymbols)
         {
             string output = "";
             for (int i = 0; i < nodeDisplaySymbols.Length; i++)
@@ -469,7 +469,7 @@ namespace Slot_Engine.Matrix
         /// Stop the reel and set ending symbols
         /// </summary>
         /// <param name="ending_symbols">the symbols to land on</param>
-        public async Task StopReel(NodeDisplaySymbol[] ending_symbols)
+        public async Task StopReel(NodeDisplaySymbolContainer[] ending_symbols)
         {
             //If not directional constant then whatever symbol is on reel right now use that
             SetEndingSymbolsTo(ending_symbols);
@@ -482,13 +482,13 @@ namespace Slot_Engine.Matrix
         /// Set Ending Symbols variable
         /// </summary>
         /// <param name="endingSymbols">ending symbols for reelstrip</param>
-        private void SetEndingSymbolsTo(NodeDisplaySymbol[] endingSymbols)
+        private void SetEndingSymbolsTo(NodeDisplaySymbolContainer[] endingSymbols)
         {
-            Debug.Log($"Setting End Symbols To {PrintNodeDisplaySymbolArray(endingSymbols)}");
+            //Debug.Log($"Setting End Symbols To {PrintNodeDisplaySymbolArray(endingSymbols)}");
             this.symbolsdisplaySymbolsSequence = endingSymbols;
         }
 
-        private string PrintNodeDisplaySymbolArray(NodeDisplaySymbol[] endingSymbols)
+        private string PrintNodeDisplaySymbolArray(NodeDisplaySymbolContainer[] endingSymbols)
         {
             List<int> output = new List<int>();
             for (int endingSymbol = 0; endingSymbol < endingSymbols.Length; endingSymbol++)
@@ -515,7 +515,7 @@ namespace Slot_Engine.Matrix
         }
         internal async Task AllSlotsStoppedSpinning()
         {
-            Debug.Log($"Waiting for group {gameObject.name} to stop spinning");
+            //Debug.Log($"Waiting for group {gameObject.name} to stop spinning");
             bool task_lock = true;
             while (task_lock)
             {
@@ -526,7 +526,7 @@ namespace Slot_Engine.Matrix
                     task_lock = false;
                 }
             }
-            Debug.Log($"group {gameObject.name} stopped spinning");
+            //Debug.Log($"group {gameObject.name} stopped spinning");
         }
 
         //internal virtual void GenerateLocalPositions(ConfigurationSettingsScriptableObject configurationSettings)
@@ -555,7 +555,7 @@ namespace Slot_Engine.Matrix
             List<AnimatorSubStateMachine> values = new List<AnimatorSubStateMachine>();
             for (int slot = 0; slot < objectsInGroup.Length; slot++)
             {
-                values.AddRange(objectsInGroup[slot].stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines);
+                values.AddRange(objectsInGroup[slot].animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines);
             }
             return values.ToArray();
         }
@@ -564,7 +564,7 @@ namespace Slot_Engine.Matrix
             List<string> keys = new List<string>();
             for (int slot = 0; slot < objectsInGroup.Length; slot++)
             {
-                keys.AddRange(objectsInGroup[slot].stateMachine.animator_state_machines.sub_state_machines_keys);
+                keys.AddRange(objectsInGroup[slot].animatorStateMachine.animator_state_machines.sub_state_machines_keys);
             }
             return keys.ToArray();
         }
@@ -586,9 +586,16 @@ namespace Slot_Engine.Matrix
                 List<BaseObjectManager> temp = GetSlotsDecending();
                 Debug.Log($"Setting {gameObject.name} temp[0].gameObject.name = {temp[0].gameObject.name}");
                 //Get slots descending and set the first padding symbol to next symbol
-                NodeDisplaySymbol temp2 = new NodeDisplaySymbol(selectedSymbolToGenerate);
+                NodeDisplaySymbolContainer temp2 = new NodeDisplaySymbolContainer(selectedSymbolToGenerate);
                 temp[0].SetDisplaySymbolTo(temp2);
 
+            }
+        }
+        internal void SyncInformationToDisplaySymbol ()
+        {
+            for (int i = 0; i < objectsInGroup.Length; i++)
+            {
+                objectsInGroup[i].SyncCurrentDisplaySymbolInfo();
             }
         }
 

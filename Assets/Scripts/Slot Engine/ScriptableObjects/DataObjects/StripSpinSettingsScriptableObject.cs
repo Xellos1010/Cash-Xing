@@ -6,7 +6,7 @@
 //  @ File Name : SlotEngine.cs
 //  @ Date : 5/7/2014
 //  @ Author : Evan McCall
-namespace Slot_Engine.Matrix.ScriptableObjects
+namespace BoomSports.Prototype.ScriptableObjects
 {
     using System.Collections;
     using System.Collections.Generic;

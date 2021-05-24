@@ -10,8 +10,9 @@
 //
 using UnityEngine;
 using System;
-
-namespace Slot_Engine.Matrix
+using BoomSports.Prototype.Managers;
+//TODO make conditional namespace - need to develop more
+namespace BoomSports.Prototype
 {
     [Serializable]
     public abstract class BaseSlotActivatorEventConditional

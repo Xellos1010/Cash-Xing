@@ -1,9 +1,9 @@
 ﻿using System;
 using UnityEngine;
-namespace Slot_Engine.Matrix.Managers
+namespace BoomSports.Prototype.Managers
 {
     [Serializable]
-    public abstract class BoomSportsManager : MonoBehaviour
+    public abstract class BaseBoomSportsManager : MonoBehaviour
     {
         [SerializeField]
         public StripConfigurationObject configurationObject;

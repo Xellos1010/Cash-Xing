@@ -14,50 +14,53 @@ using System.Collections;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-public class AudioManager 
+namespace BoomSports.Prototype.Managers
 {
-	public AudioClip aRollups ;
-	public AudioSource audioMachine;
-	public AudioClip[] sequenceToPlay;
-	public object aCelebrationRollup ;
-	public void FindAndSetRollups()
-    {
+	public class AudioManager : BaseBoomSportsManager
+{
+		public AudioClip aRollups;
+		public AudioSource audioMachine;
+		public AudioClip[] sequenceToPlay;
+		public object aCelebrationRollup;
+		public void FindAndSetRollups()
+		{
 
+		}
+		public void PlayRollup(int iRollup)
+		{
+
+		}
+		/// <summary>
+		/// Set a Sequence of audio clips to play without delay
+		/// </summary>
+		/// <param name="Sequence">AudioClip[] sequence to play</param>
+		public void SetSequenceClips(AudioClip[] Sequence)
+		{
+
+		}
+		/// <summary>
+		/// Play Sequence of clips - Bonus is to include another class to play sequence of clips with float delay
+		/// </summary>
+		public void PlaySequenceClips()
+		{
+
+		}
+
+		/// <summary>
+		/// Interrupt the current sequence of audio clips and stop the current audio clip from playing
+		/// </summary>
+		public void InterruptAudio()
+		{
+
+		}
+		/// <summary>
+		/// Interrupt the audio clip sequence, stop the current audio clip and start playing the replacementClip - Bonus for incorporating another class to play clip sequence.
+		/// </summary>
+		/// <param name="Replacementclip"></param>
+		public void InterruptAndReplaceAudio(AudioClip Replacementclip)
+		{
+
+		}
 	}
-	public void PlayRollup(int iRollup)
-    {
 
-	}
-	/// <summary>
-	/// Set a Sequence of audio clips to play without delay
-	/// </summary>
-	/// <param name="Sequence">AudioClip[] sequence to play</param>
-	public void SetSequenceClips(AudioClip[] Sequence)
-    {
-
-	}
-	/// <summary>
-	/// Play Sequence of clips - Bonus is to include another class to play sequence of clips with float delay
-	/// </summary>
-	public void PlaySequenceClips()
-    {
-
-	}
-
-	/// <summary>
-	/// Interrupt the current sequence of audio clips and stop the current audio clip from playing
-	/// </summary>
-	public void InterruptAudio()
-    {
-
-	}
-	/// <summary>
-	/// Interrupt the audio clip sequence, stop the current audio clip and start playing the replacementClip - Bonus for incorporating another class to play clip sequence.
-	/// </summary>
-	/// <param name="Replacementclip"></param>
-	public void InterruptAndReplaceAudio(AudioClip Replacementclip)
-    {
-
-	}
 }
-

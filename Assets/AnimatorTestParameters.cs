@@ -2,13 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+using BoomSports.Prototype.Managers;
 
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype
 {
 
 #if UNITY_EDITOR
@@ -28,7 +28,7 @@ namespace Slot_Engine.Matrix
         public override async void OnInspectorGUI()
         {
             EditorGUILayout.LabelField("Animator Debug Utility");
-            EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+            EditorGUILayout.EnumPopup(StaticStateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             DrawTriggerUtilityWindow();
             BoomEditorUtilities.DrawUILine(Color.white);

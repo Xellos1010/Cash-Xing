@@ -9,15 +9,10 @@
 //
 //
 using UnityEngine;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using static Slot_Engine.Matrix.EndConfigurationManager;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
     [CanEditMultipleObjects]
@@ -209,7 +204,7 @@ namespace Slot_Engine.Matrix
         {
 
             bool symbol_set = false;
-            NodeDisplaySymbol symbol = new NodeDisplaySymbol();
+            NodeDisplaySymbolContainer symbol = new NodeDisplaySymbolContainer();
             //First we check if we have symbols in a list to present next - then we go based on set presentation symbol - This will break under certain conditions but works for now.
             if (stripManager.nextSymbolToUseOnGoToStart.Count > 0)
             {
@@ -264,7 +259,7 @@ namespace Slot_Engine.Matrix
                 {
                     Debug.LogWarning("Symbol was not set - auto setting random");
                     //Determines an overlay symbol
-                    symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StateManager.enCurrentMode).Result;
+                    symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StaticStateManager.enCurrentMode).Result;
                 }
                 SetDisplaySymbolTo(symbol);
             }
@@ -279,7 +274,7 @@ namespace Slot_Engine.Matrix
             {
                 if (stripManager.configurationObjectParent.isSymbolOverlay(i))
                 {
-                    output = stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
+                    output = animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[i];
                     SetBoolTo(ref output, supportedAnimatorBools.FeatureTrigger, true);
                     return output;
                 }
@@ -293,7 +288,7 @@ namespace Slot_Engine.Matrix
         {
             if (stripManager.configurationGroupDisplayZones.spinParameters.GetType() == typeof(StripSpinDirectionalStepperEvaluatorScriptableObject))
             {
-                Debug.Log($"{stripManager.gameObject.name} {gameObject.name} spin parameters = {stripManager.configurationGroupDisplayZones.spinParameters.GetType()}");
+                //Debug.Log($"{stripManager.gameObject.name} {gameObject.name} spin parameters = {stripManager.configurationGroupDisplayZones.spinParameters.GetType()}");
                 endSpin = true;
             }
             else

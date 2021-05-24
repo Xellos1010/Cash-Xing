@@ -1,5 +1,5 @@
-﻿using Slot_Engine.Matrix;
-using Slot_Engine.Matrix.ScriptableObjects;
+﻿using BoomSports.Prototype;
+using BoomSports.Prototype.ScriptableObjects;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,7 +28,7 @@ public struct EvaluationObjectStruct
     /// Winning Symbol Nodes
     /// </summary>
     [SerializeField]
-    public List<EvaluationNode> winningEvaluationNodes;
+    public List<WinningEvaluatedNodeContainer> winningEvaluationNodes;
     [SerializeField]
     internal Dictionary<Features, List<SuffixTreeNodeInfo>> featureEvaluationActiveCount;
 
@@ -52,9 +52,9 @@ public struct EvaluationObjectStruct
         return evaluationScriptableObject.EvaluatePaylines(ref this);
     }
 
-    internal void InitializeWinningSymbolsFeaturesActiveCollections()
+    internal void ResetWinningEvaluationNodesList()
     {
-        winningEvaluationNodes = new List<EvaluationNode>();
+        winningEvaluationNodes = new List<WinningEvaluatedNodeContainer>();
     }
 
     internal bool? ContainsItemWithFeature<T>(Features featureName, ref SlotEvaluationScriptableObject slotEvaluationActivated)

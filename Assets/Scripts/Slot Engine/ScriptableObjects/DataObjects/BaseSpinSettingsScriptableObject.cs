@@ -9,7 +9,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
-namespace Slot_Engine.Matrix.ScriptableObjects
+namespace BoomSports.Prototype.ScriptableObjects
 {
     public abstract class BaseSpinSettingsScriptableObject : ScriptableObject
     {

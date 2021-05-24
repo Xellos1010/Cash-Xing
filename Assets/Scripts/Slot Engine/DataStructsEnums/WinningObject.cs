@@ -1,5 +1,5 @@
 ﻿//For Parsing Purposes
-using Slot_Engine.Matrix;
+using BoomSports.Prototype;
 using System;
 using UnityEngine;
 /// <summary>
@@ -9,7 +9,7 @@ using UnityEngine;
 public partial class WinningObject
 {
     [SerializeField]
-    public EvaluationNode[] winningNodes;
+    public WinningEvaluatedNodeContainer[] winningNodes;
 
     internal bool ContainsNode(SuffixTreeNodeInfo nodeInfo)
     {

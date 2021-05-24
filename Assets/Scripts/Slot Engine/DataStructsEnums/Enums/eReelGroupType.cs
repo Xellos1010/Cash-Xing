@@ -1,5 +1,5 @@
 ﻿
-namespace Slot_Engine
+namespace BoomSports
 {
     public enum eReelGroupType
     {

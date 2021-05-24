@@ -1,5 +1,5 @@
-using Slot_Engine.Matrix;
-using Slot_Engine.Matrix.ScriptableObjects;
+using BoomSports.Prototype;
+using BoomSports.Prototype.ScriptableObjects;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Reflection;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix.Managers
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
 
@@ -80,8 +80,73 @@ namespace Slot_Engine.Matrix.Managers
         }
     }
 #endif
-    public class EvaluationManager : BoomSportsManager
+    public class EvaluationManager : BaseBoomSportsManager
     {
+        internal static bool CheckSymbolActivatesFeature(int symbolIndex, Features featureToCheck)
+        {
+            bool output = false;
+            for (int i = 0; i < instance.slotEvaluationObjects.Length; i++)
+            {
+                if(instance.slotEvaluationObjects[i].featureName == featureToCheck)
+                {
+                    if(instance.configurationObject.symbolDataScriptableObject.symbols[symbolIndex].symbolName.Contains(instance.slotEvaluationObjects[i].symbolTargetName))
+                    {
+                        output = true;
+                        break;
+                    }
+                }
+            }
+            return output;
+        }
+
+        [Serializable]
+        public struct SymbolSlotEvaluationsReturnContainer
+        {
+            /// <summary>
+            /// Dispplay symbol searched
+            /// </summary>
+            [SerializeField]
+            public NodeDisplaySymbolContainer symbolChecked;
+            /// <summary>
+            /// Connected Evaluators to symbol
+            /// </summary>
+            [SerializeField]
+            public SlotEvaluationScriptableObject[] connectedEvaluators;
+
+            public SymbolSlotEvaluationsReturnContainer(NodeDisplaySymbolContainer displaySymboltoCheck, SlotEvaluationScriptableObject[] connectedEvaluators) : this()
+            {
+                symbolChecked = displaySymboltoCheck;
+                this.connectedEvaluators = connectedEvaluators;
+            }
+        }
+        /// <summary>
+        /// Checks if a symbol has evaluators it triggers and returns evaluators
+        /// </summary>
+        /// <param name="displaySymboltoCheck"></param>
+        /// <returns></returns>
+        internal static SymbolSlotEvaluationsReturnContainer CheckReturnSymbolHasFeature(NodeDisplaySymbolContainer displaySymboltoCheck)
+        {
+            List<SlotEvaluationScriptableObject> connectedEvaluators = new List<SlotEvaluationScriptableObject>();
+            for (int i = 0; i < instance.slotEvaluationObjects.Length; i++)
+            {
+                if (instance.configurationObject.symbolDataScriptableObject.symbols[displaySymboltoCheck.primarySymbol].symbolName.Contains(instance.slotEvaluationObjects[i].symbolTargetName))
+                {
+                    connectedEvaluators.Add(instance.slotEvaluationObjects[i]);
+                }
+            }
+            SymbolSlotEvaluationsReturnContainer output = new SymbolSlotEvaluationsReturnContainer(displaySymboltoCheck, connectedEvaluators.ToArray());
+            return output;
+        }
+        public static EvaluationManager instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = GameObject.FindObjectOfType<EvaluationManager>();
+                return _instance;
+            }
+        }
+        public static EvaluationManager _instance;
         /// <summary>
         /// These Control the various ways a gridConfiguration can be evaluated for features - Wild allows more winning lines/ways/shapes - Overlays have sub symbols- trigger symbols trigger a feature 
         /// </summary>
@@ -99,7 +164,7 @@ namespace Slot_Engine.Matrix.Managers
         {
             get
             {
-                return GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref slotEvaluationObjects).nodesActivatingEvaluationConditions;
+                return GetFirstInstanceFeatureEvaluationObject<TriggerFeatureEvaluationScriptableObject>(ref slotEvaluationObjects).nodesActivatingEvaluationConditions;
             }
         }
 
@@ -107,38 +172,42 @@ namespace Slot_Engine.Matrix.Managers
         /// Evaluates the symbols configuration for winning paylines
         /// </summary>
         /// <param name="configurationToEvaluate"></param>
-        /// <returns></returns>
+        /// <returns>Winning Objects</returns> TODO refactor to return base abstract class
         internal Task<WinningPayline[]> EvaluateSymbolConfigurationForWinningPaylines(DisplayConfigurationContainer configurationToEvaluate)
         {
             //Build a list of evaluation objects based on feature evaluation and core evaluation objects
             List<object> output_raw = new List<object>();
 
             //Build list of evaluations to make out of features and core objects
-            List<EvaluationObjectStruct> evaluationsToTake = new List<EvaluationObjectStruct>();
+            List<EvaluationObjectStruct> coreEvaluationsToRun = new List<EvaluationObjectStruct>();
 
             //Clear all feature conditions of activated nodes previously
 
             Debug.Log($"Symbol Configuration being evaluated = {PrintConfiguration(configurationToEvaluate)}");
 
+            //Clear and build evaluation objects winning objects
             for (int coreEvaluationObject = 0; coreEvaluationObject < coreEvaluationObjects.Length; coreEvaluationObject++)
             {
-                evaluationsToTake.Add(new EvaluationObjectStruct(coreEvaluationObjects[coreEvaluationObject], slotEvaluationObjects, configurationToEvaluate));
+                coreEvaluationsToRun.Add(new EvaluationObjectStruct(coreEvaluationObjects[coreEvaluationObject], slotEvaluationObjects, configurationToEvaluate));
                 coreEvaluationObjects[coreEvaluationObject].ClearWinningObjects();
             }
             for (int slotEvaluationObject = 0; slotEvaluationObject < slotEvaluationObjects.Length; slotEvaluationObject++)
             {
                 slotEvaluationObjects[slotEvaluationObject].ClearWinningObjects();
             }
-            for (int evaluation = 0; evaluation < evaluationsToTake.Count; evaluation++)
+
+            //Build the raw winning paylines
+            for (int evaluation = 0; evaluation < coreEvaluationsToRun.Count; evaluation++)
             {
-                output_raw.Add(evaluationsToTake[evaluation].Evaluate());
+                output_raw.Add(coreEvaluationsToRun[evaluation].Evaluate());
             }
+            //TODO Abstract Winning Paylines to Winning Objects
             List<WinningPayline> output_filtered = new List<WinningPayline>();
             for (int i = 0; i < output_raw.Count; i++)
             {
                 output_filtered.AddRange((WinningPayline[])Convert.ChangeType(output_raw[i], typeof(WinningPayline[])));
             }
-            //Check that feature conditions are met and activated
+            //Check that feature conditions are met and activated after return
             return Task.FromResult<WinningPayline[]>(output_filtered.ToArray());
         }
 
@@ -240,7 +309,8 @@ namespace Slot_Engine.Matrix.Managers
             {
                 if (slotEvaluationObjects[slotEvaluator].featureName == feature || feature == Features.Count)
                 {
-                    if (slotEvaluationObjects[slotEvaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                    //The prefab of the symbol came with Symbol_ - See if symbol prefab contains symbol defined name
+                    if (symbolObject.symbolName.Contains(slotEvaluationObjects[slotEvaluator].symbolTargetName))
                     {
                         return true;
                     }
@@ -254,7 +324,7 @@ namespace Slot_Engine.Matrix.Managers
             List<Features> output = new List<Features>();
             for (int slotEvaluator = 0; slotEvaluator < slotEvaluationObjects.Length; slotEvaluator++)
             {
-                if (slotEvaluationObjects[slotEvaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                if (symbolObject.symbolName.Contains(slotEvaluationObjects[slotEvaluator].symbolTargetName))
                 {
                     output.Add(slotEvaluationObjects[slotEvaluator].featureName);
                 }
@@ -305,7 +375,7 @@ namespace Slot_Engine.Matrix.Managers
             bool output = false;
             for (int evaluator = 0; evaluator < slotEvaluationObjects.Length; evaluator++)
             {
-                if (slotEvaluationObjects[evaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                if (symbolObject.symbolName.Contains(slotEvaluationObjects[evaluator].symbolTargetName))
                 {
                     output = true;
                     break;
@@ -320,7 +390,7 @@ namespace Slot_Engine.Matrix.Managers
             List<Features> output = new List<Features>();
             for (int evaluator = 0; evaluator < slotEvaluationObjects.Length; evaluator++)
             {
-                if (slotEvaluationObjects[evaluator].symbolTargetNames.Contains(symbolObject.symbolName))
+                if (symbolObject.symbolName.Contains(slotEvaluationObjects[evaluator].symbolTargetName))
                 {
                     if(!output.Contains(slotEvaluationObjects[evaluator].featureName))
                         output.Add(slotEvaluationObjects[evaluator].featureName);
@@ -328,5 +398,6 @@ namespace Slot_Engine.Matrix.Managers
             }
             return output.ToArray();
         }
+
     }
 }

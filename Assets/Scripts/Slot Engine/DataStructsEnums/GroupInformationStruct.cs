@@ -2,7 +2,7 @@
 //  @ Author : Evan McCall
 #if UNITY_EDITOR
 #endif
-using Slot_Engine.Matrix;
+using BoomSports.Prototype;
 using System;
 using UnityEngine;
 

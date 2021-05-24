@@ -1,6 +1,6 @@
 using UnityEngine;
 using System;
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
     public class SoundManager : MonoBehaviour
     {

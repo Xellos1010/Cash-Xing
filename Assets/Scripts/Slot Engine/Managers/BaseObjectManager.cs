@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 using UnityEngine;
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
     /// <summary>
     /// 
@@ -57,7 +57,7 @@ namespace Slot_Engine.Matrix
         /// <summary>
         /// Animator State machine that controls the Object
         /// </summary>
-        public AnimatorStateMachineManager stateMachine
+        public AnimatorStateMachineManager animatorStateMachine
         {
             get
             {
@@ -131,7 +131,7 @@ namespace Slot_Engine.Matrix
         internal void SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol()
         {
             //This is a work around to get Cash-Xing implemented and can be refined and integrated into a signaling system when an object changes index in path
-            Debug.Log($"{gameObject.name} is signaling {baseObjectGroupParent.gameObject.name} to check for evaluation conditions for next slot");
+            //Debug.Log($"{gameObject.name} is signaling {baseObjectGroupParent.gameObject.name} to check for evaluation conditions for next slot");
             startSpinCheckNextPointInPath?.Invoke(this);
         }
 
@@ -160,40 +160,40 @@ namespace Slot_Engine.Matrix
         internal void SetTriggerSubStatesTo(supportedAnimatorTriggers toTrigger)
         {
             //Debug.Log(String.Format("Setting sub states to trigger {0}",toTrigger.ToString()));
-            stateMachine.SetSubStateMachinesTriggerTo(0, toTrigger);
+            animatorStateMachine.SetSubStateMachinesTriggerTo(0, toTrigger);
         }
 
         internal void ResetTriggerSubStates(supportedAnimatorTriggers triggerToReset)
         {
-            stateMachine.ResetTriggerStateMachines(triggerToReset);
+            animatorStateMachine.ResetTriggerStateMachines(triggerToReset);
         }
 
         internal void SetAllSubStateAnimators()
         {
-            stateMachine.SetStateMachinesBySubAnimators();
+            animatorStateMachine.SetStateMachinesBySubAnimators();
         }
 
         internal void ClearAllSubStateAnimators()
         {
-            stateMachine.ClearStateMachinesBySubAnimators();
+            animatorStateMachine.ClearStateMachinesBySubAnimators();
         }
 
         internal void SetStateMachineAnimators()
         {
-            stateMachine.SetStateMachineSyncAnimators();
+            animatorStateMachine.SetStateMachineSyncAnimators();
         }
 
         internal bool isAllAnimatorsFinished(string animation_to_check)
         {
             bool output = false;
-            for (int subStateMachine = 0; subStateMachine < stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length; subStateMachine++)
+            for (int subStateMachine = 0; subStateMachine < animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length; subStateMachine++)
             {
-                for (int animator = 0; animator < stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length; animator++)
+                for (int animator = 0; animator < animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length; animator++)
                 {
-                    AnimatorStateInfo state_info = stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator].GetCurrentAnimatorStateInfo(0);
+                    AnimatorStateInfo state_info = animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator].GetCurrentAnimatorStateInfo(0);
                     //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
 
-                    if (state_info.IsName(animation_to_check) && state_info.normalizedTime >= 1 && (subStateMachine == stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length - 1) && (animator == stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length))
+                    if (state_info.IsName(animation_to_check) && state_info.normalizedTime >= 1 && (subStateMachine == animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length - 1) && (animator == animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length))
                     {
                         output = true;
                     }
@@ -209,11 +209,11 @@ namespace Slot_Engine.Matrix
 
         internal void AddAnimatorsToList(ref List<Animator> output)
         {
-            for (int subStateMachine = 0; subStateMachine < stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length; subStateMachine++)
+            for (int subStateMachine = 0; subStateMachine < animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines.Length; subStateMachine++)
             {
-                for (int animator = 0; animator < stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length; animator++)
+                for (int animator = 0; animator < animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators.Length; animator++)
                 {
-                    output.Add(stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator]);
+                    output.Add(animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[subStateMachine].sub_state_animators[animator]);
                 }
             }
         }
@@ -221,7 +221,7 @@ namespace Slot_Engine.Matrix
         {
             if (currentPresentingSymbolID > 0)
             {
-                AnimatorStateInfo state_info = stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID].GetCurrentAnimatorStateInfo(0);
+                AnimatorStateInfo state_info = animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID].GetCurrentAnimatorStateInfo(0);
                 if (state_info.IsName(stateToCheck) && state_info.normalizedTime >= 1.0)
                 {
                     return true;
@@ -275,33 +275,33 @@ namespace Slot_Engine.Matrix
         {
             Animator[] sub_states = transform.GetComponentsInChildren<Animator>(true).RemoveAt<Animator>(0);
             //Remove at 1st index because self reference
-            stateMachine.SetSubStateMachinesTo(ref sub_states);
+            animatorStateMachine.SetSubStateMachinesTo(ref sub_states);
         }
 
         internal void SetBoolStateMachines(supportedAnimatorBools bool_name, bool v)
         {
-            stateMachine.SetBoolAllStateMachines(bool_name, v);
+            animatorStateMachine.SetBoolAllStateMachines(bool_name, v);
         }
 
         internal void ResetAnimator()
         {
-            stateMachine.InitializeAnimator();
+            animatorStateMachine.InitializeAnimator();
         }
 
         internal void InitializeAnimatorToPresentWin()
         {
-            stateMachine.InitializeAnimator();
+            animatorStateMachine.InitializeAnimator();
 
         }
 
         internal void SetTriggerTo(supportedAnimatorTriggers to_trigger)
         {
-            stateMachine.SetAllTriggersTo(to_trigger);
+            animatorStateMachine.SetAllTriggersTo(to_trigger);
         }
 
         internal void ResetTrigger(supportedAnimatorTriggers slot_to_trigger)
         {
-            stateMachine.ResetAllTrigger(slot_to_trigger);
+            animatorStateMachine.ResetAllTrigger(slot_to_trigger);
         }
 
         internal void ShowRandomSymbol()
@@ -406,7 +406,7 @@ namespace Slot_Engine.Matrix
         {
             //Set the sub symbol Animator
             //Debug.Log(String.Format("Setting {0} to symbol win for {1}",String.Join("_",transform.gameObject.name,transform.parent.gameObject.name),presentation_symbol));
-            Animator sub_state_animator = stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID]; //may display wrong animator is out of order
+            Animator sub_state_animator = animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID]; //may display wrong animator is out of order
             //Debug.Log(String.Format("Symbol Set to win = {0}", sub_state_animator.transform.name));
             SetBoolTo(ref sub_state_animator, supportedAnimatorBools.SymbolResolve, true);
             SetBoolTo(ref sub_state_animator, supportedAnimatorBools.LoopPaylineWins, true);
@@ -419,7 +419,7 @@ namespace Slot_Engine.Matrix
 
         internal async void PlayAnimationOnPresentationSymbol(string animation)
         {
-            Animator sub_state_animator = stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID]; //may display wrong animator is out of order
+            Animator sub_state_animator = animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID]; //may display wrong animator is out of order
             sub_state_animator.Play(animation, -1, 0);
         }
 
@@ -428,7 +428,7 @@ namespace Slot_Engine.Matrix
         {
             if (currentPresentingSymbolID > 0)
             {
-                AnimatorStateInfo state_info = stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID].GetCurrentAnimatorStateInfo(0);
+                AnimatorStateInfo state_info = animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID].GetCurrentAnimatorStateInfo(0);
                 //Debug.Log(String.Format("Current State Normalized Time = {0} State Name = {1}", state_info.normalizedTime, state_info.IsName(animation_to_check) ? animation_to_check : "Something Else"));
 
                 if (state_info.IsName(animation_to_check))
@@ -445,7 +445,7 @@ namespace Slot_Engine.Matrix
             return true;
         }
 
-        internal void SyncCurrentDisplaySymbolInfo()
+        internal void SyncSymbolInfoToCurrentDisplay()
         {
             MeshRenderer activeMeshrenderer = null;
             //Get sub symbol active
@@ -462,35 +462,40 @@ namespace Slot_Engine.Matrix
             currentPresentingSymbolName = activeMeshrenderer.transform.parent.name;
         }
 
+        internal void SyncCurrentDisplaySymbolInfo()
+        {
+            ShowSymbolRenderer(currentPresentingSymbolID);
+        }
+
         internal void SetBoolTo(ref Animator animator, supportedAnimatorBools supportedBool, bool value)
         {
             //Debug.Log(String.Format("{0} bool {1} is {2}", animator.gameObject.name, supportedBool.ToString(), value));
-            stateMachine.SetBool(ref animator, supportedBool, value);
+            animatorStateMachine.SetBool(ref animator, supportedBool, value);
         }
 
         internal void SetSymbolResolveToLose()
         {
             if (Application.isPlaying)
             {
-                Animator sub_state_animator = stateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID];
-                SetBoolTo(ref sub_state_animator, supportedAnimatorBools.SymbolResolve, false);
+                Animator subAnimatorStateMachines = animatorStateMachine.animator_state_machines.sub_state_machines_values.sub_state_machines[0].sub_state_animators[currentPresentingSymbolID];
+                SetBoolTo(ref subAnimatorStateMachines, supportedAnimatorBools.SymbolResolve, false);
             }
         }
 
         internal void SetOverrideControllerTo(AnimatorOverrideController animatorOverrideController)
         {
-            stateMachine.SetRuntimeControllerTo(animatorOverrideController);
+            animatorStateMachine.SetRuntimeControllerTo(animatorOverrideController);
         }
 
-        internal void SetDisplaySymbolTo(NodeDisplaySymbol symbol_to_display)
+        internal void SetDisplaySymbolTo(NodeDisplaySymbolContainer symbol_to_display)
         {
             //Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primary_symbol}");
             SetPresentationSymbolTo(symbol_to_display.primarySymbol);
             ShowSymbolRenderer(symbol_to_display.primarySymbol);
-            if (symbol_to_display.is_overlay)
-            {
-                ShowSymbolRenderer(symbol_to_display.overlay_symbol, false);
-            }
+            //if (symbol_to_display.is_overlay)
+            //{
+            //    ShowSymbolRenderer(symbol_to_display.overlay_symbol, false);
+            //}
         }
 
         internal void SetPresentationSymbolTo(int to_symbol)

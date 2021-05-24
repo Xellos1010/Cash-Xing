@@ -5,7 +5,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 
 #if UNITY_EDITOR
@@ -81,13 +81,13 @@ namespace Slot_Engine.Matrix
         // Start is called before the first frame update
         void OnEnable()
         {
-            StateManager.StateChangedTo += StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
         private void OffsetPlayerWalletBy(double amount)
         {
             //This will fire an event and the UI manager will auto set the text based on new player amount
-            Debug.Log("Player wallet offset by " + amount);
+            //Debug.Log("Player wallet offset by " + amount);
             matrix.OffetPlayerWalletBy(amount);
         }
 
@@ -126,7 +126,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void StartRacking()
         {
-            Debug.Log("Starting Rack");
+            //Debug.Log("Starting Rack");
             if(matrix.managers.machineInfoManager.machineInfoScriptableObject.bank > 0)
                 SetCreditAmountToRack(matrix.managers.machineInfoManager.machineInfoScriptableObject.bank);
             else
@@ -148,7 +148,7 @@ namespace Slot_Engine.Matrix
             }
             else
             {
-                Debug.Log("Racking manager Starting to rack" + win_amount + " Amount won");
+                //Debug.Log("Racking manager Starting to rack" + win_amount + " Amount won");
                 //OffsetPlayerBankBy(win_amount);
                 //Set Credits to rack
                 SetCreditsToRackAtSpeed(win_amount, credit_rack_speed);
@@ -171,7 +171,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         void OnDisable()
         {
-            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo -= StateManager_StateChangedTo;
         }
         /// <summary>
         /// Main racking loop - will iterate if bank_rack_remaining > 0
