@@ -8,11 +8,11 @@
 //  @ Author : Evan McCall
 //
 //
-using Slot_Engine.Matrix.Managers;
+using BoomSports.Prototype.Managers;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Slot_Engine.Matrix.ScriptableObjects
+namespace BoomSports.Prototype.ScriptableObjects
 {
     public abstract partial class EvaluationScriptableObject : ScriptableObject
     {

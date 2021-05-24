@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
     /// <summary>
     /// Base Configuration Object Class - Strip Configuration (Spin grid in a strip approach) - Grid Configuration (WYSIWYG, Independant Reels)- 
     /// </summary>
-    public class BaseConfigurationObject : MonoBehaviour
+    public class BaseConfigurationObjectManager : MonoBehaviour
     {
         /// <summary>
         /// Holds the reference to all managers
@@ -70,7 +70,7 @@ namespace Slot_Engine.Matrix
         public async virtual void Start()
         {
             //Initialize game mode
-            StateManager.SetGameModeActiveTo(GameModes.baseGame);
+            StaticStateManager.SetGameModeActiveTo(GameModes.baseGame);
             await CheckSymbolWeightsWork();
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
             InitializeStateMachine();
@@ -78,11 +78,11 @@ namespace Slot_Engine.Matrix
             managers.machineInfoManager.InitializeTestMachineValues(10000.0f, 0.0f, managers.machineInfoManager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 - 1, 0, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
-            SyncCurrentSymbolDisplayed();
+            SyncCurrentSymbolDisplayedToPresentationID();
             managers.endConfigurationManager.ClearConfigurations();
             await managers.endConfigurationManager.GenerateMultipleDisplayConfigurations(GameModes.baseGame,20);
 
-            StateManager.SetStateTo(States.Idle_Intro);
+            StaticStateManager.SetStateTo(States.Idle_Intro);
         }
         /// <summary>
         /// Use Next Configuration from endConfigurationManager
@@ -107,7 +107,7 @@ namespace Slot_Engine.Matrix
             int[] spinObjectsOrder = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
             //Set the end configuraiton manager current configuraiton in use to displayConfiguration
             managers.endConfigurationManager._displayConfigurationInUse = displayConfigurationToUse;
-            Debug.Log($"Spinning objects in order {String.Join("|", spinObjectsOrder)}");
+            //Debug.Log($"Spinning objects in order {String.Join("|", spinObjectsOrder)}");
             //Spin the reels - if there is a delay between reels then wait delay amount
             for (int i = 0; i < spinObjectsOrder.Length; i++)
             {
@@ -139,12 +139,12 @@ namespace Slot_Engine.Matrix
             //Wait for all reels to be in spin.end state before continuing
             await WaitForGroupManagersToStopSpin(configurationGroupManagers);
             //ensure symbols have proper id's set
-            SyncCurrentSymbolDisplayed();
+            SyncCurrentSymbolDisplayedToPresentationID();
             //Evaluate the reels - 
             managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
         }
 
-        internal void SyncCurrentSymbolDisplayed()
+        internal void SyncCurrentSymbolDisplayedToPresentationID()
         {
             for (int i = 0; i < configurationGroupManagers.Length; i++)
             {
@@ -317,7 +317,7 @@ namespace Slot_Engine.Matrix
         internal async Task<int> DrawRandomSymbol()
         {
             if (Application.isPlaying)
-                return await DrawRandomSymbol(StateManager.enCurrentMode);
+                return await DrawRandomSymbol(StaticStateManager.enCurrentMode);
             else
                 return await DrawRandomSymbol(GameModes.baseGame);
         }
@@ -350,7 +350,7 @@ namespace Slot_Engine.Matrix
         internal int DrawRandomSymbolFromCurrentMode()
         {
             //Debug.Log($"Drawing random symbol for state {StateManager.enCurrentMode}");
-            return DrawRandomSymbol(StateManager.enCurrentMode).Result;
+            return DrawRandomSymbol(StaticStateManager.enCurrentMode).Result;
         }
 
         internal Animator SetAnimatorFeatureTriggerAndReturn(SuffixTreeNodeInfo SuffixTreeNodeInfo)

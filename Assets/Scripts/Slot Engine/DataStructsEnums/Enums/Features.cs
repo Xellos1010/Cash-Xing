@@ -11,7 +11,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype
 {
 
 	public enum Features

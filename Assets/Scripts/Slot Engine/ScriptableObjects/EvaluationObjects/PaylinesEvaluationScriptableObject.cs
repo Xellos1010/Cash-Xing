@@ -9,11 +9,11 @@
 //
 //
 using UnityEngine;
-using Slot_Engine.Matrix.Managers;
+using BoomSports.Prototype.Managers;
 using System.Collections.Generic;
 using System;
 
-namespace Slot_Engine.Matrix.ScriptableObjects
+namespace BoomSports.Prototype.ScriptableObjects
 {
     public enum paylineDirection
     {
@@ -75,13 +75,16 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             evaluationUsed = evaluationObject;
             List<WinningPayline> output_raw = new List<WinningPayline>();
             List<WinningPayline> output_filtered = new List<WinningPayline>();
-            //Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.paylineNodes.Length}");
-            //Filter thru each node and check the active feature conditions for activating a feature
+            Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.paylineNodes.Length}");
+
+            //Evaluate each root node and check active feature conditions
             for (int rootNode = 0; rootNode < dynamic_paylines.paylineNodes.Length; rootNode++)
             {
-                // Debug.Log($"Checking Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
-                output_raw.AddRange(dynamic_paylines.paylineNodes[rootNode].InitializeAndCheckForWinningPaylines(ref evaluationObject));
-                //Don't add the same full line win both ways
+                Debug.Log($"Evaluating Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
+                //Add initial winning lines
+                output_raw.AddRange(dynamic_paylines.paylineNodes[rootNode].EvaluateRawWinningPaylines(ref evaluationObject));
+
+                //Filter for duplicate linewins
                 FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw,evaluationObject.maxLength);
                 output_filtered.AddRange(output_raw);
                 output_raw.Clear();
@@ -96,7 +99,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                     //Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
                     if ((item.Key == Features.overlay || item.Key == Features.multiplier))
                     {
-                        OverlayEvaluationScriptableObject overlayLogic = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
+                        TriggerFeatureEvaluationScriptableObject overlayLogic = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<TriggerFeatureEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
                         //Feature Evaluated Slot items are in raw format waiting for winningObjects to be generated to run evaluation logic- run check if items are valid
                         for (int node = item.Value.Count - 1; node >= 0; node--)
                         {
@@ -107,15 +110,15 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                         }
                         if (item.Value.Count > 0)
                         {
-                            if (StateManager.enCurrentMode != GameModes.freeSpin)
+                            if (StaticStateManager.enCurrentMode != GameModes.freeSpin)
                             {
-                                if (StateManager.enCurrentMode == GameModes.baseGame) //Can Only apply overlay feature in base-game
-                                    StateManager.SetFeatureActiveTo(Features.multiplier, true);
-                                EvaluationManager.GetFirstInstanceFeatureEvaluationObject<OverlayEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects).nodesActivatingEvaluationConditions = item.Value;
+                                if (StaticStateManager.enCurrentMode == GameModes.baseGame) //Can Only apply overlay feature in base-game
+                                    StaticStateManager.SetFeatureActiveTo(Features.multiplier, true);
+                                EvaluationManager.GetFirstInstanceFeatureEvaluationObject<TriggerFeatureEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects).nodesActivatingEvaluationConditions = item.Value;
                             }
                             else
                             {
-                                StateManager.AddToMultiplier(item.Value.Count);
+                                StaticStateManager.AddToMultiplier(item.Value.Count);
                             }
                         }
                     }
@@ -125,7 +128,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                         bool activateFeature = freespinsObject.EvaluateConditionsMet(item.Value, output_filtered.ToArray());
                         if (activateFeature)
                         {
-                            StateManager.SetFeatureActiveTo(Features.freespin, true);
+                            StaticStateManager.SetFeatureActiveTo(Features.freespin, true);
                         }
                         else
                         {
@@ -145,7 +148,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
 
         private void BuildWinningSymbolNodes(ref List<WinningObject> winningPaylines)
         {
-            HashSet<EvaluationNode> winningNodes = new HashSet<EvaluationNode>();
+            HashSet<WinningEvaluatedNodeContainer> winningNodes = new HashSet<WinningEvaluatedNodeContainer>();
             for (int payline = 0; payline < winningPaylines.Count; payline++)
             {
                 for (int node = 0; node < winningPaylines[payline].winningNodes.Length; node++)
@@ -154,7 +157,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 }
             }
             if (evaluationUsed.winningEvaluationNodes == null)
-                evaluationUsed.winningEvaluationNodes = new List<EvaluationNode>();
+                evaluationUsed.winningEvaluationNodes = new List<WinningEvaluatedNodeContainer>();
             evaluationUsed.winningEvaluationNodes.AddRange(winningNodes);
         }
 
@@ -184,14 +187,14 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             //              add children of n to toWork
             //Node 0 is connected to 0 / 1
             //Initializing the first reel root nodes
-            List<SuffixTreeNodes> paylines = new List<SuffixTreeNodes>();
-            List<SuffixTreeNodes> finished_list = new List<SuffixTreeNodes>();
+            List<SuffixTreeNode> paylines = new List<SuffixTreeNode>();
+            List<SuffixTreeNode> finished_list = new List<SuffixTreeNode>();
 
             number_of_paylines = 0;
             dynamic_paylines.paylinesSupported = new List<Payline>();
 
             dynamic_paylines.paylineNodes = InitializeRootNodes(ref displayZones).ToArray();
-            List<SuffixTreeNodes> to_finish_list = new List<SuffixTreeNodes>();
+            List<SuffixTreeNode> to_finish_list = new List<SuffixTreeNode>();
 
             for (int root_node = 0; root_node < dynamic_paylines.paylineNodes.Length; root_node++)
             {
@@ -201,7 +204,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                 BuildPayline(ref payline, ref dynamic_paylines.paylineNodes[root_node], ref displayZones, evaluationDirection, ref dynamic_paylines.paylineNodes[root_node], customColumnsDefine);
             }
         }
-        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNodes currentPaylineNode, ref ConfigurationDisplayZonesStruct[] displayZones, paylineDirection evaluationDirection, ref SuffixTreeNodes rootNode, CustomColumns[] customColumnsDefine = null)
+        internal void BuildPayline(ref List<int> payline, ref SuffixTreeNode currentPaylineNode, ref ConfigurationDisplayZonesStruct[] displayZones, paylineDirection evaluationDirection, ref SuffixTreeNode rootNode, CustomColumns[] customColumnsDefine = null)
         {
             //Debug.Log($"Payline before nodeInfo registered = {String.Join("|", payline)}");
             //Add current node to payline
@@ -220,7 +223,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             }
             else
             {
-                SuffixTreeNodes parentNode = currentPaylineNode;
+                SuffixTreeNode parentNode = currentPaylineNode;
                 ConfigurationDisplayZonesStruct displayZoneNextColumn = displayZones[next_column];
                 //Next Node needs to initialize ndes further down the tree
                 currentPaylineNode.InitializeConnectedNodes(next_column, ref displayZoneNextColumn, ref parentNode, currentPaylineNode.leftRight,evaluationDirection, customColumnsDefine);
@@ -229,15 +232,15 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                     //Now build out the child refs
                     BuildPayline(ref payline, ref currentPaylineNode.connectedNodes[child_nodes], ref displayZones, evaluationDirection,ref rootNode, customColumnsDefine);
                     //Remove payline buildup
-                    payline.RemoveRange(currentPaylineNode.parent_nodes.Length, payline.Count - currentPaylineNode.parent_nodes.Length);
+                    payline.RemoveRange(currentPaylineNode.parentNodes.Length, payline.Count - currentPaylineNode.parentNodes.Length);
                 }
             }
         }
 
-        private List<SuffixTreeNodes> InitializeRootNodes(ref ConfigurationDisplayZonesStruct[] displayZones)
+        private List<SuffixTreeNode> InitializeRootNodes(ref ConfigurationDisplayZonesStruct[] displayZones)
         {
-            List<SuffixTreeNodes> root_nodes = new List<SuffixTreeNodes>();
-            SuffixTreeNodes node;
+            List<SuffixTreeNode> root_nodes = new List<SuffixTreeNode>();
+            SuffixTreeNode node;
             //Initialize all the rows and the next elements
             switch (evaluationDirection)
             {
@@ -272,10 +275,10 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         /// <param name="configurationDisplayZonesStruct"></param>
         /// <param name="left_right"></param>
         /// <returns></returns>
-        private List<SuffixTreeNodes> BuildRootNodes(int column, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct, bool left_right)
+        private List<SuffixTreeNode> BuildRootNodes(int column, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct, bool left_right)
         {
-            List<SuffixTreeNodes> root_nodes = new List<SuffixTreeNodes>();
-            SuffixTreeNodes node;
+            List<SuffixTreeNode> root_nodes = new List<SuffixTreeNode>();
+            SuffixTreeNode node;
             DisplayZoneStruct displayZone;
             //Row is automatically the first available node non padding node
             int row = configurationDisplayZonesStruct.paddingBefore;
@@ -290,7 +293,7 @@ namespace Slot_Engine.Matrix.ScriptableObjects
                     for (int slot = 0; slot < displayZone.positionsInZone; slot++)
                     {
                         //Build my node
-                        node = new SuffixTreeNodes(column, row, null, new SuffixTreeNodeInfo(-1, -1), left_right);
+                        node = new SuffixTreeNode(column, row, null, new SuffixTreeNodeInfo(-1, -1), left_right);
                         root_nodes.Add(node);
                         //Debug.Log(String.Format("Registering Root Node {0}", node.node_info.Print()));
                         row += 1;
@@ -403,13 +406,13 @@ namespace Slot_Engine.Matrix.ScriptableObjects
         }
 
 
-        private int GetPossiblePaylineCombinations(ref SuffixTreeNodes suffix_tree_node)
+        private int GetPossiblePaylineCombinations(ref SuffixTreeNode suffix_tree_node)
         {
             int paylines_supported = 0;
             if (suffix_tree_node.connectedNodes != null)
             {
                 paylines_supported = suffix_tree_node.connectedNodes.Length;
-                if (suffix_tree_node.connected_nodes.Length > 0)
+                if (suffix_tree_node.connectedRows.Length > 0)
                 {
                     for (int sub_node = 0; sub_node < suffix_tree_node.connectedNodes.Length; sub_node++)
                     {

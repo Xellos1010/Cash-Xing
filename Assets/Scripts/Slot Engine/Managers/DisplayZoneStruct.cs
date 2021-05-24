@@ -12,7 +12,7 @@ using UnityEngine;
 using System;
 
 //public string[] symbol_set_supported = new string[6] { "SF01", "SF02", "MA01" };//Want this list populated by whatever output brent is using. If we are unable to have access from a list then we should pull based on assets provided in skins folder. Read folder names of folders in Base Game/Symbols Directory
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype
 {
     /// <summary>
     /// Controls a display zone being defined

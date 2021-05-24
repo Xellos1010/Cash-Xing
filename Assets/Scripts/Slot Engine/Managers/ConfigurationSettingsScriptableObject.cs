@@ -9,7 +9,7 @@
 //
 //
 using UnityEngine;
-using Slot_Engine.Matrix;
+using BoomSports.Prototype;
 using System;
 #if UNITY_EDITOR
 #endif

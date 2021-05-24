@@ -9,13 +9,10 @@
 //
 //
 using UnityEngine;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
     using UnityEditor;
@@ -99,12 +96,12 @@ namespace Slot_Engine.Matrix
     public class StripObjectGroupManager : BaseObjectGroupManager
     {
         //the matrix associated with the reel_strip
-        internal BaseConfigurationObject configurationObjectParent
+        internal BaseConfigurationObjectManager configurationObjectParent
         {
             get
             {
                 if (base.configurationObjectParent == null)
-                    base.configurationObjectParent = transform.GetComponentInParent<BaseConfigurationObject>();
+                    base.configurationObjectParent = transform.GetComponentInParent<BaseConfigurationObjectManager>();
                 return base.configurationObjectParent;
             }
         }
@@ -276,10 +273,10 @@ namespace Slot_Engine.Matrix
             return String.Join("|", output);
         }
 
-        internal NodeDisplaySymbol ReturnNextSymbolInStrip()
+        internal NodeDisplaySymbolContainer ReturnNextSymbolInStrip()
         {
             int stripCounter = 0;
-            NodeDisplaySymbol output = stripInfo.spinInformation.spinIdleSymbolSequence[stripCounter];
+            NodeDisplaySymbolContainer output = stripInfo.spinInformation.spinIdleSymbolSequence[stripCounter];
             if (stripCounter + 1 >= stripInfo.spinInformation.spinIdleSymbolSequence.Length)
             {
                 stripCounter = 0;
@@ -313,9 +310,10 @@ namespace Slot_Engine.Matrix
         /// </summary>
         internal void SetSlotPositionToStart()
         {
+            //Debug.Log($"Setting positions to start {gameObject.name}");
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
-                objectsInGroup[i].transform.localPosition = GetSlotPositionInStrip(i);
+                objectsInGroup[i].transform.localPosition = localPositionsInStrip[i];
             }
         }
 

@@ -2,7 +2,7 @@
 //  @ Author : Evan McCall
 #if UNITY_EDITOR
 #endif
-using Slot_Engine.Matrix;
+using BoomSports.Prototype;
 using System;
 using System.Collections.Generic;
 /// <summary>
@@ -15,19 +15,19 @@ public struct GroupSpinInformationStruct
     /// Display Symbol Sequence for this spin - First in First Out
     /// </summary>
     [UnityEngine.SerializeField]
-    public NodeDisplaySymbol[] displaySymbolSequence;
+    public NodeDisplaySymbolContainer[] displaySymbolSequence;
     /// <summary>
     /// The spin symbols that will sequence on Spin Idle
     /// </summary>
     [UnityEngine.SerializeField]
-    public NodeDisplaySymbol[] spinIdleSymbolSequence;
+    public NodeDisplaySymbolContainer[] spinIdleSymbolSequence;
     /// <summary>
     /// Holds the lower and upper range for spinIdleSymbolSequence where the ending display symbols were placed.
     /// </summary>
     [UnityEngine.SerializeField]
     public int[] endSymbolDisplayRangeOnSpinIdleSequence;
 
-    public GroupSpinInformationStruct(NodeDisplaySymbol[] slotDisplaySymbols) : this()
+    public GroupSpinInformationStruct(NodeDisplaySymbolContainer[] slotDisplaySymbols) : this()
     {
         displaySymbolSequence = slotDisplaySymbols;
     }

@@ -18,8 +18,9 @@ using UnityEditor;
 using UnityEditorInternal;
 #endif
 using System;
+using BoomSports.Prototype.Managers;
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(ConfigurationGenerator))]
@@ -136,7 +137,7 @@ namespace Slot_Engine.Matrix
         public string configurationObjectLoadedName;
         //********
         //Associate the instance that gets updated with Generate Matrix
-        public BaseConfigurationObject connectedConfigurationObject;
+        public BaseConfigurationObjectManager connectedConfigurationObject;
         /// <summary>
         /// Used to generate backplate and covers for the slots
         /// </summary>
@@ -163,12 +164,12 @@ namespace Slot_Engine.Matrix
             Debug.LogWarning($"Select Evaluation Manger Object and run Generate Paylines From Matrix to have update evaluation system");
         }
 
-        private void SetSymbolDataForConfigurationObject(ref BaseConfigurationObject connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
+        private void SetSymbolDataForConfigurationObject(ref BaseConfigurationObjectManager connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
         {
             connectedConfigurationObject.symbolDataScriptableObject = configurationGeneratorSettings.symbolData;
         }
 
-        private void SetConnectedConfigurationObjectLoadedSettings(ref BaseConfigurationObject connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
+        private void SetConnectedConfigurationObjectLoadedSettings(ref BaseConfigurationObjectManager connectedConfigurationObject, ref ConfigurationSettingsScriptableObject configurationGeneratorSettings)
         {
             connectedConfigurationObject.configurationSettings = configurationGeneratorSettings;
             configurationObjectLoadedName = configurationGeneratorSettings.configurationName;
@@ -351,7 +352,7 @@ namespace Slot_Engine.Matrix
         /// Generates Backplates from configuration - todo Generic class
         /// </summary>
         /// <param name="connectedConfigurationObject"></param>
-        private void GenerateBackplateFromStripConfiguration(BaseConfigurationObject connectedConfigurationObject)
+        private void GenerateBackplateFromStripConfiguration(BaseConfigurationObjectManager connectedConfigurationObject)
         {
             //TODO Refactor to create generic reference
             StripConfigurationObject connectedStripConfigurationObject = connectedConfigurationObject as StripConfigurationObject;
@@ -445,7 +446,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private void GenerateCoverOrBackplate(DisplayZoneStruct reelStripStructDisplayZone, BaseConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, ref int positionInStrip)
+        private void GenerateCoverOrBackplate(DisplayZoneStruct reelStripStructDisplayZone, BaseConfigurationObjectManager connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, ref int positionInStrip)
         {
             for (int i = 0; i < reelStripStructDisplayZone.positionsInZone; i++)
             {
@@ -462,7 +463,7 @@ namespace Slot_Engine.Matrix
             positionInStrip += reelStripStructDisplayZone.positionsInZone;
         }
 
-        private void GenerateCoverPrefab(BaseConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
+        private void GenerateCoverPrefab(BaseConfigurationObjectManager connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
         {
             //Debug.LogWarning($"Generating Cover for position {configurationObjectWorldPosition[strip][position]}");
             //Debug.LogWarning($"Using Cover Prefab {connectedConfigurationObject.configurationSettings.symbolCover.name}");
@@ -470,7 +471,7 @@ namespace Slot_Engine.Matrix
             GeneratePrefabAtPosition(configurationObjectWorldPosition[strip][position] + Vector3.back, connectedConfigurationObject.configurationSettings.symbolCover, temp.coverPlateParent);
         }
 
-        private void GenerateBackPlatePrefab(BaseConfigurationObject connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
+        private void GenerateBackPlatePrefab(BaseConfigurationObjectManager connectedConfigurationObject, Vector3[][] configurationObjectWorldPosition, CoverFacePlateGameobjectManager temp, int strip, int position)
         {
             //Debug.LogWarning($"Generating Backplate for position {configurationObjectWorldPosition[strip][position]}");
             //Debug.LogWarning($"Using Backplate Prefab {connectedConfigurationObject.configurationSettings.symbolBackplatePrefab.name}");
@@ -633,7 +634,7 @@ namespace Slot_Engine.Matrix
         /// </summary>
         /// <param name="lengthOfReels">Reels in Configuration</param>
         /// <param name="connectedConfigurationObject.reelStripManagers">reference var to cached reelstrip_managers</param>
-        internal void SetStripObjectsToLength(int lengthOfReels, ref BaseConfigurationObject connectedConfigurationObject)
+        internal void SetStripObjectsToLength(int lengthOfReels, ref BaseConfigurationObjectManager connectedConfigurationObject)
         {
             //Ensure Connected Reel Managers 
             EnsureConnectedConfigurationObjectStripManagersSet(ref connectedConfigurationObject);
@@ -663,7 +664,7 @@ namespace Slot_Engine.Matrix
             }
         }
 
-        private static void EnsureConnectedConfigurationObjectStripManagersSet(ref BaseConfigurationObject connectedConfigurationObject)
+        private static void EnsureConnectedConfigurationObjectStripManagersSet(ref BaseConfigurationObjectManager connectedConfigurationObject)
         {
             if (connectedConfigurationObject.configurationGroupManagers?.Length > 0)
             {
@@ -693,7 +694,7 @@ namespace Slot_Engine.Matrix
         /// Generates a new matrix object child with reelstrips configured
         /// </summary>
         /// <returns>matrix reference for connected matrix</returns>
-        private void GenerateConfigurationObject<T>(ref BaseConfigurationObject connectedConfigurationObject)
+        private void GenerateConfigurationObject<T>(ref BaseConfigurationObjectManager connectedConfigurationObject)
         {
             if (connectedConfigurationObject == null)
             {
@@ -702,7 +703,7 @@ namespace Slot_Engine.Matrix
                 GameObject gameObject_to_return = new GameObject("ConfigurationObject", MatrixComponents);
                 gameObject_to_return.transform.tag = "ConfigurationObject";
                 gameObject_to_return.transform.parent = transform;
-                connectedConfigurationObject = gameObject_to_return.GetComponent<T>() as BaseConfigurationObject;
+                connectedConfigurationObject = gameObject_to_return.GetComponent<T>() as BaseConfigurationObjectManager;
             }
         }
 

@@ -10,7 +10,7 @@
 //
 using UnityEngine;
 
-namespace Slot_Engine.Matrix.ScriptableObjects
+namespace BoomSports.Prototype.ScriptableObjects
 {
 
     /// <summary>

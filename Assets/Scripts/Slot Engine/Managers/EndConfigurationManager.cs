@@ -10,7 +10,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(EndConfigurationManager))]
@@ -29,7 +29,7 @@ namespace Slot_Engine.Matrix
         public override async void OnInspectorGUI()
         {
             EditorGUILayout.LabelField("EndConfigurationManager Properties");
-            EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+            EditorGUILayout.EnumPopup(StaticStateManager.enCurrentState);
             
             BoomEditorUtilities.DrawUILine(Color.white);
             if(endConfigurationsScriptableObject.type != null)
@@ -75,25 +75,19 @@ namespace Slot_Engine.Matrix
 
 
     }
+
 #endif
-    /// <summary>
-    /// Used to track all custom managers
-    /// </summary>
-    public class BoomSportsManager : MonoBehaviour
-    {
-        
-    }
 
     [System.Serializable]
-    public class EndConfigurationManager : BoomSportsManager
+    public class EndConfigurationManager : BaseBoomSportsManager
     {
         /*Static Accessors used to have clean calls from scripts - will not allow multiple slot games in 1 scene. Would have to Unload Current Slot Game and Load Next Slot Game.*/
         public static DisplayConfigurationContainer displayConfigurationInUse
         {
             get
             {
-                Debug.Log(instance.gameObject.name);
-                Debug.Log(instance._displayConfigurationInUse.configuration.Length);
+                //Debug.Log(instance.gameObject.name);
+                //Debug.Log(instance._displayConfigurationInUse.configuration.Length);
 
                 return instance._displayConfigurationInUse;
             }
@@ -156,7 +150,7 @@ namespace Slot_Engine.Matrix
                 catch (Exception e)
                 {
                     Debug.LogWarning(e.Message);
-                    GenerateMultipleDisplayConfigurations(StateManager.enCurrentMode, 20);
+                    GenerateMultipleDisplayConfigurations(StaticStateManager.enCurrentMode, 20);
                     StoreCurrentConfigurationAndSetNewConfiguration(0);
                 }
                 return endConfigurationsScriptableObject.currentConfigurationInUse;
@@ -170,16 +164,16 @@ namespace Slot_Engine.Matrix
 
         private void StoreCurrentConfigurationAndSetNewConfiguration(int v)
         {
-            if (v > endConfigurationsScriptableObject.configurationsByState[StateManager.enCurrentMode].data.Count)
+            if (v > endConfigurationsScriptableObject.configurationsByState[StaticStateManager.enCurrentMode].data.Count)
             {
-                GenerateMultipleDisplayConfigurations(StateManager.enCurrentMode, v);
+                GenerateMultipleDisplayConfigurations(StaticStateManager.enCurrentMode, v);
             }
             //Save the strip used into the backlog
             if (_displayConfigurationInUse.configuration.Length > 0)
                 SaveReelstripUsed(_displayConfigurationInUse);
             //TODO Validate Data in Reel Strip then Generate if no valid data found
-            SetCurrentConfigurationTo(endConfigurationsScriptableObject.configurationsByState[StateManager.enCurrentMode].data[v].data);
-            endConfigurationsScriptableObject.configurationsByState[StateManager.enCurrentMode].data.RemoveAt(v);
+            SetCurrentConfigurationTo(endConfigurationsScriptableObject.configurationsByState[StaticStateManager.enCurrentMode].data[v].data);
+            endConfigurationsScriptableObject.configurationsByState[StaticStateManager.enCurrentMode].data.RemoveAt(v);
         }
 
         private void SaveReelstripUsed(DisplayConfigurationContainer currentReelstripConfiguration)
@@ -249,9 +243,9 @@ namespace Slot_Engine.Matrix
             return output;
         }
 
-        private async Task<NodeDisplaySymbol[]> GenerateStripConfiguration(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct)
+        private async Task<NodeDisplaySymbolContainer[]> GenerateStripConfiguration(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct)
         {
-            List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
+            List<NodeDisplaySymbolContainer> output = new List<NodeDisplaySymbolContainer>();
             //Debug.LogWarning($"reelStripManager.configurationGroupDisplayZones.totalPositions = {configurationDisplayZonesStruct.totalPositions}");
             //Generate a symbol for each display zone slot
             for (int i = 0; i < configurationDisplayZonesStruct.displayZonesPositionsTotal; i++)
@@ -261,9 +255,9 @@ namespace Slot_Engine.Matrix
             return output.ToArray();
         }
 
-        private async Task<NodeDisplaySymbol[]> GenerateEndingStrip(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct,Features featureToGenerate, int strip, int lengthGroupManagers)
+        private async Task<NodeDisplaySymbolContainer[]> GenerateEndingStrip(GameModes mode, ConfigurationDisplayZonesStruct configurationDisplayZonesStruct,Features featureToGenerate, int strip, int lengthGroupManagers)
         {
-            List<NodeDisplaySymbol> output = new List<NodeDisplaySymbol>();
+            List<NodeDisplaySymbolContainer> output = new List<NodeDisplaySymbolContainer>();
             //Debug.LogWarning($"reelStripManager.configurationGroupDisplayZones.totalPositions = {configurationDisplayZonesStruct.totalPositions}");
 
             //Get ConfigurationDisplayZonesStruct Spin Type - Generate Symbols based on how many Symbols replace per spin
@@ -280,7 +274,7 @@ namespace Slot_Engine.Matrix
         /// Generate a random symbol based on weights defined
         /// </summary>
         /// <returns></returns>
-        public async Task<NodeDisplaySymbol> GetRandomWeightedSymbol(GameModes currentMode)
+        public async Task<NodeDisplaySymbolContainer> GetRandomWeightedSymbol(GameModes currentMode)
         {
             int symbol = await configurationObject.DrawRandomSymbol(currentMode);
             return await GetNodeDisplaySymbol(symbol);
@@ -289,28 +283,28 @@ namespace Slot_Engine.Matrix
         /// Generate a random symbol based on weights defined
         /// </summary>
         /// <returns></returns>
-        public async Task<NodeDisplaySymbol> GetNodeDisplaySymbol(int symbol)
+        public async Task<NodeDisplaySymbolContainer> GetNodeDisplaySymbol(int symbol)
         {
-            NodeDisplaySymbol output = new NodeDisplaySymbol();
-            //Debug.LogWarning($"End Configuration Draw Random Symbol returned {symbol}");
-            if (configurationObject.isSymbolOverlay(symbol))
-            {
-                output.SetOverlaySymbolTo(symbol);
-                output.AddFeaturesTo(configurationObject.GetSymbolFeatures(symbol));
-                while (configurationObject.isSymbolOverlay(symbol))
-                {
-                    symbol = await configurationObject.DrawRandomSymbol();//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw();
-                    //Set Overlay feature in list and freespin
-                }
-            }
-            if (configurationObject.isFeatureSymbol(symbol))
-            {
-                output.AddFeaturesTo(configurationObject.GetSymbolFeatures(symbol));
-            }
-            if (configurationObject.isWildSymbol(symbol))
-            {
-                output.SetWildTo(symbol);
-            }
+            NodeDisplaySymbolContainer output = new NodeDisplaySymbolContainer();
+            ////Debug.LogWarning($"End Configuration Draw Random Symbol returned {symbol}");
+            //if (configurationObject.isSymbolOverlay(symbol))
+            //{
+            //    output.SetOverlaySymbolTo(symbol);
+            //    output.AddFeaturesTo(configurationObject.GetSymbolFeatures(symbol));
+            //    while (configurationObject.isSymbolOverlay(symbol))
+            //    {
+            //        symbol = await configurationObject.DrawRandomSymbol();//symbol_weights_per_state[StateManager.enCurrentMode].intDistribution.Draw();
+            //        //Set Overlay feature in list and freespin
+            //    }
+            //}
+            //if (configurationObject.isFeatureSymbol(symbol))
+            //{
+            //    output.AddFeaturesTo(configurationObject.GetSymbolFeatures(symbol));
+            //}
+            //if (configurationObject.isWildSymbol(symbol))
+            //{
+            //    output.SetWildTo(symbol);
+            //}
             output.primarySymbol = symbol;
             //Debug.Log(String.Format("Symbol Generated form Weighted Distribution is {0}", ((Symbol)output).ToString()));
             return output;

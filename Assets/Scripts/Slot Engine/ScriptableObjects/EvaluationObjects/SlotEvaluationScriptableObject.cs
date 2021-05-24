@@ -11,7 +11,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Slot_Engine.Matrix.ScriptableObjects
+namespace BoomSports.Prototype.ScriptableObjects
 {
 
     /// <summary>
@@ -19,11 +19,14 @@ namespace Slot_Engine.Matrix.ScriptableObjects
     /// </summary>
     public abstract partial class SlotEvaluationScriptableObject : EvaluationScriptableObject
     {
+        /// <summary>
+        /// Name of the feature triggering the evaluation
+        /// </summary>
         public Features featureName;
         /// <summary>
         /// The name of the Symbol(s) targeted for the wild evaluation [SA01, MA01, Etc...]
         /// </summary>
-        public string symbolTargetNames;
+        public string symbolTargetName;
         /// <summary>
         /// List of symbols that meet criteria of conditions to activate
         /// </summary>
@@ -41,6 +44,13 @@ namespace Slot_Engine.Matrix.ScriptableObjects
             {
                 nodesActivatingEvaluationConditions.Clear();
             }
+        }
+
+        internal void AddRawNodeActivatingFeature(SuffixTreeNodeInfo nodeInfo)
+        {
+            if (nodesActivatingEvaluationConditions == null)
+                nodesActivatingEvaluationConditions = new List<SuffixTreeNodeInfo>();
+            nodesActivatingEvaluationConditions.Add(nodeInfo);
         }
     }
 }

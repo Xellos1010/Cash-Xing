@@ -10,29 +10,9 @@
 //
 using UnityEngine;
 using System;
-
-namespace Slot_Engine.Matrix
+using BoomSports.Prototype.Managers;
+namespace BoomSports.Prototype
 {
-    /// <summary>
-    /// Acts as a container for future implementations with Groupped Objects and conditional activators - Need to work in generic gameobject event invoking
-    /// </summary>
-    [Serializable]
-    public class ObjectGroupConditionalActivatorsContainer
-    {
-        /// <summary>
-        /// List of all slot with symbol conditional activators
-        /// </summary>
-        [SerializeField]
-        public NextSlotSymbolActivatorEvent[] slotSymbolActivators;
-        /// <summary>
-        /// returns all conditionals from all sources in a list
-        /// </summary>
-        /// <returns></returns>
-        internal BaseSlotActivatorEventConditional[] GetAllConditionalChecks()
-        {
-            return slotSymbolActivators;
-        }
-    }
     /// <summary>
     /// A slot activator that triggered by a symbol - 
     /// </summary>

@@ -1,4 +1,4 @@
-﻿using Slot_Engine.Matrix.ScriptableObjects;
+﻿using BoomSports.Prototype.ScriptableObjects;
 using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using UnityEditor;
 #endif
 
-namespace Slot_Engine.Matrix.Managers
+namespace BoomSports.Prototype.Managers
 {
     /// <summary>
     /// Display's Winning Objects and Manages Debug Rendering of Winning Objects and winable configurations. 
@@ -201,11 +201,11 @@ namespace Slot_Engine.Matrix.Managers
 
         internal Task ShowWinningPayline(int v)
         {
-            Debug.Log($"winningObjects.Length = {winningObjects.Length}");
+            //Debug.Log($"winningObjects.Length = {winningObjects.Length}");
             if (v < winningObjects.Length)
             {
                 current_winning_payline_shown = v;
-                Debug.Log($"Current wining payline shown = {v}");
+                //Debug.Log($"Current wining payline shown = {v}");
                 RenderWinningPayline(winningObjects[current_winning_payline_shown]);
             }
             return Task.CompletedTask;
@@ -218,7 +218,7 @@ namespace Slot_Engine.Matrix.Managers
 
         void OnEnable()
         {
-            StateManager.StateChangedTo += StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
         private void StateManager_StateChangedTo(States state)
@@ -235,7 +235,7 @@ namespace Slot_Engine.Matrix.Managers
 
         void OnDisable()
         {
-            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo -= StateManager_StateChangedTo;
         }
 
         void OnApplicationQuit()

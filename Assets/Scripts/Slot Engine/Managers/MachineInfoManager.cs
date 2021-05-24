@@ -8,7 +8,7 @@ using System;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(MachineInfoManager))]
@@ -94,7 +94,7 @@ namespace Slot_Engine.Matrix
         }
         internal void OffsetBankBy(double amount)
         {
-            Debug.Log(String.Format("Offsetting bank by {0}",amount));
+            //Debug.Log(String.Format("Offsetting bank by {0}",amount));
             SetBankTo(machineInfoScriptableObject.bank + amount);
         }
 
@@ -164,8 +164,8 @@ namespace Slot_Engine.Matrix
 
         void OnEnable()
         {
-            StateManager.featureTransition += StateManager_FeatureTransition;
-            StateManager.add_to_multiplier += StateManager_add_to_multiplier;
+            StaticStateManager.featureTransition += StateManager_FeatureTransition;
+            StaticStateManager.add_to_multiplier += StateManager_add_to_multiplier;
         }
 
         private void StateManager_add_to_multiplier(int multiplier)
@@ -205,8 +205,8 @@ namespace Slot_Engine.Matrix
 
         void OnDisable()
         {
-            StateManager.featureTransition += StateManager_FeatureTransition;
-            StateManager.add_to_multiplier -= StateManager_add_to_multiplier;
+            StaticStateManager.featureTransition += StateManager_FeatureTransition;
+            StaticStateManager.add_to_multiplier -= StateManager_add_to_multiplier;
         }
 
         internal void ResetMultiplier()

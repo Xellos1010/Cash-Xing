@@ -7,7 +7,7 @@ using System;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(UITextManager))]
@@ -107,7 +107,7 @@ namespace Slot_Engine.Matrix
             matrix.managers.machineInfoManager.newBankAmount += Machine_information_manager_new_bank_amount;
             matrix.managers.machineInfoManager.newPlayerWalletAmount += Machine_information_manager_new_player_wallet_amount;
             matrix.managers.machineInfoManager.newFreespinAmount += Machine_information_manager_new_freespin_amount;
-            StateManager.StateChangedTo += StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
         private void StateManager_StateChangedTo(States State)

@@ -1,5 +1,5 @@
 ﻿//For Parsing Purposes
-using Slot_Engine.Matrix;
+using BoomSports.Prototype;
 using System;
 using UnityEngine;
 [System.Serializable]
@@ -8,7 +8,7 @@ public partial class WinningPayline : WinningObject
     [SerializeField]
     public Payline payline;
 
-    public WinningPayline(Payline payline, EvaluationNode[] winning_symbols)
+    public WinningPayline(Payline payline, WinningEvaluatedNodeContainer[] winning_symbols)
     {
         this.payline = payline;
         this.winningNodes = winning_symbols;
@@ -39,7 +39,7 @@ public partial class WinningPayline : WinningObject
         //}
     }
 
-    internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, EvaluationNode symbol_to_check)
+    internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, WinningEvaluatedNodeContainer symbol_to_check)
     {
         //Check Winning slot at reel 
         if (payline.configuration.payline[reel]+reel_start_padding==slot && IsSymbolWinningSymbol(symbol_to_check))
@@ -52,7 +52,7 @@ public partial class WinningPayline : WinningObject
         }
     }
 
-    private bool IsSymbolWinningSymbol(EvaluationNode symbol_to_check)
+    private bool IsSymbolWinningSymbol(WinningEvaluatedNodeContainer symbol_to_check)
     {
         bool output = false;
         for (int i = 0; i < winningNodes.Length; i++)
@@ -66,7 +66,7 @@ public partial class WinningPayline : WinningObject
         return output;
     }
 
-    internal EvaluationNode GetWinningWymbol()
+    internal WinningEvaluatedNodeContainer GetWinningWymbol()
     {
         //Default to the first - need to add check if wild and provide override logic
         return winningNodes[0];

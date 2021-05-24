@@ -6,23 +6,23 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
-    [CustomEditor(typeof(InteractionController))]
+    [CustomEditor(typeof(InteractionManager))]
     class InteractionControllerEditor : BoomSportsEditor
     {
-        InteractionController myTarget;
+        InteractionManager myTarget;
         public void OnEnable()
         {
-            myTarget = (InteractionController)target;
+            myTarget = (InteractionManager)target;
         }
         public override void OnInspectorGUI()
         {
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Interaction Controller Properties");
 
-            EditorGUILayout.EnumPopup(StateManager.enCurrentState);
+            EditorGUILayout.EnumPopup(StaticStateManager.enCurrentState);
 
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Interaction Controller Controls");
@@ -33,7 +33,7 @@ namespace Slot_Engine.Matrix
     }
 #endif
 
-    public class InteractionController : MonoBehaviour
+    public class InteractionManager : MonoBehaviour
     {
         public AnimatorStateMachineManager StateMachineController
         {
@@ -100,7 +100,7 @@ namespace Slot_Engine.Matrix
                     RaycastForUIFromPosition(Input.mousePosition);
                 }
                 //Modify Bet Amount
-                if (StateManager.enCurrentState == States.Idle_Idle)
+                if (StaticStateManager.enCurrentState == States.Idle_Idle)
                 {
 #if UNITY_ANDROID
                 //#if UNITY_ANDROID
@@ -151,7 +151,7 @@ namespace Slot_Engine.Matrix
                         PerformAction(Actions.PlaceBet);
                     }
                 }
-                else if(StateManager.enCurrentState == States.bonus_idle_idle)
+                else if(StaticStateManager.enCurrentState == States.bonus_idle_idle)
                 {
                     //ToDO this needs to be built a more safe reference
                     if (Input.GetKeyDown(KeyCode.Space) && can_spin_slam)
@@ -203,21 +203,21 @@ namespace Slot_Engine.Matrix
 
         internal void CheckStateToSpinSlam()
         {
-            if (StateManager.enCurrentState == States.Idle_Idle || StateManager.enCurrentState == States.bonus_idle_idle)
+            if (StaticStateManager.enCurrentState == States.Idle_Idle || StaticStateManager.enCurrentState == States.bonus_idle_idle)
             {
                 StartSpin();
             }
-            else if (StateManager.enCurrentState == States.Idle_Outro || 
-                StateManager.enCurrentState == States.Spin_Intro || 
-                StateManager.enCurrentState == States.Spin_Idle || 
-                StateManager.enCurrentState == States.bonus_idle_outro || 
-                StateManager.enCurrentState == States.bonus_spin_intro || 
-                StateManager.enCurrentState == States.bonus_spin_loop)
+            else if (StaticStateManager.enCurrentState == States.Idle_Outro || 
+                StaticStateManager.enCurrentState == States.Spin_Intro || 
+                StaticStateManager.enCurrentState == States.Spin_Idle || 
+                StaticStateManager.enCurrentState == States.bonus_idle_outro || 
+                StaticStateManager.enCurrentState == States.bonus_spin_intro || 
+                StaticStateManager.enCurrentState == States.bonus_spin_loop)
             {
                 SlamSpin();
             }
             //TODO Have this based off game mode
-            else if (StateManager.enCurrentState == States.Resolve_Intro)
+            else if (StaticStateManager.enCurrentState == States.Resolve_Intro)
             {
                 SlamLoopingPaylines();
             }
@@ -232,10 +232,10 @@ namespace Slot_Engine.Matrix
 
         private void StartSpin()
         {
-            if(StateManager.enCurrentState == States.Idle_Idle)
+            if(StaticStateManager.enCurrentState == States.Idle_Idle)
                 DisableInteractionAndSetStateTo(States.Idle_Outro);
             //TODO have this based off game mode
-            else if (StateManager.enCurrentState == States.bonus_idle_idle)
+            else if (StaticStateManager.enCurrentState == States.bonus_idle_idle)
                 DisableInteractionAndSetStateTo(States.bonus_idle_outro);
         }
         
@@ -248,7 +248,7 @@ namespace Slot_Engine.Matrix
         {
             can_spin_slam = false;
             //Set state to idle outro then in idle outro set trigger for StartSpin
-            StateManager.SetStateTo(to_state);
+            StaticStateManager.SetStateTo(to_state);
         }
 
         private bool CheckForTapEvent(Vector2 position)
@@ -273,15 +273,15 @@ namespace Slot_Engine.Matrix
 
         private void RaycastForUIFromPosition(Vector3 position)
         {
-            Debug.Log(String.Format("testing position = {0} for raycast hit", position));
+            //Debug.Log(String.Format("testing position = {0} for raycast hit", position));
             RaycastHit hit_info;
             Ray ray_to_use = Camera.main.ScreenPointToRay(position);
             Physics.Raycast(ray_to_use, out hit_info, 1000f);
             EnableDrawLineGizmo(ray_to_use);
-            Debug.Log(hit_info.transform?.gameObject.name);
+            //Debug.Log(hit_info.transform?.gameObject.name);
             if (hit_info.collider != null)
             {
-                if (StateManager.enCurrentState == States.Idle_Idle)
+                if (StaticStateManager.enCurrentState == States.Idle_Idle)
                 {
                     if (hit_info.collider.gameObject.tag == "Layout")
                     {
@@ -300,7 +300,7 @@ namespace Slot_Engine.Matrix
                         PerformAction(Actions.PlaceBet);
                     }
                 }
-                else if(StateManager.enCurrentState == States.bonus_idle_idle)
+                else if(StaticStateManager.enCurrentState == States.bonus_idle_idle)
                 {
                     if (hit_info.collider.gameObject.tag == "Spin" && can_spin_slam)
                     {
@@ -332,14 +332,14 @@ namespace Slot_Engine.Matrix
 
         private void IncreaseBetAmount()
         {
-            if (StateManager.enCurrentState == States.Idle_Idle)
+            if (StaticStateManager.enCurrentState == States.Idle_Idle)
                 matrix.managers.machineInfoManager.IncreaseBetAmount();
             locked = false;
         }
 
         private void DecreaseBetAmount()
         {
-            if(StateManager.enCurrentState == States.Idle_Idle)
+            if(StaticStateManager.enCurrentState == States.Idle_Idle)
                 matrix.managers.machineInfoManager.DecreaseBetAmount();
             locked = false;
         }
@@ -356,12 +356,12 @@ namespace Slot_Engine.Matrix
 
         void OnEnable()
         {
-            StateManager.StateChangedTo += StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
         void OnDisable()
         {
-            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo -= StateManager_StateChangedTo;
         }
 
         private async void StateManager_StateChangedTo(States State)
@@ -393,7 +393,7 @@ namespace Slot_Engine.Matrix
 
         private void UnlockSlamSpin()
         {
-            Debug.Log("Unlock Slam Spin");
+            //Debug.Log("Unlock Slam Spin");
             locked = false;
             can_spin_slam = true;
         }

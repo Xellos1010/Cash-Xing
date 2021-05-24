@@ -1,4 +1,4 @@
-﻿using Slot_Engine.Matrix;
+﻿using BoomSports.Prototype;
 using System;
 using UnityEngine;
 /// <summary>
@@ -11,9 +11,9 @@ public struct DisplayConfigurationSymbolsGroup
     /// Display Symbols in sequence first in first out
     /// </summary>
     [SerializeField]
-    public NodeDisplaySymbol[] displaySymbolSequence;
+    public NodeDisplaySymbolContainer[] displaySymbolSequence;
 
-    internal void SetColumnSymbolsTo(NodeDisplaySymbol[] displaySymbolSequence)
+    internal void SetColumnSymbolsTo(NodeDisplaySymbolContainer[] displaySymbolSequence)
     {
         this.displaySymbolSequence = displaySymbolSequence;
     }

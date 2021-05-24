@@ -5,7 +5,7 @@ using System;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
 #if UNITY_EDITOR
     [CustomEditor(typeof(PaylineRendererManager))]
@@ -86,12 +86,12 @@ namespace Slot_Engine.Matrix
             return (PaylineRenderer)new_game_object.AddComponent(typeof(PaylineRenderer));
         }
 
-        private Slot_Engine.Matrix.StripConfigurationObject matrix
+        private BoomSports.Prototype.StripConfigurationObject matrix
         {
             get
             {
                 if (_matrix == null)
-                    _matrix = GameObject.FindObjectOfType<Slot_Engine.Matrix.StripConfigurationObject>();
+                    _matrix = GameObject.FindObjectOfType<BoomSports.Prototype.StripConfigurationObject>();
                 return _matrix;
             }
         }
@@ -199,7 +199,7 @@ namespace Slot_Engine.Matrix
                 }
                 toShowPayline.configuration.payline = paylineTemp.ToArray();
             }
-            Debug.Log($"rendering Winning Payline - {toShowPayline.PrintConfiguration()} root node = {toShowPayline.rootNode.Print()}");
+            //Debug.Log($"rendering Winning Payline - {toShowPayline.PrintConfiguration()} root node = {toShowPayline.rootNode.Print()}");
 
             //Take the positions on the matrix and return the symbol at those positions for the payline always going to be -1 the line position length. last symbol always spinning off reel
             matrix.ReturnPositionsBasedOnPayline(ref toShowPayline, out linePositions);
@@ -276,7 +276,7 @@ namespace Slot_Engine.Matrix
 
         void OnEnable()
         {
-            StateManager.StateChangedTo += StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo += StateManager_StateChangedTo;
         }
 
         private void StateManager_StateChangedTo(States state)
@@ -291,7 +291,7 @@ namespace Slot_Engine.Matrix
 
         void OnDisable()
         {
-            StateManager.StateChangedTo -= StateManager_StateChangedTo;
+            StaticStateManager.StateChangedTo -= StateManager_StateChangedTo;
         }
     }
 }

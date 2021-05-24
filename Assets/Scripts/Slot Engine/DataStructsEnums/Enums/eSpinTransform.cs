@@ -1,5 +1,5 @@
 ﻿
-namespace Slot_Engine
+namespace BoomSports
 {
     /// <summary>
     /// Defines which transforms the slot can modify - Can be specifically one or a combination of in the future

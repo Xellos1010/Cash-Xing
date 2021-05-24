@@ -12,9 +12,9 @@ using UnityEngine;
 #if UNITY_EDITOR
 #endif
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype.Managers
 {
-    public class CoverFacePlateGameobjectManager : MonoBehaviour
+    public class CoverFacePlateGameobjectManager : BaseBoomSportsManager
     {
         public Transform coverPlateParent;
         public Transform backPlateParent;

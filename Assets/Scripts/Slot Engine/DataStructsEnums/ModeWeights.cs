@@ -4,7 +4,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-namespace Slot_Engine.Matrix
+namespace BoomSports.Prototype
 {
     /// <summary>
     /// Holds a state defined for weights scriptable object
