@@ -226,9 +226,17 @@ namespace BoomSports.Prototype.Managers
             return output;
         }
 
-        internal void GetDisplaySymbolsGroupAtIndex(int indexInGroupManager)
+        /// <summary>
+        /// used to set the display symbols for a group based on spin parameter
+        /// </summary>
+        /// <param name="objectGroupManager"></param>
+        internal void SetDisplaySymbolsForGroup(ref BaseObjectGroupManager objectGroupManager)
         {
-            
+            //Get how many symbols on strip will clear from group manager spin parameters
+            int symbolsToReplaceReel = objectGroupManager;
+            //if < length of symbols currently on display. (1 will be off the strip - remove x from end of strip x=symbols to leave strip)
+            //Get symbols from strip sequence based on object group manager index in groups. (This should be controled by objectGroupManager parent)
+            //Set object group managers sequence display symbols (should contain symbols on strip and x symbol off strip. x = objectGroupManager.displayzone.paddingbefore)
         }
 
         //Todo Refactor and combine function

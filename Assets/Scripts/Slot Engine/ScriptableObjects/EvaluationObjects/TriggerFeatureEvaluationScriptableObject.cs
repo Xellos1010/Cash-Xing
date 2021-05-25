@@ -119,7 +119,7 @@ namespace BoomSports.Prototype.ScriptableObjects
                     }
                 }
             }
-            Debug.Log($"Feature {featureName.ToString()} Evaluated to {output} for - {nodeInfo.Print()}");
+            //Debug.Log($"Feature {featureName.ToString()} Evaluated to {output} for - {nodeInfo.Print()}");
             return output;
         }
     }

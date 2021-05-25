@@ -44,7 +44,7 @@ namespace BoomSports.Prototype.Managers
                 {
                     myTarget.SetLocalPositionsBySlotPositions();
                 }
-                if (GUILayout.Button("Set positions on path for objects"))
+                if (GUILayout.Button("Set Index on path for objects"))
                 {
                     myTarget.SetPositionIndexOnPathForObjects();
                 }

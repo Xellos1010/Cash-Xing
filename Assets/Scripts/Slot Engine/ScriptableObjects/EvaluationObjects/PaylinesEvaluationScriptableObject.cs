@@ -110,7 +110,7 @@ namespace BoomSports.Prototype.ScriptableObjects
                             {
                                 if(evaluationObject.slotEvaluationObjects[evaluator].EvaluateNodeForConditionsMet(item.Value[node], outputFiltered.ToArray()))
                                 {
-                                    Debug.Log($"Node {item.Value[node].Print()} activated feature {item.Key.ToString()} ");
+                                    //Debug.Log($"Node {item.Value[node].Print()} activated feature {item.Key.ToString()} ");
                                     evaluationObject.slotEvaluationObjects[evaluator].AddRawNodeActivatingFeature(item.Value[node]);
                                 }
                             }
@@ -419,7 +419,7 @@ namespace BoomSports.Prototype.ScriptableObjects
                     ||
                     winningPaylinesFiltered[currentWinningPaylineChecking].ContainsNode(paylineToCheck.winningNodes[0].nodeInfo))
                 {
-                    Debug.Log($"One of these paylines contains the first element of the other {paylineToCheck.payline.PrintConfiguration()} {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()} ");
+///*                    Debug.Log($"One of these paylines contains the first element of the other {paylineToCheck.payline.PrintConfiguration()} {winningPaylinesFiltered*/[currentWinningPaylineChecking].payline.PrintConfiguration()} ");
                     //Need to see if one payline appears in the other - compare length and use greater length payline for reference
                     if (paylineToCheck.winningNodes.Length < winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length) //Use winning payline for reference
                     {
@@ -432,7 +432,7 @@ namespace BoomSports.Prototype.ScriptableObjects
                             }
                             if(i == paylineToCheck.winningNodes.Length-1)
                             {
-                                Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
+                                //Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
                                 return true;
                             }
                         }
@@ -448,7 +448,7 @@ namespace BoomSports.Prototype.ScriptableObjects
                             }
                             if (i == winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length - 1)
                             {
-                                Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
+                                //Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
                                 return true;
                             }
                         }
