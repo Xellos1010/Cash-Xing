@@ -35,12 +35,12 @@ public class Payline
         return String.Join("|", configuration.payline);
     }
 
-    internal int ReturnLeftRootNodeFromFullLineWin()
+    internal int ReturnLeftRootNodeFromLineWin()
     {
         return left_right ? configuration.payline[0]:configuration.payline[configuration.payline.Length - 1];
     }
 
-    internal int ReturnRightRootNodeFromFullLineWin()
+    internal int ReturnRightRootNodeFromLineWin()
     {
         return left_right ? configuration.payline[configuration.payline.Length - 1] : configuration.payline[0];
     }

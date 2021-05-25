@@ -95,6 +95,11 @@ namespace BoomSports.Prototype.ScriptableObjects
 
         public override bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects)
         {
+            bool output = false;
+            if (nodeEvaluationConditions == null)
+                output = true;
+            if (nodeEvaluationConditions.Count < 1)
+                output = true;
             for (int winningObject = 0; winningObject < winningObjects.Length; winningObject++)
             {
                 //if any conditions are met to the fullest then the node is a valid node
@@ -105,8 +110,7 @@ namespace BoomSports.Prototype.ScriptableObjects
                     {
                         if (condition == nodeEvaluationConditions.Count - 1)
                         {
-                            Debug.Log($"Trigger Feature Evaluated to True - {symbolTargetName}");
-                            return true;
+                            output = true;
                         }
                     }
                     else
@@ -115,8 +119,8 @@ namespace BoomSports.Prototype.ScriptableObjects
                     }
                 }
             }
-            Debug.Log($"Trigger Feature Evaluated to false - {symbolTargetName}");
-            return false;
+            Debug.Log($"Feature {featureName.ToString()} Evaluated to {output} for - {nodeInfo.Print()}");
+            return output;
         }
     }
 }

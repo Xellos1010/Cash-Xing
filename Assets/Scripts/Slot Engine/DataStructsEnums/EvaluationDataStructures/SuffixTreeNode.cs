@@ -75,9 +75,8 @@ namespace BoomSports.Prototype
         }
 
         /// <summary>
-        /// Initialize the winning symbol list and check dynamic paylines for wins
+        /// Initialize the winning symbol list and check for wins
         /// </summary>
-        /// <param name="symbols_configuration">symbols on matrix</param>
         internal WinningPayline[] EvaluateRawWinningPaylines(ref EvaluationObjectStruct evaluationObject)
         {
             //Reset winning nodes and track new evaluation
@@ -86,14 +85,14 @@ namespace BoomSports.Prototype
             //This could be a wild
             NodeDisplaySymbolContainer rootWinSymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nodeInfo.column].displaySymbolSequence[nodeInfo.row];
             //Checks the first symbol for a feature condition - for features that don't require a winning payline
-            CheckSlotNeedsFeatureEvaluated(rootWinSymbol, ref evaluationObject, ref nodeInfo);
+            CheckAndAddSlotsNeedFeaturesEvaluated(rootWinSymbol, ref evaluationObject, ref nodeInfo);
             //Adds the first symbol as a lineWin and makes the primary symbol to track for
             AddWinningNodeInRawList(rootWinSymbol, ref this, ref evaluationObject);
             //Debug.Log(evaluationObject.winningEvaluationNodes[0].Print());
             //Initialize Winning Paylines
             List<WinningPayline> winning_paylines = new List<WinningPayline>();
             
-            Debug.Log(String.Format($"Root Win Symbol = {rootWinSymbol.primarySymbol} - Starting check for winning paylines from node {nodeInfo.Print()}"));
+            //Debug.Log(String.Format($"Root Win Symbol = {rootWinSymbol.primarySymbol} - Starting check for winning paylines from node {nodeInfo.Print()}"));
 
             //Check all connected nodes for a win using dfs (depth first search) search
             EvaluateConnectedNodesForWin(this, this, ref evaluationObject, ref winning_paylines);
@@ -117,7 +116,7 @@ namespace BoomSports.Prototype
         /// </summary>
         /// <param name="evaluationDisplaySymbol">the symbol that won</param>
         /// <param name="evaluationObject">The special symbols conditions</param>
-        private void CheckSlotNeedsFeatureEvaluated(NodeDisplaySymbolContainer evaluationDisplaySymbol, ref EvaluationObjectStruct evaluationObject, ref SuffixTreeNodeInfo nodeInfo)
+        private void CheckAndAddSlotsNeedFeaturesEvaluated(NodeDisplaySymbolContainer evaluationDisplaySymbol, ref EvaluationObjectStruct evaluationObject, ref SuffixTreeNodeInfo nodeInfo)
         {
             //Debug.Log($"evaluationDisplaySymbol.primarySymbol {evaluationDisplaySymbol.primarySymbol} Checking for feature");
             Managers.EvaluationManager.SymbolSlotEvaluationsReturnContainer slotEvaluationActivated = Managers.EvaluationManager.CheckReturnSymbolHasFeature(evaluationDisplaySymbol);
@@ -125,10 +124,24 @@ namespace BoomSports.Prototype
             if (slotEvaluationActivated.connectedEvaluators?.Length > 0) //Check if symbol has features
             {
                 //Store that the node has a feature. After Paylines are evaluated we take the nodes in evaluationObject.featureEvaluationActiveCount[feature] and ensure the winning 
-                Debug.Log($"Symbol {evaluationDisplaySymbol.primarySymbol} slot evaluators count = {slotEvaluationActivated.connectedEvaluators.Length} - Implement Raw tracking of ");
+                //Debug.Log($"Symbol {evaluationDisplaySymbol.primarySymbol} slot evaluators count = {slotEvaluationActivated.connectedEvaluators.Length}");
                 for (int evaluator = 0; evaluator < slotEvaluationActivated.connectedEvaluators.Length; evaluator++)
                 {
-                    //Store any nodes that are apart of conditions which appear anywhere without win associations
+                    if (Managers.EvaluationManager.instance.configurationObject.symbolDataScriptableObject.symbols[evaluationDisplaySymbol.primarySymbol].symbolName.Contains(slotEvaluationActivated.connectedEvaluators[evaluator].symbolTargetName))
+                    {
+                        //Debug.Log($"Checking to add node {nodeInfo.Print()} to feature list {slotEvaluationActivated.connectedEvaluators[evaluator].featureName.ToString()}");
+                        if (evaluationObject.featureEvaluationActiveCount == null)
+                            evaluationObject.featureEvaluationActiveCount = new Dictionary<Features, List<SuffixTreeNodeInfo>>();
+                        if (!evaluationObject.featureEvaluationActiveCount.ContainsKey(slotEvaluationActivated.connectedEvaluators[evaluator].featureName))
+                        {
+                            evaluationObject.featureEvaluationActiveCount[slotEvaluationActivated.connectedEvaluators[evaluator].featureName] = new List<SuffixTreeNodeInfo>();
+                        }
+                        if (!evaluationObject.featureEvaluationActiveCount[slotEvaluationActivated.connectedEvaluators[evaluator].featureName].Contains(nodeInfo))
+                        {
+                            //Debug.Log($"Adding node {nodeInfo.Print()} to feature list {slotEvaluationActivated.connectedEvaluators[evaluator].featureName.ToString()}");
+                            evaluationObject.featureEvaluationActiveCount[slotEvaluationActivated.connectedEvaluators[evaluator].featureName].Add(nodeInfo);
+                        }
+                    }
                 }
             }
         }
@@ -146,7 +159,7 @@ namespace BoomSports.Prototype
             //Cycle thru each connected node for a winning payline
             for (int connectedNode = 0; connectedNode < previousNodeChecked.connectedNodes.Length; connectedNode++)
             {
-                Debug.Log($"Checking Connected node {previousNodeChecked.connectedNodes[connectedNode].nodeInfo.Print()} from {previousNodeChecked.nodeInfo.Print()}");
+                //Debug.Log($"Checking Connected node {previousNodeChecked.connectedNodes[connectedNode].nodeInfo.Print()} from {previousNodeChecked.nodeInfo.Print()}");
                 EvaluateNodeForWin(rootWinSymbol, previousNodeChecked.connectedNodes[connectedNode], ref evaluationObject, ref winning_paylines);
             }
         }
@@ -159,13 +172,13 @@ namespace BoomSports.Prototype
         /// <param name="winning_symbols">winning symbols list</param>
         private void EvaluateNodeForWin(SuffixTreeNode rootWinSymbol, SuffixTreeNode nextSymbol,ref EvaluationObjectStruct evaluationObject, ref List<WinningPayline> winning_paylines)
         {
-            Debug.Log($"Checking node {nextSymbol.nodeInfo.Print()} against root node {rootWinSymbol.nodeInfo.Print()}");
+            //Debug.Log($"Checking node {nextSymbol.nodeInfo.Print()} against root node {rootWinSymbol.nodeInfo.Print()}");
             //Get current node symbol display container
             NodeDisplaySymbolContainer currentDisplaySymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[rootWinSymbol.nodeInfo.column].displaySymbolSequence[rootWinSymbol.nodeInfo.row];
             NodeDisplaySymbolContainer nextDisplaySymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nextSymbol.nodeInfo.column].displaySymbolSequence[nextSymbol.nodeInfo.row];
 
             //Checks the node for a feature condition
-            CheckSlotNeedsFeatureEvaluated(currentDisplaySymbol, ref evaluationObject, ref rootWinSymbol.nodeInfo);
+            CheckAndAddSlotsNeedFeaturesEvaluated(currentDisplaySymbol, ref evaluationObject, ref rootWinSymbol.nodeInfo);
 
             //If previous node is wild, makes current node any symbol primary symbol - repeat until at end
             //First Level Check - Wilds - TODO Refactor to abstract logic - Need to build in wild support 
@@ -174,7 +187,7 @@ namespace BoomSports.Prototype
                 //Temp - cache primary node information and save for later in-case of wild
                 SuffixTreeNode rootWinSymbolCache = new SuffixTreeNode(rootWinSymbol);
                 bool rootChanged = false;
-                Debug.Log($"{nextDisplaySymbol.primarySymbol} Match's! Winning Symbol in Node {rootWinSymbol.nodeInfo.Print()}");
+                //Debug.Log($"{nextDisplaySymbol.primarySymbol} Match's! Winning Symbol in Node {rootWinSymbol.nodeInfo.Print()}");
                 //Change the primary symbol to current symbol if primary is wild
                 if (Managers.EvaluationManager.CheckSymbolActivatesFeature(currentDisplaySymbol.primarySymbol, Features.wild))
                 {
@@ -365,7 +378,7 @@ namespace BoomSports.Prototype
         /// <param name="evaluationObject">winning symbols reference list</param>
         private void AddWinningNodeInRawList(NodeDisplaySymbolContainer winningSymbolContainer, ref SuffixTreeNode winningNode, ref EvaluationObjectStruct evaluationObject)
         {
-            Debug.Log($"Adding winning symbol {winningSymbolContainer.primarySymbol} on node {winningNode.nodeInfo.Print()}");
+            //Debug.Log($"Adding winning symbol {winningSymbolContainer.primarySymbol} on node {winningNode.nodeInfo.Print()}");
             evaluationObject.winningEvaluationNodes.Add(new WinningEvaluatedNodeContainer(winningNode.nodeInfo, winningSymbolContainer.primarySymbol));
         }
         /// <summary>
