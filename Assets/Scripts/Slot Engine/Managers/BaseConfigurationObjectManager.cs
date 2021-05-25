@@ -264,6 +264,19 @@ namespace BoomSports.Prototype.Managers
             await AddSymbolStateWeightByDict(symboWeightsByState);
         }
 
+        internal int GetIndexOfGroupManager(BaseObjectGroupManager baseObjectGroupManager)
+        {
+            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            {
+                if(configurationGroupManagers[i] == baseObjectGroupManager)
+                {
+                    return i;
+                }
+            }
+            Debug.Log($"object group manager {baseObjectGroupManager.gameObject.name} not in configuration object group managers array. Returning -1 for index");
+            return -1;
+        }
+
         private async Task AddSymbolStateWeightByDict(Dictionary<GameModes, List<float>> symbol_weight_state)
         {
             symbolWeightsByState = new ModeWeights[symbol_weight_state.Keys.Count];

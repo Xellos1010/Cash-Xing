@@ -17,10 +17,11 @@ namespace BoomSports.Prototype.Managers
 #if UNITY_EDITOR
     using UnityEditor;
     public enum eEaseType
-{
-    constant,
-    ease,
-}
+    {
+        linear,
+        constant,
+        ease
+    }
 
 
     [CanEditMultipleObjects]
@@ -48,14 +49,14 @@ namespace BoomSports.Prototype.Managers
                 {
                     myTarget.SetPositionIndexOnPathForObjects();
                 }
+                if (GUILayout.Button("Set Next Display symbols sequence based on spin type"))
+                {
+                    myTarget.InitializeEndingDisplayForNewSpin();
+                }
                 if (GUILayout.Button("Set Slot Positions To Initial Local Positions"))
                 {
                     myTarget.SetSlotPositionToStart();
                 }
-                //if (GUILayout.Button("Update Slot objects and positions local world reference"))
-                //{
-                //    myTarget.UpdateStripPositionsFromConfigurationSettings();
-                //}
                 if (GUILayout.Button("Update sub state machines slot managers"))
                 {
                     myTarget.UpdateSlotManagersSubStateMachines();
@@ -105,8 +106,6 @@ namespace BoomSports.Prototype.Managers
                 return base.configurationObjectParent;
             }
         }
-        [SerializeField]
-        internal GroupInformationStruct stripInfo;
         /// <summary>
         /// Holds the reference for the slots position in path from entering to exiting reel area
         /// </summary>
