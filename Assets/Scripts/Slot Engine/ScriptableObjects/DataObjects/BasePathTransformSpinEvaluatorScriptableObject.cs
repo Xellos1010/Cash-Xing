@@ -13,14 +13,20 @@ using UnityEngine;
 public abstract class BasePathTransformSpinEvaluatorScriptableObject : ScriptableObject
 {
     /// <summary>
-    /// Take the spin Time, path and times reached and and calculate position and return position 
+    /// Evaluate the spin parameters for supplied time and return point on path
     /// </summary>
-    /// <param name="spinTimerCurrent"></param>
-    /// <param name="startPositionInPath"></param>
-    /// <param name="positionPath"></param>
-    /// <param name="timesReachedEndOfPath"></param>
-    /// <returns></returns>
+    /// <returns>Position on Path</returns>
     public abstract Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath positionPath);
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
     internal abstract float GetTotalTime();
+    /// <summary>
+    /// Gets the number of symbols to replace per spin based on objects in group that are affected
+    /// </summary>
+    /// <param name="objectsInGroup"></param>
+    /// <returns></returns>
+    public abstract int GetSymbolsReplacedPerSpin(int objectsInGroup);
     internal abstract bool isTimeInPauseState(float spinCurrentTimer);
 }

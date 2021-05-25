@@ -24,6 +24,7 @@ namespace BoomSports.Prototype
         /// </summary>
         [SerializeField]
         public int symbolIDThatActivatesCondition;
+
         //Cash Crossing Specific hard coded
         public int rowThatActivates = 1;
         public int rowThatDeactivates = 5;

@@ -224,9 +224,9 @@ namespace BoomSports.Prototype.Managers
                     presentationSymbolSetToEnd = true;
                     stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
 
-                    if (stripManager.endSymbolsSetFromConfiguration < stripManager.symbolsdisplaySymbolsSequence.Length)
+                    if (stripManager.endSymbolsSetFromConfiguration < stripManager.symbolsDisplaySymbolsSequence.Length)
                     {
-                        SetDisplaySymbolTo(stripManager.symbolsdisplaySymbolsSequence[stripManager.symbolsdisplaySymbolsSequence.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
+                        SetDisplaySymbolTo(stripManager.symbolsDisplaySymbolsSequence[stripManager.symbolsDisplaySymbolsSequence.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
                         stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.configurationGroupDisplayZones.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
                         stripManager.endSymbolsSetFromConfiguration += 1;
                         symbol_set = true;

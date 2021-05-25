@@ -41,7 +41,7 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         public Vector3 stopSpinEndPosition;
         /// <summary>
-        /// current position of slot in Path
+        /// current position of slot in Path: current issues with memory reference staying set in unity
         /// </summary>
         public int indexOnPath;
         /// <summary>
@@ -122,7 +122,7 @@ namespace BoomSports.Prototype.Managers
         {
             ResetAllVarsFromPreviousSpin();
             SetObjectMovementEnabledTo(true);
-            Debug.Log($"Index on path = {indexOnPath}");
+            //Debug.Log($"Index on path = {indexOnPath}");
             //Cash Crossing Specific Feature - Stepper Strips will trigger Bonus Visuals thru Animator Trigger - may be repurposed for other things
             SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol();
         }
@@ -155,6 +155,7 @@ namespace BoomSports.Prototype.Managers
                 presentationSymbolSetToEnd = false;
                 stopSpinEndPosition = Vector3.zero;
                 spinCurrentTimer = 0.0f;
+                //TODO Set Index On Path based on local position
             }
         }
 

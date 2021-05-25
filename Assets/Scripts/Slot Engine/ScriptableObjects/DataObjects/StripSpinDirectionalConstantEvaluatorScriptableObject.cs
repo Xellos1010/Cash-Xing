@@ -15,7 +15,7 @@ using UnityEngine;
 /// Creates the scriptable object for the reels spin parameters
 /// </summary>
 [CreateAssetMenu(fileName = "StripSpinDirectionalConstantScriptableObject", menuName = "BoomSportsScriptableObjects/ReelStripSpinParametersScriptableObject", order = 2)]
-public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEvaluatorBaseScriptableObject
+public class StripSpinDirectionalConstantEvaluatorScriptableObject : BaseStripSpinEvaluatorScriptableObject
 {
     /// <summary>
     /// Controls the strip spin speed during looping state - traverse the length of the path over time
@@ -50,7 +50,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEv
 
             //Evaluate the spin in a direction based on speed and return raw distance to travel
             float calculatedDistanceTravelRaw = distancePerSecond * (float)spinTimerCurrent;
-            Vector3 rawToPosition = pathPositions.path[pathPositions.startPosition] + (reel_spin_direction * calculatedDistanceTravelRaw);
+            Vector3 rawToPosition = pathPositions.path[pathPositions.startPosition] + (stripSpinDirection * calculatedDistanceTravelRaw);
             //Since sqr operation is cpu heavy we will sqr our distance to travel to make comparison easier
 
             //Get Total Distance to travel from start position to next position in path
@@ -82,6 +82,15 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : StripSpinEv
             Debug.LogWarning($"Start position supplied {pathPositions.startPosition} is > path positions Length {pathPositions.path.Length}");
         }
         return output;
+    }
+    /// <summary>
+    /// Returns length of objects in group **always full strip clear**
+    /// </summary>
+    /// <param name="objectsInGroup"></param>
+    /// <returns></returns>
+    public override int GetSymbolsReplacedPerSpin(int objectsInGroup)
+    {
+        return objectsInGroup;
     }
 
     internal override float GetTotalTime()

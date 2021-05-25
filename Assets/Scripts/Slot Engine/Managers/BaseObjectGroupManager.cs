@@ -53,7 +53,7 @@ namespace BoomSports.Prototype.Managers
         /// Used to set the next symbol to display - stepper strip will set 1 # steps per spin - directional constant will set based on group length in active display zone
         /// </summary>
         [SerializeField]
-        internal NodeDisplaySymbolContainer[] symbolsdisplaySymbolsSequence;
+        internal NodeDisplaySymbolContainer[] symbolsDisplaySymbolsSequence;
         /// <summary>
         /// When an object is moves from last position to first the symbol is changed.
         /// </summary>
@@ -68,6 +68,8 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         [SerializeField]
         internal int endSymbolsSetFromConfiguration = 0;
+        [SerializeField]
+        internal GroupInformationStruct stripInfo;
         internal bool areObjectsInEndPosition
         {
             get
@@ -268,6 +270,32 @@ namespace BoomSports.Prototype.Managers
             SetSpinStateTo(SpinStates.spin_idle);
             return Task.CompletedTask;
         }
+        /// <summary>
+        /// Gets the number of symbols in a group that will be replaced on a spin
+        /// </summary>
+        /// <returns></returns>
+        internal int GetSymbolsToBeReplacedPerSpin()
+        {
+            //Access Spin Parameters and get number of symbols to replace per spin
+            return configurationGroupDisplayZones.spinParameters.GetSymbolsReplacedPerSpin(objectsInGroup.Length);
+            //Ex: stepper replaces x symbols x=steps per spin allowed. Directional Constant is full strip clear
+        }
+
+        internal string PrintCurrentDisplaySymbols()
+        {
+            string output = "";
+            List<BaseObjectManager> lastInFirstOut = GetSlotsDecending();
+            for (int i = 0; i < lastInFirstOut.Count; i++)
+            {
+                output += $"|{lastInFirstOut[i].currentPresentingSymbolID}";
+            }
+            return output;
+        }
+
+        internal int GetIndexInGroup()
+        {
+            return configurationObjectParent.GetIndexOfGroupManager(this);
+        }
 
         /// <summary>
         /// Spin the Reels
@@ -301,9 +329,9 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// Initializes Ending Display Symbols for Strip.
         /// </summary>
-        private void InitializeEndingDisplayForNewSpin()
+        internal void InitializeEndingDisplayForNewSpin()
         {
-            symbolsdisplaySymbolsSequence = GetDisplaySymbolsForNextSpin();
+            symbolsDisplaySymbolsSequence = GetDisplaySymbolsForNextSpin();
         }
         /// <summary>
         /// Gets the display slots for the next spin - Stepper is partial clear depending on steps per spin - constant is full clear
@@ -315,9 +343,8 @@ namespace BoomSports.Prototype.Managers
             //Hook into End Configuration Manager and get display symbols for this object manager
             EndConfigurationManager.instance.SetDisplaySymbolsForGroup(ref tempThis);
             //Used to get the symbol spin type and the set end display symbols for stepper strip what the strip will look like after 1 spin
-
             //Get from Spin type how many how many slots in object group to persist based on # steps per spin or full clear grouppping
-            return symbolsdisplaySymbolsSequence;
+            return symbolsDisplaySymbolsSequence;
         }
 
         /// <summary>
@@ -486,7 +513,7 @@ namespace BoomSports.Prototype.Managers
         private void SetEndingSymbolsTo(NodeDisplaySymbolContainer[] endingSymbols)
         {
             //Debug.Log($"Setting End Symbols To {PrintNodeDisplaySymbolArray(endingSymbols)}");
-            this.symbolsdisplaySymbolsSequence = endingSymbols;
+            this.symbolsDisplaySymbolsSequence = endingSymbols;
         }
 
         private string PrintNodeDisplaySymbolArray(NodeDisplaySymbolContainer[] endingSymbols)
