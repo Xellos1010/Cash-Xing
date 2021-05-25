@@ -73,77 +73,98 @@ namespace BoomSports.Prototype.ScriptableObjects
         public override object EvaluatePaylines(ref EvaluationObjectStruct evaluationObject)
         {
             evaluationUsed = evaluationObject;
-            List<WinningPayline> output_raw = new List<WinningPayline>();
-            List<WinningPayline> output_filtered = new List<WinningPayline>();
-            Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.paylineNodes.Length}");
+            List<WinningPayline> outputRaw = new List<WinningPayline>();
+            List<WinningPayline> outputFiltered = new List<WinningPayline>();
+            //Debug.Log($"dynamic_paylines.rootNodes.Length = {dynamic_paylines.paylineNodes.Length}");
 
             //Evaluate each root node and check active feature conditions
             for (int rootNode = 0; rootNode < dynamic_paylines.paylineNodes.Length; rootNode++)
             {
-                Debug.Log($"Evaluating Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
+                //Debug.Log($"Evaluating Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
                 //Add initial winning lines
-                output_raw.AddRange(dynamic_paylines.paylineNodes[rootNode].EvaluateRawWinningPaylines(ref evaluationObject));
+                outputRaw.AddRange(dynamic_paylines.paylineNodes[rootNode].EvaluateRawWinningPaylines(ref evaluationObject));
 
                 //Filter for duplicate linewins
-                FilterRawOutputForDuplicateRootNodeEntries(ref output_filtered, ref output_raw,evaluationObject.maxLength);
-                output_filtered.AddRange(output_raw);
-                output_raw.Clear();
-                // Debug.Log(String.Format("winning paylines Count = {0} for root_node {1} info = {2}", output_filtered.Count, rootNode, dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()));
+                FilterRawOutputForDuplicateRootNodeEntries(ref outputFiltered, ref outputRaw);
+                outputFiltered.AddRange(outputRaw);
+                outputRaw.Clear();
             }
+
+            //Since we evaluated all nodes and added a list of raw nodes that have features we will parse thru and see which onces actually activate and apply
+
+            //For now we will have features activate on a case by case basis until we can figure out a generic way to associate features and associate actions
+            //TODO Add each feature that triggers featureEvaluationActiveCount when adding winning symbol
             if (evaluationObject.featureEvaluationActiveCount != null)
             {
+                //Iterate over each key - find paired evaluator - run conditionals on evaluator
                 //Debug.Log(String.Format("Looking for features that activated"));
                 foreach (KeyValuePair<Features, List<SuffixTreeNodeInfo>> item in evaluationObject.featureEvaluationActiveCount)
                 {
+                    //Iterate thru evaluators and check conditions
+                    for (int evaluator = 0; evaluator < evaluationObject.slotEvaluationObjects.Length; evaluator++)
+                    {
+                        if(evaluationObject.slotEvaluationObjects[evaluator].featureName == item.Key)
+                        {
+                            //Run conditional check on every slot and add to winning node list in evaluator
+                            for (int node = 0; node < item.Value.Count; node++)
+                            {
+                                if(evaluationObject.slotEvaluationObjects[evaluator].EvaluateNodeForConditionsMet(item.Value[node], outputFiltered.ToArray()))
+                                {
+                                    Debug.Log($"Node {item.Value[node].Print()} activated feature {item.Key.ToString()} ");
+                                    evaluationObject.slotEvaluationObjects[evaluator].AddRawNodeActivatingFeature(item.Value[node]);
+                                }
+                            }
+                        }
+                    }
                     //Multiplier calculated first then mode is applied
                     //Debug.Log(String.Format("Feature name = {0}, counter = {1} mode - {2}", item.Key.ToString(), item.Value.Count, StateManager.enCurrentMode));
-                    if ((item.Key == Features.overlay || item.Key == Features.multiplier))
-                    {
-                        TriggerFeatureEvaluationScriptableObject overlayLogic = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<TriggerFeatureEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
-                        //Feature Evaluated Slot items are in raw format waiting for winningObjects to be generated to run evaluation logic- run check if items are valid
-                        for (int node = item.Value.Count - 1; node >= 0; node--)
-                        {
-                            if (!overlayLogic.EvaluateNodeForConditionsMet(item.Value[node], output_filtered.ToArray()))
-                            {
-                                item.Value.RemoveAt(node);
-                            }
-                        }
-                        if (item.Value.Count > 0)
-                        {
-                            if (StaticStateManager.enCurrentMode != GameModes.freeSpin)
-                            {
-                                if (StaticStateManager.enCurrentMode == GameModes.baseGame) //Can Only apply overlay feature in base-game
-                                    StaticStateManager.SetFeatureActiveTo(Features.multiplier, true);
-                                EvaluationManager.GetFirstInstanceFeatureEvaluationObject<TriggerFeatureEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects).nodesActivatingEvaluationConditions = item.Value;
-                            }
-                            else
-                            {
-                                StaticStateManager.AddToMultiplier(item.Value.Count);
-                            }
-                        }
-                    }
-                    if (item.Key == Features.freespin)
-                    {
-                        FreeSpinEvaluationScriptableObject freespinsObject = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<FreeSpinEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
-                        bool activateFeature = freespinsObject.EvaluateConditionsMet(item.Value, output_filtered.ToArray());
-                        if (activateFeature)
-                        {
-                            StaticStateManager.SetFeatureActiveTo(Features.freespin, true);
-                        }
-                        else
-                        {
-                            freespinsObject.nodesActivatingEvaluationConditions.Clear();
-                            break;
-                        }
-                    }
+                    //if ((item.Key == Features.overlay || item.Key == Features.multiplier))
+                    //{
+                    //    TriggerFeatureEvaluationScriptableObject overlayLogic = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<TriggerFeatureEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
+                    //    //Feature Evaluated Slot items are in raw format waiting for winningObjects to be generated to run evaluation logic- run check if items are valid
+                    //    for (int node = item.Value.Count - 1; node >= 0; node--)
+                    //    {
+                    //        if (!overlayLogic.EvaluateNodeForConditionsMet(item.Value[node], outputFiltered.ToArray()))
+                    //        {
+                    //            item.Value.RemoveAt(node);
+                    //        }
+                    //    }
+                    //    if (item.Value.Count > 0)
+                    //    {
+                    //        if (StaticStateManager.enCurrentMode != GameModes.freeSpin)
+                    //        {
+                    //            if (StaticStateManager.enCurrentMode == GameModes.baseGame) //Can Only apply overlay feature in base-game
+                    //                StaticStateManager.SetFeatureActiveTo(Features.multiplier, true);
+                    //            EvaluationManager.GetFirstInstanceFeatureEvaluationObject<TriggerFeatureEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects).nodesActivatingEvaluationConditions = item.Value;
+                    //        }
+                    //        else
+                    //        {
+                    //            StaticStateManager.AddToMultiplier(item.Value.Count);
+                    //        }
+                    //    }
+                    //}
+                    //if (item.Key == Features.freespin)
+                    //{
+                    //    FreeSpinEvaluationScriptableObject freespinsObject = EvaluationManager.GetFirstInstanceFeatureEvaluationObject<FreeSpinEvaluationScriptableObject>(ref evaluationObject.slotEvaluationObjects);
+                    //    bool activateFeature = freespinsObject.EvaluateConditionsMet(item.Value, outputFiltered.ToArray());
+                    //    if (activateFeature)
+                    //    {
+                    //        StaticStateManager.SetFeatureActiveTo(Features.freespin, true);
+                    //    }
+                    //    else
+                    //    {
+                    //        freespinsObject.nodesActivatingEvaluationConditions.Clear();
+                    //        break;
+                    //    }
+                    //}
                 }
             }
             evaluated = true;
             if (winningObjects == null)
                 winningObjects = new List<WinningObject>();
-            winningObjects.AddRange(output_filtered.ToArray());
+            winningObjects.AddRange(outputFiltered.ToArray());
             BuildWinningSymbolNodes(ref winningObjects); 
-            return output_filtered.ToArray();
+            return outputFiltered.ToArray();
         }
 
         private void BuildWinningSymbolNodes(ref List<WinningObject> winningPaylines)
@@ -358,48 +379,80 @@ namespace BoomSports.Prototype.ScriptableObjects
             }
             return false;
         }
-        private void FilterRawOutputForDuplicateRootNodeEntries(ref List<WinningPayline> output_filtered, ref List<WinningPayline> output_raw, int? maxLength)
+        /// <summary>
+        /// Filters out duplicate paylines from raw winning evaluations
+        /// </summary>
+        /// <param name="winningPaylinesFiltered"></param>
+        /// <param name="winningPaylinesRaw"></param>
+        /// <param name="maxLength"></param>
+        private void FilterRawOutputForDuplicateRootNodeEntries(ref List<WinningPayline> winningPaylinesFiltered, ref List<WinningPayline> winningPaylinesRaw)
         {
-            List<WinningPayline> duplicate_paylines = new List<WinningPayline>();
-            WinningPayline raw_payline;
-            for (int payline = 0; payline < output_raw.Count; payline++)
+            //Initialize List for duplicate paylines
+            List<WinningPayline> duplicatePaylines = new List<WinningPayline>();
+            WinningPayline paylineToCheck;
+            for (int rawPayline = 0; rawPayline < winningPaylinesRaw.Count; rawPayline++)
             {
-                raw_payline = output_raw[payline];
-                //Compare both ends of a line win spanning the reels.length
-                if (raw_payline.winningNodes.Length == maxLength)
+                paylineToCheck = winningPaylinesRaw[rawPayline];
+                //Check for a duplicate entry already in output filter
+                if (IsPaylineInList(paylineToCheck, ref winningPaylinesFiltered))
                 {
-                    //Check for a duplicate entry already in output filter
-                    if (IsFullLineWinInList(raw_payline, ref output_filtered))
-                    {
-                        duplicate_paylines.Add(raw_payline);
-                    }
+                    duplicatePaylines.Add(paylineToCheck);
                 }
             }
-            for (int duplicate_payline = 0; duplicate_payline < duplicate_paylines.Count; duplicate_payline++)
+            for (int duplicate = 0; duplicate < duplicatePaylines.Count; duplicate++)
             {
-                output_raw.Remove(duplicate_paylines[duplicate_payline]);
+                winningPaylinesRaw.Remove(duplicatePaylines[duplicate]);
             }
         }
         /// <summary>
         /// This ensures there are no winning paylines that share the same payline already. Keep highest value winning_payline 
         /// </summary>
-        /// <param name="new_winning_payline"></param>
-        /// <param name="winning_paylines"></param>
-        private bool IsFullLineWinInList(WinningPayline new_winning_payline, ref List<WinningPayline> winning_paylines)
+        /// <param name="paylineToCheck"></param>
+        /// <param name="winningPaylinesFiltered"></param>
+        private bool IsPaylineInList(WinningPayline paylineToCheck, ref List<WinningPayline> winningPaylinesFiltered)
         {
-            //Check which 
-            int left_root_node_new_winning_payline = new_winning_payline.payline.ReturnLeftRootNodeFromFullLineWin();
-            int right_root_node_new_winning_payline = new_winning_payline.payline.ReturnRightRootNodeFromFullLineWin();
-            int left_root_node_winning_payline = 0;
-            int right_root_node_winning_payline = 0;
-            for (int winning_payline = 0; winning_payline < winning_paylines.Count; winning_payline++)
+            //Check each winning payline
+            for (int currentWinningPaylineChecking = 0; currentWinningPaylineChecking < winningPaylinesFiltered.Count; currentWinningPaylineChecking++)
             {
-                left_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnLeftRootNodeFromFullLineWin();
-                right_root_node_winning_payline = winning_paylines[winning_payline].payline.ReturnRightRootNodeFromFullLineWin();
-                //Debug.Log(String.Format("left_root_node_winning_payline = {0} | left_root_node_new_winning_payline = {1} | right_root_node_winning_payline = {2} | right_root_node_new_winning_payline = {3}", left_root_node_winning_payline,left_root_node_new_winning_payline,right_root_node_winning_payline,right_root_node_new_winning_payline));
-                if (left_root_node_winning_payline == left_root_node_new_winning_payline && right_root_node_new_winning_payline == right_root_node_winning_payline)
+                //Check if the either winning payline contains the first node from winning group
+                if (paylineToCheck.ContainsNode(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes[0].nodeInfo)
+                    ||
+                    winningPaylinesFiltered[currentWinningPaylineChecking].ContainsNode(paylineToCheck.winningNodes[0].nodeInfo))
                 {
-                    return true;
+                    Debug.Log($"One of these paylines contains the first element of the other {paylineToCheck.payline.PrintConfiguration()} {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()} ");
+                    //Need to see if one payline appears in the other - compare length and use greater length payline for reference
+                    if (paylineToCheck.winningNodes.Length < winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length) //Use winning payline for reference
+                    {
+                        //Check if each node is in the larger payline - if so then keep larger payline
+                        for (int i = 0; i < paylineToCheck.winningNodes.Length; i++)
+                        {
+                            if(!winningPaylinesFiltered[currentWinningPaylineChecking].ContainsNode(paylineToCheck.winningNodes[i].nodeInfo))
+                            {
+                                break;
+                            }
+                            if(i == paylineToCheck.winningNodes.Length-1)
+                            {
+                                Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
+                                return true;
+                            }
+                        }
+                    }
+                    else //Use paylineToCheck for reference - keep payline already in list if they are the same full line win
+                    {
+                        //Check if each node is in the larger payline - if so then keep larger payline
+                        for (int i = 0; i < winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length; i++)
+                        {
+                            if (!paylineToCheck.ContainsNode(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes[i].nodeInfo))
+                            {
+                                break;
+                            }
+                            if (i == winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length - 1)
+                            {
+                                Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
+                                return true;
+                            }
+                        }
+                    }
                 }
             }
             return false;

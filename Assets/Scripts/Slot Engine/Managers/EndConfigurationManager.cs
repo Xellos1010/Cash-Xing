@@ -169,7 +169,7 @@ namespace BoomSports.Prototype.Managers
                 GenerateMultipleDisplayConfigurations(StaticStateManager.enCurrentMode, v);
             }
             //Save the strip used into the backlog
-            if (_displayConfigurationInUse.configuration.Length > 0)
+            if (_displayConfigurationInUse.configuration?.Length > 0)
                 SaveReelstripUsed(_displayConfigurationInUse);
             //TODO Validate Data in Reel Strip then Generate if no valid data found
             SetCurrentConfigurationTo(endConfigurationsScriptableObject.configurationsByState[StaticStateManager.enCurrentMode].data[v].data);
