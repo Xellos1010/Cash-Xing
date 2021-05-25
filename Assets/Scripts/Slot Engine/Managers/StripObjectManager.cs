@@ -98,13 +98,18 @@ namespace BoomSports.Prototype.Managers
         public override void StartSpin( bool test = false)
         {
             timesReachedEndOfPath = 0;
-            startPositionIndex = GetIndexFromLocalPositions();
             endSpin = false;
             this.test = test;
+            SetStartPosition();
             base.StartSpin();
         }
 
-        private int GetIndexFromLocalPositions()
+        internal override void SetStartPosition()
+        {
+            startPositionIndex = GetIndexFromLocalPositions();
+        }
+
+        internal int GetIndexFromLocalPositions()
         {
             for (int i = 0; i < stripManager.localPositionsInStrip.Length; i++)
             {

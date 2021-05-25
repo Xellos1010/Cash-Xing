@@ -37,6 +37,7 @@ namespace BoomSports.Prototype
                 {
                     for (int target = 0; target < targetConditionalContainer.targetsForConditionalTrue.Length; target++)
                     {
+                        Debug.Log($"{objectToEvaluate.gameObject.name} with index on path as {objectToEvaluate.indexOnPath} is activating a condition");
                         //Animators are 0-5 but start on row 1 - index on path is current index which is same number as index in animator without adding 0-1 etc
                         targetConditionalContainer.targetsForConditionalTrue[target].ActivateConditionalAtIndex(objectToEvaluate.indexOnPath);
                     }

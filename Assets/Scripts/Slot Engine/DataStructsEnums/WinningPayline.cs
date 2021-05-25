@@ -29,14 +29,7 @@ public partial class WinningPayline : WinningObject
 
     private float CalculateTotalWin(int win_value, ref StripConfigurationObject matrix)
     {
-        //if (matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier > 0)
-        //{
-        //    return (win_value * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.bet_amount) * matrix.slot_machine_managers.machine_info_manager.machineInfoScriptableObject.multiplier;
-        //}
-        //else
-        //{
-            return (win_value * matrix.managers.machineInfoManager.machineInfoScriptableObject.bet_amount);
-        //}
+        return (win_value * matrix.managers.machineInfoManager.machineInfoScriptableObject.bet_amount);
     }
 
     internal bool IsSymbolOnWinningPayline(int reel, int slot, int reel_start_padding, WinningEvaluatedNodeContainer symbol_to_check)

@@ -122,9 +122,11 @@ namespace BoomSports.Prototype.Managers
         {
             ResetAllVarsFromPreviousSpin();
             SetObjectMovementEnabledTo(true);
+            Debug.Log($"Index on path = {indexOnPath}");
             //Cash Crossing Specific Feature - Stepper Strips will trigger Bonus Visuals thru Animator Trigger - may be repurposed for other things
             SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol();
         }
+        internal virtual void SetStartPosition() { }
         /// <summary>
         /// Check if next position in path activates a conditional event based on symbol
         /// </summary>

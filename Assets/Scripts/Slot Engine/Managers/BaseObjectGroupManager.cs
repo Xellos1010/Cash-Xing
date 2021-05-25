@@ -276,6 +276,7 @@ namespace BoomSports.Prototype.Managers
         public void SpinGroupNow(bool test = false)
         {
             InitializeEndingDisplayForNewSpin();
+
             //When reel is generated it's vector3[] path is generated for reference from slots
             SetSpinStateTo(SpinStates.spin_start);
             //TODO hooks for reel state machine
@@ -310,13 +311,13 @@ namespace BoomSports.Prototype.Managers
         /// <returns></returns>
         private NodeDisplaySymbolContainer[] GetDisplaySymbolsForNextSpin()
         {
+            BaseObjectGroupManager tempThis = this;
             //Hook into End Configuration Manager and get display symbols for this object manager
-            EndConfigurationManager.instance.GetDisplaySymbolsGroupAtIndex(indexInGroupManager);
+            EndConfigurationManager.instance.SetDisplaySymbolsForGroup(ref tempThis);
             //Used to get the symbol spin type and the set end display symbols for stepper strip what the strip will look like after 1 spin
-            Debug.Log("to be Implemented - get symbol display for next spin");
 
             //Get from Spin type how many how many slots in object group to persist based on # steps per spin or full clear grouppping
-            return null;
+            return symbolsdisplaySymbolsSequence;
         }
 
         /// <summary>
