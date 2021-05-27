@@ -27,6 +27,6 @@ public abstract class BasePathTransformSpinEvaluatorScriptableObject : Scriptabl
     /// </summary>
     /// <param name="objectsInGroup"></param>
     /// <returns></returns>
-    public abstract int GetSymbolsReplacedPerSpin(int objectsInGroup);
-    internal abstract bool isTimeInPauseState(float spinCurrentTimer);
+    public abstract int GetSymbolsReplacedPerSpin(int objectsInGroup, BoomSports.Prototype.ConfigurationDisplayZonesStruct configurationGroupDisplayZones);
+    internal abstract bool isTimeAtEndOfSpin(float spinCurrentTimer);
 }

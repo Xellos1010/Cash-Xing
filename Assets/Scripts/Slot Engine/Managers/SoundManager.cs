@@ -2,9 +2,8 @@ using UnityEngine;
 using System;
 namespace BoomSports.Prototype.Managers
 {
-    public class SoundManager : MonoBehaviour
+    public class SoundManager : BaseBoomSportsManager
     {
-        public StripConfigurationObject matrix;
         public MachineSoundsReferenceScriptableObject machineSoundsReference;
 
         public AudioSource audioSource
@@ -24,13 +23,13 @@ namespace BoomSports.Prototype.Managers
         void OnEnable()
         {
             //Setup Reel Start and Stop Spin
-            for (int reel = 0; reel < matrix.configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < configurationObject.configurationGroupManagers.Length; reel++)
             {
-                matrix.configurationGroupManagers[reel].objectGroupStartSpin += SoundManager_reelStartSpin;
-                matrix.configurationGroupManagers[reel].objectGroupEndSpin += SoundManager_reelStopSpin;
+                configurationObject.configurationGroupManagers[reel].objectGroupStartSpin += SoundManager_reelStartSpin;
+                configurationObject.configurationGroupManagers[reel].objectGroupEndSpin += SoundManager_reelStopSpin;
             }
-            matrix.managers.rackingManager.rackStart += Racking_manager_rackStart;
-            matrix.managers.rackingManager.rackEnd += Racking_manager_rackEnd;
+            configurationObject.managers.rackingManager.rackStart += Racking_manager_rackStart;
+            configurationObject.managers.rackingManager.rackEnd += Racking_manager_rackEnd;
         }
 
         private void Racking_manager_rackEnd()
@@ -44,7 +43,7 @@ namespace BoomSports.Prototype.Managers
         private void Racking_manager_rackStart(double amountToRack)
         {
             audioSource.loop = true;
-            audioSource.clip = machineSoundsReference.rollups[matrix.GetRollupIndexFromAmountToRack(amountToRack)];
+            audioSource.clip = machineSoundsReference.rollups[configurationObject.GetRollupIndexFromAmountToRack(amountToRack)];
             audioSource.Play();
         }
 
@@ -61,19 +60,26 @@ namespace BoomSports.Prototype.Managers
         void OnDisable()
         {
             //Setup Reel Start and Stop Spin
-            for (int reel = 0; reel < matrix.configurationGroupManagers.Length; reel++)
+            try
             {
-                matrix.configurationGroupManagers[reel].objectGroupStartSpin -= SoundManager_reelStartSpin;
-                matrix.configurationGroupManagers[reel].objectGroupEndSpin -= SoundManager_reelStopSpin;
+                for (int reel = 0; reel < configurationObject.configurationGroupManagers.Length; reel++)
+                {
+                    configurationObject.configurationGroupManagers[reel].objectGroupStartSpin -= SoundManager_reelStartSpin;
+                    configurationObject.configurationGroupManagers[reel].objectGroupEndSpin -= SoundManager_reelStopSpin;
+                }
+                configurationObject.managers.rackingManager.rackStart -= Racking_manager_rackStart;
+                configurationObject.managers.rackingManager.rackEnd -= Racking_manager_rackEnd;
             }
-            matrix.managers.rackingManager.rackStart -= Racking_manager_rackStart;
-            matrix.managers.rackingManager.rackEnd -= Racking_manager_rackEnd;
+            catch
+            {
+                Debug.LogWarning("Sound Manager deregister from events issue");
+            }
         }
 
         internal void PlayAudioForWinningPayline(WinningPayline winningPayline)
         {
             int winningSymbol = winningPayline.GetWinningWymbol().symbol;
-            audioSource.PlayOneShot(matrix.ReturnSymbolSound(winningSymbol));
+            audioSource.PlayOneShot(configurationObject.ReturnSymbolSound(winningSymbol));
         }
     }
 

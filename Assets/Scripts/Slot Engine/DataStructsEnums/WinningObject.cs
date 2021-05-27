@@ -20,4 +20,26 @@ public partial class WinningObject
         }
         return false;
     }
+    internal string PrintWinningNodes()
+    {
+        string output = "";
+        for (int node = 0; node < winningNodes.Length; node++)
+        {
+            output += winningNodes[node].nodeInfo.Print();
+        }
+        return output;
+    }
+    internal string PrintWinningNodesAndSymbols()
+    {
+        return PrintWinningNodesAndSymbols(winningNodes);
+    }
+    internal string PrintWinningNodesAndSymbols(WinningEvaluatedNodeContainer[] winningNodes)
+    {
+        string output = "";
+        for (int node = 0; node < winningNodes.Length; node++)
+        {
+            output += $"|{winningNodes[node].nodeInfo.Print()}|{winningNodes[node].symbol}";
+        }
+        return output;
+    }
 }

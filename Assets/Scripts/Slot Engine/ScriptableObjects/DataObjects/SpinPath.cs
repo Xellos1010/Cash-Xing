@@ -47,6 +47,9 @@ public struct SpinPath
     /// </summary>
     [SerializeField]
     public int timesReachedEndOfPath;
+    //Steps completed in path
+    [SerializeField]
+    public int stepsCompletedInPath;
     /// <summary>
     /// current position of object in path
     /// </summary>
@@ -87,6 +90,7 @@ public struct SpinPath
         this.path = path;
         this.startPosition = startPosition;
         this.timesReachedEndOfPath = 0;
+        this.stepsCompletedInPath = startPosition;
         this.slotSize = slotSize;
         this.slotPadding = slotPadding;
         this.currentToIndexInPath = startPosition;

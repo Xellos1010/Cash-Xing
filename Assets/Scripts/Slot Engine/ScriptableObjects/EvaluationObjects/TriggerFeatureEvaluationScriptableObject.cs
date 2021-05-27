@@ -63,6 +63,11 @@ namespace BoomSports.Prototype.ScriptableObjects
             Debug.Log($"Trigger Feature Evaluated to false - {symbolTargetName}");
             return false;
         }
+
+        internal override void ActivateWinningNodesEvents()
+        {
+            throw new System.NotImplementedException();
+        }
     }
     /// <summary>
     /// Creates an evaluation object to associate conditions and activate a feature - Cash Crossing: on outer reel multiplier linewin
@@ -121,6 +126,11 @@ namespace BoomSports.Prototype.ScriptableObjects
             }
             //Debug.Log($"Feature {featureName.ToString()} Evaluated to {output} for - {nodeInfo.Print()}");
             return output;
+        }
+
+        internal override void ActivateWinningNodesEvents()
+        {
+            Debug.Log($"{featureToTrigger.ToString()} feature being triggered on slots {PrintActivatingNodes()}");
         }
     }
 }

@@ -18,7 +18,7 @@ public struct EvaluationObjectStruct
     /// Core Evaluation Object Logic - Ways - Lines - etc...
     /// </summary>
     [SerializeField]
-    public EvaluationScriptableObject evaluationScriptableObject;
+    public BaseEvaluationScriptableObject evaluationScriptableObject;
     /// <summary>
     /// Multiple evaluations methods, Wild, Overlay, Trigger Symbol
     /// </summary>
@@ -32,7 +32,7 @@ public struct EvaluationObjectStruct
     [SerializeField]
     internal Dictionary<Features, List<SuffixTreeNodeInfo>> featureEvaluationActiveCount;
 
-    public EvaluationObjectStruct(EvaluationScriptableObject evaluationScriptableObject, SlotEvaluationScriptableObject[] slotEvaluationObjects, DisplayConfigurationContainer displayConfigurationContainerToEvaluate) : this()
+    public EvaluationObjectStruct(BaseEvaluationScriptableObject evaluationScriptableObject, SlotEvaluationScriptableObject[] slotEvaluationObjects, DisplayConfigurationContainer displayConfigurationContainerToEvaluate) : this()
     {
         this.displayConfigurationContainerEvaluating = displayConfigurationContainerToEvaluate;
         this.evaluationScriptableObject = evaluationScriptableObject;

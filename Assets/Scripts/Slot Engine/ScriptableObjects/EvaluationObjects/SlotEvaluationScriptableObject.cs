@@ -17,7 +17,7 @@ namespace BoomSports.Prototype.ScriptableObjects
     /// <summary>
     /// Defines a single symbol evaluation feature, Wilds - Overlays - Etc. returns list of nodes from configuration passed where symbol evaluates and conditions are met to trigger
     /// </summary>
-    public abstract partial class SlotEvaluationScriptableObject : EvaluationScriptableObject
+    public abstract partial class SlotEvaluationScriptableObject : BaseEvaluationScriptableObject
     {
         /// <summary>
         /// Name of the feature triggering the evaluation
@@ -31,11 +31,22 @@ namespace BoomSports.Prototype.ScriptableObjects
         /// List of symbols that meet criteria of conditions to activate
         /// </summary>
         public List<SuffixTreeNodeInfo> nodesActivatingEvaluationConditions;
-
+        public string PrintActivatingNodes()
+        {
+            string output = "";
+            for (int i = 0; i < nodesActivatingEvaluationConditions.Count; i++)
+            {
+                output += nodesActivatingEvaluationConditions[i].Print();
+            }
+            return output;
+        }
         //public Conditions to be met for slot feature to activate.
         //Conditions can be as follows: Winning Payline Amount = 0 - configurationLength -1
         public List<NodeEvaluationCondition> nodeEvaluationConditions;
+        //Temporary data for Cash Crossing - TODO Abstract sequence to be able to call generic function and pass winning node.
+        public TargetAnimatorGroupContainer bridgeAnimators;
         public abstract bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects);
+        internal abstract void ActivateWinningNodesEvents();
         public override void ClearWinningObjects()
         {
             if (nodesActivatingEvaluationConditions == null)

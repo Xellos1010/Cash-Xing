@@ -50,14 +50,14 @@ namespace BoomSports.Prototype.Managers
         [SerializeField] //If base inspector enabled can check references
         internal BaseObjectManager[] objectsInGroup;
         /// <summary>
-        /// Used to set the next symbol to display - stepper strip will set 1 # steps per spin - directional constant will set based on group length in active display zone
+        /// used to track the end display sequence. In decending display order - Cash Crossing: stepper strip will replace 1 symbol on reel per spin - directional constant will replace all symbols on strip. Updated on SpinStart()
         /// </summary>
         [SerializeField]
-        internal NodeDisplaySymbolContainer[] symbolsDisplaySymbolsSequence;
+        internal NodeDisplaySymbolContainer[] symbolsDisplaySequence;
         /// <summary>
         /// When an object is moves from last position to first the symbol is changed.
         /// </summary>
-        public List<int> nextSymbolToUseOnGoToStart;
+        public List<int> debugNextSymbolsToLoad;
         /// <summary>
         /// Enables you to change the symbol graphic when slot exits the viewable area of a configuration to a predefined strip or random draw weighte distribution symbol
         /// </summary>
@@ -193,7 +193,7 @@ namespace BoomSports.Prototype.Managers
         public bool registerOnNextSymbolChangeWithObjectsEvent = false;
         public void OnEnable()
         {
-            RegisterWithObjectsInGroupEvents();
+            //RegisterWithObjectsInGroupEvents();
         }
 
         private void RegisterWithObjectsInGroupEvents()
@@ -209,6 +209,25 @@ namespace BoomSports.Prototype.Managers
                 }
             }
         }
+
+        /// <summary>
+        /// Right now used for stepper reel specifically to check next symbol in path
+        /// </summary>
+        /// <param name="objectInPath"></param>
+        private void CheckSymbolInSequenceForConditionalEvents(int symbolID, int indexInEndSequence, ConfigurationDisplayZonesStruct objectGroupManagerDisplayZones)
+        {
+            BaseSlotActivatorEventConditional[] conditionalsToCheck = objectGroupConditionalActivatorsContainer.GetAllConditionalChecks();
+            SymbolObjectGroupEvaluatorContainer symbolEvaluationContainer = new SymbolObjectGroupEvaluatorContainer(symbolID, indexInEndSequence, objectGroupManagerDisplayZones);
+            //Iterate thru evaluators and evaluate for a true condition
+            for (int i = 0; i < conditionalsToCheck.Length; i++)
+            {
+                if (conditionalsToCheck[i].EvaluateCondition(symbolEvaluationContainer))
+                {
+                    //Evaluate Condition handles invoking events - may change in future
+                }
+            }
+        }
+
         /// <summary>
         /// Right now used for stepper reel specifically to check next symbol in path
         /// </summary>
@@ -229,7 +248,7 @@ namespace BoomSports.Prototype.Managers
 
         public void OnDisable()
         {
-            DeregisterWithObjectsInGroupEvents();
+            //DeregisterWithObjectsInGroupEvents();
         }
 
         private void DeregisterWithObjectsInGroupEvents()
@@ -257,19 +276,55 @@ namespace BoomSports.Prototype.Managers
             InitializeEndingDisplayForNewSpin();
             //Switching to ObjectManager of spin object to invoke check of display symbol and row in strip.
             //Check each symbols next position - any symbol activating a condition send event to recieving object
-            //CheckEvaluationConditionsFromEndDisplayConfiguration();
+            //Cash Crossing when a bonus symbol enters a slot it sends idle trigger to associated bridge animator
+            InitializeConditionalEvents();
+            CheckForConditionalEventsFromEndDisplaySequence(symbolsDisplaySequence);
 
             SetSpinStateTo(SpinStates.spin_start);
 
+            //if symbols to replace on reel < objectsInGroup.Length then set reel to end spin 
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
                 objectsInGroup[i].StartSpin();
+                if (GetSymbolsToBeReplacedPerSpin() < GetTotalDisplaySlots())
+                {
+                    Debug.Log($"{gameObject.name} is setting spin to stop on start spin.");
+                    //Stepper reels need to set symbol to latest in sequence
+                    objectsInGroup[i].SetToStopSpin();
+                }
             }
             //If event on symbol stop then evaluate if event conidtions were reached - ie SpinDirectionalStepper a bonus trigger will land on the strip and a + will glow symbo
             //TODO refactor check for interupt state
             SetSpinStateTo(SpinStates.spin_idle);
             return Task.CompletedTask;
         }
+
+        private int GetTotalDisplaySlots()
+        {
+            return configurationGroupDisplayZones.displayZonesPositionsTotal;
+        }
+
+        private void InitializeConditionalEvents()
+        {
+            BaseSlotActivatorEventConditional[] conditionalsToCheck = objectGroupConditionalActivatorsContainer.GetAllConditionalChecks();
+            //Iterate thru evaluators and evaluate for a true condition
+            for (int i = 0; i < conditionalsToCheck.Length; i++)
+            {
+                conditionalsToCheck[i].Initialize();
+            }
+        }
+
+        private void CheckForConditionalEventsFromEndDisplaySequence(NodeDisplaySymbolContainer[] symbolsDisplaySymbolsSequence)
+        {
+            //Cash Crossing Specific
+            //Need to include logic for padding and active vs inactive display zones so we send the right index to the bridge manager
+            for (int symbolIndex = configurationGroupDisplayZones.paddingBefore; symbolIndex < symbolsDisplaySymbolsSequence.Length; symbolIndex++)
+            {
+                //TODO: Future refactor required to support active vs inactive display zone and proper index association
+                CheckSymbolInSequenceForConditionalEvents(symbolsDisplaySymbolsSequence[symbolIndex].primarySymbol, symbolIndex,configurationGroupDisplayZones);
+            }
+        }
+
         /// <summary>
         /// Gets the number of symbols in a group that will be replaced on a spin
         /// </summary>
@@ -277,7 +332,7 @@ namespace BoomSports.Prototype.Managers
         internal int GetSymbolsToBeReplacedPerSpin()
         {
             //Access Spin Parameters and get number of symbols to replace per spin
-            return configurationGroupDisplayZones.spinParameters.GetSymbolsReplacedPerSpin(objectsInGroup.Length);
+            return configurationGroupDisplayZones.spinParameters.GetSymbolsReplacedPerSpin(objectsInGroup.Length,configurationGroupDisplayZones);
             //Ex: stepper replaces x symbols x=steps per spin allowed. Directional Constant is full strip clear
         }
 
@@ -292,6 +347,17 @@ namespace BoomSports.Prototype.Managers
             return output;
         }
 
+        internal NodeDisplaySymbolContainer[] GetDisplaySymbolsFromDecending()
+        {
+            List<BaseObjectManager> lastInFirstOut = GetSlotsDecending();
+            NodeDisplaySymbolContainer[] output = new NodeDisplaySymbolContainer[lastInFirstOut.Count];
+            for (int i = 0; i < lastInFirstOut.Count; i++)
+            {
+                output[i] = new NodeDisplaySymbolContainer(lastInFirstOut[i].currentPresentingSymbolID);
+            }
+            return output;
+        }
+
         internal int GetIndexInGroup()
         {
             return configurationObjectParent.GetIndexOfGroupManager(this);
@@ -301,22 +367,23 @@ namespace BoomSports.Prototype.Managers
         /// Spin the Reels
         /// </summary>
         /// <returns>async task to track</returns>
-        public void SpinGroupNow(bool test = false)
+        public void SpinGroupNowTestNoAnimator(bool test = false)
         {
-            InitializeEndingDisplayForNewSpin();
+            StartSpin();
+            //    InitializeEndingDisplayForNewSpin();
 
-            //When reel is generated it's vector3[] path is generated for reference from slots
-            SetSpinStateTo(SpinStates.spin_start);
-            //TODO hooks for reel state machine
-            for (int i = 0; i < objectsInGroup.Length; i++)
-            {
-                //Last slot needs to ease in and out to the "next position" but 
-                objectsInGroup[i].StartSpin(test); // Tween to the same position then evaluate
-            }
-            //Task.Delay(time_to_enter_loop);
-            //TODO Implement Ease In for Starting spin
-            //TODO refactor check for interupt state
-            SetSpinStateTo(SpinStates.spin_idle);
+            //    //When reel is generated it's vector3[] path is generated for reference from slots
+            //    SetSpinStateTo(SpinStates.spin_start);
+            //    //TODO hooks for reel state machine
+            //    for (int i = 0; i < objectsInGroup.Length; i++)
+            //    {
+            //        //Last slot needs to ease in and out to the "next position" but 
+            //        objectsInGroup[i].StartSpin(test); // Tween to the same position then evaluate
+            //    }
+            //    //Task.Delay(time_to_enter_loop);
+            //    //TODO Implement Ease In for Starting spin
+            //    //TODO refactor check for interupt state
+            //    SetSpinStateTo(SpinStates.spin_idle);
         }
         /// <summary>
         /// Sets the Spin State to state
@@ -331,20 +398,20 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         internal void InitializeEndingDisplayForNewSpin()
         {
-            symbolsDisplaySymbolsSequence = GetDisplaySymbolsForNextSpin();
+            SetDisplaySymbolsForNextSpin();
         }
         /// <summary>
         /// Gets the display slots for the next spin - Stepper is partial clear depending on steps per spin - constant is full clear
         /// </summary>
-        /// <returns></returns>
-        private NodeDisplaySymbolContainer[] GetDisplaySymbolsForNextSpin()
+        /// <returns>symbols that were Set</returns>
+        internal NodeDisplaySymbolContainer[] SetDisplaySymbolsForNextSpin()
         {
             BaseObjectGroupManager tempThis = this;
             //Hook into End Configuration Manager and get display symbols for this object manager
             EndConfigurationManager.instance.SetDisplaySymbolsForGroup(ref tempThis);
             //Used to get the symbol spin type and the set end display symbols for stepper strip what the strip will look like after 1 spin
             //Get from Spin type how many how many slots in object group to persist based on # steps per spin or full clear grouppping
-            return symbolsDisplaySymbolsSequence;
+            return symbolsDisplaySequence;
         }
 
         /// <summary>
@@ -458,29 +525,33 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
         /// </summary>
-        public async Task StopReel(GroupSpinInformationStruct reelStrip)
+        public async Task StopReel()
         {
             endSymbolsSetFromConfiguration = 0;
             //Set State to spin outro
             SetSpinStateTo(SpinStates.spin_outro);
             //Waits until all slots have stopped spinning
-            await StopReel(reelStrip.displaySymbolSequence); //This will control ho wfast the reel goes to stop spin
+            await StopReel(symbolsDisplaySequence); //This will control how fast the reel goes to stop spin
             SetSpinStateTo(SpinStates.spin_end);
         }
-
+        /// <summary>
+        /// Gets the display sequence of symbols in object group
+        /// </summary>
+        /// <returns></returns>
         internal NodeDisplaySymbolContainer[] GetNodeDisplaySymbols()
         {
-            //Debug.Log($"{gameObject.name} is generating Node Display Symbols");
-            List<BaseObjectManager> tempOutput = GetSlotsDecending();
-            //Debug.Log($"tempOutput.Count = {tempOutput.Count}");
-            List<NodeDisplaySymbolContainer> output = new List<NodeDisplaySymbolContainer>();
-            for (int i = 0; i < tempOutput.Count; i++) //TODO Refactor evaluations manager to not include padding rowint i = configurationGroupDisplayZones.paddingBefore ; i < tempOutput.Count; i++)
-            {
-                //Debug.Log($"tempOutput[{i}].currentPresentingSymbolID = {tempOutput[i].currentPresentingSymbolID}");
-                output.Add(new NodeDisplaySymbolContainer(tempOutput[i].currentPresentingSymbolID));
-            }
-            //Debug.Log($"Node Display Symbols from {gameObject.name} = {PrintNodeDisplaySymbols(output.ToArray())}");
-            return output.ToArray();
+            return symbolsDisplaySequence;
+            ////Debug.Log($"{gameObject.name} is generating Node Display Symbols");
+            //List<BaseObjectManager> tempOutput = GetSlotsDecending();
+            ////Debug.Log($"tempOutput.Count = {tempOutput.Count}");
+            //List<NodeDisplaySymbolContainer> output = new List<NodeDisplaySymbolContainer>();
+            //for (int i = 0; i < tempOutput.Count; i++) //TODO Refactor evaluations manager to not include padding rowint i = configurationGroupDisplayZones.paddingBefore ; i < tempOutput.Count; i++)
+            //{
+            //    //Debug.Log($"tempOutput[{i}].currentPresentingSymbolID = {tempOutput[i].currentPresentingSymbolID}");
+            //    output.Add(new NodeDisplaySymbolContainer(tempOutput[i].currentPresentingSymbolID));
+            //}
+            ////Debug.Log($"Node Display Symbols from {gameObject.name} = {PrintNodeDisplaySymbols(output.ToArray())}");
+            //return output.ToArray();
         }
 
         private string PrintNodeDisplaySymbols(NodeDisplaySymbolContainer[] nodeDisplaySymbols)
@@ -507,13 +578,13 @@ namespace BoomSports.Prototype.Managers
             //Debug.Log(String.Format("All slots stopped spinning for reel {0}",transform.name));
         }
         /// <summary>
-        /// Set Ending Symbols variable
+        /// Set ending 
         /// </summary>
         /// <param name="endingSymbols">ending symbols for reelstrip</param>
         private void SetEndingSymbolsTo(NodeDisplaySymbolContainer[] endingSymbols)
         {
-            //Debug.Log($"Setting End Symbols To {PrintNodeDisplaySymbolArray(endingSymbols)}");
-            this.symbolsDisplaySymbolsSequence = endingSymbols;
+            Debug.Log($"Setting End Symbols To {PrintNodeDisplaySymbolArray(endingSymbols)} deprecated and set on start spin");
+            //this.symbolsDisplaySequence = endingSymbols;
         }
 
         private string PrintNodeDisplaySymbolArray(NodeDisplaySymbolContainer[] endingSymbols)
@@ -605,9 +676,9 @@ namespace BoomSports.Prototype.Managers
         {
             if (Application.isPlaying)
             {
-                if (nextSymbolToUseOnGoToStart == null)
-                    nextSymbolToUseOnGoToStart = new List<int>();
-                nextSymbolToUseOnGoToStart.Insert(0, selectedSymbolToGenerate);
+                if (debugNextSymbolsToLoad == null)
+                    debugNextSymbolsToLoad = new List<int>();
+                debugNextSymbolsToLoad.Insert(0, selectedSymbolToGenerate);
             }
             else
             {
@@ -660,6 +731,16 @@ namespace BoomSports.Prototype.Managers
         internal void SetSlotsReference()
         {
             objectsInGroup = GetComponentsInChildren<BaseObjectManager>();
+        }
+
+        internal void SetDisplaySymbolsForNextSpinToCurrent()
+        {
+            List<BaseObjectManager> slots = GetSlotsDecending();
+            symbolsDisplaySequence = new NodeDisplaySymbolContainer[slots.Count];
+            for (int i = 0; i < slots.Count; i++)
+            {
+                symbolsDisplaySequence[i] = new NodeDisplaySymbolContainer(slots[i].currentPresentingSymbolID);
+            }
         }
     }
 }

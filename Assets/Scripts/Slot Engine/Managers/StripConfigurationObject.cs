@@ -36,6 +36,10 @@ namespace BoomSports.Prototype
             EditorGUILayout.EnumPopup(StaticStateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
+            if (GUILayout.Button("Set Slots Display Sequence to current"))
+            {
+                myTarget.SetSlotsDisplaySequenceToCurrentSequence();
+            }
             if (GUILayout.Button("Set Slots PresentationID to symbol currently active"))
             {
                 myTarget.SyncCurrentSymbolDisplayedToPresentationID();
@@ -837,7 +841,7 @@ namespace BoomSports.Prototype
                     break;
                 case States.Resolve_Intro:
                     await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
-                    Debug.Log($"Resolve Intro state entered - Bonus Game Triggered = {StaticStateManager.bonusGameTriggered} multiplier = {managers.machineInfoManager.machineInfoScriptableObject.multiplier} Toal Win = {GetTotalSpinAmountWon()}");
+                    Debug.Log($"Resolve Intro state entered - Bonus Game Triggered = {StaticStateManager.bonusGameTriggered} Toal Win = {GetTotalSpinAmountWon()}");
                     //The amount total even with multiplier
                     double totalSpinAwardeded = GetTotalSpinAmountWon();
                     double totalAwardeded = totalSpinAwardeded + managers.machineInfoManager.machineInfoScriptableObject.bank + totalSpinAwardeded;
@@ -1538,6 +1542,14 @@ namespace BoomSports.Prototype
             for (int i = 0; i < configurationGroupManagers.Length; i++)
             {
                 configurationGroupManagers[i].SyncInformationToDisplaySymbol();
+            }
+        }
+
+        internal void SetSlotsDisplaySequenceToCurrentSequence()
+        {
+            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            {
+                configurationGroupManagers[i].SetDisplaySymbolsForNextSpinToCurrent();
             }
         }
     }

@@ -23,7 +23,7 @@ namespace BoomSports.Prototype
         /// List of all slot with symbol conditional activators
         /// </summary>
         [SerializeField]
-        public NextSlotSymbolActivatorEvent[] slotSymbolActivators;
+        public SlotSymbolActivatorConditional[] slotSymbolActivators;
         /// <summary>
         /// returns all conditionals from all sources in a list
         /// </summary>

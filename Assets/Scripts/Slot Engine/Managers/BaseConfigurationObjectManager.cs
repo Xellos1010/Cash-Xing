@@ -20,7 +20,7 @@ namespace BoomSports.Prototype.Managers
             get
             {
                 if (_managers == null)
-                    _managers = transform.parent.GetComponentInChildren<ManagersReferenceScript>();
+                    _managers = GameObject.FindObjectOfType<ManagersReferenceScript>();
                 return _managers;
             }
         }
@@ -129,11 +129,11 @@ namespace BoomSports.Prototype.Managers
                 //If reel strip delays are enabled wait between strips to stop
                 if (managers.spinManager.baseSpinSettingsScriptableObject.delayStartEnabled)
                 {
-                    await configurationGroupManagers[orderStopObjects[i]].StopReel(displayConfiguration.configuration[i]);
+                    await configurationGroupManagers[orderStopObjects[i]].StopReel();
                 }
                 else
                 {
-                    configurationGroupManagers[orderStopObjects[i]].StopReel(displayConfiguration.configuration[i]);
+                    configurationGroupManagers[orderStopObjects[i]].StopReel();
                 }
             }
             //Wait for all reels to be in spin.end state before continuing

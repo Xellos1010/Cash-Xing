@@ -46,6 +46,11 @@ namespace BoomSports.Prototype.ScriptableObjects
             return nodesActivatingEvaluationConditions?.Count;
         }
 
+        internal override void ActivateWinningNodesEvents()
+        {
+            throw new NotImplementedException();
+        }
+
         internal bool EvaluateConditionsMet(List<SuffixTreeNodeInfo> nodesToCheck, WinningPayline[] winningPaylines)
         {
             for (int condition = 0; condition < nodeEvaluationConditions.Count; condition++)
