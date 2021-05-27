@@ -108,18 +108,6 @@ namespace BoomSports.Prototype.Managers
 
         /**/
         /*Core*/
-        internal StripConfigurationObject configurationObject
-        {
-            get
-            {
-                if (_configurationObject == null)
-                    //TODO hardcoded - will change
-                    _configurationObject = transform.parent.parent.GetComponentInChildren<StripConfigurationObject>();
-                return _configurationObject;
-            }
-        }
-        [SerializeField]
-        private StripConfigurationObject _configurationObject;
         public EndConfigurationsScriptableObject endConfigurationsScriptableObject;
         /// <summary>
         /// The current reelstrip display configuration
@@ -236,48 +224,58 @@ namespace BoomSports.Prototype.Managers
             List<NodeDisplaySymbolContainer> symbolSequence = new List<NodeDisplaySymbolContainer>();
             //Get how many symbols on strip will clear from group manager spin parameters
             int symbolsToReplaceReel = objectGroupManager.GetSymbolsToBeReplacedPerSpin();
-            //if symbolsToReplaceReel < total slot objects. (remove x from end of strip x=symbols to leave strip) and build end display symbols
-            //if (symbolsToReplaceReel < objectGroupManager.objectsInGroup.Length)
-            //{
-            //Get symbols currently on reel in priority order
-            //extra call but hack for now - if need performance really add the if
-            List<BaseObjectManager> objectsLastInFirstOut = objectGroupManager.GetSlotsDecending();
-            Debug.Log($"current display symbols = {objectGroupManager.PrintCurrentDisplaySymbols()}");
-            objectsLastInFirstOut.RemoveRange(objectsLastInFirstOut.Count-1-symbolsToReplaceReel, symbolsToReplaceReel);
-            for (int i = objectsLastInFirstOut.Count - 1; i > 0; i--)
+            Debug.Log($"Replacing {symbolsToReplaceReel} symbol(s) on strip {objectGroupManager.gameObject.name}");
+
+            //Add symbols from strip if not full strip replacement - need to account for padding slots. does not account for active and inactive display zones
+            if (symbolsToReplaceReel < objectGroupManager.objectsInGroup.Length - objectGroupManager.configurationGroupDisplayZones.paddingBefore)
             {
-                Debug.Log($"{objectsLastInFirstOut[i].gameObject.name} currentPresentingSymbolID = {objectsLastInFirstOut[i].currentPresentingSymbolID}");
-                symbolSequence.Add(new NodeDisplaySymbolContainer(objectsLastInFirstOut[i].currentPresentingSymbolID));
+                //Will need to be refactored when not a strip group manager
+                symbolSequence.AddRange(objectGroupManager.GetDisplaySymbolsFromDecending());
+                symbolSequence.RemoveRange(symbolSequence.Count - symbolsToReplaceReel, symbolsToReplaceReel);
             }
+
             string debugmessage = "";
             for (int i = 0; i < symbolSequence.Count; i++)
             {
                 debugmessage += $"|{symbolSequence[i].primarySymbol}";
             }
-            Debug.Log($"Display sequence before add= {debugmessage}");
-            //Symbols on reel in last of symbol sequence - add next symbols ontop and return from strip sequence
-            //May need to refactor in future
+            Debug.Log($"Display sequence before add = {debugmessage}");
+            Debug.Log($"{objectGroupManager.gameObject.name}.GetIndexInGroup() = {objectGroupManager.GetIndexInGroup()}");
             AddSymbolsToDisplaySequence(symbolsToReplaceReel, _displayConfigurationInUse.configuration[objectGroupManager.GetIndexInGroup()], ref symbolSequence);
             debugmessage = "";
             for (int i = 0; i < symbolSequence.Count; i++)
             {
                 debugmessage += $"|{symbolSequence[i].primarySymbol}";
             }
-            Debug.Log($"Display sequence after add= {debugmessage}");
-            objectGroupManager.symbolsDisplaySymbolsSequence = symbolSequence.ToArray();
-        //}
-            //Get symbols from strip sequence based on object group manager index in groups. (This should be controled by objectGroupManager parent)
-            //Set object group managers sequence display symbols (should contain symbols on strip and x symbol off strip. x = objectGroupManager.displayzone.paddingbefore)
+            Debug.Log($"Display sequence after add = {debugmessage}");
+            objectGroupManager.symbolsDisplaySequence = symbolSequence.ToArray();
         }
-
+        /// <summary>
+        /// Add's symbols to the start of a display sequence
+        /// </summary>
+        /// <param name="symbolsToAdd"></param>
+        /// <param name="groupSpinInformationStruct"></param>
+        /// <param name="symbolsSequenceList"></param>
         private void AddSymbolsToDisplaySequence(int symbolsToAdd, GroupSpinInformationStruct groupSpinInformationStruct, ref List<NodeDisplaySymbolContainer> symbolsSequenceList)
         {
-            for (int i = 0; i < symbolsToAdd; i++)
+            Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {groupSpinInformationStruct.displaySymbolSequence.Length}");
+            for (int displaySymbolSequenceIndex = 0; displaySymbolSequenceIndex < symbolsToAdd; displaySymbolSequenceIndex++)
             {
-                symbolsSequenceList.Add(groupSpinInformationStruct.displaySymbolSequence[i]);
+                //For full reel replacement you will replace objects in group - since we have padding we need to add random symbols to the top
+                if (displaySymbolSequenceIndex >= groupSpinInformationStruct.displaySymbolSequence.Length)
+                {
+                    symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(UnityEngine.Random.Range(0, 3)));
+                }
+                else
+                {
+                    Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {groupSpinInformationStruct.displaySymbolSequence.Length} getting index {displaySymbolSequenceIndex}");
+                    Debug.Log($"Adding symbol {groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex].primarySymbol} to sequence");
+                    symbolsSequenceList.Insert(0, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
+                    Debug.Log($"symbolsSequenceList[0] = {symbolsSequenceList[0].primarySymbol}");
+                }
             }  
         }
-
+        //public List<NodeDisplaySymbolContainer> enmd
         //Todo Refactor and combine function
         internal async Task<DisplayConfigurationContainer> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones, Features featureToGenerate)
         {

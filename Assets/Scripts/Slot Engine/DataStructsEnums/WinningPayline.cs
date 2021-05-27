@@ -64,4 +64,23 @@ public partial class WinningPayline : WinningObject
         //Default to the first - need to add check if wild and provide override logic
         return winningNodes[0];
     }
+
+    internal bool ContainsAllNodes(WinningEvaluatedNodeContainer[] winningNodes)
+    {
+        Debug.Log($"Checking if {PrintWinningNodesAndSymbols()} contains {PrintWinningNodesAndSymbols(winningNodes)}");
+        bool output = false;
+        for (int i = 0; i < winningNodes.Length; i++)
+        {
+            Debug.Log($"{PrintWinningNodesAndSymbols()} ContainsNode(winningNodes[{i}].nodeInfo{winningNodes[i].nodeInfo.Print()}) = {ContainsNode(winningNodes[i].nodeInfo)}");
+            if(!ContainsNode(winningNodes[i].nodeInfo))
+            {
+                break;
+            }
+            if(i == winningNodes.Length-1)
+            {
+                output = true;
+            }
+        }
+        return output;
+    }
 }

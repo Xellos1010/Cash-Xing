@@ -27,65 +27,13 @@ namespace BoomSports.Prototype
         /// </summary>
         /// <param name="objectToEvaluate"></param>
         /// <returns></returns>
-        [SerializeField]
         public abstract bool EvaluateCondition(BaseObjectManager objectToEvaluate);
-    }
-    /// <summary>
-    /// Container for Target Conditional Reference
-    /// </summary>
-    [Serializable]
-    public class TargetConditionalActiveContainer
-    {
         /// <summary>
-        /// Who should be the target - Refactor to make scriptable objects later - this is cash crossing specific
+        /// evaluates if a symbol at index in display sequence triggers an event - need to consider how to pass index of a strip with active and inactive displayzones
         /// </summary>
-        [SerializeField]
-        public TargetAnimatorTriggerSetOnActive[] targetsForConditionalTrue;
-    }
-    [Serializable]
-    public class TargetAnimatorTriggerSetOnActive : TargetAnimatorGroupContainer
-    {
-        [SerializeField]
-        public supportedAnimatorTriggers triggerToSet;
-
-        public override void ActivateConditionalAtIndex(int indexToTrigger)
-        {
-            Debug.Log($"{targetAnimators[indexToTrigger].gameObject.name} set {triggerToSet.ToString()} trigger");
-            //Needs to be set beforehand
-            targetAnimators[indexToTrigger].SetTrigger(triggerToSet.ToString());
-        }
-    }
-
-    /// <summary>
-    /// Base class for assigning animator target for conditional active
-    /// </summary>
-    [Serializable]
-    public abstract class TargetAnimatorGroupContainer : BaseTargetGroupContainer
-    {
-        /// <summary>
-        /// The target animator for event to invoke
-        /// </summary>
-        [SerializeField]
-        public Animator[] targetAnimators;
-    }
-    ///// <summary>
-    ///// Base class for assigning animator target for conditional active
-    ///// </summary>
-    //[Serializable]
-    //public abstract class TargetAnimatorContainer : BaseTargetGroupContainer
-    //{
-    //    /// <summary>
-    //    /// The target animator for event to invoke
-    //    /// </summary>
-    //    [SerializeField]
-    //    public Animator targetAnimator;
-    //}
-    /// <summary>
-    /// Used to hold reference for future implementation of scriptable objects
-    /// </summary>
-    [Serializable]
-    public abstract class BaseTargetGroupContainer
-    {
-        public abstract void ActivateConditionalAtIndex(int index);
+        /// <param name="symbolEvaluationContainer">containes data required to evaluate conditions based on symbolID and sequence of end display configuration</param>
+        /// <returns></returns>
+        public abstract bool EvaluateCondition(SymbolObjectGroupEvaluatorContainer symbolEvaluationContainer);
+        internal abstract void Initialize();
     }
 }

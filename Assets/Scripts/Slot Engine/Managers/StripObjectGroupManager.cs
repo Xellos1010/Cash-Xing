@@ -66,7 +66,11 @@ namespace BoomSports.Prototype.Managers
             {
                 if (GUILayout.Button("Spin Reel Test"))
                 {
-                    myTarget.SpinGroupNow(true);
+                    myTarget.SpinGroupNowTestNoAnimator(true);
+                }
+                if (GUILayout.Button("Stop Reel Test"))
+                {
+                    myTarget.StopReel();
                 }
             }
             else
@@ -285,6 +289,20 @@ namespace BoomSports.Prototype.Managers
                 stripCounter += 1;
             }
             return output;
+        }
+
+        internal int GetIndexOfEndSymbolsStartInStrip()
+        {
+            return GetSymbolsToBeReplacedPerSpin(); //Stepper Reel
+
+            //if (symbolsDisplaySequence.Length > configurationGroupDisplayZones.displayZonesPositionsTotal)
+            //{
+            //    return GetSymbolsToBeReplacedPerSpin(); //Stepper Reel
+            //}
+            //else
+            //{
+            //    return symbolsDisplaySequence.Length - 1;
+            //}
         }
 
 

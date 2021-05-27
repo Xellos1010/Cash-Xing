@@ -8,6 +8,7 @@
 //  @ Author : Evan McCall
 //
 //
+using BoomSports.Prototype;
 using UnityEngine;
 /// <summary>
 /// Creates the scriptable object for a stepper strip - Flow of Stepper Strip
@@ -49,9 +50,9 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
     /// <returns></returns>
     public override Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath pathPositions)
     {
-        //Debug.Log(Log("Evaluating Stepper Directional Spin");
+        //Debug.Log("Evaluating Stepper Directional Spin");
         //See how many steps to evaluate
-        //Debug.Log(Log($"pathPositions.path.Length = {pathPositions.path.Length} pathPositions.startPosition = {pathPositions.startPosition}  + stepsAllowedPerSpin {stepsAllowedPerSpin} = {pathPositions.startPosition + stepsAllowedPerSpin}");
+        //Debug.Log($"pathPositions.path.Length = {pathPositions.path.Length} pathPositions.startPosition = {pathPositions.startPosition}  + stepsAllowedPerSpin {stepsAllowedPerSpin} = {pathPositions.startPosition + stepsAllowedPerSpin}");
         Vector3 startPosition = pathPositions.path[pathPositions.startPosition];
         //Solve for 1 step first - if want infinity step set end positoin to end of path
         //Set the end position to pathPositions.startPosition + stepsAllowedPerSpin - If the allowed steps per spin take the position index over the amount of points in path then you've reached end of path and need to start again
@@ -176,7 +177,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
                         }
                         else
                         {
-                             //Debug.Log(Log($"We are setting final position step - add pause time to lerpTime. {spinTimerCurrent - evaluatingTimeOnPath} = spinTimerCurrent {spinTimerCurrent} - startTimeOnPath {evaluatingTimeOnPath} ");
+                            //Debug.Log($"We are setting final position step - add pause time to lerpTime. {spinTimerCurrent - evaluatingTimeOnPath} = spinTimerCurrent {spinTimerCurrent} - startTimeOnPath {evaluatingTimeOnPath} ");
                             evaluatingTimeOnPath += spinTimerCurrent - evaluatingTimeOnPath;
                         }
                     }
@@ -187,11 +188,14 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
                         evaluatingTimeOnPath += spinTimerCurrent - evaluatingTimeOnPath;
                     }
                 }
-                if(Mathf.Abs(output.sqrMagnitude) >Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude))
+                //Debug.Log($"Mathf.Abs(output.sqrMagnitude) {Mathf.Abs(output.sqrMagnitude)} >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude) {Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude)} = {Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude)}");
+                if(Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude))
                 {
-                    while (Mathf.Abs(output.sqrMagnitude) > Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude))
+                    Vector3 differenceStartEnd = pathPositions.path[pathPositions.path.Length - 1] - pathPositions.path[0];
+                    while (Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude))
                     {
-                        output -= pathPositions.path[0];
+                        //Debug.Log($"output {output} -= differenceStartEnd {differenceStartEnd}");
+                        output -= differenceStartEnd;
                         //Increment times reached end of path for each time end of path is reached
                         timesReachedEndOfPath += 1;
                     }
@@ -225,7 +229,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
     /// Stepper will only replace number of steps allowed per spin
     /// </summary>
     /// <returns>(int) stepsAllowedPerSpin</returns>
-    public override int GetSymbolsReplacedPerSpin(int objectsInGroup)
+    public override int GetSymbolsReplacedPerSpin(int objectsInGroup, ConfigurationDisplayZonesStruct configurationGroupDisplayZones)
     {
         return stepsAllowedPerSpin;
     }
@@ -236,7 +240,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
         return (timeToCompleteStep + timeToPauseAfterStepCompleted);
     }
 
-    internal override bool isTimeInPauseState(float spinCurrentTimer)
+    internal override bool isTimeAtEndOfSpin(float spinCurrentTimer)
     {
         float tempTimer = 0;
         bool addActiveTimerAmount = true;

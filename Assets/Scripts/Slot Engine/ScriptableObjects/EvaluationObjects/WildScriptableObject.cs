@@ -37,5 +37,10 @@ namespace BoomSports.Prototype.ScriptableObjects
         {
             return nodesActivatingEvaluationConditions?.Count;
         }
+
+        internal override void ActivateWinningNodesEvents()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

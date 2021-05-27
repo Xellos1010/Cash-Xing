@@ -24,6 +24,7 @@ public class IsOnPaylineCondition : NodeEvaluationCondition
 	/// <returns></returns>
 	public override bool EvaluateCondition(WinningObject winningObject, SuffixTreeNodeInfo nodeInfo)
 	{
+		Debug.Log($"Checking Winning Object {winningObject.PrintWinningNodes()} contains node {nodeInfo.Print()}");
 		return winningObject.ContainsNode((SuffixTreeNodeInfo)nodeInfo);
 	}
 

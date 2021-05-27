@@ -14,10 +14,25 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace BoomSports.Prototype.ScriptableObjects
 {
-    public abstract partial class EvaluationScriptableObject : ScriptableObject
+    public abstract partial class BaseEvaluationScriptableObject : ScriptableObject
     {
+        /// <summary>
+        /// have we run the evaluation?
+        /// </summary>
         public bool evaluated = false;
+        /// <summary>
+        /// List of winning objects apart of evaluation
+        /// </summary>
         public List<WinningObject> winningObjects;
+        public string PrintWinningNodes()
+        {
+            string output = "";
+            for (int i = 0; i < winningObjects.Count; i++)
+            {
+                output += winningObjects[i].PrintWinningNodes();
+            }
+            return output;
+        }
         /// <summary>
         /// Can return winning paylines - number of overlay symbols - anything
         /// </summary>

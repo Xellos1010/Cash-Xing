@@ -46,7 +46,7 @@ namespace BoomSports.Prototype.ScriptableObjects
     /// Paylines Evaluation Scriptable Object - Holds nodes and conditions to build nodes and store information
     /// </summary>
     [CreateAssetMenu(fileName = "PaylinesEvaluationObject", menuName = "BoomSportsScriptableObjects/PaylinesEvaluationScriptableObject", order = 4)]
-    public class PaylinesEvaluationScriptableObject : EvaluationScriptableObject
+    public class PaylinesEvaluationScriptableObject : BaseEvaluationScriptableObject
     {
         /// <summary>
         /// Which way should the evaluation take place?
@@ -80,13 +80,18 @@ namespace BoomSports.Prototype.ScriptableObjects
             //Evaluate each root node and check active feature conditions
             for (int rootNode = 0; rootNode < dynamic_paylines.paylineNodes.Length; rootNode++)
             {
-                //Debug.Log($"Evaluating Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()}");
+                Debug.Log($"Evaluating Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} before evaluation outputRaw.Count = {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
                 //Add initial winning lines
                 outputRaw.AddRange(dynamic_paylines.paylineNodes[rootNode].EvaluateRawWinningPaylines(ref evaluationObject));
-
-                //Filter for duplicate linewins
-                FilterRawOutputForDuplicateRootNodeEntries(ref outputFiltered, ref outputRaw);
-                outputFiltered.AddRange(outputRaw);
+                Debug.Log($"Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} before payline consolidation= {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
+                //for (int i = 0; i < outputRaw.Count; i++)
+                //{
+                //    Debug.Log($"Raw winning payline {i} = {outputRaw[i].PrintWinningNodesAndSymbols()}");
+                //}
+                //Filter for duplicate linewins and merge lists
+                if(outputRaw.Count > 0)
+                    ConsolidateWinningPaylines(ref outputFiltered, ref outputRaw);
+                Debug.Log($"Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} after filter outputRaw.Count = {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
                 outputRaw.Clear();
             }
 
@@ -385,77 +390,57 @@ namespace BoomSports.Prototype.ScriptableObjects
         /// <param name="winningPaylinesFiltered"></param>
         /// <param name="winningPaylinesRaw"></param>
         /// <param name="maxLength"></param>
-        private void FilterRawOutputForDuplicateRootNodeEntries(ref List<WinningPayline> winningPaylinesFiltered, ref List<WinningPayline> winningPaylinesRaw)
+        private void ConsolidateWinningPaylines(ref List<WinningPayline> winningPaylinesFiltered, ref List<WinningPayline> winningPaylinesRaw)
         {
+            Debug.Log($"Consolidating Paylines winningPaylinesFiltered.Count = {winningPaylinesFiltered.Count} winningPaylinesRaw.Count = {winningPaylinesRaw.Count}");
+            string rawList = "";
+            string filteredList = "";
+            for (int i = 0; i < winningPaylinesRaw.Count; i++)
+            {
+                rawList += winningPaylinesRaw[i].PrintWinningNodesAndSymbols() + "\n";
+            }
+            for (int i = 0; i < winningPaylinesFiltered.Count; i++)
+            {
+                filteredList += winningPaylinesFiltered[i].PrintWinningNodesAndSymbols() + "\n";
+            }
+            Debug.Log($"Printing all raw paylines \n {rawList} ");
+            Debug.Log($"Printing all filtered paylines \n {filteredList} ");
             //Initialize List for duplicate paylines
             List<WinningPayline> duplicatePaylines = new List<WinningPayline>();
-            WinningPayline paylineToCheck;
-            for (int rawPayline = 0; rawPayline < winningPaylinesRaw.Count; rawPayline++)
+            WinningPayline rawPaylineToCheck;
+            for (int rawPaylineChecking = winningPaylinesRaw.Count-1; rawPaylineChecking >= 0; rawPaylineChecking--)
             {
-                paylineToCheck = winningPaylinesRaw[rawPayline];
-                //Check for a duplicate entry already in output filter
-                if (IsPaylineInList(paylineToCheck, ref winningPaylinesFiltered))
+                //Set raw payline to check against list of filtered paylines
+                rawPaylineToCheck = winningPaylinesRaw[rawPaylineChecking];
+                Debug.Log($"rawPaylineToCheck = winningPaylinesRaw[{rawPaylineChecking}] {rawPaylineToCheck.PrintWinningNodesAndSymbols()}");
+                //Check each filtered winning payline
+                for (int currentWinningPaylineChecking = winningPaylinesFiltered.Count-1; currentWinningPaylineChecking >= 0; currentWinningPaylineChecking--)
                 {
-                    duplicatePaylines.Add(paylineToCheck);
-                }
-            }
-            for (int duplicate = 0; duplicate < duplicatePaylines.Count; duplicate++)
-            {
-                winningPaylinesRaw.Remove(duplicatePaylines[duplicate]);
-            }
-        }
-        /// <summary>
-        /// This ensures there are no winning paylines that share the same payline already. Keep highest value winning_payline 
-        /// </summary>
-        /// <param name="paylineToCheck"></param>
-        /// <param name="winningPaylinesFiltered"></param>
-        private bool IsPaylineInList(WinningPayline paylineToCheck, ref List<WinningPayline> winningPaylinesFiltered)
-        {
-            //Check each winning payline
-            for (int currentWinningPaylineChecking = 0; currentWinningPaylineChecking < winningPaylinesFiltered.Count; currentWinningPaylineChecking++)
-            {
-                //Check if the either winning payline contains the first node from winning group
-                if (paylineToCheck.ContainsNode(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes[0].nodeInfo)
-                    ||
-                    winningPaylinesFiltered[currentWinningPaylineChecking].ContainsNode(paylineToCheck.winningNodes[0].nodeInfo))
-                {
-///*                    Debug.Log($"One of these paylines contains the first element of the other {paylineToCheck.payline.PrintConfiguration()} {winningPaylinesFiltered*/[currentWinningPaylineChecking].payline.PrintConfiguration()} ");
-                    //Need to see if one payline appears in the other - compare length and use greater length payline for reference
-                    if (paylineToCheck.winningNodes.Length < winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length) //Use winning payline for reference
+                    Debug.Log($"Duplicate payline Check \n {rawPaylineToCheck.PrintWinningNodesAndSymbols()}<->{winningPaylinesFiltered[currentWinningPaylineChecking].PrintWinningNodesAndSymbols()}");
+
+                    if(rawPaylineToCheck.winningNodes.Length > winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length)
                     {
-                        //Check if each node is in the larger payline - if so then keep larger payline
-                        for (int i = 0; i < paylineToCheck.winningNodes.Length; i++)
+                        Debug.Log($"rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes) = {rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes)}");
+                        if(rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes))
                         {
-                            if(!winningPaylinesFiltered[currentWinningPaylineChecking].ContainsNode(paylineToCheck.winningNodes[i].nodeInfo))
-                            {
-                                break;
-                            }
-                            if(i == paylineToCheck.winningNodes.Length-1)
-                            {
-                                //Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
-                                return true;
-                            }
+                            Debug.Log($"rawPaylineToCheck contains all nodes from winningPaylinesFiltered[currentWinningPaylineChecking] - Remove winningPaylinesFiltered[{currentWinningPaylineChecking}]");
+                            winningPaylinesFiltered.RemoveAt(currentWinningPaylineChecking);
                         }
                     }
-                    else //Use paylineToCheck for reference - keep payline already in list if they are the same full line win
+                    else
                     {
-                        //Check if each node is in the larger payline - if so then keep larger payline
-                        for (int i = 0; i < winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length; i++)
+                        Debug.Log($"winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes)) = {winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes)}");
+
+                        if (winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes))
                         {
-                            if (!paylineToCheck.ContainsNode(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes[i].nodeInfo))
-                            {
-                                break;
-                            }
-                            if (i == winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length - 1)
-                            {
-                                //Debug.Log($"Duplicate Payline Detected {paylineToCheck.payline.PrintConfiguration()} and {winningPaylinesFiltered[currentWinningPaylineChecking].payline.PrintConfiguration()}");
-                                return true;
-                            }
+                            Debug.Log($"winningPaylinesFiltered[currentWinningPaylineChecking]contains all nodes from rawPaylineToCheck - Remove rawPaylineToCheck[{rawPaylineChecking}]");
+                            winningPaylinesRaw.RemoveAt(rawPaylineChecking);
                         }
                     }
                 }
             }
-            return false;
+            //Add raw paylines to winning paylines
+            winningPaylinesFiltered.AddRange(winningPaylinesRaw);
         }
 
 

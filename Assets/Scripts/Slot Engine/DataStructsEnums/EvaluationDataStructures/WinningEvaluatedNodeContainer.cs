@@ -22,7 +22,7 @@ public struct WinningEvaluatedNodeContainer
     internal string Print()
     {
         string output = "";
-        output += (symbol.ToString() + " " + nodeInfo.Print());
+        output += $"|{symbol.ToString()}|{nodeInfo.Print()}|";
         return output;
     }
 }

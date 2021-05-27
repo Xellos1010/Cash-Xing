@@ -161,7 +161,7 @@ namespace BoomSports.Prototype.Managers
         {
             //Debug.Log($"{gameObject.name} is MoveObjectToSpinPosition( spinCurrentTimer ={spinCurrentTimer})");
             toPosition = Vector3.zero;
-            BasePathTransformSpinEvaluatorScriptableObject temp = stripManager.GetSpinParameters();
+            BasePathTransformSpinEvaluatorScriptableObject spinParameters = stripManager.GetSpinParameters();
             //TODO Test Generic Evaluate Spin - TODO Add abtract function to return positions in object group
             StripObjectGroupManager temp2 = baseObjectGroupParent as StripObjectGroupManager;
             //Debug.Log($"new SpinPath({temp2.localPositionsInStrip}, {startPositionIndex},{temp2.configurationObjectParent.configurationSettings.slotSize}, {temp2.configurationObjectParent.configurationSettings.slotPadding});");
@@ -169,18 +169,21 @@ namespace BoomSports.Prototype.Managers
             SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
             //Debug.Log($"pathToEvaluate.GetType() == null = {pathToEvaluate.GetType() == null}");
             //Stepper Logic - The evaluating object checks if you have a set amount of steps or rotations to make in spin then to return constant value once ceiling has been reached 
-            temp.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
+            spinParameters.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
             indexOnPath = pathToEvaluate.currentToIndexInPath;
             toPosition = pathToEvaluate.toPositionEvaluated;
+            //Debug.Log($"{gameObject.name} toPosition = {toPosition} timesReachedEndOfPath = {timesReachedEndOfPath} pathToEvaluate.timesReachedEndOfPath = {pathToEvaluate.timesReachedEndOfPath} pathToEvaluate.changeSymbolGraphic {pathToEvaluate.changeSymbolGraphic} ");
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
             {
                 timesReachedEndOfPath = pathToEvaluate.timesReachedEndOfPath;
                 if (Application.isPlaying)
                     SetSymbolGraphics();
             }
+            //Finalize position of evaluation if spin end
             if (Application.isPlaying)
             {
-                if (setToPresentationSymbolNextSpinCycle && presentationSymbolSetToEnd)
+                //TODO Set Presentation symbol to end automatically for stepper reels
+                if (setDisplaySymbolOnrfeachEndOfPath && presentationSymbolSetToEnd)
                 {
                     if (Mathf.Abs(toPosition.sqrMagnitude) >= Mathf.Abs(stopSpinEndPosition.sqrMagnitude))
                     {
@@ -190,11 +193,16 @@ namespace BoomSports.Prototype.Managers
                     }
                 }
                 else if (endSpin == true)
-                { 
-                    if (!temp.isTimeInPauseState(spinCurrentTimer))
+                {
+                    //Debug.Log($"{gameObject.name} endSpin = true - Checking spinParameters.isTimeInPauseState({spinCurrentTimer}) {spinParameters.isTimeAtEndOfSpin(spinCurrentTimer)}");
+                    //Check if the spin is in a pause state
+                    if (!spinParameters.isTimeAtEndOfSpin(spinCurrentTimer))
                     {
-                        if (toPosition == stripManager.localPositionsInStrip[stripManager.localPositionsInStrip.Length - 1])
+                        //position set to top handled in evaluator
+                        /*if (toPosition == stripManager.localPositionsInStrip[stripManager.localPositionsInStrip.Length - 1])
+                        {
                             toPosition = stripManager.localPositionsInStrip[0];
+                        }*/
                         stopSpinEndPosition = toPosition;
                         objectInEndPosition = true;
                         spinMovementEnabled = false;
@@ -207,42 +215,61 @@ namespace BoomSports.Prototype.Managers
 
         private void SetSymbolGraphics()
         {
-
-            bool symbol_set = false;
+            bool symbolSet = false;
             NodeDisplaySymbolContainer symbol = new NodeDisplaySymbolContainer();
-            //First we check if we have symbols in a list to present next - then we go based on set presentation symbol - This will break under certain conditions but works for now.
-            if (stripManager.nextSymbolToUseOnGoToStart.Count > 0)
+            //First we check if we have symbols in a list to present next - this takes priority over pre-generated strips for testing purposes
+            if (stripManager.debugNextSymbolsToLoad.Count > 0)
             {
-                symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.nextSymbolToUseOnGoToStart.Pop<int>()).Result;
+                symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetNodeDisplaySymbol(stripManager.debugNextSymbolsToLoad.Pop<int>()).Result;
             }
-            else
+            else //We have no debug symbols - set either random to to next symbol in display sequence
             {
-                if (setToPresentationSymbolNextSpinCycle)
+                if (setDisplaySymbolOnrfeachEndOfPath) //set graphic to next symbol in path
                 {
+                    string debug = "";
+                    for (int i = 0; i < stripManager.symbolsDisplaySequence.Length; i++)
+                    {
+                        debug += $"|{stripManager.symbolsDisplaySequence[i].primarySymbol}";
+                    }
+                    Debug.Log($"{debug} Display symbol sequence from {stripManager.gameObject.name}");
+
                     //Set Graphics and end position
-                    //Debug.Log($"Setting {gameObject.name} end symbol in reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
+                    Debug.Log($"Setting {gameObject.name} Display symbol on reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
                     presentationSymbolSetToEnd = true;
                     stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
 
-                    if (stripManager.endSymbolsSetFromConfiguration < stripManager.symbolsDisplaySymbolsSequence.Length)
+                    if (stripManager.endSymbolsSetFromConfiguration < stripManager.symbolsDisplaySequence.Length)
                     {
-                        SetDisplaySymbolTo(stripManager.symbolsDisplaySymbolsSequence[stripManager.symbolsDisplaySymbolsSequence.Length - 1 - stripManager.endSymbolsSetFromConfiguration]);
+                        int indexForLastNewSymbolInSequence = stripManager.GetIndexOfEndSymbolsStartInStrip();
+                        //Hack: to get this working - TODO refactor to return proper value
+                        if(indexForLastNewSymbolInSequence >= stripManager.symbolsDisplaySequence.Length)
+                        {
+                            indexForLastNewSymbolInSequence = stripManager.symbolsDisplaySequence.Length - 1;
+                        }
+                        Debug.Log($"stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration} < stripManager.symbolsDisplaySequence.Length {stripManager.symbolsDisplaySequence.Length} is true indexForLastNewSymbolInSequence = {indexForLastNewSymbolInSequence} Display Symbol index = {indexForLastNewSymbolInSequence - stripManager.endSymbolsSetFromConfiguration} symbol = {stripManager.symbolsDisplaySequence[indexForLastNewSymbolInSequence - stripManager.endSymbolsSetFromConfiguration].primarySymbol}");
+                        //Set display symbol to symbol in sequence
+                        //Reset all symbols on strip pull last first
+                        //Reset partial symbols - set last index to pull to stripManager.symbolsDisplaySequence.Length - 1 - 
+                        SetDisplaySymbolTo(stripManager.symbolsDisplaySequence[indexForLastNewSymbolInSequence - stripManager.endSymbolsSetFromConfiguration]);
+                        
                         stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.configurationGroupDisplayZones.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
+                        
                         stripManager.endSymbolsSetFromConfiguration += 1;
-                        symbol_set = true;
+                        symbolSet = true;
                         //Set end position to paddig after = stripManager.endSymbolsSetFromConfiguration
 
                     }
-                    else
+                    else //Set to end
                     {
+                        Debug.Log($"stripManager.endSymbolsSetFromConfiguration{stripManager.endSymbolsSetFromConfiguration} < stripManager.symbolsDisplaySequence.Length {stripManager.symbolsDisplaySequence.Length} is false");
                         SetPresentationSymbolTo(-1); //TODO Define whether to set the top slot graphic
                         stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.configurationGroupDisplayZones.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
                         stripManager.endSymbolsSetFromConfiguration += 1;
-                        symbol_set = true;
+                        symbolSet = true;
+                        presentationSymbolSetToEnd = true;
                     }
-                    //Debug.Log("Slot " + transform.name + " symbol presentation = " + presentation_symbol + " end position = " + end_position);
+                    Debug.Log("Slot " + transform.name + " symbol presentation = " + currentPresentingSymbolID + " end position = " + stopSpinEndPosition);
                 }
-
                 else
                 {
                     if (stripManager.randomSetSymbolOnEndOfSequence)
@@ -253,14 +280,14 @@ namespace BoomSports.Prototype.Managers
                             if (stripManager.stripInfo.spinInformation.spinIdleSymbolSequence.Length > 0)
                             {
                                 symbol = stripManager.ReturnNextSymbolInStrip();
-                                symbol_set = true;
+                                symbolSet = true;
                             }
                         }
                     }
                 }
 
                 //In-case nothing was set set to random 
-                if (!symbol_set)
+                if (!symbolSet)
                 {
                     Debug.LogWarning("Symbol was not set - auto setting random");
                     //Determines an overlay symbol
@@ -298,7 +325,7 @@ namespace BoomSports.Prototype.Managers
             }
             else
             {
-                setToPresentationSymbolNextSpinCycle = true;
+                setDisplaySymbolOnrfeachEndOfPath = true;
                 objectInEndPosition = false;
                 presentationSymbolSetToEnd = false;
             }

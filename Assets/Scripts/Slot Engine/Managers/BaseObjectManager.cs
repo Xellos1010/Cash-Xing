@@ -101,7 +101,7 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// When object reachs end of spin cycle new symbol assigned is either random or pre-defined for spin loop or spin end
         /// </summary>
-        public bool setToPresentationSymbolNextSpinCycle = false;
+        public bool setDisplaySymbolOnrfeachEndOfPath = false;
 
         /// <summary>
         /// Local reference for spin manager timer - used to debug Object Position Along Spin Path - 
@@ -124,7 +124,7 @@ namespace BoomSports.Prototype.Managers
             SetObjectMovementEnabledTo(true);
             //Debug.Log($"Index on path = {indexOnPath}");
             //Cash Crossing Specific Feature - Stepper Strips will trigger Bonus Visuals thru Animator Trigger - may be repurposed for other things
-            SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol();
+            //SignalParentToEvaluateConditionsForNextSlotInPathViaSymbol();
         }
         internal virtual void SetStartPosition() { }
         /// <summary>
@@ -150,7 +150,7 @@ namespace BoomSports.Prototype.Managers
                 objectInEndPosition = false;
                 presentationSymbolSetToEnd = false;
                 startPosition = transform.localPosition;
-                setToPresentationSymbolNextSpinCycle = false;
+                setDisplaySymbolOnrfeachEndOfPath = false;
                 objectInEndPosition = false;
                 presentationSymbolSetToEnd = false;
                 stopSpinEndPosition = Vector3.zero;
@@ -492,7 +492,7 @@ namespace BoomSports.Prototype.Managers
 
         internal void SetDisplaySymbolTo(NodeDisplaySymbolContainer symbol_to_display)
         {
-            //Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primary_symbol}");
+            Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primarySymbol}");
             SetPresentationSymbolTo(symbol_to_display.primarySymbol);
             ShowSymbolRenderer(symbol_to_display.primarySymbol);
             //if (symbol_to_display.is_overlay)
@@ -529,7 +529,7 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         internal virtual void SetToStopSpin()
         {
-            setToPresentationSymbolNextSpinCycle = true;
+            setDisplaySymbolOnrfeachEndOfPath = true;
             objectInEndPosition = false;
             presentationSymbolSetToEnd = false;
         }

@@ -8,6 +8,7 @@
 //  @ Author : Evan McCall
 //
 //
+using BoomSports.Prototype;
 using System;
 using UnityEngine;
 
@@ -88,9 +89,9 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : BaseStripSp
     /// </summary>
     /// <param name="objectsInGroup"></param>
     /// <returns></returns>
-    public override int GetSymbolsReplacedPerSpin(int objectsInGroup)
+    public override int GetSymbolsReplacedPerSpin(int objectsInGroup, ConfigurationDisplayZonesStruct configurationGroupDisplayZones)
     {
-        return objectsInGroup;
+        return objectsInGroup;// - configurationGroupDisplayZones.paddingBefore;
     }
 
     internal override float GetTotalTime()
@@ -98,7 +99,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : BaseStripSp
         return distancePerSecond;
     }
 
-    internal override bool isTimeInPauseState(float spinCurrentTimer)
+    internal override bool isTimeAtEndOfSpin(float spinCurrentTimer)
     {
         Debug.LogWarning("Spin Directional Constant has no pause state");
         throw new NotImplementedException();

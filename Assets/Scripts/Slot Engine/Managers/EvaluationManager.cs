@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.Reflection;
+using BoomSports.Prototype.Containers;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -98,27 +99,6 @@ namespace BoomSports.Prototype.Managers
             }
             return output;
         }
-
-        [Serializable]
-        public struct SymbolSlotEvaluationsReturnContainer
-        {
-            /// <summary>
-            /// Dispplay symbol searched
-            /// </summary>
-            [SerializeField]
-            public NodeDisplaySymbolContainer symbolChecked;
-            /// <summary>
-            /// Connected Evaluators to symbol
-            /// </summary>
-            [SerializeField]
-            public SlotEvaluationScriptableObject[] connectedEvaluators;
-
-            public SymbolSlotEvaluationsReturnContainer(NodeDisplaySymbolContainer displaySymboltoCheck, SlotEvaluationScriptableObject[] connectedEvaluators) : this()
-            {
-                symbolChecked = displaySymboltoCheck;
-                this.connectedEvaluators = connectedEvaluators;
-            }
-        }
         /// <summary>
         /// Checks if a symbol has evaluators it triggers and returns evaluators
         /// </summary>
@@ -158,7 +138,7 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// This is either ways lines or grouped.
         /// </summary>
-        public EvaluationScriptableObject[] coreEvaluationObjects;
+        public BaseEvaluationScriptableObject[] coreEvaluationObjects;
         //temporary to get working - need to refactor to get list of activated overlays from scriptable object
         public List<SuffixTreeNodeInfo> overlaySymbols
         {
@@ -173,7 +153,7 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         /// <param name="configurationToEvaluate"></param>
         /// <returns>Winning Objects</returns> TODO refactor to return base abstract class
-        internal Task<WinningPayline[]> EvaluateSymbolConfigurationForWinningPaylines(DisplayConfigurationContainer configurationToEvaluate)
+        internal Task<T[]> EvaluateSymbolConfigurationForWinningPaylines<T>(DisplayConfigurationContainer configurationToEvaluate)
         {
             //Build a list of evaluation objects based on feature evaluation and core evaluation objects
             List<object> output_raw = new List<object>();
@@ -182,7 +162,7 @@ namespace BoomSports.Prototype.Managers
             List<EvaluationObjectStruct> coreEvaluationsToRun = new List<EvaluationObjectStruct>();
 
             //Clear all feature conditions of activated nodes previously
-
+            //Will need 
             Debug.Log($"Symbol Configuration being evaluated = {PrintConfiguration(configurationToEvaluate)}");
 
             //Clear and build evaluation objects winning objects
@@ -196,19 +176,28 @@ namespace BoomSports.Prototype.Managers
                 slotEvaluationObjects[slotEvaluationObject].ClearWinningObjects();
             }
 
-            //Build the raw winning paylines
+            //Build the raw winning objects to convert to paylines
             for (int evaluation = 0; evaluation < coreEvaluationsToRun.Count; evaluation++)
             {
                 output_raw.Add(coreEvaluationsToRun[evaluation].Evaluate());
             }
-            //TODO Abstract Winning Paylines to Winning Objects
-            List<WinningPayline> output_filtered = new List<WinningPayline>();
+
+            //After items are filtered
+            //Scan the slot activators for any slots that activate conditions and run connected events
+            for (int slotEvaluationObject = 0; slotEvaluationObject < slotEvaluationObjects.Length; slotEvaluationObject++)
+            {
+                if(slotEvaluationObjects[slotEvaluationObject].nodesActivatingEvaluationConditions.Count > 0)
+                    slotEvaluationObjects[slotEvaluationObject].ActivateWinningNodesEvents();
+            }
+
+            List<T> output_filtered = new List<T>();
             for (int i = 0; i < output_raw.Count; i++)
             {
-                output_filtered.AddRange((WinningPayline[])Convert.ChangeType(output_raw[i], typeof(WinningPayline[])));
+                output_filtered.AddRange((T[])Convert.ChangeType(output_raw[i], typeof(T[])));
             }
+
             //Check that feature conditions are met and activated after return
-            return Task.FromResult<WinningPayline[]>(output_filtered.ToArray());
+            return Task.FromResult<T[]>(output_filtered.ToArray());
         }
 
         private string PrintConfiguration(DisplayConfigurationContainer configurationContainer)
@@ -226,7 +215,7 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         /// <typeparam name="T">Type of evaluation manager to return</typeparam>
         /// <returns>Type if in list or null if nothing</returns>
-        internal static T GetFirstInstanceCoreEvaluationObject<T>(ref EvaluationScriptableObject[] coreEvaluationObjects)
+        internal static T GetFirstInstanceCoreEvaluationObject<T>(ref BaseEvaluationScriptableObject[] coreEvaluationObjects)
         {
             object output = null;
             for (int i = 0; i < coreEvaluationObjects.Length; i++)
@@ -267,18 +256,12 @@ namespace BoomSports.Prototype.Managers
 
         internal async Task<WinningPayline[]> EvaluateForWinningSymbolsFromConfiguration(DisplayConfigurationContainer configurationToEvaluateContainer)
         {
-            //
-            //DisplayConfigurationSymbolsGroup[] displayConfiguration = new DisplayConfigurationSymbolsGroup[configurationToEvaluateContainer.configuration.Length];
-            //for (int symbolGroup = 0; symbolGroup < configurationToEvaluateContainer.configuration.Length; symbolGroup++)
-            //{
-            //    displayConfiguration[symbolGroup].SetColumnSymbolsTo(configurationToEvaluateContainer.configuration[symbolGroup].displaySymbols);
-            //}
             return await EvaluateWinningSymbols(configurationToEvaluateContainer);
         }
 
         public async Task<WinningPayline[]> EvaluateWinningSymbols(DisplayConfigurationContainer configurationContainer)
         {
-            return await EvaluateSymbolConfigurationForWinningPaylines(configurationContainer);
+            return await EvaluateSymbolConfigurationForWinningPaylines<WinningPayline>(configurationContainer);
         }
         /// <summary>
         /// Evaluates configuration from either the symbols displayed or pre-generated. bug with use preGenerated with stepper reels since they don't symbol replace
@@ -289,7 +272,7 @@ namespace BoomSports.Prototype.Managers
             Debug.Log($"Evaluating Wins - using PreGenerated reels = {usePreGenerated}");
             DisplayConfigurationContainer temp = usePreGenerated ? EndConfigurationManager.displayConfigurationInUse : BuildStripSpinStructArrayFromSymbolsOnDisplay();
             //Debug.Log(String.Format("Evaluating Symbols in configuration {0}", matrix.slot_machine_managers.end_configuration_manager.current_reelstrip_configuration.PrintDisplaySymbols()));
-            await EvaluateSymbolConfigurationForWinningPaylines(temp);
+            await EvaluateSymbolConfigurationForWinningPaylines<WinningPayline>(temp);
         }
 
         private DisplayConfigurationContainer BuildStripSpinStructArrayFromSymbolsOnDisplay()
