@@ -46,7 +46,7 @@ namespace BoomSports.Prototype.ScriptableObjects
             return nodesActivatingEvaluationConditions?.Count;
         }
 
-        internal override void ActivateWinningNodesEvents()
+        internal override void ActivateWinningNodesEvents(ConfigurationDisplayZonesStruct[] displayZones)
         {
             throw new NotImplementedException();
         }

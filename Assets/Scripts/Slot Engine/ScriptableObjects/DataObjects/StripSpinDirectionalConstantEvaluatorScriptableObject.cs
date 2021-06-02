@@ -43,7 +43,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : BaseStripSp
         //Debug.Log("Evaluating Constant Directional Spin");
         Vector3 output = Vector3.zero;
         //If start position is the last positoin then we will test for position output to be >= last position in path magnitude and reset
-        if (pathPositions.startPosition < pathPositions.path.Length)
+        if (pathPositions.localStartPositionIndex < pathPositions.path.Length)
         {
             //position in path is a standard defined list. hold list as points in path - 2 vectors start and end - distance pre-calculated and held for quick reference.
 
@@ -51,7 +51,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : BaseStripSp
 
             //Evaluate the spin in a direction based on speed and return raw distance to travel
             float calculatedDistanceTravelRaw = distancePerSecond * (float)spinTimerCurrent;
-            Vector3 rawToPosition = pathPositions.path[pathPositions.startPosition] + (stripSpinDirection * calculatedDistanceTravelRaw);
+            Vector3 rawToPosition = pathPositions.path[pathPositions.localStartPositionIndex] + (stripSpinDirection * calculatedDistanceTravelRaw);
             //Since sqr operation is cpu heavy we will sqr our distance to travel to make comparison easier
 
             //Get Total Distance to travel from start position to next position in path
@@ -80,7 +80,7 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : BaseStripSp
         }
         else
         {
-            Debug.LogWarning($"Start position supplied {pathPositions.startPosition} is > path positions Length {pathPositions.path.Length}");
+            Debug.LogWarning($"Start position supplied {pathPositions.localStartPositionIndex} is > path positions Length {pathPositions.path.Length}");
         }
         return output;
     }
@@ -89,9 +89,9 @@ public class StripSpinDirectionalConstantEvaluatorScriptableObject : BaseStripSp
     /// </summary>
     /// <param name="objectsInGroup"></param>
     /// <returns></returns>
-    public override int GetSymbolsReplacedPerSpin(int objectsInGroup, ConfigurationDisplayZonesStruct configurationGroupDisplayZones)
+    public override int GetSymbolsReplacedPerSpin(int objectsInGroup, ConfigurationDisplayZonesStruct configurationGroupDisplayZones, int startIndexInPath)
     {
-        return objectsInGroup;// - configurationGroupDisplayZones.paddingBefore;
+        return objectsInGroup - startIndexInPath;// - configurationGroupDisplayZones.paddingBefore;
     }
 
     internal override float GetTotalTime()

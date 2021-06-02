@@ -13,6 +13,10 @@ using UnityEngine;
 public abstract class BasePathTransformSpinEvaluatorScriptableObject : ScriptableObject
 {
     /// <summary>
+    /// used to apply to the start position - Used when you spin to point in path and need to have symbol appear behind 
+    /// </summary>
+    public Vector3 offsetAtMoveToTop;
+    /// <summary>
     /// Evaluate the spin parameters for supplied time and return point on path
     /// </summary>
     /// <returns>Position on Path</returns>
@@ -27,6 +31,6 @@ public abstract class BasePathTransformSpinEvaluatorScriptableObject : Scriptabl
     /// </summary>
     /// <param name="objectsInGroup"></param>
     /// <returns></returns>
-    public abstract int GetSymbolsReplacedPerSpin(int objectsInGroup, BoomSports.Prototype.ConfigurationDisplayZonesStruct configurationGroupDisplayZones);
+    public abstract int GetSymbolsReplacedPerSpin(int objectsInGroup, BoomSports.Prototype.ConfigurationDisplayZonesStruct configurationGroupDisplayZones, int spinAtIndexInPath);
     internal abstract bool isTimeAtEndOfSpin(float spinCurrentTimer);
 }

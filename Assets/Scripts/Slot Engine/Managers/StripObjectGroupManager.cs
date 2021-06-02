@@ -41,7 +41,20 @@ namespace BoomSports.Prototype.Managers
             EditorGUILayout.LabelField("Controls");
             if(!Application.isPlaying)
             {
-                if(GUILayout.Button("Set Local Positions To Slot Current Positions"))
+                if (GUILayout.Button("print ABS sqr magnitude of positions 1 and 3 and offset"))
+                {
+                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] = {Mathf.Abs(myTarget.localPositionsInStrip[0].sqrMagnitude)}");
+                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] + offset = {Mathf.Abs((myTarget.localPositionsInStrip[0] + (Vector3.back * 10)).sqrMagnitude)}");
+                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] = {myTarget.localPositionsInStrip[0].sqrMagnitude}");
+                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] + offset = {(myTarget.localPositionsInStrip[0] + (Vector3.back * 10)).sqrMagnitude}");
+                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] = {Mathf.Abs(myTarget.localPositionsInStrip[2].sqrMagnitude)}");
+                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] + offset = {Mathf.Abs((myTarget.localPositionsInStrip[2] + (Vector3.back * 10)).sqrMagnitude)}");
+                }
+                if (GUILayout.Button("Set Intial Padding Slot object"))
+                {
+                    myTarget.paddingSlot = myTarget.objectsInGroup[0];
+                }
+                if (GUILayout.Button("Set Local Positions To Slot Current Positions"))
                 {
                     myTarget.SetLocalPositionsBySlotPositions();
                 }
@@ -279,8 +292,8 @@ namespace BoomSports.Prototype.Managers
         internal NodeDisplaySymbolContainer ReturnNextSymbolInStrip()
         {
             int stripCounter = 0;
-            NodeDisplaySymbolContainer output = stripInfo.spinInformation.spinIdleSymbolSequence[stripCounter];
-            if (stripCounter + 1 >= stripInfo.spinInformation.spinIdleSymbolSequence.Length)
+            NodeDisplaySymbolContainer output = groupInfo.spinInformation.spinIdleSymbolSequence[stripCounter];
+            if (stripCounter + 1 >= groupInfo.spinInformation.spinIdleSymbolSequence.Length)
             {
                 stripCounter = 0;
             }

@@ -46,7 +46,7 @@ namespace BoomSports.Prototype.ScriptableObjects
         //Temporary data for Cash Crossing - TODO Abstract sequence to be able to call generic function and pass winning node.
         public TargetAnimatorGroupContainer bridgeAnimators;
         public abstract bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects);
-        internal abstract void ActivateWinningNodesEvents();
+        internal abstract void ActivateWinningNodesEvents(ConfigurationDisplayZonesStruct[] displayZones);
         public override void ClearWinningObjects()
         {
             if (nodesActivatingEvaluationConditions == null)

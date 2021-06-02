@@ -23,6 +23,6 @@ namespace BoomSports.Prototype
         /// Who should be the target - Refactor to make scriptable objects later - this is cash crossing specific
         /// </summary>
         [SerializeField]
-        public TargetAnimatorTriggerSetOnActive[] targetsForConditionalTrue;
+        public TargetAnimatorsTriggerSetOnActive[] targetsForConditionalTrue;
     }
 }

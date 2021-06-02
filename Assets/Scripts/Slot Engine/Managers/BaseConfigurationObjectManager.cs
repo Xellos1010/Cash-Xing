@@ -12,6 +12,16 @@ namespace BoomSports.Prototype.Managers
     /// </summary>
     public class BaseConfigurationObjectManager : MonoBehaviour
     {
+        public static BaseConfigurationObjectManager instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = GameObject.FindObjectOfType<BaseConfigurationObjectManager>();
+                return _instance;
+            }
+        }
+        private static BaseConfigurationObjectManager _instance;
         /// <summary>
         /// Holds the reference to all managers
         /// </summary>
@@ -54,6 +64,7 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         [SerializeField]
         internal List<BaseObjectManager> winning_slots, losing_slots;
+
         internal string[] supportedSymbols
         {
             get

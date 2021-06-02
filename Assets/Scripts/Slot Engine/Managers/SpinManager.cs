@@ -106,7 +106,7 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// For reference only to what state our spin manager is in
         /// </summary>
-        public SpinStates current_state;
+        public SpinStates currentState;
 
         void Update()
         {
@@ -284,7 +284,7 @@ namespace BoomSports.Prototype.Managers
         internal async void SetSpinStateTo(SpinStates state)
         {
             //Debug.Log(String.Format("current state = {0}",state));
-            current_state = state;
+            currentState = state;
             //Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
             {
@@ -339,7 +339,7 @@ namespace BoomSports.Prototype.Managers
         internal async void DebugSetSpinStateTo(SpinStates state)
         {
             //Debug.Log(String.Format("current state = {0}",state));
-            current_state = state;
+            currentState = state;
             //Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
             {

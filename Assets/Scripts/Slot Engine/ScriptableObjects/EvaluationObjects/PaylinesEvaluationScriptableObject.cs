@@ -80,18 +80,19 @@ namespace BoomSports.Prototype.ScriptableObjects
             //Evaluate each root node and check active feature conditions
             for (int rootNode = 0; rootNode < dynamic_paylines.paylineNodes.Length; rootNode++)
             {
-                Debug.Log($"Evaluating Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} before evaluation outputRaw.Count = {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
+                //Debug.Log($"Evaluating Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} before evaluation outputRaw.Count = {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
                 //Add initial winning lines
                 outputRaw.AddRange(dynamic_paylines.paylineNodes[rootNode].EvaluateRawWinningPaylines(ref evaluationObject));
-                Debug.Log($"Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} before payline consolidation= {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
+                //Debug.Log($"Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} before payline consolidation= {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
                 //for (int i = 0; i < outputRaw.Count; i++)
                 //{
-                //    Debug.Log($"Raw winning payline {i} = {outputRaw[i].PrintWinningNodesAndSymbols()}");
+                //    //Debug.Log$"Raw winning payline {i} = {outputRaw[i].PrintWinningNodesAndSymbols()}");
                 //}
+
                 //Filter for duplicate linewins and merge lists
                 if(outputRaw.Count > 0)
                     ConsolidateWinningPaylines(ref outputFiltered, ref outputRaw);
-                Debug.Log($"Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} after filter outputRaw.Count = {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
+                //Debug.Log($"Root Node {dynamic_paylines.paylineNodes[rootNode].nodeInfo.Print()} after filter outputRaw.Count = {outputRaw.Count} outputFiltered.Count = {outputFiltered.Count}");
                 outputRaw.Clear();
             }
 
@@ -119,6 +120,12 @@ namespace BoomSports.Prototype.ScriptableObjects
                                     evaluationObject.slotEvaluationObjects[evaluator].AddRawNodeActivatingFeature(item.Value[node]);
                                 }
                             }
+                            //if (evaluationObject.slotEvaluationObjects[evaluator].nodesActivatingEvaluationConditions.Count > 0)
+                            //{
+                            //    //Debug.Log($"Feature {item.Key} activated on nodes {evaluationObject.slotEvaluationObjects[evaluator].PrintActivatingNodes()}");
+                            //    //Activate any nodes that met conditional requirements
+                            //    evaluationObject.slotEvaluationObjects[evaluator].ActivateWinningNodesEvents();
+                            //}
                         }
                     }
                     //Multiplier calculated first then mode is applied
@@ -289,7 +296,7 @@ namespace BoomSports.Prototype.ScriptableObjects
                     }
                     break;
                 default:
-                    // Debug.Log("Please set the evaluation direciton to left, right or both");
+                    //Debug.Log("Please set the evaluation direciton to left, right or both");
                     break;
             }
             return root_nodes;
@@ -327,11 +334,11 @@ namespace BoomSports.Prototype.ScriptableObjects
                 }
                 else
                 {
-                    // Debug.Log(String.Format("Non-active pay zone- skipping {0} rows ", displayZone.positionsInZone));
+                    // //Debug.LogString.Format("Non-active pay zone- skipping {0} rows ", displayZone.positionsInZone));
                     for (int slot = 0; slot < displayZone.positionsInZone; slot++)
                     {
                         //Register blank slot
-                        // Debug.Log(String.Format("Root Node {0} {1} not in active payzone", column, row));
+                        // //Debug.LogString.Format("Root Node {0} {1} not in active payzone", column, row));
                         row += 1;
                     }
                 }
@@ -392,7 +399,7 @@ namespace BoomSports.Prototype.ScriptableObjects
         /// <param name="maxLength"></param>
         private void ConsolidateWinningPaylines(ref List<WinningPayline> winningPaylinesFiltered, ref List<WinningPayline> winningPaylinesRaw)
         {
-            Debug.Log($"Consolidating Paylines winningPaylinesFiltered.Count = {winningPaylinesFiltered.Count} winningPaylinesRaw.Count = {winningPaylinesRaw.Count}");
+            //Debug.Log$"Consolidating Paylines winningPaylinesFiltered.Count = {winningPaylinesFiltered.Count} winningPaylinesRaw.Count = {winningPaylinesRaw.Count}");
             string rawList = "";
             string filteredList = "";
             for (int i = 0; i < winningPaylinesRaw.Count; i++)
@@ -403,8 +410,8 @@ namespace BoomSports.Prototype.ScriptableObjects
             {
                 filteredList += winningPaylinesFiltered[i].PrintWinningNodesAndSymbols() + "\n";
             }
-            Debug.Log($"Printing all raw paylines \n {rawList} ");
-            Debug.Log($"Printing all filtered paylines \n {filteredList} ");
+            //Debug.Log$"Printing all raw paylines \n {rawList} ");
+            //Debug.Log$"Printing all filtered paylines \n {filteredList} ");
             //Initialize List for duplicate paylines
             List<WinningPayline> duplicatePaylines = new List<WinningPayline>();
             WinningPayline rawPaylineToCheck;
@@ -412,28 +419,28 @@ namespace BoomSports.Prototype.ScriptableObjects
             {
                 //Set raw payline to check against list of filtered paylines
                 rawPaylineToCheck = winningPaylinesRaw[rawPaylineChecking];
-                Debug.Log($"rawPaylineToCheck = winningPaylinesRaw[{rawPaylineChecking}] {rawPaylineToCheck.PrintWinningNodesAndSymbols()}");
+                //Debug.Log$"rawPaylineToCheck = winningPaylinesRaw[{rawPaylineChecking}] {rawPaylineToCheck.PrintWinningNodesAndSymbols()}");
                 //Check each filtered winning payline
                 for (int currentWinningPaylineChecking = winningPaylinesFiltered.Count-1; currentWinningPaylineChecking >= 0; currentWinningPaylineChecking--)
                 {
-                    Debug.Log($"Duplicate payline Check \n {rawPaylineToCheck.PrintWinningNodesAndSymbols()}<->{winningPaylinesFiltered[currentWinningPaylineChecking].PrintWinningNodesAndSymbols()}");
+                    //Debug.Log$"Duplicate payline Check \n {rawPaylineToCheck.PrintWinningNodesAndSymbols()}<->{winningPaylinesFiltered[currentWinningPaylineChecking].PrintWinningNodesAndSymbols()}");
 
                     if(rawPaylineToCheck.winningNodes.Length > winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes.Length)
                     {
-                        Debug.Log($"rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes) = {rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes)}");
+                        //Debug.Log$"rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes) = {rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes)}");
                         if(rawPaylineToCheck.ContainsAllNodes(winningPaylinesFiltered[currentWinningPaylineChecking].winningNodes))
                         {
-                            Debug.Log($"rawPaylineToCheck contains all nodes from winningPaylinesFiltered[currentWinningPaylineChecking] - Remove winningPaylinesFiltered[{currentWinningPaylineChecking}]");
+                            //Debug.Log$"rawPaylineToCheck contains all nodes from winningPaylinesFiltered[currentWinningPaylineChecking] - Remove winningPaylinesFiltered[{currentWinningPaylineChecking}]");
                             winningPaylinesFiltered.RemoveAt(currentWinningPaylineChecking);
                         }
                     }
                     else
                     {
-                        Debug.Log($"winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes)) = {winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes)}");
+                        //Debug.Log$"winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes)) = {winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes)}");
 
                         if (winningPaylinesFiltered[currentWinningPaylineChecking].ContainsAllNodes(rawPaylineToCheck.winningNodes))
                         {
-                            Debug.Log($"winningPaylinesFiltered[currentWinningPaylineChecking]contains all nodes from rawPaylineToCheck - Remove rawPaylineToCheck[{rawPaylineChecking}]");
+                            //Debug.Log$"winningPaylinesFiltered[currentWinningPaylineChecking]contains all nodes from rawPaylineToCheck - Remove rawPaylineToCheck[{rawPaylineChecking}]");
                             winningPaylinesRaw.RemoveAt(rawPaylineChecking);
                         }
                     }

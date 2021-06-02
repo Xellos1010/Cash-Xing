@@ -19,7 +19,6 @@ namespace BoomSports.Prototype.ScriptableObjects
     [CreateAssetMenu(fileName = "WildEvaluationObject", menuName = "BoomSportsScriptableObjects/WildEvaluationScriptableObject", order = 4)]
     public class WildScriptableObject : SlotEvaluationScriptableObject
     {
-
         public override bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects)
         {
             throw new System.NotImplementedException();
@@ -38,7 +37,7 @@ namespace BoomSports.Prototype.ScriptableObjects
             return nodesActivatingEvaluationConditions?.Count;
         }
 
-        internal override void ActivateWinningNodesEvents()
+        internal override void ActivateWinningNodesEvents(ConfigurationDisplayZonesStruct[] displayZones)
         {
             throw new System.NotImplementedException();
         }

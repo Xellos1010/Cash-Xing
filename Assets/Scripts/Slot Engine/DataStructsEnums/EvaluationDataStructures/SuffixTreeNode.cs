@@ -394,7 +394,7 @@ namespace BoomSports.Prototype
             {
                 debugString += $"|{evaluationObject.winningEvaluationNodes[i].symbol}-{evaluationObject.winningEvaluationNodes[i].nodeInfo.Print()}";
             }
-            Debug.Log($"evaluationObject.winningEvaluationNodes = {debugString}");
+            //Debug.Log$"evaluationObject.winningEvaluationNodes = {debugString}");
         }
         /// <summary>
         /// Ensures the connected nodes are valid nodes
