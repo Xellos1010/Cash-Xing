@@ -8,38 +8,67 @@
 //  @ Author : Evan McCall
 //
 //
+using BoomSports.Prototype;
 using System;
+using UnityEngine;
 //TODO make conditional namespace - need to develop more
 namespace BoomSports.Prototype
 {
-    ///// <summary>
-    ///// Base class for assigning animator target for conditional active
-    ///// </summary>
-    //[Serializable]
-    //public abstract class TargetAnimatorContainer : BaseTargetGroupContainer
-    //{
-    //    /// <summary>
-    //    /// The target animator for event to invoke
-    //    /// </summary>
-    //    [SerializeField]
-    //    public Animator targetAnimator;
-    //}
+    [Serializable]
+    public class TargetAnimatorTriggerSetOnActive : TargetAnimatorContainer
+    {
+        [SerializeField]
+        public supportedAnimatorTriggers triggerToSetOnConditionalTrue;
+        [SerializeField]
+        public supportedAnimatorTriggers triggerToSetOnInitialize;
+        public override void ActivateConditional()
+        {
+            Debug.Log($"{targetAnimator.gameObject.name} set {triggerToSetOnConditionalTrue.ToString()} trigger");
+            //Needs to be set beforehand
+            targetAnimator.SetTrigger(triggerToSetOnConditionalTrue.ToString());
+        }
+
+        public override void ActivateConditionalAtIndex(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ActivateConditionalWithNode(SuffixTreeNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override void Initialize()
+        {
+            AnimatorStateInfo state_info;
+            state_info = targetAnimator.GetCurrentAnimatorStateInfo(0);
+            if (!state_info.IsName(triggerToSetOnInitialize.ToString()))
+            {
+                Debug.Log($"{targetAnimator.gameObject.name} state name != {triggerToSetOnInitialize.ToString()}");
+                targetAnimator.SetTrigger(triggerToSetOnInitialize.ToString());
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Base class for assigning animator target for conditional active
+    /// </summary>
+    [Serializable]
+    public abstract class TargetAnimatorContainer : BaseTargetContainer
+{
+        /// <summary>
+        /// The target animator for event to invoke
+        /// </summary>
+        [SerializeField]
+        public Animator targetAnimator;
+    }
     /// <summary>
     /// Used to hold reference for future implementation of scriptable objects
     /// </summary>
     [Serializable]
     public abstract class BaseTargetGroupContainer : BaseTargetContainer
     {
-        public abstract void ActivateConditionalAtIndex(int index);
+        //Moved to base class
+        //public abstract void ActivateConditionalAtIndex(int index);
     }
-    /// <summary>
-    /// The base target container- used to hold references generically
-    /// </summary>
-    [Serializable]
-    public abstract class BaseTargetContainer
-    {
-        internal abstract void Initialize();
-        //public abstract void ActivateConditionalWithNode(SuffixTreeNode node);
-    }
-
 }

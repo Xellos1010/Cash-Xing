@@ -186,8 +186,13 @@ namespace BoomSports.Prototype.Managers
             //Scan the slot activators for any slots that activate conditions and run connected events
             for (int slotEvaluationObject = 0; slotEvaluationObject < slotEvaluationObjects.Length; slotEvaluationObject++)
             {
-                if(slotEvaluationObjects[slotEvaluationObject].nodesActivatingEvaluationConditions.Count > 0)
-                    slotEvaluationObjects[slotEvaluationObject].ActivateWinningNodesEvents();
+                //Cash Crossing Specific - sending display zones to gett padding and activate correct index of bridge animators
+                if (slotEvaluationObjects[slotEvaluationObject].nodesActivatingEvaluationConditions.Count > 0)
+                {
+                    ActivateWinningNodesEvents(slotEvaluationObjects[slotEvaluationObject], BaseConfigurationObjectManager.instance.configurationSettings.displayZones);
+                    //Cannot reference scene objects in scriptable object - need to implement on class level
+                    //slotEvaluationObjects[slotEvaluationObject].ActivateWinningNodesEvents(BaseConfigurationObjectManager.instance.configurationSettings.displayZones);
+                }
             }
 
             List<T> output_filtered = new List<T>();
@@ -198,6 +203,46 @@ namespace BoomSports.Prototype.Managers
 
             //Check that feature conditions are met and activated after return
             return Task.FromResult<T[]>(output_filtered.ToArray());
+        }
+        //Cash Crossing Specific - Needs to b e refactored
+        public TargetAnimatorsTriggerSetOnActive targetBridgeAnimatorsLeft;
+        public TargetAnimatorsTriggerSetOnActive targetBridgeAnimatorsRight;
+        public TargetAnimatorTriggerSetOnActive targetBridgeAnimatorCenter;
+
+        internal void ActivateWinningNodesEvents(SlotEvaluationScriptableObject slotEvaluationScriptableObject, ConfigurationDisplayZonesStruct[] displayZones)
+        {
+            Debug.Log($"slotEvaluationScriptableObject.GetType() == {slotEvaluationScriptableObject.GetType()}\n slotEvaluationScriptableObject.GetType() == typeof(TriggerFeatureEvaluationScriptableObject) == {slotEvaluationScriptableObject.GetType() == typeof(TriggerFeatureEvaluationScriptableObject)}");
+            if (slotEvaluationScriptableObject.GetType() == typeof(TriggerFeatureEvaluationScriptableObject))
+            {
+                TriggerFeatureEvaluationScriptableObject temp = (TriggerFeatureEvaluationScriptableObject)slotEvaluationScriptableObject;
+                Debug.Log($"{temp.featureToTrigger.ToString()} feature being triggered on slots {temp.PrintActivatingNodes()}");
+                if (temp.featureToTrigger == Features.trailing)
+                {
+                    //Cash Crossing Specific - Needs to be refactored and made generic
+                    for (int i = 0; i < temp.nodesActivatingEvaluationConditions.Count; i++)
+                    {
+                        //Check the nodes column - Target the animator in the column and row - Set to active
+                        //Need to use row - padding of display slots
+                        int indexOfRowInAnimators = temp.nodesActivatingEvaluationConditions[i].row - displayZones[temp.nodesActivatingEvaluationConditions[i].column].paddingBefore;
+                        if (temp.nodesActivatingEvaluationConditions[i].column == 0) //Left Bridge Animator
+                        {
+                            targetBridgeAnimatorsLeft.ActivateConditionalAtIndex(indexOfRowInAnimators);
+                        }
+                        else if (temp.nodesActivatingEvaluationConditions[i].column == 6)// Right Bridge Animator
+                        {
+                            targetBridgeAnimatorsRight.ActivateConditionalAtIndex(indexOfRowInAnimators);
+                        }
+                        else if (temp.nodesActivatingEvaluationConditions[i].column == 3)// Center Animator
+                        {
+                            targetBridgeAnimatorCenter.ActivateConditional();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogWarning("TODO implement other SlotEvaluationScriptableObject hacks as needed");
+            }
         }
 
         private string PrintConfiguration(DisplayConfigurationContainer configurationContainer)

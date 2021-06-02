@@ -69,7 +69,7 @@ namespace BoomSports.Prototype.Managers
         /// Reference to the start position - always set on instantiate and spinEnd
         /// </summary>
         [SerializeField]
-        internal int startPositionIndex;
+        internal int localStartPositionIndex;
         /// <summary>
         /// times object has reached end of path - set to 0 on spin start and instantiate
         /// </summary>
@@ -106,7 +106,7 @@ namespace BoomSports.Prototype.Managers
 
         internal override void SetStartPosition()
         {
-            startPositionIndex = GetIndexFromLocalPositions();
+            localStartPositionIndex = GetIndexFromLocalPositions();
         }
 
         internal int GetIndexFromLocalPositions()
@@ -122,13 +122,23 @@ namespace BoomSports.Prototype.Managers
             return -1;
         }
 
-        Vector3 SetPositionTo(Vector3 toPosition) //Needs to be positive to move forwards and negative to move backwards
+        internal Vector3 SetPositionTo(Vector3 toPosition) //Needs to be positive to move forwards and negative to move backwards
         {
             //Debug.Log($"Setting transform.localPosition = {amount}");
             transform.localPosition = toPosition;
             return toPosition; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
         }
-        Vector3 OffsetPositionBy(Vector3 amountToAdd) //Needs to be positive to move forwards and negative to move backwards
+
+        internal override Vector3 SetPositionToIndexInPath(Vector3 toPosition, int index) //Needs to be positive to move forwards and negative to move backwards
+        {
+            //Debug.Log($"Setting transform.localPosition = {amount}");
+            transform.localPosition = toPosition;
+            indexOnPath = index;
+            localStartPositionIndex = index;
+            return toPosition; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
+        }
+
+        internal Vector3 OffsetPositionBy(Vector3 amountToAdd) //Needs to be positive to move forwards and negative to move backwards
         {
             //Debug.Log($"Offsetting transform.localPosition {transform.localPosition} by {amountToAdd}");
             return transform.localPosition + amountToAdd; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
@@ -151,13 +161,13 @@ namespace BoomSports.Prototype.Managers
                 //This is where you add functionality for reel reveal control
                 spinCurrentTimer += Time.deltaTime;
             }
-            return MoveObjectToSpinPosition(spinCurrentTimer);
+            return MoveObjectBasedOnTime(spinCurrentTimer);
         }
         /// <summary>
         /// Moves an objects along SpinCycle (Spin Sequence/Path) and returns the calculated to position based on spinCurrentTimer;
         /// </summary>
         /// <returns></returns>
-        internal Vector3 MoveObjectToSpinPosition(float spinCurrentTimer)
+        internal Vector3 MoveObjectBasedOnTime(float spinCurrentTimer)
         {
             //Debug.Log($"{gameObject.name} is MoveObjectToSpinPosition( spinCurrentTimer ={spinCurrentTimer})");
             toPosition = Vector3.zero;
@@ -166,7 +176,7 @@ namespace BoomSports.Prototype.Managers
             StripObjectGroupManager temp2 = baseObjectGroupParent as StripObjectGroupManager;
             //Debug.Log($"new SpinPath({temp2.localPositionsInStrip}, {startPositionIndex},{temp2.configurationObjectParent.configurationSettings.slotSize}, {temp2.configurationObjectParent.configurationSettings.slotPadding});");
             //Sets up our spin path - calculates sqr magnitudes between each point in path - Compare absolute sqr magnitude of object local position and last position in path to move to start of path
-            SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, startPositionIndex,temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
+            SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, localStartPositionIndex, temp2.spinAtIndexInPath, temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
             //Debug.Log($"pathToEvaluate.GetType() == null = {pathToEvaluate.GetType() == null}");
             //Stepper Logic - The evaluating object checks if you have a set amount of steps or rotations to make in spin then to return constant value once ceiling has been reached 
             spinParameters.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
@@ -176,6 +186,7 @@ namespace BoomSports.Prototype.Managers
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
             {
                 timesReachedEndOfPath = pathToEvaluate.timesReachedEndOfPath;
+                baseObjectGroupParent.paddingSlot = this;
                 if (Application.isPlaying)
                     SetSymbolGraphics();
             }
@@ -208,7 +219,7 @@ namespace BoomSports.Prototype.Managers
                         spinMovementEnabled = false;
                     }
                 }
-                toPosition = SetPositionTo(toPosition);
+                SetPositionTo(toPosition);
             }
             return toPosition;
         }
@@ -275,9 +286,9 @@ namespace BoomSports.Prototype.Managers
                     if (stripManager.randomSetSymbolOnEndOfSequence)
                     {
                         //If Symbol Generated = opverlay - Generate Sub Symbol and attach 2 materials
-                        if (stripManager.stripInfo.spinInformation.spinIdleSymbolSequence != null)
+                        if (stripManager.groupInfo.spinInformation.spinIdleSymbolSequence != null)
                         {
-                            if (stripManager.stripInfo.spinInformation.spinIdleSymbolSequence.Length > 0)
+                            if (stripManager.groupInfo.spinInformation.spinIdleSymbolSequence.Length > 0)
                             {
                                 symbol = stripManager.ReturnNextSymbolInStrip();
                                 symbolSet = true;

@@ -46,36 +46,38 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
     /// Sequence for evaluation - spin timer 0 -> lerpOverTime 
     /// </summary>
     /// <param name="spinTimerCurrent"></param>
-    /// <param name="pathPositions"></param>
+    /// <param name="spinPath"></param>
     /// <returns></returns>
-    public override Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath pathPositions)
+    public override Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath spinPath)
     {
-        //Debug.Log("Evaluating Stepper Directional Spin");
+        Debug.Log("Evaluating Stepper Directional Spin");
         //See how many steps to evaluate
         //Debug.Log($"pathPositions.path.Length = {pathPositions.path.Length} pathPositions.startPosition = {pathPositions.startPosition}  + stepsAllowedPerSpin {stepsAllowedPerSpin} = {pathPositions.startPosition + stepsAllowedPerSpin}");
-        Vector3 startPosition = pathPositions.path[pathPositions.startPosition];
+
+        Vector3 initialStartPosition = spinPath.path[spinPath.localStartPositionIndex];
         //Solve for 1 step first - if want infinity step set end positoin to end of path
         //Set the end position to pathPositions.startPosition + stepsAllowedPerSpin - If the allowed steps per spin take the position index over the amount of points in path then you've reached end of path and need to start again
-        Vector3 endPosition = pathPositions.path[pathPositions.startPosition + 1];
+        Vector3 endPosition = spinPath.path[spinPath.localStartPositionIndex + 1];
 
         //if next position is last position then need to set to top and track spin completed - Reset steps completed in path
-        Vector3 nextPosition = pathPositions.path[pathPositions.startPosition + 1];
-        amountToTraverseDuringStep = nextPosition - startPosition;
+        Vector3 nextPosition = spinPath.path[spinPath.localStartPositionIndex + 1];
+
+        amountToTraverseDuringStep = nextPosition - initialStartPosition;
 
         //Initialize Output with start position
-        Vector3 output = pathPositions.path[pathPositions.startPosition];
+        Vector3 output = spinPath.path[spinPath.localStartPositionIndex];
         //Debug.Log(Log($"amountToTraverseDuringStep = {amountToTraverseDuringStep.ToString()} Initial Output set to start position {output.ToString()}");
 
         //Initialize Steps completed sequence - used to compare whether to change symbol or not
         //Start Poisition index is corelated to Steps completed in path
-        int stepsCompletedSoFar = pathPositions.startPosition;
+        int stepsCompletedSoFar = spinPath.localStartPositionIndex;
         //Steps to complete path is last index in path
-        int stepsToCompletePath = pathPositions.path.Length - 1;
+        int stepsToCompletePath = spinPath.path.Length - 1;
 
         //Calling object passes previously evaluated steps that have been completed - SpinPath will contain the times path has reached end position.
         //If the current spin timer is over a sequence step total then we need to pre-determine based on times reached end where in position 
         //(lerpOverTime + timeTillStartLerp) gets the total time of a sequence * the steps to complete the sequence * stepsToCompletePath + 1 - change symbol if >
-        float lerpTimeToCompletePath = ((timeToCompleteStep + timeToPauseAfterStepCompleted) * stepsToCompletePath) * (pathPositions.timesReachedEndOfPath + 1);
+        float lerpTimeToCompletePath = ((timeToCompleteStep + timeToPauseAfterStepCompleted) * stepsToCompletePath) * (spinPath.timesReachedEndOfPath + 1);
 
         int timesReachedEndOfPath = 0;
         float evaluatingTimeOnPath = ((timeToCompleteStep + timeToPauseAfterStepCompleted) * stepsCompletedSoFar);
@@ -88,12 +90,12 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
             //Initial check to see if the spin timer supplied is > Initial end of path
             if (spinTimerCurrent > lerpTimeToCompletePath)
             {
-                output = pathPositions.path[0];
-                startPosition = output;
-                nextPosition = pathPositions.path[1];
-                amountToTraverseDuringStep = nextPosition - startPosition;
+                output = spinPath.path[0];
+                initialStartPosition = output;
+                nextPosition = spinPath.path[1];
+                amountToTraverseDuringStep = nextPosition - initialStartPosition;
                 stepsCompletedSoFar = 0;
-                //Debug.Log($"SpinTimerCurrent {spinTimerCurrent} > end of path Time {lerpTimeToCompletePath} - output {pathPositions.path[0]} = pathPositions.path[0]");
+                Debug.Log($"SpinTimerCurrent {spinTimerCurrent} > end of path Time {lerpTimeToCompletePath} - output {spinPath.path[0]} = pathPositions.path[0]");
                 //Set the path to the start
                 //While the spinTimerCurrent > lerpTimeToCompletePath we need to set the evaluation to the start of the path and count how many times we reach the end
                 while (spinTimerCurrent > lerpTimeToCompletePath)
@@ -123,9 +125,9 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
                         //Debug.Log($"We are in next step - add pause time to lerpTime. {initialTimeOnPath} += {timeTillStartLerp}");
                         evaluatingTimeOnPath += timeToPauseAfterStepCompleted;
                         stepsCompletedSoFar += 1;
-                        startPosition = output;
-                        nextPosition = pathPositions.path[stepsCompletedSoFar+1];
-                        amountToTraverseDuringStep = nextPosition - startPosition;
+                        initialStartPosition = output;
+                        nextPosition = spinPath.path[stepsCompletedSoFar+1];
+                        amountToTraverseDuringStep = nextPosition - initialStartPosition;
                     }
                     else
                     {
@@ -164,10 +166,10 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
                             //Debug.Log($"We are in next step - add pause time to lerpTime. {initialTimeOnPath} += {timeTillStartLerp}");
                             evaluatingTimeOnPath += timeToPauseAfterStepCompleted;
                             stepsCompletedSoFar += 1;
-                            if (stepsCompletedSoFar + 1 < pathPositions.path.Length)
+                            if (stepsCompletedSoFar + 1 < spinPath.path.Length)
                             {
                                 //You've reached the end of path
-                                amountToTraverseDuringStep = pathPositions.path[stepsCompletedSoFar + 1] - pathPositions.path[stepsCompletedSoFar];
+                                amountToTraverseDuringStep = spinPath.path[stepsCompletedSoFar + 1] - spinPath.path[stepsCompletedSoFar];
                             }
                             else
                             {
@@ -189,10 +191,10 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
                     }
                 }
                 //Debug.Log($"Mathf.Abs(output.sqrMagnitude) {Mathf.Abs(output.sqrMagnitude)} >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude) {Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude)} = {Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude)}");
-                if(Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude))
+                if(Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(spinPath.path[spinPath.path.Length - 1].sqrMagnitude))
                 {
-                    Vector3 differenceStartEnd = pathPositions.path[pathPositions.path.Length - 1] - pathPositions.path[0];
-                    while (Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(pathPositions.path[pathPositions.path.Length - 1].sqrMagnitude))
+                    Vector3 differenceStartEnd = spinPath.path[spinPath.path.Length - 1] - (spinPath.path[spinPath.spinAtIndexInPath] + offsetAtMoveToTop);
+                    while (Mathf.Abs(output.sqrMagnitude) >= Mathf.Abs(spinPath.path[spinPath.path.Length - 1].sqrMagnitude))
                     {
                         //Debug.Log($"output {output} -= differenceStartEnd {differenceStartEnd}");
                         output -= differenceStartEnd;
@@ -203,33 +205,33 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
             }
             else //Set to end position on path and return value
             {
-                int positionIndex = pathPositions.startPosition + stepsAllowedPerSpin;
-                if (positionIndex >= pathPositions.path.Length)
+                int positionIndex = spinPath.localStartPositionIndex + stepsAllowedPerSpin;
+                if (positionIndex >= spinPath.path.Length)
                 {
-                    while (positionIndex >= pathPositions.path.Length)
+                    while (positionIndex >= spinPath.path.Length)
                     {
                         timesReachedEndOfPath += 1;
-                        positionIndex -= (pathPositions.path.Length - 1);
+                        positionIndex -= (spinPath.path.Length - 1);
                     }
                 }
-                output = pathPositions.path[positionIndex];
+                output = spinPath.path[positionIndex];
             }
         }
-        if (timesReachedEndOfPath != pathPositions.timesReachedEndOfPath)
+        if (timesReachedEndOfPath != spinPath.timesReachedEndOfPath)
         {
-            pathPositions.timesReachedEndOfPath = timesReachedEndOfPath;
-            pathPositions.changeSymbolGraphic = true;
+            spinPath.timesReachedEndOfPath = timesReachedEndOfPath;
+            spinPath.changeSymbolGraphic = true;
         }
         //Need to calculate time till end of path
-        pathPositions.toPositionEvaluated = output;
-        pathPositions.currentToIndexInPath = pathPositions.FormatRawStepsToPositionInPath(stepsCompletedSoFar,stepsToCompletePath);
+        spinPath.toPositionEvaluated = output;
+        spinPath.currentToIndexInPath = spinPath.FormatRawStepsToPositionInPath(stepsCompletedSoFar,stepsToCompletePath);
         return output;
     }
     /// <summary>
     /// Stepper will only replace number of steps allowed per spin
     /// </summary>
     /// <returns>(int) stepsAllowedPerSpin</returns>
-    public override int GetSymbolsReplacedPerSpin(int objectsInGroup, ConfigurationDisplayZonesStruct configurationGroupDisplayZones)
+    public override int GetSymbolsReplacedPerSpin(int objectsInGroup, ConfigurationDisplayZonesStruct configurationGroupDisplayZones, int startIndexInPath)
     {
         return stepsAllowedPerSpin;
     }

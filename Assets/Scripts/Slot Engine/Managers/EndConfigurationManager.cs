@@ -222,27 +222,28 @@ namespace BoomSports.Prototype.Managers
         {
             Debug.Log($"Setting Display Symbols for {objectGroupManager.gameObject.name}");
             List<NodeDisplaySymbolContainer> symbolSequence = new List<NodeDisplaySymbolContainer>();
+            //Symbol Sequence needs to account for index in path
             //Get how many symbols on strip will clear from group manager spin parameters
             int symbolsToReplaceReel = objectGroupManager.GetSymbolsToBeReplacedPerSpin();
-            Debug.Log($"Replacing {symbolsToReplaceReel} symbol(s) on strip {objectGroupManager.gameObject.name}");
+            //Debug.Log($"Replacing {symbolsToReplaceReel} symbol(s) on strip {objectGroupManager.gameObject.name}");
 
             //Add symbols from strip if not full strip replacement - need to account for padding slots. does not account for active and inactive display zones
             if (symbolsToReplaceReel < objectGroupManager.objectsInGroup.Length - objectGroupManager.configurationGroupDisplayZones.paddingBefore)
             {
-                //Will need to be refactored when not a strip group manager
+                //Remove from end of strip symbols to be replaced - right now formatted for 1 per step - start position index may change this logic in future if more than 1 step is activated
                 symbolSequence.AddRange(objectGroupManager.GetDisplaySymbolsFromDecending());
                 symbolSequence.RemoveRange(symbolSequence.Count - symbolsToReplaceReel, symbolsToReplaceReel);
             }
 
+            //string debugmessage = "";
+            //for (int i = 0; i < symbolSequence.Count; i++)
+            //{
+            //    debugmessage += $"|{symbolSequence[i].primarySymbol}";
+            //}
+            //Debug.Log($"Display sequence before add = {debugmessage}");
+            //Debug.Log($"{objectGroupManager.gameObject.name}.GetIndexInGroup() = {objectGroupManager.GetIndexInGroup()}");
+            AddSymbolsToDisplaySequence(symbolsToReplaceReel, objectGroupManager.spinAtIndexInPath, _displayConfigurationInUse.configuration[objectGroupManager.GetIndexInGroup()], ref symbolSequence);
             string debugmessage = "";
-            for (int i = 0; i < symbolSequence.Count; i++)
-            {
-                debugmessage += $"|{symbolSequence[i].primarySymbol}";
-            }
-            Debug.Log($"Display sequence before add = {debugmessage}");
-            Debug.Log($"{objectGroupManager.gameObject.name}.GetIndexInGroup() = {objectGroupManager.GetIndexInGroup()}");
-            AddSymbolsToDisplaySequence(symbolsToReplaceReel, _displayConfigurationInUse.configuration[objectGroupManager.GetIndexInGroup()], ref symbolSequence);
-            debugmessage = "";
             for (int i = 0; i < symbolSequence.Count; i++)
             {
                 debugmessage += $"|{symbolSequence[i].primarySymbol}";
@@ -256,7 +257,7 @@ namespace BoomSports.Prototype.Managers
         /// <param name="symbolsToAdd"></param>
         /// <param name="groupSpinInformationStruct"></param>
         /// <param name="symbolsSequenceList"></param>
-        private void AddSymbolsToDisplaySequence(int symbolsToAdd, GroupSpinInformationStruct groupSpinInformationStruct, ref List<NodeDisplaySymbolContainer> symbolsSequenceList)
+        private void AddSymbolsToDisplaySequence(int symbolsToAdd, int spinAtIndexInPath, GroupSpinInformationStruct groupSpinInformationStruct, ref List<NodeDisplaySymbolContainer> symbolsSequenceList)
         {
             Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {groupSpinInformationStruct.displaySymbolSequence.Length}");
             for (int displaySymbolSequenceIndex = 0; displaySymbolSequenceIndex < symbolsToAdd; displaySymbolSequenceIndex++)
@@ -264,13 +265,16 @@ namespace BoomSports.Prototype.Managers
                 //For full reel replacement you will replace objects in group - since we have padding we need to add random symbols to the top
                 if (displaySymbolSequenceIndex >= groupSpinInformationStruct.displaySymbolSequence.Length)
                 {
-                    symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(UnityEngine.Random.Range(0, 3)));
+                    //Refactored to include index at path
+                    //symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(UnityEngine.Random.Range(0, 3)));
+                    symbolsSequenceList.Insert(spinAtIndexInPath, new NodeDisplaySymbolContainer(UnityEngine.Random.Range(0, 3)));
                 }
                 else
                 {
                     Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {groupSpinInformationStruct.displaySymbolSequence.Length} getting index {displaySymbolSequenceIndex}");
                     Debug.Log($"Adding symbol {groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex].primarySymbol} to sequence");
-                    symbolsSequenceList.Insert(0, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
+                    //symbolsSequenceList.Insert(0, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
+                    symbolsSequenceList.Insert(spinAtIndexInPath, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
                     Debug.Log($"symbolsSequenceList[0] = {symbolsSequenceList[0].primarySymbol}");
                 }
             }  

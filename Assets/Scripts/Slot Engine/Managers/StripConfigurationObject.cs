@@ -40,6 +40,10 @@ namespace BoomSports.Prototype
             {
                 myTarget.SetSlotsDisplaySequenceToCurrentSequence();
             }
+            if (GUILayout.Button("Set Slots Display to current sequence"))
+            {
+                myTarget.SetSlotsDisplayToCurrentSequence();
+            }
             if (GUILayout.Button("Set Slots PresentationID to symbol currently active"))
             {
                 myTarget.SyncCurrentSymbolDisplayedToPresentationID();
@@ -556,7 +560,7 @@ namespace BoomSports.Prototype
                     spinConfiguration[i].spinIdleSymbolSequence = StripManager.GenerateReelStripStatic(StaticStateManager.enCurrentMode, slots_per_strip_onSpinLoop, ref temp);
                 }
                 //Assign reelstrip to reel
-                reelStripManagers[i].stripInfo.SetSpinConfigurationTo(spinConfiguration[i]);
+                reelStripManagers[i].groupInfo.SetSpinConfigurationTo(spinConfiguration[i]);
             }
         }
 
@@ -1429,10 +1433,10 @@ namespace BoomSports.Prototype
         {
             StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
             configurationGroupManagers[strip].indexInGroupManager = strip;
-            GroupInformationStruct temp2 = temp.stripInfo;
+            GroupInformationStruct temp2 = temp.groupInfo;
             temp2.index = strip;
             ConfigurationDisplayZonesStruct temp3 = new ConfigurationDisplayZonesStruct(displayZone);
-            temp.stripInfo = temp2;
+            temp.groupInfo = temp2;
             Debug.Log($"temp3 as displayZone.totalPositions {temp3.totalPositions}");
             temp.InitializeLocalPositions();
         }
@@ -1442,7 +1446,7 @@ namespace BoomSports.Prototype
             configurationGroupManagers[strip].indexInGroupManager = strip;
             GroupInformationStruct tempStripStruct = new GroupInformationStruct();
             tempStripStruct.index = strip;
-            temp.stripInfo = tempStripStruct;
+            temp.groupInfo = tempStripStruct;
             temp.InitializeLocalPositions();
         }
         internal void ClearSubStatesAllSlotAnimatorStateMachines()
@@ -1550,6 +1554,14 @@ namespace BoomSports.Prototype
             for (int i = 0; i < configurationGroupManagers.Length; i++)
             {
                 configurationGroupManagers[i].SetDisplaySymbolsForNextSpinToCurrent();
+            }
+        }
+
+        internal void SetSlotsDisplayToCurrentSequence()
+        {
+            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            {
+                configurationGroupManagers[i].SetDisplaySymbolsToCurrentSequence();
             }
         }
     }

@@ -14,62 +14,6 @@ using UnityEngine;
 namespace BoomSports.Prototype.ScriptableObjects
 {
     /// <summary>
-    /// Creates an evaluation object to associate conditions and activate a Multiplier on linewin
-    /// </summary>
-    [CreateAssetMenu(fileName = "MultiplierEvaluationReferenceObject", menuName = "BoomSportsScriptableObjects/MultiplierEvaluationReferenceScriptableObject", order = 4)]
-    public class MultiplierEvaluationScriptableObject : SlotEvaluationScriptableObject
-    {
-
-        public void InitializeOverlaySymbolsEvaluation()
-        {
-            nodesActivatingEvaluationConditions = new List<SuffixTreeNodeInfo>();
-            nodesActivatingEvaluationConditions.Clear();
-        }
-
-        public override object EvaluatePaylines(ref EvaluationObjectStruct symbols_configuration)
-        {
-            InitializeOverlaySymbolsEvaluation();
-            object[] objectReturn = new object[0];
-            return objectReturn;
-        }
-
-        public override int? ReturnEvaluationObjectSupportedRootCount()
-        {
-            return nodesActivatingEvaluationConditions.Count;
-        }
-
-        public override bool EvaluateNodeForConditionsMet(SuffixTreeNodeInfo nodeInfo, WinningObject[] winningObjects)
-        {
-            for (int winningObject = 0; winningObject < winningObjects.Length; winningObject++)
-            {
-                //if any conditions are met to the fullest then the node is a valid node
-                //First Test for Overlay - Pass On Winning Paylien Check then Count for payline
-                for (int condition = 0; condition < nodeEvaluationConditions.Count; condition++)
-                {
-                    if (nodeEvaluationConditions[condition].EvaluateCondition(winningObjects[winningObject], nodeInfo))
-                    {
-                        if (condition == nodeEvaluationConditions.Count - 1)
-                        {
-                            Debug.Log($"Trigger Feature Evaluated to True - {symbolTargetName}");
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-            Debug.Log($"Trigger Feature Evaluated to false - {symbolTargetName}");
-            return false;
-        }
-
-        internal override void ActivateWinningNodesEvents()
-        {
-            throw new System.NotImplementedException();
-        }
-    }
-    /// <summary>
     /// Creates an evaluation object to associate conditions and activate a feature - Cash Crossing: on outer reel multiplier linewin
     /// </summary>
     [CreateAssetMenu(fileName = "TriggerFeatureEvaluationReferenceObject", menuName = "BoomSportsScriptableObjects/TriggerFeatureEvaluationReferenceScriptableObject", order = 4)]
@@ -79,6 +23,12 @@ namespace BoomSports.Prototype.ScriptableObjects
         /// The feature to trigger when overlay is activated
         /// </summary>
         public Features featureToTrigger;
+
+        ////Cash Crossing Specific - Needs to be refactored
+        //public TargetAnimatorsTriggerSetOnActive targetBridgeAnimatorsLeft;
+        //public TargetAnimatorsTriggerSetOnActive targetBridgeAnimatorsRight;
+        //public TargetAnimatorTriggerSetOnActive targetBridgeAnimatorCenter;
+
 
         public void InitializeOverlaySymbolsEvaluation()
         {
@@ -128,9 +78,28 @@ namespace BoomSports.Prototype.ScriptableObjects
             return output;
         }
 
-        internal override void ActivateWinningNodesEvents()
+        internal override void ActivateWinningNodesEvents(ConfigurationDisplayZonesStruct[] displayZones)
         {
             Debug.Log($"{featureToTrigger.ToString()} feature being triggered on slots {PrintActivatingNodes()}");
+            //Cash Crossing Specific - Needs to be refactored and made generic
+            //for (int i = 0; i < nodesActivatingEvaluationConditions.Count; i++)
+            //{
+            //    //Check the nodes column - Target the animator in the column and row - Set to active
+            //    //Need to use row - padding of display slots
+            //    int indexOfRowInAnimators = nodesActivatingEvaluationConditions[i].row - displayZones[nodesActivatingEvaluationConditions[i].column].paddingBefore;
+            //    if (nodesActivatingEvaluationConditions[i].column == 0) //Left Bridge Animator
+            //    {
+            //        targetBridgeAnimatorsLeft.ActivateConditionalAtIndex(indexOfRowInAnimators);
+            //    }
+            //    else if (nodesActivatingEvaluationConditions[i].column == 6)// Right Bridge Animator
+            //    {
+            //        targetBridgeAnimatorsRight.ActivateConditionalAtIndex(indexOfRowInAnimators);
+            //    }
+            //    else if (nodesActivatingEvaluationConditions[i].column == 3)// Center Animator
+            //    {
+            //        targetBridgeAnimatorCenter.ActivateConditional();
+            //    }
+            //}
         }
     }
 }

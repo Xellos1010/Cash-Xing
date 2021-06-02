@@ -14,17 +14,28 @@ using System;
 namespace BoomSports.Prototype
 {
     [Serializable]
-    public class TargetAnimatorTriggerSetOnActive : TargetAnimatorGroupContainer
+    public class TargetAnimatorsTriggerSetOnActive : TargetAnimatorGroupContainer
     {
         [SerializeField]
         public supportedAnimatorTriggers triggerToSetOnConditionalTrue;
         [SerializeField]
         public supportedAnimatorTriggers triggerToSetOnInitialize;
+
+        public override void ActivateConditional()
+        {
+            throw new NotImplementedException();
+        }
+
         public override void ActivateConditionalAtIndex(int indexToTrigger)
         {
             Debug.Log($"{targetAnimators[indexToTrigger].gameObject.name} set {triggerToSetOnConditionalTrue.ToString()} trigger");
             //Needs to be set beforehand
             targetAnimators[indexToTrigger].SetTrigger(triggerToSetOnConditionalTrue.ToString());
+        }
+
+        public override void ActivateConditionalWithNode(SuffixTreeNode node)
+        {
+            throw new NotImplementedException();
         }
 
         internal override void Initialize()

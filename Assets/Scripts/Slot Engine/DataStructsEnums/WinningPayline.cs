@@ -67,11 +67,11 @@ public partial class WinningPayline : WinningObject
 
     internal bool ContainsAllNodes(WinningEvaluatedNodeContainer[] winningNodes)
     {
-        Debug.Log($"Checking if {PrintWinningNodesAndSymbols()} contains {PrintWinningNodesAndSymbols(winningNodes)}");
+        //Debug.Log($"Checking if {PrintWinningNodesAndSymbols()} contains {PrintWinningNodesAndSymbols(winningNodes)}");
         bool output = false;
         for (int i = 0; i < winningNodes.Length; i++)
         {
-            Debug.Log($"{PrintWinningNodesAndSymbols()} ContainsNode(winningNodes[{i}].nodeInfo{winningNodes[i].nodeInfo.Print()}) = {ContainsNode(winningNodes[i].nodeInfo)}");
+            //Debug.Log($"{PrintWinningNodesAndSymbols()} ContainsNode(winningNodes[{i}].nodeInfo{winningNodes[i].nodeInfo.Print()}) = {ContainsNode(winningNodes[i].nodeInfo)}");
             if(!ContainsNode(winningNodes[i].nodeInfo))
             {
                 break;

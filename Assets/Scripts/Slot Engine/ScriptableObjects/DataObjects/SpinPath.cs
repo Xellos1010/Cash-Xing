@@ -41,7 +41,7 @@ public struct SpinPath
     /// The starting position evaluating position on path from
     /// </summary>
     [SerializeField]
-    public int startPosition;
+    public int localStartPositionIndex;
     /// <summary>
     /// The amount of times objects has reached end of path before - used to evaluate whether to change symbol
     /// </summary>
@@ -65,8 +65,14 @@ public struct SpinPath
     /// </summary>
     [SerializeField]
     private float _totalAbsSqrMagnitudeOfPath;
+    /// <summary>
+    /// Local reference variable to First Last Position
+    /// </summary>
     internal Vector3 distanceFirstLastPositionInPath;
-
+    /// <summary>
+    /// Controls which point in path to move after reaching end of path - if not 0 then spin in position has to account for z-depth clashing
+    /// </summary>
+    internal int spinAtIndexInPath;
     /// <summary>
     /// global reference for total sqr - will rebuild if initial = 0;
     /// </summary>
@@ -85,15 +91,16 @@ public struct SpinPath
     /// Takes in the path and auto calculates the total sqr magnitude required for evaluating distance to travel on spin
     /// </summary>
     /// <param name="path"></param>
-    public SpinPath(Vector3[] path, int startPosition, Vector3 slotSize, Vector3 slotPadding)
+    public SpinPath(Vector3[] path, int localStartPositionIndex, int spinIndexInPath, Vector3 slotSize, Vector3 slotPadding)
     {
         this.path = path;
-        this.startPosition = startPosition;
+        this.localStartPositionIndex = localStartPositionIndex;
+        this.spinAtIndexInPath = spinIndexInPath;
         this.timesReachedEndOfPath = 0;
-        this.stepsCompletedInPath = startPosition;
+        this.stepsCompletedInPath = localStartPositionIndex;
         this.slotSize = slotSize;
         this.slotPadding = slotPadding;
-        this.currentToIndexInPath = startPosition;
+        this.currentToIndexInPath = localStartPositionIndex;
         changeSymbolGraphic = false;
         toPositionEvaluated = Vector3.zero;
         float totalAbsSqrMagnitudePath = 0;
@@ -105,7 +112,9 @@ public struct SpinPath
             totalAbsSqrMagnitudePath += Mathf.Abs((path[point - 1] - path[point]).sqrMagnitude);
         }
         _totalAbsSqrMagnitudeOfPath = totalAbsSqrMagnitudePath;
-        distanceFirstLastPositionInPath = path[0] - path[path.Length - 1];
+        //Refactored to include spin at index in path
+        //distanceFirstLastPositionInPath = path[0] - path[path.Length - 1];
+        distanceFirstLastPositionInPath = path[spinIndexInPath] - path[path.Length - 1];
     }
    
 

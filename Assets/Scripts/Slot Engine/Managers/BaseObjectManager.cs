@@ -159,6 +159,8 @@ namespace BoomSports.Prototype.Managers
             }
         }
 
+        internal virtual Vector3 SetPositionToIndexInPath(Vector3 toPosition, int index) //Needs to be positive to move forwards and negative to move backwards
+        { return Vector3.zero; }
 
         internal void SetTriggerSubStatesTo(supportedAnimatorTriggers toTrigger)
         {
@@ -400,7 +402,7 @@ namespace BoomSports.Prototype.Managers
             }
         }
 
-        private string ReturnSymbolNameFromInt(int symbol)
+        private string ReturnSymbolNameFromID(int symbol)
         {
             return baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols[symbol].symbolName;
         }
@@ -501,13 +503,14 @@ namespace BoomSports.Prototype.Managers
             //}
         }
 
-        internal void SetPresentationSymbolTo(int to_symbol)
+        internal void SetPresentationSymbolTo(int toSymbolID)
         {
-            if (to_symbol < 0)
+            if (toSymbolID < 0)
                 currentPresentingSymbolName = "Not on Matrix";
             else
-                currentPresentingSymbolName = ReturnSymbolNameFromInt(to_symbol);
-            currentPresentingSymbolID = to_symbol; 
+                currentPresentingSymbolName = ReturnSymbolNameFromID(toSymbolID);
+            Debug.Log($"{gameObject.name} presentation symbol set to {toSymbolID} {currentPresentingSymbolName} ");
+            currentPresentingSymbolID = toSymbolID; 
         }
         internal void UpdateSpinTimerFromSpinManager()
         {
