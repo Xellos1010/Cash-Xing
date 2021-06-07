@@ -50,6 +50,19 @@ namespace BoomSports.Prototype.Managers
                     Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] = {Mathf.Abs(myTarget.localPositionsInStrip[2].sqrMagnitude)}");
                     Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] + offset = {Mathf.Abs((myTarget.localPositionsInStrip[2] + (Vector3.back * 10)).sqrMagnitude)}");
                 }
+
+                if(GUILayout.Button("Test OoO(Order of Operations) for Start Spin"))
+                {
+                    //Initialize Padding slot start position - Ensure graphic of padding slot set to next graphic in sequence
+                    myTarget.InitializePaddingSlotPositionAndSymbol();
+                    //Clear Ending Symbols - Set new ending symbols
+                    myTarget.InitializeEndDisplaySequenceToSet();
+                    //Switching to ObjectManager of spin object to invoke check of display symbol and row in strip.
+                    //Check each symbols next position - any symbol activating a condition send event to recieving object
+                    //Cash Crossing when a bonus symbol enters a slot it sends idle trigger to associated bridge animator
+                    myTarget.InitializeConditionalEvents();
+                    myTarget.CheckForConditionalEventsFromEndDisplaySequence(myTarget.symbolsDisplaySequence);
+                }
                 if (GUILayout.Button("Set Intial Padding Slot object"))
                 {
                     myTarget.paddingSlot = myTarget.objectsInGroup[0];
@@ -64,7 +77,7 @@ namespace BoomSports.Prototype.Managers
                 }
                 if (GUILayout.Button("Set Next Display symbols sequence based on spin type"))
                 {
-                    myTarget.InitializeEndingDisplayForNewSpin();
+                    myTarget.InitializeEndDisplaySequenceToSet();
                 }
                 if (GUILayout.Button("Set Slot Positions To Initial Local Positions"))
                 {
@@ -113,7 +126,6 @@ namespace BoomSports.Prototype.Managers
 
     public class StripObjectGroupManager : BaseObjectGroupManager
     {
-        //the matrix associated with the reel_strip
         internal BaseConfigurationObjectManager configurationObjectParent
         {
             get
@@ -267,6 +279,11 @@ namespace BoomSports.Prototype.Managers
         {
             List<BaseObjectManager> output = new List<BaseObjectManager>();
             //Debug.Log($"localPositionsInStrip.Length == {localPositionsInStrip.Length} - objectsInGroup.Length == {objectsInGroup.Length}");
+            //spinAtIndexInPath starts at 0 - at some point it is switched to index in path then after a few spins returns to 0.
+            //when spinAtIndexInPath > 0 then the slot last moved to top (paddingSlot) at localPositionsInStrip[0] on spin start is initialized and shifted below localPositionsInStrip[spinAtIndexInPath] + (0,0,-20) - need to ensure symbol is set to symbol in sequence. will pull from debug symbol sequence for right now. Need to add padding slot to top of slots array passed to evaluator - evaluator does including padding slots as inactive evaluation row
+            //during spin at index slots will place themselves at localPositionsInStrip[spinAtIndexInPath] + (0,0,-20) and use the next display symbol in sequence
+            //Once all debug symbols to display in sequence is empty then spinAtIndexInPath is set to 0 
+
             for (int position_to_check = 0; position_to_check < localPositionsInStrip.Length; position_to_check++)
             {
                 for (int slot = 0; slot < objectsInGroup.Length; slot++)
@@ -274,6 +291,44 @@ namespace BoomSports.Prototype.Managers
                     //Debug.Log($"objectsInGroup[{slot}].transform.localPosition {objectsInGroup[slot].transform.localPosition} == {localPositionsInStrip[position_to_check]} localPositionsInStrip[position_to_check] is {objectsInGroup[slot].transform.localPosition == localPositionsInStrip[position_to_check]}");
                     if (objectsInGroup[slot].transform.localPosition == localPositionsInStrip[position_to_check])
                         output.Add(objectsInGroup[slot]);
+                }
+            }
+            //for (int i = 0; i < output.Count; i++)
+            //{
+            //    Debug.Log($"{gameObject.name}.GetSlotsDecending()[{i}]{output[i].gameObject.name}.currentPresentingSymbolID = {output[i].currentPresentingSymbolID}");
+            //}
+            //Auto Adds padding slot when not in initial position - Uncomment will cause bugs if calling objects handle this logic (BaseObjectGroupManager)
+            //if(output.Count != objectsInGroup.Length)
+            //{
+            //    Debug.Log($"output.Count = {output.Count} objectsInGroup.Length = {objectsInGroup.Length}");
+            //    //Find the slot with offset amount and what point in path is closest to slot
+            //    for (int i = 0; i < objectsInGroup.Length; i++)
+            //    {
+            //        if(!output.Contains(objectsInGroup[i]))
+            //        {
+            //            Debug.Log($"!output.Contains({objectsInGroup[i].gameObject.name})");
+            //            int closestPositionIndex = FindCloseestPositionTo(objectsInGroup[i]);
+            //            output.Insert(closestPositionIndex, objectsInGroup[i]);
+            //        }
+            //    }
+            //}
+            //If spin at index on path is != 0 then 1 symbol will be set to position in path + (0,0,-x) need to grab that symbol and inject that as the next symbol in path (index at path will move down by 1)
+            return output;
+        }
+
+        private int FindCloseestPositionTo(BaseObjectManager baseObjectManager)
+        {
+            int output = 0;
+            Vector3 leastDistanceToObject = localPositionsInStrip[0] - baseObjectManager.transform.localPosition;
+            Vector3 temp;
+            for (int i = 1; i < localPositionsInStrip.Length; i++)
+            {
+                temp = localPositionsInStrip[i] - baseObjectManager.transform.localPosition;
+                Debug.Log($"leastDistanceToObject.sqrMagnitude = {leastDistanceToObject.sqrMagnitude}\ntemp.sqrMagnitude = {temp.sqrMagnitude}\ntemp.sqrMagnitude < leastDistanceToObject.sqrMagnitude = {temp.sqrMagnitude < leastDistanceToObject.sqrMagnitude}");
+                if (temp.sqrMagnitude < leastDistanceToObject.sqrMagnitude)
+                {
+                    leastDistanceToObject = temp;
+                    output = i;
                 }
             }
             return output;

@@ -25,7 +25,7 @@ public struct StripsStruct
         string output = "";
         for (int i = 0; i < strips.Length; i++)
         {
-            output += "-" + String.Join("|", strips[i].spinInformation.displaySymbolSequence);
+            output += "-" + String.Join("|", strips[i].spinInformation.displaySymbolsToLoad);
         }
         return output;
     }

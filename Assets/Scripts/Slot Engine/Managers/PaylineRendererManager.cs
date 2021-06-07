@@ -56,7 +56,7 @@ namespace BoomSports.Prototype.Managers
                 {
                     _payline_renderers = GetComponentsInChildren<PaylineRenderer>();
                 }
-                if (_payline_renderers.Length != matrix.configurationGroupManagers.Length - 1)
+                if (_payline_renderers.Length != matrix.groupObjectManagers.Length - 1)
                 {
                     List<PaylineRenderer> renderers = new List<PaylineRenderer>();
                     renderers.AddRange(_payline_renderers);
@@ -146,7 +146,7 @@ namespace BoomSports.Prototype.Managers
             if (fillEndToEnd)
             {
                 //Check if the length of the payline is the length of the group managers
-                if (payline_to_show.payline.configuration.payline.Length < matrix.configurationGroupManagers.Length)
+                if (payline_to_show.payline.configuration.payline.Length < matrix.groupObjectManagers.Length)
                 {
                     //Check if evaluating left right
                     if (payline_to_show.payline.left_right)
@@ -156,42 +156,42 @@ namespace BoomSports.Prototype.Managers
                             //Fill the payline backwards - the amount difference but as straight line - In future base this off 
                             for (int toFill = payline_to_show.payline.rootNode.column; toFill > 0; toFill--)
                             {
-                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(payline_to_show.payline.rootNode.row);
+                                adjacentSlot = matrix.groupObjectManagers[toFill].ReturnValidActiveDisplayFromRow(payline_to_show.payline.rootNode.row);
                                 //Will fill anything before the root node with the node adjacent\
                                 paylineTemp.Insert(0, adjacentSlot);
                             }
                         }
-                        if (paylineTemp.Count < matrix.configurationGroupManagers.Length)
+                        if (paylineTemp.Count < matrix.groupObjectManagers.Length)
                         {
                             int toFillBase = paylineTemp.Count;
                             //Will fill anything after end of payline raw with the node adjacent
-                            for (int toFill = toFillBase; toFill < matrix.configurationGroupManagers.Length; toFill++)
+                            for (int toFill = toFillBase; toFill < matrix.groupObjectManagers.Length; toFill++)
                             {
-                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(paylineTemp[paylineTemp.Count - 1]);
+                                adjacentSlot = matrix.groupObjectManagers[toFill].ReturnValidActiveDisplayFromRow(paylineTemp[paylineTemp.Count - 1]);
                                 paylineTemp.Add(adjacentSlot);
                             }
                         }
                     }
                     else
                     {
-                        Debug.Log($"payline_to_show.payline.rootNode.column {payline_to_show.payline.rootNode.column} != matrix.configurationGroupManagers.Length-1 {matrix.configurationGroupManagers.Length-1} = {payline_to_show.payline.rootNode.column != matrix.configurationGroupManagers.Length-1}");
-                        if (payline_to_show.payline.rootNode.column != matrix.configurationGroupManagers.Length-1) //using 0 indexing based rule. -1 from length to get index last object in array
+                        Debug.Log($"payline_to_show.payline.rootNode.column {payline_to_show.payline.rootNode.column} != matrix.configurationGroupManagers.Length-1 {matrix.groupObjectManagers.Length-1} = {payline_to_show.payline.rootNode.column != matrix.groupObjectManagers.Length-1}");
+                        if (payline_to_show.payline.rootNode.column != matrix.groupObjectManagers.Length-1) //using 0 indexing based rule. -1 from length to get index last object in array
                         {
                             //Fill the payline backwards - the amount difference but as straight line - In future base this off 
-                            for (int toFill = payline_to_show.payline.rootNode.column; toFill < matrix.configurationGroupManagers.Length-1; toFill++)
+                            for (int toFill = payline_to_show.payline.rootNode.column; toFill < matrix.groupObjectManagers.Length-1; toFill++)
                             {
                                 //Will fill anything before the root node with the node adjacent
-                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(payline_to_show.payline.rootNode.row);
+                                adjacentSlot = matrix.groupObjectManagers[toFill].ReturnValidActiveDisplayFromRow(payline_to_show.payline.rootNode.row);
                                 paylineTemp.Insert(0, adjacentSlot);
                             }
                         }
-                        if (paylineTemp.Count < matrix.configurationGroupManagers.Length)
+                        if (paylineTemp.Count < matrix.groupObjectManagers.Length)
                         {
                             int toFillBase = paylineTemp.Count;
                             //Will fill anything before the root node with the node adjacent
-                            for (int toFill = toFillBase; toFill < matrix.configurationGroupManagers.Length; toFill++)
+                            for (int toFill = toFillBase; toFill < matrix.groupObjectManagers.Length; toFill++)
                             {
-                                adjacentSlot = matrix.configurationGroupManagers[toFill].ReturnValidActiveDisplayFromRow(paylineTemp[paylineTemp.Count - 1]);
+                                adjacentSlot = matrix.groupObjectManagers[toFill].ReturnValidActiveDisplayFromRow(paylineTemp[paylineTemp.Count - 1]);
                                 paylineTemp.Add(adjacentSlot);
                             }
                         }

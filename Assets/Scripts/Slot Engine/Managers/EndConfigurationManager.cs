@@ -220,36 +220,75 @@ namespace BoomSports.Prototype.Managers
         /// <param name="objectGroupManager"></param>
         internal void SetDisplaySymbolsForGroup(ref BaseObjectGroupManager objectGroupManager)
         {
-            Debug.Log($"Setting Display Symbols for {objectGroupManager.gameObject.name}");
+            Debug.Log($"Building display symbol sequence for {objectGroupManager.gameObject.name}");
             List<NodeDisplaySymbolContainer> symbolSequence = new List<NodeDisplaySymbolContainer>();
             //Symbol Sequence needs to account for index in path
+
             //Get how many symbols on strip will clear from group manager spin parameters
             int symbolsToReplaceReel = objectGroupManager.GetSymbolsToBeReplacedPerSpin();
-            //Debug.Log($"Replacing {symbolsToReplaceReel} symbol(s) on strip {objectGroupManager.gameObject.name}");
+            Debug.Log($"Replacing {symbolsToReplaceReel} symbol(s) on strip {objectGroupManager.gameObject.name}");
+            
+            string symbolSequenceDebugMessage = "";
 
             //Add symbols from strip if not full strip replacement - need to account for padding slots. does not account for active and inactive display zones
             if (symbolsToReplaceReel < objectGroupManager.objectsInGroup.Length - objectGroupManager.configurationGroupDisplayZones.paddingBefore)
-            {
-                //Remove from end of strip symbols to be replaced - right now formatted for 1 per step - start position index may change this logic in future if more than 1 step is activated
-                symbolSequence.AddRange(objectGroupManager.GetDisplaySymbolsFromDecending());
+            {//Symbols to replace less then strip length - remove end and add Start
+             //- if index on path != 0 then Padding slot is next symbol at index and using the next debug symbol at path position for x spins.
+             //- while set symbols at path position (x) > 0 Symbols to replace per spin then set symbol in last position to index on path untilspin end then last symbol in end position will go to start of path to be adjusted again and align with symbol sequence.
+             //Spin at index in path needs to be accounted for
+                //Add initial range of current symbols in decending order; then adjust for symbols to replace per spin - take from end - insert at path until enough left to fill padding at top - insert at top
+                //Debug.Log($"symbolSequence.Count before raw add slots decending = {symbolSequence.Count}");
+                symbolSequence.AddRange(objectGroupManager.GetCurrentDisplaySymbolsFromDecending());
+                //Debug.Log($"symbolSequence.Count from raw add slots decending = {symbolSequence.Count}");
+                //Build Debug Message
+                for (int i = 0; i < symbolSequence.Count; i++)
+                {
+                    symbolSequenceDebugMessage += $"|{symbolSequence[i].primarySymbol}";
+                }
+                Debug.Log($"raw current sequence from decending slots = {symbolSequenceDebugMessage}");
+                //Spin at index needs to be < positions along path end index - this may not work with partial reel clears above 1 symbol replace (Stepper reel step per spin) needs more testing
+                //Only built for 1 step (1 symbol replacement) per spin use-case - If spin at path is > last index on path 
                 symbolSequence.RemoveRange(symbolSequence.Count - symbolsToReplaceReel, symbolsToReplaceReel);
+                symbolSequenceDebugMessage = "";
+                //Build Debug Message
+                for (int i = 0; i < symbolSequence.Count; i++)
+                {
+                    symbolSequenceDebugMessage += $"|{symbolSequence[i].primarySymbol}";
+                }
+                Debug.Log($"current sequence after symbolSequence.RemoveRange(symbolSequence.Count{symbolSequence.Count} - symbolsToReplaceReel {symbolsToReplaceReel}, symbolsToReplaceReel);= {symbolSequenceDebugMessage}");
             }
+            //Starts our printout for symbol sequence in unity console.
 
-            //string debugmessage = "";
-            //for (int i = 0; i < symbolSequence.Count; i++)
-            //{
-            //    debugmessage += $"|{symbolSequence[i].primarySymbol}";
-            //}
-            //Debug.Log($"Display sequence before add = {debugmessage}");
             //Debug.Log($"{objectGroupManager.gameObject.name}.GetIndexInGroup() = {objectGroupManager.GetIndexInGroup()}");
-            AddSymbolsToDisplaySequence(symbolsToReplaceReel, objectGroupManager.spinAtIndexInPath, _displayConfigurationInUse.configuration[objectGroupManager.GetIndexInGroup()], ref symbolSequence);
-            string debugmessage = "";
+            //Build the data container required to add symbols to display sequence
+            
+            BuildSymbolSequenceDataContainer buildSymbolSequenceDataContainer = new BuildSymbolSequenceDataContainer(symbolsToReplaceReel, objectGroupManager.spinAtIndexInPath, _displayConfigurationInUse.configuration[objectGroupManager.GetIndexInGroup()], objectGroupManager);
+            //symbolSequence comes in pre-formatted Cash Crossing specific
+            AddSymbolsToDisplaySequence(buildSymbolSequenceDataContainer, ref symbolSequence);
+            
+            symbolSequenceDebugMessage = "";
             for (int i = 0; i < symbolSequence.Count; i++)
             {
-                debugmessage += $"|{symbolSequence[i].primarySymbol}";
+                symbolSequenceDebugMessage += $"|{symbolSequence[i].primarySymbol}";
             }
-            Debug.Log($"Display sequence after add = {debugmessage}");
+            Debug.Log($"Display sequence after add = {symbolSequenceDebugMessage}");
             objectGroupManager.symbolsDisplaySequence = symbolSequence.ToArray();
+        }
+
+        public struct BuildSymbolSequenceDataContainer
+        {
+            public int symbolsToReplaceReel;
+            public int spinAtIndexInPath;
+            public GroupSpinInformationStruct groupSpinInformationStruct;
+            public BaseObjectGroupManager objectGroupManager;
+
+            public BuildSymbolSequenceDataContainer(int symbolsToReplaceReel, int spinAtIndexInPath, GroupSpinInformationStruct groupSpinInformationStruct, BaseObjectGroupManager objectGroupManager)
+            {
+                this.symbolsToReplaceReel = symbolsToReplaceReel;
+                this.spinAtIndexInPath = spinAtIndexInPath;
+                this.groupSpinInformationStruct = groupSpinInformationStruct;
+                this.objectGroupManager = objectGroupManager;
+            }
         }
         /// <summary>
         /// Add's symbols to the start of a display sequence
@@ -257,28 +296,65 @@ namespace BoomSports.Prototype.Managers
         /// <param name="symbolsToAdd"></param>
         /// <param name="groupSpinInformationStruct"></param>
         /// <param name="symbolsSequenceList"></param>
-        private void AddSymbolsToDisplaySequence(int symbolsToAdd, int spinAtIndexInPath, GroupSpinInformationStruct groupSpinInformationStruct, ref List<NodeDisplaySymbolContainer> symbolsSequenceList)
+        private void AddSymbolsToDisplaySequence(BuildSymbolSequenceDataContainer dataContainer, ref List<NodeDisplaySymbolContainer> symbolsSequenceList)
         {
-            Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {groupSpinInformationStruct.displaySymbolSequence.Length}");
-            for (int displaySymbolSequenceIndex = 0; displaySymbolSequenceIndex < symbolsToAdd; displaySymbolSequenceIndex++)
+            Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length}");
+            int symbol = -1;
+            //Insert symbols at spin at index until 1 left to insert at top
+            //Works for Stepper reels and constant directional reels use-case only - more testing required
+            for (int displaySymbolSequenceIndex = 0; displaySymbolSequenceIndex < dataContainer.symbolsToReplaceReel; displaySymbolSequenceIndex++)
             {
-                //For full reel replacement you will replace objects in group - since we have padding we need to add random symbols to the top
-                if (displaySymbolSequenceIndex >= groupSpinInformationStruct.displaySymbolSequence.Length)
+                //TODO change random range to pull list of symbols valid for column
+                symbol = UnityEngine.Random.Range(0, 3);
+
+                Debug.Log($"displaySymbolSequenceIndex {displaySymbolSequenceIndex} >= groupSpinInformationStruct.displaySymbolSequence.Length {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length} = {displaySymbolSequenceIndex >= dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length}");
+                
+                //Bug Resolve full reel replacement - For full reel replacement you will replace objects in group - sometimes you will have more padding slots then in display sequence - evaluation manager needs all slots in row filled including padding and inactive payline evaluations since using suffix tree data structure and logic to identify nodes with columsn and rows.
+                if (displaySymbolSequenceIndex >= dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length)
                 {
+                    Debug.Log($"displaySymbolSequenceIndex {displaySymbolSequenceIndex} >= dataContainer.groupSpinInformationStruct.displaySymbolsToLoad{dataContainer.groupSpinInformationStruct.displaySymbolsToLoad} = {displaySymbolSequenceIndex >= dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length}");
                     //Refactored to include index at path
-                    //symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(UnityEngine.Random.Range(0, 3)));
-                    symbolsSequenceList.Insert(spinAtIndexInPath, new NodeDisplaySymbolContainer(UnityEngine.Random.Range(0, 3)));
+                    if (displaySymbolSequenceIndex == dataContainer.symbolsToReplaceReel-1)//If we are on the last symbol then insert at start of strip - will break if padding is > 1
+                    {//TODO include in data container group display struct for reel and account for padding before reel to replace symbols at top
+                        Debug.Log($"Inserting symbolID {symbol} into symbolsSequenceList at {dataContainer.spinAtIndexInPath}");
+                        symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(symbol)); //Insert at start of array
+                    }
+                    else
+                    {
+                        Debug.Log($"Inserting symbolID {symbol} into symbolsSequenceList at {dataContainer.spinAtIndexInPath}");
+                        symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath, new NodeDisplaySymbolContainer(symbol)); //Insert at index in path
+                    }
                 }
-                else
+                else //Stepper only replaces 1 slot per spin
                 {
-                    Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {groupSpinInformationStruct.displaySymbolSequence.Length} getting index {displaySymbolSequenceIndex}");
-                    Debug.Log($"Adding symbol {groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex].primarySymbol} to sequence");
-                    //symbolsSequenceList.Insert(0, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
-                    symbolsSequenceList.Insert(spinAtIndexInPath, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
-                    Debug.Log($"symbolsSequenceList[0] = {symbolsSequenceList[0].primarySymbol}");
+                    if (dataContainer.objectGroupManager.trailingActive)
+                    {
+                        //Hard coded to add multiplier symbol to Cash Crossing
+                        //When padding slot is initialized it is set to position at path - if we are at last symbol to replace set to top symbol
+                        if (displaySymbolSequenceIndex == dataContainer.symbolsToReplaceReel)//If we are on the last symbol then insert at start of strip - will break if padding is > 1
+                        {//TODO include in data container group display struct for reel and account for padding before reel to replace symbols at top
+                            Debug.Log($"Inserting symbolID {9} into symbolsSequenceList at {0}");
+                            symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(9)); //Insert at start of array
+                        }
+                        else
+                        {
+                            Debug.Log($"Inserting multiplier symbol into symbolsSequenceList at {dataContainer.spinAtIndexInPath}");
+                            symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath, new NodeDisplaySymbolContainer(symbol)); //Insert at index in path
+                        }
+                        //symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath,new NodeDisplaySymbolContainer(9));
+                    }
+                    else
+                    {//May break in the future - further testing required
+                        Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length} getting index {displaySymbolSequenceIndex}");
+                        Debug.Log($"Adding symbol {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad[displaySymbolSequenceIndex].primarySymbol} to sequence");
+                        //symbolsSequenceList.Insert(0, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
+                        symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath, dataContainer.groupSpinInformationStruct.displaySymbolsToLoad[displaySymbolSequenceIndex]);
+                        Debug.Log($"symbolsSequenceList[0] = {symbolsSequenceList[0].primarySymbol}");
+                    }
                 }
             }  
         }
+
         //public List<NodeDisplaySymbolContainer> enmd
         //Todo Refactor and combine function
         internal async Task<DisplayConfigurationContainer> GenerateStrips(GameModes gameState, ConfigurationDisplayZonesStruct[] displayZones, Features featureToGenerate)
