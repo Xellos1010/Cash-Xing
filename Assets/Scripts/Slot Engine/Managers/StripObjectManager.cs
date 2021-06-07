@@ -131,7 +131,7 @@ namespace BoomSports.Prototype.Managers
 
         internal override Vector3 SetPositionToIndexInPath(Vector3 toPosition, int index) //Needs to be positive to move forwards and negative to move backwards
         {
-            //Debug.Log($"Setting transform.localPosition = {amount}");
+            Debug.Log($"Setting {gameObject.name}.transform.localPosition = {toPosition}, setting start index to {index}");
             transform.localPosition = toPosition;
             indexOnPath = index;
             localStartPositionIndex = index;
@@ -242,10 +242,10 @@ namespace BoomSports.Prototype.Managers
                     {
                         debug += $"|{stripManager.symbolsDisplaySequence[i].primarySymbol}";
                     }
-                    Debug.Log($"{debug} Display symbol sequence from {stripManager.gameObject.name}");
+                    //Debug.Log($"{debug} Display symbol sequence from {stripManager.gameObject.name}");
 
                     //Set Graphics and end position
-                    Debug.Log($"Setting {gameObject.name} Display symbol on reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
+                    //Debug.Log($"Setting {gameObject.name} Display symbol on reel {baseObjectGroupParent.gameObject.name} stripManager.localPositionsInStrip.Length = {stripManager.localPositionsInStrip.Length} (stripManager.localPositionsInStrip.Length - 2 {stripManager.localPositionsInStrip.Length - 2}) - stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration}");
                     presentationSymbolSetToEnd = true;
                     stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 2) - stripManager.endSymbolsSetFromConfiguration];
 
@@ -257,7 +257,7 @@ namespace BoomSports.Prototype.Managers
                         {
                             indexForLastNewSymbolInSequence = stripManager.symbolsDisplaySequence.Length - 1;
                         }
-                        Debug.Log($"stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration} < stripManager.symbolsDisplaySequence.Length {stripManager.symbolsDisplaySequence.Length} is true indexForLastNewSymbolInSequence = {indexForLastNewSymbolInSequence} Display Symbol index = {indexForLastNewSymbolInSequence - stripManager.endSymbolsSetFromConfiguration} symbol = {stripManager.symbolsDisplaySequence[indexForLastNewSymbolInSequence - stripManager.endSymbolsSetFromConfiguration].primarySymbol}");
+                        //Debug.Log($"stripManager.endSymbolsSetFromConfiguration {stripManager.endSymbolsSetFromConfiguration} < stripManager.symbolsDisplaySequence.Length {stripManager.symbolsDisplaySequence.Length} is true indexForLastNewSymbolInSequence = {indexForLastNewSymbolInSequence} Display Symbol index = {indexForLastNewSymbolInSequence - stripManager.endSymbolsSetFromConfiguration} symbol = {stripManager.symbolsDisplaySequence[indexForLastNewSymbolInSequence - stripManager.endSymbolsSetFromConfiguration].primarySymbol}");
                         //Set display symbol to symbol in sequence
                         //Reset all symbols on strip pull last first
                         //Reset partial symbols - set last index to pull to stripManager.symbolsDisplaySequence.Length - 1 - 
@@ -272,14 +272,14 @@ namespace BoomSports.Prototype.Managers
                     }
                     else //Set to end
                     {
-                        Debug.Log($"stripManager.endSymbolsSetFromConfiguration{stripManager.endSymbolsSetFromConfiguration} < stripManager.symbolsDisplaySequence.Length {stripManager.symbolsDisplaySequence.Length} is false");
+                        //Debug.Log($"stripManager.endSymbolsSetFromConfiguration{stripManager.endSymbolsSetFromConfiguration} < stripManager.symbolsDisplaySequence.Length {stripManager.symbolsDisplaySequence.Length} is false");
                         SetPresentationSymbolTo(-1); //TODO Define whether to set the top slot graphic
                         stopSpinEndPosition = stripManager.localPositionsInStrip[(stripManager.localPositionsInStrip.Length - 1) - stripManager.configurationGroupDisplayZones.paddingAfter - stripManager.endSymbolsSetFromConfiguration];
                         stripManager.endSymbolsSetFromConfiguration += 1;
                         symbolSet = true;
                         presentationSymbolSetToEnd = true;
                     }
-                    Debug.Log("Slot " + transform.name + " symbol presentation = " + currentPresentingSymbolID + " end position = " + stopSpinEndPosition);
+                    //Debug.Log("Slot " + transform.name + " symbol presentation = " + currentPresentingSymbolID + " end position = " + stopSpinEndPosition);
                 }
                 else
                 {
@@ -297,11 +297,10 @@ namespace BoomSports.Prototype.Managers
                     }
                 }
 
-                //In-case nothing was set set to random 
+                //In-case nothing was set, set to random 
                 if (!symbolSet)
                 {
                     Debug.LogWarning("Symbol was not set - auto setting random");
-                    //Determines an overlay symbol
                     symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StaticStateManager.enCurrentMode).Result;
                 }
                 SetDisplaySymbolTo(symbol);

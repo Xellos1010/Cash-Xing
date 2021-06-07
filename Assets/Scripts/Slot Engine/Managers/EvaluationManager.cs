@@ -189,6 +189,7 @@ namespace BoomSports.Prototype.Managers
                 //Cash Crossing Specific - sending display zones to gett padding and activate correct index of bridge animators
                 if (slotEvaluationObjects[slotEvaluationObject].nodesActivatingEvaluationConditions.Count > 0)
                 {
+                    //Use Case Cash Crossing - Activate column event to turn animator on and activate trailing at index in path for x spins - load column with x debug symbol
                     ActivateWinningNodesEvents(slotEvaluationObjects[slotEvaluationObject], BaseConfigurationObjectManager.instance.configurationSettings.displayZones);
                     //Cannot reference scene objects in scriptable object - need to implement on class level
                     //slotEvaluationObjects[slotEvaluationObject].ActivateWinningNodesEvents(BaseConfigurationObjectManager.instance.configurationSettings.displayZones);
@@ -218,12 +219,17 @@ namespace BoomSports.Prototype.Managers
                 Debug.Log($"{temp.featureToTrigger.ToString()} feature being triggered on slots {temp.PrintActivatingNodes()}");
                 if (temp.featureToTrigger == Features.trailing)
                 {
+                    int indexOfRowInAnimators;
                     //Cash Crossing Specific - Needs to be refactored and made generic
                     for (int i = 0; i < temp.nodesActivatingEvaluationConditions.Count; i++)
                     {
+
                         //Check the nodes column - Target the animator in the column and row - Set to active
                         //Need to use row - padding of display slots
-                        int indexOfRowInAnimators = temp.nodesActivatingEvaluationConditions[i].row - displayZones[temp.nodesActivatingEvaluationConditions[i].column].paddingBefore;
+                        indexOfRowInAnimators = temp.nodesActivatingEvaluationConditions[i].row - displayZones[temp.nodesActivatingEvaluationConditions[i].column].paddingBefore;
+
+                        //Temporary hook for cash crossing - may be extracted for further use
+                        StripConfigurationObject.instance.SetSpinAtIndexFrom(temp,temp.nodesActivatingEvaluationConditions[i].column, indexOfRowInAnimators);
                         if (temp.nodesActivatingEvaluationConditions[i].column == 0) //Left Bridge Animator
                         {
                             targetBridgeAnimatorsLeft.ActivateConditionalAtIndex(indexOfRowInAnimators);
@@ -323,10 +329,10 @@ namespace BoomSports.Prototype.Managers
         private DisplayConfigurationContainer BuildStripSpinStructArrayFromSymbolsOnDisplay()
         {
             DisplayConfigurationContainer output = new DisplayConfigurationContainer();
-                output.configuration = new GroupSpinInformationStruct[configurationObject.configurationGroupManagers.Length];
+                output.configuration = new GroupSpinInformationStruct[configurationObject.groupObjectManagers.Length];
             for (int i = 0; i < output.configuration.Length; i++)
             {
-                output.configuration[i] = new GroupSpinInformationStruct(configurationObject.configurationGroupManagers[i].GetNodeDisplaySymbols());
+                output.configuration[i] = new GroupSpinInformationStruct(configurationObject.groupObjectManagers[i].GetNodeDisplaySymbols());
             }
             return output;
         }
@@ -396,7 +402,6 @@ namespace BoomSports.Prototype.Managers
         {
             return ReturnWinningObjectsAs<WinningPayline>();
         }
-
         internal bool IsSymbolFeatureSymbol(SymbolObject symbolObject)
         {
             //for every slot evaluation object see which 
@@ -407,6 +412,24 @@ namespace BoomSports.Prototype.Managers
                 {
                     output = true;
                     break;
+                }
+            }
+            return output;
+        }
+
+        internal bool IsSymbolFeatureSymbol(SymbolObject symbolObject, Features featureTriggerToCheck)
+        {
+            //for every slot evaluation object see which 
+            bool output = false;
+            for (int evaluator = 0; evaluator < slotEvaluationObjects.Length; evaluator++)
+            {
+                if (symbolObject.symbolName.Contains(slotEvaluationObjects[evaluator].symbolTargetName))
+                {
+                    if (slotEvaluationObjects[evaluator].featureName == featureTriggerToCheck)
+                    {
+                        output = true;
+                        break;
+                    }
                 }
             }
             return output;

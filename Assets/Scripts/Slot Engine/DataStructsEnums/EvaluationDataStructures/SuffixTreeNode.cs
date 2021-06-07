@@ -84,7 +84,7 @@ namespace BoomSports.Prototype
             evaluationObject.ResetWinningEvaluationNodesList();
 
             //This could be a wild
-            NodeDisplaySymbolContainer rootWinSymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nodeInfo.column].displaySymbolSequence[nodeInfo.row];
+            NodeDisplaySymbolContainer rootWinSymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nodeInfo.column].displaySymbolsToLoad[nodeInfo.row];
             //Checks the first symbol for a feature condition - for features that don't require a winning payline
             CheckAndAddSlotsNeedFeaturesEvaluated(rootWinSymbol, ref evaluationObject, ref nodeInfo);
             //Adds the first symbol as a lineWin and makes the primary symbol to track for
@@ -176,8 +176,8 @@ namespace BoomSports.Prototype
         {
             //Debug.Log($"Checking node {nextSymbol.nodeInfo.Print()} against root node {rootWinSymbol.nodeInfo.Print()}");
             //Get current node symbol display container
-            NodeDisplaySymbolContainer currentDisplaySymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[rootWinSymbol.nodeInfo.column].displaySymbolSequence[rootWinSymbol.nodeInfo.row];
-            NodeDisplaySymbolContainer nextDisplaySymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nextSymbol.nodeInfo.column].displaySymbolSequence[nextSymbol.nodeInfo.row];
+            NodeDisplaySymbolContainer currentDisplaySymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[rootWinSymbol.nodeInfo.column].displaySymbolsToLoad[rootWinSymbol.nodeInfo.row];
+            NodeDisplaySymbolContainer nextDisplaySymbol = evaluationObject.displayConfigurationContainerEvaluating.configuration[nextSymbol.nodeInfo.column].displaySymbolsToLoad[nextSymbol.nodeInfo.row];
 
             //Debug.Log($"currentDisplaySymbol = {currentDisplaySymbol.primarySymbol} nextDisplaySymbol = {nextDisplaySymbol.primarySymbol}");
 

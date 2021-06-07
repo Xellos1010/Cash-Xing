@@ -24,7 +24,7 @@ namespace BoomSports.Prototype.Managers
 
         internal string ReturnDisplaySymbolsPrint()
         {
-            return String.Join(" ", stripInfo.spinInformation.displaySymbolSequence);
+            return String.Join(" ", stripInfo.spinInformation.displaySymbolsToLoad);
         }
     }
 }

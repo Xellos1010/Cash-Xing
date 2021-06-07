@@ -15,7 +15,7 @@ public struct GroupSpinInformationStruct
     /// Display Symbol Sequence for this spin - First in First Out
     /// </summary>
     [UnityEngine.SerializeField]
-    public NodeDisplaySymbolContainer[] displaySymbolSequence;
+    public NodeDisplaySymbolContainer[] displaySymbolsToLoad;
     /// <summary>
     /// The spin symbols that will sequence on Spin Idle
     /// </summary>
@@ -29,7 +29,7 @@ public struct GroupSpinInformationStruct
 
     public GroupSpinInformationStruct(NodeDisplaySymbolContainer[] slotDisplaySymbols) : this()
     {
-        displaySymbolSequence = slotDisplaySymbols;
+        displaySymbolsToLoad = slotDisplaySymbols;
     }
     /// <summary>
     /// Used to Get all display symbols index in SymbolData Scriptable Object
@@ -38,9 +38,9 @@ public struct GroupSpinInformationStruct
     internal List<int> GetAllDisplaySymbolsIndex()
     {
         List<int> output = new List<int>();
-        for (int i = 0; i < displaySymbolSequence.Length; i++)
+        for (int i = 0; i < displaySymbolsToLoad.Length; i++)
         {
-            output.Add(displaySymbolSequence[i].primarySymbol);
+            output.Add(displaySymbolsToLoad[i].primarySymbol);
         }
         return output;
     }
@@ -48,9 +48,9 @@ public struct GroupSpinInformationStruct
     internal string PrintDisplaySymbols()
     {
         string output = "";
-        for (int i = 0; i < displaySymbolSequence.Length; i++)
+        for (int i = 0; i < displaySymbolsToLoad.Length; i++)
         {
-            output += "|" + displaySymbolSequence[i].primarySymbol.ToString();
+            output += "|" + displaySymbolsToLoad[i].primarySymbol.ToString();
         }
         return output;
     }

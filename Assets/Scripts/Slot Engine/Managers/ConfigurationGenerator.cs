@@ -200,12 +200,12 @@ namespace BoomSports.Prototype
             SetReelsAndSlotsPerReel(stripConfiguration, displayZonesPerStrip);
             //Set each reel display zone information
             ConfigurationDisplayZonesStruct temp;
-            for (int group = 0; group < connectedConfigurationObject.configurationGroupManagers.Length; group++)
+            for (int group = 0; group < connectedConfigurationObject.groupObjectManagers.Length; group++)
             {
                 Debug.Log($"displayZonesPerStrip[group].paddingBefore {displayZonesPerStrip[group].paddingBefore}");
                 temp = new ConfigurationDisplayZonesStruct(displayZonesPerStrip[group]);
-                connectedConfigurationObject.configurationGroupManagers[group].configurationGroupDisplayZones = temp;
-                Debug.Log($"connectedConfigurationObject.configurationGroupManagers[group].configurationGroupDisplayZones.paddingBefore{connectedConfigurationObject.configurationGroupManagers[group].configurationGroupDisplayZones.paddingBefore}");
+                connectedConfigurationObject.groupObjectManagers[group].configurationGroupDisplayZones = temp;
+                Debug.Log($"connectedConfigurationObject.configurationGroupManagers[group].configurationGroupDisplayZones.paddingBefore{connectedConfigurationObject.groupObjectManagers[group].configurationGroupDisplayZones.paddingBefore}");
             }
             return Task.CompletedTask;
         }
@@ -234,12 +234,12 @@ namespace BoomSports.Prototype
             //Set each Reels Configuration - each reel will take care of generating slots
             for (int i = 0; i < stripsConfiguration.strips.Length; i++)
             {
-                Debug.Log($"Setting {connectedConfigurationObject.configurationGroupManagers[i].gameObject.name} reelstrip info with total positions {displayZonesPerStrip[i].totalPositions}");
-                BaseObjectGroupManager temp2 = connectedConfigurationObject.configurationGroupManagers[i];
+                Debug.Log($"Setting {connectedConfigurationObject.groupObjectManagers[i].gameObject.name} reelstrip info with total positions {displayZonesPerStrip[i].totalPositions}");
+                BaseObjectGroupManager temp2 = connectedConfigurationObject.groupObjectManagers[i];
                 //Generate Slot Objects
                 Debug.Log($"Generate Slot Objects for stripsConfiguration.strips[{i}]{stripsConfiguration.strips[i]}");
                 GenerateStripSlotObjects(ref temp2, stripsConfiguration.strips[i]);
-                objectGroupManager = connectedConfigurationObject.configurationGroupManagers[i] as StripObjectGroupManager;
+                objectGroupManager = connectedConfigurationObject.groupObjectManagers[i] as StripObjectGroupManager;
                 arrayCopy = new Vector3[displayZonesPerStrip[i].totalPositions];
                 for (int j = 0; j < arrayCopy.Length; j++)
                 {
@@ -271,10 +271,10 @@ namespace BoomSports.Prototype
         /// <param name="connectedConfigurationObject"></param>
         private void SetStripObjectsInitialPositions(ref StripConfigurationObject connectedConfigurationObject)
         {
-            for (int strip = 0; strip < connectedConfigurationObject.configurationGroupManagers.Length; strip++)
+            for (int strip = 0; strip < connectedConfigurationObject.groupObjectManagers.Length; strip++)
             {
                 //Generates the local position for the strip. Slot Movements are calculcated and applied to localPosition;
-                connectedConfigurationObject.configurationGroupManagers[strip].transform.localPosition = GenerateLocalPositionForStrip(strip, connectedConfigurationObject.configurationGroupManagers.Length, connectedConfigurationObject.configurationSettings);
+                connectedConfigurationObject.groupObjectManagers[strip].transform.localPosition = GenerateLocalPositionForStrip(strip, connectedConfigurationObject.groupObjectManagers.Length, connectedConfigurationObject.configurationSettings);
             }
         }
 
@@ -639,46 +639,46 @@ namespace BoomSports.Prototype
             //Ensure Connected Reel Managers 
             EnsureConnectedConfigurationObjectStripManagersSet(ref connectedConfigurationObject);
             //Add or subtract reel obejcts as needed
-            if(lengthOfReels - connectedConfigurationObject.configurationGroupManagers.Length < 0)
+            if(lengthOfReels - connectedConfigurationObject.groupObjectManagers.Length < 0)
             {
                 //Refactor to make generic
                 BaseObjectGroupManager temp;
                 //Remove strip objects
-                for (int strip = connectedConfigurationObject.configurationGroupManagers.Length - 1; strip >= lengthOfReels ; strip--)
+                for (int strip = connectedConfigurationObject.groupObjectManagers.Length - 1; strip >= lengthOfReels ; strip--)
                 {
-                    temp = connectedConfigurationObject.configurationGroupManagers[strip];
-                    connectedConfigurationObject.configurationGroupManagers = connectedConfigurationObject.configurationGroupManagers.RemoveAt<BaseObjectGroupManager>(strip);
+                    temp = connectedConfigurationObject.groupObjectManagers[strip];
+                    connectedConfigurationObject.groupObjectManagers = connectedConfigurationObject.groupObjectManagers.RemoveAt<BaseObjectGroupManager>(strip);
                     Destroy(temp.gameObject);
                 }
             }
             else
             {
                 List<StripObjectGroupManager> strips = new List<StripObjectGroupManager>();
-                strips.AddRange(connectedConfigurationObject.configurationGroupManagers.Cast<StripObjectGroupManager>());
+                strips.AddRange(connectedConfigurationObject.groupObjectManagers.Cast<StripObjectGroupManager>());
                 //Add strip objects
-                for (int strip = connectedConfigurationObject.configurationGroupManagers.Length; strip < lengthOfReels; strip++)
+                for (int strip = connectedConfigurationObject.groupObjectManagers.Length; strip < lengthOfReels; strip++)
                 {
                     strips.Add(GenerateStripObject(strip));
                 }
-                connectedConfigurationObject.configurationGroupManagers = strips.ToArray();
+                connectedConfigurationObject.groupObjectManagers = strips.ToArray();
             }
         }
 
         private static void EnsureConnectedConfigurationObjectStripManagersSet(ref BaseConfigurationObjectManager connectedConfigurationObject)
         {
-            if (connectedConfigurationObject.configurationGroupManagers?.Length > 0)
+            if (connectedConfigurationObject.groupObjectManagers?.Length > 0)
             {
-                for (int manager = 0; manager < connectedConfigurationObject.configurationGroupManagers.Length; manager++)
+                for (int manager = 0; manager < connectedConfigurationObject.groupObjectManagers.Length; manager++)
                 {
-                    if (connectedConfigurationObject.configurationGroupManagers[manager] == null)
+                    if (connectedConfigurationObject.groupObjectManagers[manager] == null)
                     {
-                        connectedConfigurationObject.configurationGroupManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<BaseObjectGroupManager>();
+                        connectedConfigurationObject.groupObjectManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<BaseObjectGroupManager>();
                     }
                 }
             }
             else
             {
-                connectedConfigurationObject.configurationGroupManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<BaseObjectGroupManager>();
+                connectedConfigurationObject.groupObjectManagers = connectedConfigurationObject.gameObject.GetComponentsInChildren<BaseObjectGroupManager>();
             }
         }
 

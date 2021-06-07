@@ -33,6 +33,11 @@ namespace BoomSports.Prototype.Managers
             EditorGUILayout.LabelField("SpinManager Controls");
             if (Application.isPlaying)
             {
+                if (GUILayout.Button("Evaluate current configuration and set to spin end state"))
+                {
+                    //This should put the reels into a spin state without relying on the Animator
+                    myTarget.EvalauteCurrentDebugSpinEnd();
+                }
                 if (GUILayout.Button("Start Test Spin"))
                 {
                     //This should put the reels into a spin state without relying on the Animator
@@ -391,6 +396,12 @@ namespace BoomSports.Prototype.Managers
             
             //Spin reels
             configurationObject.managers.interactionController.CheckStateToSpinSlam();
+        }
+
+        internal void EvalauteCurrentDebugSpinEnd()
+        {
+            EvaluationManager.instance.EvaluateWinningSymbolsFromCurrentConfiguration();
+            StaticStateManager.SetStateTo(States.Spin_End);
         }
     }
 }
