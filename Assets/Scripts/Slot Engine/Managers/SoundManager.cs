@@ -23,10 +23,10 @@ namespace BoomSports.Prototype.Managers
         void OnEnable()
         {
             //Setup Reel Start and Stop Spin
-            for (int reel = 0; reel < configurationObject.configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < configurationObject.groupObjectManagers.Length; reel++)
             {
-                configurationObject.configurationGroupManagers[reel].objectGroupStartSpin += SoundManager_reelStartSpin;
-                configurationObject.configurationGroupManagers[reel].objectGroupEndSpin += SoundManager_reelStopSpin;
+                configurationObject.groupObjectManagers[reel].objectGroupStartSpin += SoundManager_reelStartSpin;
+                configurationObject.groupObjectManagers[reel].objectGroupEndSpin += SoundManager_reelStopSpin;
             }
             configurationObject.managers.rackingManager.rackStart += Racking_manager_rackStart;
             configurationObject.managers.rackingManager.rackEnd += Racking_manager_rackEnd;
@@ -62,10 +62,10 @@ namespace BoomSports.Prototype.Managers
             //Setup Reel Start and Stop Spin
             try
             {
-                for (int reel = 0; reel < configurationObject.configurationGroupManagers.Length; reel++)
+                for (int reel = 0; reel < configurationObject.groupObjectManagers.Length; reel++)
                 {
-                    configurationObject.configurationGroupManagers[reel].objectGroupStartSpin -= SoundManager_reelStartSpin;
-                    configurationObject.configurationGroupManagers[reel].objectGroupEndSpin -= SoundManager_reelStopSpin;
+                    configurationObject.groupObjectManagers[reel].objectGroupStartSpin -= SoundManager_reelStartSpin;
+                    configurationObject.groupObjectManagers[reel].objectGroupEndSpin -= SoundManager_reelStopSpin;
                 }
                 configurationObject.managers.rackingManager.rackStart -= Racking_manager_rackStart;
                 configurationObject.managers.rackingManager.rackEnd -= Racking_manager_rackEnd;

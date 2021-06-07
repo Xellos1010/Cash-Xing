@@ -50,7 +50,7 @@ public class StripSpinDirectionalStepperEvaluatorScriptableObject : BaseStripSpi
     /// <returns></returns>
     public override Vector3 EvaluateSpin(float spinTimerCurrent, ref SpinPath spinPath)
     {
-        Debug.Log("Evaluating Stepper Directional Spin");
+        //Debug.Log("Evaluating Stepper Directional Spin");
         //See how many steps to evaluate
         //Debug.Log($"pathPositions.path.Length = {pathPositions.path.Length} pathPositions.startPosition = {pathPositions.startPosition}  + stepsAllowedPerSpin {stepsAllowedPerSpin} = {pathPositions.startPosition + stepsAllowedPerSpin}");
 

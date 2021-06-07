@@ -1,6 +1,8 @@
 ﻿//For Parsing Purposes
 using BoomSports.Prototype;
+using BoomSports.Prototype.Managers;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 [System.Serializable]
 public partial class WinningPayline : WinningObject
@@ -20,10 +22,24 @@ public partial class WinningPayline : WinningObject
     internal float GetTotalWin(StripConfigurationObject matrix)
     {
         float output = 0;
+        int multiplier = 1;
         for (int i = 0; i < winningNodes.Length; i++)
         {
+            //Cash Crossing Specific but can be extracted
+            if(StripConfigurationObject.instance.isFeatureSymbol(winningNodes[i].symbol,Features.multiplier))
+            {
+                //Does not account for multiple multipliers
+                //Point to symbol container data from matrix and get multiplier value
+                List<BaseObjectManager> temp = matrix.groupObjectManagers[winningNodes[i].nodeInfo.column].GetSlotsDecending();
+                //Should account for padding slot already - If you refactor without understanding may break.
+                Debug.Log($"Found multiplier win - setting multiplier from node {winningNodes[i].nodeInfo.Print()} {matrix.groupObjectManagers[winningNodes[i].nodeInfo.column].gameObject.name} {temp[winningNodes[i].nodeInfo.row].gameObject.name} ");
+                //Add all multipliers in the winning array
+                multiplier += temp[winningNodes[i].nodeInfo.row].baseSymbolData.winMultiplier;
+            }
+            //Take symbol win amount and add together - if symbol is a multiplier then take multiplier amount from row in column symbol data is set to
             output += CalculateTotalWin(matrix.symbolDataScriptableObject.symbols[winningNodes[i].symbol].winValue,ref matrix);
         }
+        output *= multiplier;
         return output;
     }
 

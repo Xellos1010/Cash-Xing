@@ -36,6 +36,10 @@ namespace BoomSports.Prototype
             EditorGUILayout.EnumPopup(StaticStateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
+            if (GUILayout.Button("Set Object Group Managers to Children"))
+            {
+                myTarget.groupObjectManagers = myTarget.transform.GetComponentsInChildren<BaseObjectGroupManager>(true);
+            }
             if (GUILayout.Button("Set Slots Display Sequence to current"))
             {
                 myTarget.SetSlotsDisplaySequenceToCurrentSequence();
@@ -129,14 +133,14 @@ namespace BoomSports.Prototype
         {
             get
             {
-                if (configurationGroupManagers != null)
-                    if (configurationGroupManagers.Length > 0)
+                if (groupObjectManagers != null)
+                    if (groupObjectManagers.Length > 0)
                     {
                         List<Vector3[]> temp = new List<Vector3[]>();
                         StripObjectGroupManager temp2;
-                        for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+                        for (int reel = 0; reel < groupObjectManagers.Length; reel++)
                         {
-                            temp2 = configurationGroupManagers[reel] as StripObjectGroupManager;
+                            temp2 = groupObjectManagers[reel] as StripObjectGroupManager;
                             temp.Add(temp2.localPositionsInStrip);
                         }
                         return temp.ToArray();
@@ -153,14 +157,14 @@ namespace BoomSports.Prototype
         {
             get
             {
-                if (configurationGroupManagers != null)
-                    if (configurationGroupManagers.Length > 0)
+                if (groupObjectManagers != null)
+                    if (groupObjectManagers.Length > 0)
                     {
                         StripObjectGroupManager temp2;
                         List<Vector3[]> temp = new List<Vector3[]>();
-                        for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+                        for (int reel = 0; reel < groupObjectManagers.Length; reel++)
                         {
-                            temp2 = configurationGroupManagers[reel] as StripObjectGroupManager;
+                            temp2 = groupObjectManagers[reel] as StripObjectGroupManager;
                             temp.Add(temp2.localPositionsInStrip);
                         }
                         return temp.ToArray();
@@ -189,8 +193,8 @@ namespace BoomSports.Prototype
             Vector3 payline_posiiton_on_reel;
             //Debug.Log($"returning Positions based on payline configuration = {payline.PrintConfiguration()}");
 
-            for (int strip = payline.left_right ? 0 : configurationGroupManagers.Length - 1;
-                payline.left_right ? strip < configurationGroupManagers.Length : strip >= 0;
+            for (int strip = payline.left_right ? 0 : groupObjectManagers.Length - 1;
+                payline.left_right ? strip < groupObjectManagers.Length : strip >= 0;
                 strip += payline.left_right ? 1 : -1)
             {
                 if (!fullLineWin)
@@ -210,7 +214,7 @@ namespace BoomSports.Prototype
                         {
                             if (payline_positions_set < payline.configuration.payline.Length)
                             {
-                                payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[strip], payline.configuration.payline[payline_positions_set]);
+                                payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref groupObjectManagers[strip], payline.configuration.payline[payline_positions_set]);
                                 payline_positions_set += 1;
                                 out_positions.Add(payline_posiiton_on_reel);
                             }
@@ -227,7 +231,7 @@ namespace BoomSports.Prototype
                     {
                         if (payline_positions_set < payline.configuration.payline.Length)
                         {
-                            payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref configurationGroupManagers[strip], payline.configuration.payline[payline_positions_set]);
+                            payline_posiiton_on_reel = ReturnPositionOnStripForPayline(ref groupObjectManagers[strip], payline.configuration.payline[payline_positions_set]);
                             payline_positions_set += 1;
                             out_positions.Add(payline_posiiton_on_reel);
                         }
@@ -317,7 +321,7 @@ namespace BoomSports.Prototype
             if (current_payline_displayed != null)
             {
                 List<BaseObjectManager> winning_slots, losing_slots;
-                ReturnWinLoseSlots(current_payline_displayed, managers.winningObjectsManager.linePositions, out winning_slots, out losing_slots, ref configurationGroupManagers);
+                ReturnWinLoseSlots(current_payline_displayed, managers.winningObjectsManager.linePositions, out winning_slots, out losing_slots, ref groupObjectManagers);
                 bool is_all_animations_resolve_intro = false;
                 while (!is_all_animations_resolve_intro)
                 {
@@ -360,7 +364,7 @@ namespace BoomSports.Prototype
             //Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",String.Join(" ", winning_payline.payline.payline_configuration.ToString()), String.Join(" ",winning_payline.winning_symbols)));
             //Get Winning Slots and loosing slots
             current_payline_displayed = winning_payline;
-            ReturnWinLoseSlots(winning_payline, linePositions,out winning_slots, out losing_slots, ref configurationGroupManagers);
+            ReturnWinLoseSlots(winning_payline, linePositions,out winning_slots, out losing_slots, ref groupObjectManagers);
             SetSlotsToResolveWinLose(ref winning_slots, true);
             SetSlotsToResolveWinLose(ref losing_slots, false);
             return Task.CompletedTask;
@@ -503,23 +507,23 @@ namespace BoomSports.Prototype
 
         internal void SetSymbolsToDisplayOnConfigurationObjectTo(DisplayConfigurationContainer currentConfiguration)
         {
-            Debug.Log($"configurationGroupManagers.Length = {configurationGroupManagers.Length}");
+            Debug.Log($"configurationGroupManagers.Length = {groupObjectManagers.Length}");
             Debug.Log($"currentConfiguration.configuration?.Length = {currentConfiguration.configuration?.Length}");
-            for (int groupManagerIndex = 0; groupManagerIndex < configurationGroupManagers.Length; groupManagerIndex++)
+            for (int groupManagerIndex = 0; groupManagerIndex < groupObjectManagers.Length; groupManagerIndex++)
             {
                 Debug.Log($"configurationGroupManagers[{groupManagerIndex}].SetSymbolEndSymbolsAndDisplay({String.Join("|", currentConfiguration.configuration[groupManagerIndex].GetAllDisplaySymbolsIndex())})");
-                configurationGroupManagers[groupManagerIndex].SetSymbolEndSymbolsAndDisplay(currentConfiguration.configuration[groupManagerIndex]);
+                groupObjectManagers[groupManagerIndex].SetSymbolEndSymbolsAndDisplay(currentConfiguration.configuration[groupManagerIndex]);
             }
         }
 
         private void SetSlotsAnimatorBoolTo(supportedAnimatorBools bool_name, bool v)
         {
             //Debug.Log(String.Format("Setting Slot Animator {0} to {1}",bool_name.ToString(),v));
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                 {
-                    configurationGroupManagers[reel].objectsInGroup[slot].SetBoolStateMachines(bool_name, v);
+                    groupObjectManagers[reel].objectsInGroup[slot].SetBoolStateMachines(bool_name, v);
                 }
             }
         }
@@ -528,23 +532,23 @@ namespace BoomSports.Prototype
         {
             //Initialize reelstrips managers
             List<StripObjectGroupManager> reelstrip_managers = new List<StripObjectGroupManager>();
-            if (configurationGroupManagers == null)
+            if (groupObjectManagers == null)
             {
                 StripObjectGroupManager[] reelstrip_managers_intiialzied = transform.GetComponentsInChildren<StripObjectGroupManager>(true);
                 if (reelstrip_managers_intiialzied.Length < 1)
-                    configurationGroupManagers = new StripObjectGroupManager[0];
+                    groupObjectManagers = new StripObjectGroupManager[0];
                 else
-                    configurationGroupManagers = reelstrip_managers_intiialzied;
+                    groupObjectManagers = reelstrip_managers_intiialzied;
             }
             //Load any reelstrip managers that are already initialized
-            reelstrip_managers.AddRange(configurationGroupManagers.Cast<StripObjectGroupManager>());
+            reelstrip_managers.AddRange(groupObjectManagers.Cast<StripObjectGroupManager>());
             return reelstrip_managers;
         }
 
         internal void GenerateReelStripsToLoop(ref GroupSpinInformationStruct[] reelConfiguration)
         {
             //Generate reel strips based on number of reels and symbols per reel - Insert ending symbol configuration and hold reference for array range
-            GenerateReelStripsFor(configurationGroupManagers.Cast<StripObjectGroupManager>().ToArray(), ref reelConfiguration, slotsPerStripLoop);
+            GenerateReelStripsFor(groupObjectManagers.Cast<StripObjectGroupManager>().ToArray(), ref reelConfiguration, slotsPerStripLoop);
         }
 
         private void GenerateReelStripsFor(StripObjectGroupManager[] reelStripManagers, ref GroupSpinInformationStruct[] spinConfiguration, int slots_per_strip_onSpinLoop)
@@ -568,11 +572,11 @@ namespace BoomSports.Prototype
         internal void InitializeAllAnimators()
         {
             managers.animatorStateMachineMaster.InitializeAnimator();
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                 {
-                    configurationGroupManagers[reel].objectsInGroup[slot].animatorStateMachine.InitializeAnimator();
+                    groupObjectManagers[reel].objectsInGroup[slot].animatorStateMachine.InitializeAnimator();
                 }
             }
         }
@@ -581,12 +585,12 @@ namespace BoomSports.Prototype
         {
             linePositions = new List<Vector3>();
             //Return List Slots In Order 0 -> -
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
                 //Get current slot order based on slot transform compared to positions in path.
-                List<BaseObjectManager> slots_decending_in_reel = configurationGroupManagers[reel].GetSlotsDecending();
+                List<BaseObjectManager> slots_decending_in_reel = groupObjectManagers[reel].GetSlotsDecending();
                 //Cache the position of the slot that we need from this reel
-                linePositions.Add(ReturnSlotPositionOnPayline(payline.configuration.payline[reel], ref slots_decending_in_reel, ref configurationGroupManagers[reel]));
+                linePositions.Add(ReturnSlotPositionOnPayline(payline.configuration.payline[reel], ref slots_decending_in_reel, ref groupObjectManagers[reel]));
             }
         }
 
@@ -626,7 +630,7 @@ namespace BoomSports.Prototype
 
         private string ReturnDisplaySymbolsPrint(GroupSpinInformationStruct reelstrip_info)
         {
-            return String.Join("|", reelstrip_info.displaySymbolSequence);
+            return String.Join("|", reelstrip_info.displaySymbolsToLoad);
         }
 
         void OnEnable()
@@ -747,31 +751,35 @@ namespace BoomSports.Prototype
                     bool resolve_intro = false;
                     Debug.LogWarning($"mode = {StaticStateManager.enCurrentMode} Bonus Game triggered = {StaticStateManager.bonusGameTriggered} FreeSpins Remaining = {managers.machineInfoManager.machineInfoScriptableObject.freespins} Multiplier = {managers.machineInfoManager.machineInfoScriptableObject.multiplier}");
 
-                    //Can Trigger Free Spins without having a win.
-                    if (CheckForWin()) //If overlay has won will have winning payline
+                    //Can Trigger Free Spins without having a win
+                    //TODO calculate symbol win with multiplier symbol on first evaluate trailing multiplier
+                    if (CheckForWin()) //Check for winning objects and calculate total winnings
                     {
+                        //need to fix feature
                         await CycleWinningPaylinesOneShot();
                         //await CheckForOverlayAndPlay();
                         //Bonus Game needs to be set before entering freespins mode and after last spin is accounted for
-                        if (!StaticStateManager.bonusGameTriggered)
+                        //Cash crossing specific
+                        if (!StaticStateManager.bonusGameTriggered) // Base game win with no bonus trigger - trailling multipliers
                         {
                             //Debug.Log("Win in Base Game Triggered");
                             //Calculate Rack Amount and either skip resolve phase or 
                             //Proceed to next state and sync state machine
-                            SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, true);
-                            SetFreespinTextTo(String.Format("{0:C2} Total Won this Spin", GetTotalSpinAmountWon()));
+                            SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, true); //Cycle winning payline
+                            //Display total win amount
+                            SetFreespinBannerTextTo(String.Format("{0:C2} Total Won this Spin", GetTotalSpinAmountWon()));
                             if (StaticStateManager.enCurrentMode != GameModes.baseGame)
                                 StaticStateManager.SetFeatureActiveTo(Features.freespin, false);
                             //Debug.LogWarning("Setting Resolve Intro true");
                             resolve_intro = true;
                         }
-                        else
+                        else // Will her here
                         {
                             //Rack win to bank and continue to next spin
-                            Debug.Log("There is a win and bonus game triggeres");
+                            Debug.Log("There is a win and bonus game triggered");
                             //Bank Lerped Already
                             //slot_machine_managers.machine_info_manager.OffsetBankBy(slot_machine_managers.paylines_manager.GetTotalWinAmount());
-                            SetFreespinTextTo(String.Format("{0:C2} Total Won this Spin", GetTotalSpinAmountWon()));
+                            SetFreespinBannerTextTo(String.Format("{0:C2} Total Won this Spin", GetTotalSpinAmountWon()));
                             ToggleTMPFreespin(true);
                             SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, false); // dont rack wins
                             if (managers.machineInfoManager.machineInfoScriptableObject.freespins > 0)
@@ -811,6 +819,7 @@ namespace BoomSports.Prototype
                     await isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
                     await isAllSlotSubAnimatorsReady("Spin_Outro");
 
+                    //Where we resolve animations and racking rolups
                     if (resolve_intro)
                     {
                         //Debug.Log("Playing Resolve Into in Spin End");
@@ -818,6 +827,7 @@ namespace BoomSports.Prototype
                         await Task.Delay(20);
                         SetAllAnimatorsBoolTo(supportedAnimatorBools.WinRacking, true);
                         SetAllAnimatorsTriggerTo(supportedAnimatorTriggers.SpinResolve, true);
+                        //Wait till we play resolve intro animations and switch to resolve intro state
                         await isAllAnimatorsThruStateAndAtPauseState("Resolve_Intro");
                         await isAllSlotSubAnimatorsReady("Resolve_Intro");
                         StaticStateManager.SetStateTo(States.Resolve_Intro);
@@ -871,7 +881,7 @@ namespace BoomSports.Prototype
                     //TODO Refactor hack
                     if (managers.machineInfoManager.machineInfoScriptableObject.freespins < 1)
                     {
-                        SetFreespinTextTo("");
+                        SetFreespinBannerTextTo("");
                         freespinText.enabled = false;
                     }
                     else
@@ -946,6 +956,7 @@ namespace BoomSports.Prototype
         private async Task CycleWinningPaylinesOneShot()
         {
             Debug.LogWarning("Implement Cycle Winning Paylines Oneshot");
+            //TODO cycle paylines from highest value to lowest and triggering feature first
             //await slotMachineManagers.paylines_manager.CyclePaylinesOneShot();
         }
 
@@ -981,7 +992,7 @@ namespace BoomSports.Prototype
         //public Animator plateGraphicAnimatorWinBank;
         private async Task DisplayWinAmount(double spinWinAmount, double bankAmount)
         {
-            SetFreespinTextTo(String.Format("{0:C2} {1}", spinWinAmount, " Won This Spin!"));
+            SetFreespinBannerTextTo(String.Format("{0:C2} {1}", spinWinAmount, " Won This Spin!"));
             ToggleMeshRendererForGameObject(rackingRollupText.gameObject, false);
             //If you are 9X bet or you have a multiplier win - multiplier win will be phased out for own mechanism
             if (spinWinAmount + bankAmount > managers.machineInfoManager.machineInfoScriptableObject.bet_amount * 9 || managers.machineInfoManager.machineInfoScriptableObject.multiplier > 0)
@@ -1022,7 +1033,7 @@ namespace BoomSports.Prototype
             textRenderer.enabled = v;
         }
 
-        private void SetFreespinTextTo(string toText)
+        private void SetFreespinBannerTextTo(string toText)
         {
             //Debug.Log($"Setting Freespin Text To {toText}");
             freespinText.text = toText;
@@ -1033,7 +1044,7 @@ namespace BoomSports.Prototype
         private void Racking_manager_rackEnd()
         {
             Debug.Log("Matrix Recieved rack end ");
-            SetFreespinTextTo(String.Format("{0:C2} {1}", amountRacked, " Total Winnings"));
+            SetFreespinBannerTextTo(String.Format("{0:C2} {1}", amountRacked, " Total Winnings"));
             ToggleTMPFreespin(true);
             amountRacked = 0;
             managers.rackingManager.rackEnd -= Racking_manager_rackEnd;
@@ -1113,12 +1124,12 @@ namespace BoomSports.Prototype
 
         private void PlayAnimationOnAllSlots(string v)
         {
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                 {
                     //Temporary fix because Animator decides to sometimes play an animation override and sometimes not
-                    configurationGroupManagers[reel].objectsInGroup[slot].PlayAnimationOnPresentationSymbol("Resolve_Outro");
+                    groupObjectManagers[reel].objectsInGroup[slot].PlayAnimationOnPresentationSymbol("Resolve_Outro");
                 }
             }
         }
@@ -1138,17 +1149,17 @@ namespace BoomSports.Prototype
             bool is_all_animators_resolved = false;
             while (!is_all_animators_resolved)
             {
-                for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+                for (int reel = 0; reel < groupObjectManagers.Length; reel++)
                 {
-                    for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                    for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                     {
-                        if (!configurationGroupManagers[reel].objectsInGroup[slot].isAllAnimatorsFinished(state))
+                        if (!groupObjectManagers[reel].objectsInGroup[slot].isAllAnimatorsFinished(state))
                         {
                             await Task.Delay(100);
                             break;
                         }
                     }
-                    if (reel == configurationGroupManagers.Length - 1)
+                    if (reel == groupObjectManagers.Length - 1)
                         is_all_animators_resolved = true;
                 }
             }
@@ -1156,7 +1167,7 @@ namespace BoomSports.Prototype
 
         internal bool CheckForWin()
         {
-            return managers.evaluationManager.ReturnWinningObjects().Length > 0 ? true : false;
+            return EvaluationManager.instance.ReturnWinningObjects().Length > 0 ? true : false;
         }
         internal async Task isAllSlotAnimatorsThruState(string state)
         {
@@ -1166,9 +1177,9 @@ namespace BoomSports.Prototype
         private Animator[] GetAllSlotAnimators()
         {
             List<Animator> output = new List<Animator>();
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                configurationGroupManagers[reel].AddSlotAnimatorsToList(ref output);
+                groupObjectManagers[reel].AddSlotAnimatorsToList(ref output);
             }
             return output.ToArray();
         }
@@ -1284,17 +1295,17 @@ namespace BoomSports.Prototype
             bool is_all_animators_resolved = false;
             while (!is_all_animators_resolved)
             {
-                for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+                for (int reel = 0; reel < groupObjectManagers.Length; reel++)
                 {
-                    for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                    for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                     {
-                        if (!configurationGroupManagers[reel].objectsInGroup[slot].isSymbolAnimatorFinishedAndAtPauseState(state))
+                        if (!groupObjectManagers[reel].objectsInGroup[slot].isSymbolAnimatorFinishedAndAtPauseState(state))
                         {
                             await Task.Delay(100);
                             break;
                         }
                     }
-                    if (reel == configurationGroupManagers.Length - 1)
+                    if (reel == groupObjectManagers.Length - 1)
                         is_all_animators_resolved = true;
                 }
             }
@@ -1324,17 +1335,17 @@ namespace BoomSports.Prototype
             bool is_all_animators_resolved = false;
             while (!is_all_animators_resolved)
             {
-                for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+                for (int reel = 0; reel < groupObjectManagers.Length; reel++)
                 {
-                    for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                    for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                     {
-                        if (!configurationGroupManagers[reel].objectsInGroup[slot].isSymbolAnimationFinished(state))
+                        if (!groupObjectManagers[reel].objectsInGroup[slot].isSymbolAnimationFinished(state))
                         {
                             await Task.Delay(100);
                             break;
                         }
                     }
-                    if (reel == configurationGroupManagers.Length - 1)
+                    if (reel == groupObjectManagers.Length - 1)
                         is_all_animators_resolved = true;
                 }
             }
@@ -1367,9 +1378,9 @@ namespace BoomSports.Prototype
             bool task_lock = true;
             while (task_lock)
             {
-                for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+                for (int reel = 0; reel < groupObjectManagers.Length; reel++)
                 {
-                    if (configurationGroupManagers[reel].areObjectsInEndPosition)
+                    if (groupObjectManagers[reel].areObjectsInEndPosition)
                     {
                         await Task.Delay(100);
                     }
@@ -1383,24 +1394,24 @@ namespace BoomSports.Prototype
 
         private void SetSlotsAnimatorTriggerTo(supportedAnimatorTriggers slot_to_trigger)
         {
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                 {
-                    configurationGroupManagers[reel].objectsInGroup[slot].SetTriggerTo(slot_to_trigger);
-                    configurationGroupManagers[reel].objectsInGroup[slot].SetTriggerSubStatesTo(slot_to_trigger);
+                    groupObjectManagers[reel].objectsInGroup[slot].SetTriggerTo(slot_to_trigger);
+                    groupObjectManagers[reel].objectsInGroup[slot].SetTriggerSubStatesTo(slot_to_trigger);
                 }
             }
         }
 
         private void ResetSlotsAnimatorTrigger(supportedAnimatorTriggers slot_to_trigger)
         {
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                for (int slot = 0; slot < configurationGroupManagers[reel].objectsInGroup.Length; slot++)
+                for (int slot = 0; slot < groupObjectManagers[reel].objectsInGroup.Length; slot++)
                 {
-                    configurationGroupManagers[reel].objectsInGroup[slot].ResetTrigger(slot_to_trigger);
-                    configurationGroupManagers[reel].objectsInGroup[slot].ResetTriggerSubStates(slot_to_trigger);
+                    groupObjectManagers[reel].objectsInGroup[slot].ResetTrigger(slot_to_trigger);
+                    groupObjectManagers[reel].objectsInGroup[slot].ResetTriggerSubStates(slot_to_trigger);
                 }
             }
         }
@@ -1422,7 +1433,7 @@ namespace BoomSports.Prototype
         }
         internal void SetStripInfoStruct(StripConfigurationObject configurationObject)
         {
-            for (int strip = 0; strip < configurationGroupManagers.Length; strip++)
+            for (int strip = 0; strip < groupObjectManagers.Length; strip++)
             {
                 Debug.Log($"configurationObject.configurationSettings.displayZones[{strip}] = {configurationObject.configurationSettings.displayZones[strip]}");
                 SetStripInfoStruct(strip, configurationObject.configurationSettings.displayZones[strip]);
@@ -1431,8 +1442,8 @@ namespace BoomSports.Prototype
 
         internal void SetStripInfoStruct(int strip, ConfigurationDisplayZonesStruct displayZone)
         {
-            StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
-            configurationGroupManagers[strip].indexInGroupManager = strip;
+            StripObjectGroupManager temp = groupObjectManagers[strip] as StripObjectGroupManager;
+            groupObjectManagers[strip].indexInGroupManager = strip;
             GroupInformationStruct temp2 = temp.groupInfo;
             temp2.index = strip;
             ConfigurationDisplayZonesStruct temp3 = new ConfigurationDisplayZonesStruct(displayZone);
@@ -1442,8 +1453,8 @@ namespace BoomSports.Prototype
         }
         internal void SetStripInfoStruct(int strip, GroupInformationStruct stripStruct)
         {
-            StripObjectGroupManager temp = configurationGroupManagers[strip] as StripObjectGroupManager;
-            configurationGroupManagers[strip].indexInGroupManager = strip;
+            StripObjectGroupManager temp = groupObjectManagers[strip] as StripObjectGroupManager;
+            groupObjectManagers[strip].indexInGroupManager = strip;
             GroupInformationStruct tempStripStruct = new GroupInformationStruct();
             tempStripStruct.index = strip;
             temp.groupInfo = tempStripStruct;
@@ -1451,18 +1462,18 @@ namespace BoomSports.Prototype
         }
         internal void ClearSubStatesAllSlotAnimatorStateMachines()
         {
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                configurationGroupManagers[reel].ClearAllSlotContainersSubAnimatorStates();
+                groupObjectManagers[reel].ClearAllSlotContainersSubAnimatorStates();
             }
         }
 
         private AnimatorSubStateMachine[] GatherValuesFromSubStates()
         {
             List<AnimatorSubStateMachine> values = new List<AnimatorSubStateMachine>();
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                values.AddRange(configurationGroupManagers[reel].ReturnAllValuesFromSubStates());
+                values.AddRange(groupObjectManagers[reel].ReturnAllValuesFromSubStates());
             }
             return values.ToArray();
         }
@@ -1470,9 +1481,9 @@ namespace BoomSports.Prototype
         private string[] GatherKeysFromSubStates()
         {
             List<string> keys = new List<string>();
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                keys.AddRange(configurationGroupManagers[reel].ReturnAllKeysFromSubStates());
+                keys.AddRange(groupObjectManagers[reel].ReturnAllKeysFromSubStates());
             }
             return keys.ToArray();
         }
@@ -1517,51 +1528,51 @@ namespace BoomSports.Prototype
 
         internal void GenerateSlotPrefabs()
         {
-            for (int group = 0; group < configurationGroupManagers.Length; group++)
+            for (int group = 0; group < groupObjectManagers.Length; group++)
             {
-                configurationGroupManagers[group].SetRandomDisplaySymbolAll();
+                groupObjectManagers[group].SetRandomDisplaySymbolAll();
             }
         }
 
         internal void ReGenerateSlotPrefabs()
         {
             //Set all new slots to local positions
-            for (int group = 0; group < configurationGroupManagers.Length; group++)
+            for (int group = 0; group < groupObjectManagers.Length; group++)
             {
-                configurationGroupManagers[group].RegenerateSlots();
+                groupObjectManagers[group].RegenerateSlots();
             }
         }
 
         internal void SetSlotReferences()
         {
             //Set all new slots to local positions
-            for (int group = 0; group < configurationGroupManagers.Length; group++)
+            for (int group = 0; group < groupObjectManagers.Length; group++)
             {
-                configurationGroupManagers[group].SetSlotsReference();
+                groupObjectManagers[group].SetSlotsReference();
             }
         }
 
         internal void SyncPresentationIDToCurrentSymbolDisplayed()
         {
-            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                configurationGroupManagers[i].SyncInformationToDisplaySymbol();
+                groupObjectManagers[i].SyncInformationToDisplaySymbol();
             }
         }
 
         internal void SetSlotsDisplaySequenceToCurrentSequence()
         {
-            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                configurationGroupManagers[i].SetDisplaySymbolsForNextSpinToCurrent();
+                groupObjectManagers[i].SetDisplaySymbolsForNextSpinToCurrent();
             }
         }
 
         internal void SetSlotsDisplayToCurrentSequence()
         {
-            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                configurationGroupManagers[i].SetDisplaySymbolsToCurrentSequence();
+                groupObjectManagers[i].SetDisplaySymbolsToCurrentSequence();
             }
         }
     }

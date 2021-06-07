@@ -12,6 +12,7 @@ using UnityEngine;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using BoomSports.Prototype.ScriptableObjects;
 
 namespace BoomSports.Prototype.Managers
 {
@@ -64,6 +65,10 @@ namespace BoomSports.Prototype.Managers
         [SerializeField]
         public bool randomSetSymbolOnEndOfSequence = true;
         /// <summary>
+        /// Temporarily used to activate trailing multiplier
+        /// </summary>
+        public bool trailingActive = false;
+        /// <summary>
         /// UI Indicator to ensure operation for setting symbols to end configuration has performed
         /// </summary>
         [SerializeField]
@@ -99,11 +104,18 @@ namespace BoomSports.Prototype.Managers
         /// Symbols that activate slot features - Trailing multiplier in cash crossing lights up the plus sign on enter
         /// </summary>
         public ObjectGroupConditionalActivatorsContainer objectGroupConditionalActivatorsContainer;
-
+        /// <summary>
+        /// Set this to spin at index until 0 then spin at start - will not work for multiple index at path
+        /// </summary>
+        public int spinAtIndexFor = 0;
         /// <summary>
         /// Controls what index in path to start spinning at max index rows in column - padding after reel
         /// </summary>
         public int spinAtIndexInPath = 0;
+        /// <summary>
+        /// Used to track the slot off matrix to spin into position
+        /// </summary>
+        public BaseObjectManager paddingSlot;
 
         ///// <summary>
         ///// Structure for tracking slots in group that have symbols that activate features
@@ -274,16 +286,98 @@ namespace BoomSports.Prototype.Managers
                 }
             }
         }
+        /// <summary>
+        /// Sets a spin index at point in path based on feature data passed - todo refactor for generix access
+        /// </summary>
+        /// <param name="triggerFeatureEvaluationScriptableObject"></param>
+        /// <param name="indexToSpinAt"></param>
+        internal void SetSpinAtIndexTo(int indexToSpinAt)
+        {
+            //Cash Crossing specific
+            spinAtIndexInPath = indexToSpinAt;
+            if (spinAtIndexInPath > 0)
+            {
+                spinAtIndexFor = 3;//TODO refactor Hardcoding 
+                trailingActive = true;
+            }
+            else
+            {
+                spinAtIndexFor = -1;//TODO refactor Hardcoding 
+                trailingActive = false;
+            }
+        }
+        /// <summary>
+        /// Sets a spin index at point in path based on feature data passed - todo refactor for generix access
+        /// </summary>
+        /// <param name="triggerFeatureEvaluationScriptableObject"></param>
+        /// <param name="indexToSpinAt"></param>
+        internal void SetSpinAtIndexWithParamaters(TriggerFeatureEvaluationScriptableObject triggerFeatureEvaluationScriptableObject, int indexToSpinAt)
+        {
+            //Cash Crossing specific
+            spinAtIndexInPath = indexToSpinAt;
+            spinAtIndexFor = 3;//TODO refactor Hardcoding 
+            trailingActive = true;
+            if(triggerFeatureEvaluationScriptableObject.featureToTrigger == Features.multiplier)
+            {
+                DebugLoadSymbols(9,3);
+            }
+        }
+
+        /// <summary>
+        /// Sets debug symbols to load.
+        /// </summary>
+        /// <param name="symbolToLoad"></param>
+        /// <param name="howManyToLoad"></param>
+        private void DebugLoadSymbols(int symbolToLoad, int howManyToLoad)
+        {
+            for (int i = 0; i < symbolToLoad; i++)
+            {
+                debugNextSymbolsToLoad.Add(symbolToLoad);
+            }
+        }
 
         /// <summary>
         /// Spin the Reels
         /// </summary>
         /// <returns>async task to track</returns>
+        /// OOP(Order of Operations Cash Crossing) 
+        /// On any spin = Initialize Padding Slot, Set Symbol Sequence based on symbols replaced at index on path. Return spin from start at anytime after spin completes
+        /// - If spin at index != 0 then set padding slot new position and symbol from first debug then set to random symbol. 
+        /// --Trailing will only activate on spin > 0 but testing can be 0.
+        /// --After trailing feature active initialize padding slot to index on path and pull symbol from debug list to load. 
+        /// --After x spins turn off feature - multipliers set 2x-10x for X symbols - wilds trail X symbols.
+        /// ---*Math will make it impossible for 3 trailing features to activate on 1 reel
+        /// --Activate trailing multipliers on left reel and trailing wild on right reel
+        /// Highlight center symbol on any symbol win. - Animator trigger FeatureOn and FeatureOff
+        /// On Spin Start after initialize padding slot get symbol sequence
+        /// ---OOP Reel Split - Set index on reel path to start spin - initiale padding slot to index on path - calculate number of symbols to replace per spin - padding slot becomes first symbol at index to be inserted - all symbols until padding before are inserted at index - all padding symbols inserted at beggining of sequence so evaluation manager can process.
         public virtual Task StartSpin()
         {
+            //Invoke spin event
             objectGroupStartSpin?.Invoke(indexInGroupManager);
-            //Clear Ending Symbols - Set new ending symbols
-            InitializeEndingDisplayForNewSpin();
+            //Initialize if spin at index expired based on debug symbols set on strip - temporary hack
+            if(debugNextSymbolsToLoad.Count < 1)
+            {
+                //Will auto set properties to be affected
+                SetSpinAtIndexTo(0);
+            }
+            //Initialize Padding slot start position - Ensure graphic of padding slot set to next graphic in sequence - will return a list of slots 
+            InitializePaddingSlotPositionAndSymbol();
+            //Set new ending symbols based on reel. if padding slot was moved then first symbol is a non-evaluated symbol anyway.
+            InitializeEndDisplaySequenceToSet();
+            PrintSymbolSequence(ref symbolsDisplaySequence, "symbolsDisplaySequence after InitializeEndDisplaySequenceToSet() ");
+            //Ensure display sequence is set to symbols in list since padding slot can move
+            List<BaseObjectManager> baseObjectsToSpin =  GetSlotsDecending();
+            string debugMessage = "";
+            for (int i = 0; i < baseObjectsToSpin.Count; i++)
+            {
+                debugMessage += $"[{i}] = |{baseObjectsToSpin[i].gameObject.name} currentDisplaySymbolID = {baseObjectsToSpin[i].currentPresentingSymbolID}|";
+            }
+            Debug.Log($"Slots Decending == \n {debugMessage}");
+            //Used to ensure the proper order of operations
+            //Display Symbol Sequence is in end sequence - need to pull from bottom up symbols to replace as reach top
+
+            //SetObjectsDisplaySymbolsToSequence(baseObjectsToSpin.ToArray());
             //Switching to ObjectManager of spin object to invoke check of display symbol and row in strip.
             //Check each symbols next position - any symbol activating a condition send event to recieving object
             //Cash Crossing when a bonus symbol enters a slot it sends idle trigger to associated bridge animator
@@ -292,8 +386,6 @@ namespace BoomSports.Prototype.Managers
 
             SetSpinStateTo(SpinStates.spin_start);
 
-            //Initialize Padding slot start position
-            InitializePaddingSlotPositionAndSymbol();
             //Need to account for index in path
             //if symbols to replace on reel < objectsInGroup.Length then set reel to end spin 
             //for (int i = 0; i < objectsInGroup.Length; i++)
@@ -302,7 +394,7 @@ namespace BoomSports.Prototype.Managers
                 objectsInGroup[i].StartSpin();
                 if (GetSymbolsToBeReplacedPerSpin() < GetTotalDisplaySlots())
                 {
-                    Debug.Log($"{gameObject.name} is setting spin to stop on start spin.");
+                    //Debug.Log($"{gameObject.name} is setting spin to stop on start spin.");
                     //Stepper reels need to set symbol to latest in sequence
                     objectsInGroup[i].SetToStopSpin();
                 }
@@ -312,14 +404,43 @@ namespace BoomSports.Prototype.Managers
             SetSpinStateTo(SpinStates.spin_idle);
             return Task.CompletedTask;
         }
-        public BaseObjectManager paddingSlot;
+
+        private void PrintSymbolSequence(ref NodeDisplaySymbolContainer[] symbolsDisplaySequence,string message)
+        {
+            string symbolSequenceDebugMessage = "";
+            for (int i = 0; i < symbolsDisplaySequence.Length; i++)
+            {
+                symbolSequenceDebugMessage += $"|{symbolsDisplaySequence[i].primarySymbol}";
+            }
+            Debug.Log($"{message} = {symbolSequenceDebugMessage}");
+        }
+
         /// <summary>
         /// Initialize where to place the padding slot and the symbol on the slot. Only executes on start spin - will not work when objects are moving
         /// </summary>
-        private void InitializePaddingSlotPositionAndSymbol()
+        internal void InitializePaddingSlotPositionAndSymbol()
         {
+            //If the start of the spin has to spin at index and padding slot is != to localPositionsInStrip[spinAtIndexInPath] then put it at position and change graphic to next graphic in debug sequence
+            //If a slot spun and index on path was set to 0 - the display symbol sequence list will pop then be overwritten by the debug symbol losing one symbol in sequence.
+            //If start 
             StripObjectGroupManager strip = (StripObjectGroupManager)this;
-            paddingSlot.SetPositionToIndexInPath(strip.localPositionsInStrip[spinAtIndexInPath],spinAtIndexInPath);
+            if (paddingSlot.transform.localPosition != strip.localPositionsInStrip[spinAtIndexInPath])
+            {
+                Debug.Log($"Initializing padding slot position for start spin");
+                paddingSlot.SetPositionToIndexInPath(strip.localPositionsInStrip[spinAtIndexInPath], spinAtIndexInPath);
+                //Cash Crossing Specific Only - TODO refactor
+                int symbol = -1;
+
+                if (debugNextSymbolsToLoad.Count > 0)
+                    symbol = debugNextSymbolsToLoad.Pop<int>();
+                else
+                {
+                    Debug.Log($"No debug symbols to set - setting padding slot to random SymbolID");
+                    symbol = UnityEngine.Random.Range(0, 3); // TODO get symbols range from configuration object
+                }
+                Debug.Log($"Setting padding slot SymbolID to {symbol}");
+                paddingSlot.SetDisplaySymbolTo(new NodeDisplaySymbolContainer(symbol));
+            }
             //if (spinAtIndexInPath > 0)
             //{
             //    List<BaseObjectManager> groupManagers = GetSlotsDecending();
@@ -347,7 +468,7 @@ namespace BoomSports.Prototype.Managers
             return configurationGroupDisplayZones.displayZonesPositionsTotal;
         }
 
-        private void InitializeConditionalEvents()
+        internal void InitializeConditionalEvents()
         {
             BaseSlotActivatorEventConditional[] conditionalsToCheck = objectGroupConditionalActivatorsContainer.GetAllConditionalChecks();
             //Iterate thru evaluators and evaluate for a true condition
@@ -357,7 +478,7 @@ namespace BoomSports.Prototype.Managers
             }
         }
 
-        private void CheckForConditionalEventsFromEndDisplaySequence(NodeDisplaySymbolContainer[] symbolsDisplaySymbolsSequence)
+        internal void CheckForConditionalEventsFromEndDisplaySequence(NodeDisplaySymbolContainer[] symbolsDisplaySymbolsSequence)
         {
             //Cash Crossing Specific
             //Need to include logic for padding and active vs inactive display zones so we send the right index to the bridge manager
@@ -390,13 +511,31 @@ namespace BoomSports.Prototype.Managers
             return output;
         }
 
-        internal NodeDisplaySymbolContainer[] GetDisplaySymbolsFromDecending()
+        internal NodeDisplaySymbolContainer[] GetCurrentDisplaySymbolsFromDecending()
         {
+            //If padding slot is initialized to index at path then need to search and insert padding slot into list - move last symbol out to first position in - padding slot will spin into place
             List<BaseObjectManager> lastInFirstOut = GetSlotsDecending();
+            Debug.Log($"{gameObject.name} GetSlotsDecending() raw count = {GetSlotsDecending().Count}");
+            //TODO Refactor and abstract - hack for cash crossing
+            //if (spinAtIndexInPath > 0) //
+            //{
+            //    padding slot is initialized for trailing - Cash Crossing -
+            //    Insert padding slot into index at path
+            //    Set last element to first new element - designed specifically for Cash Crossing single reel stepper use -case -needs more testing for multiple steps
+            //    **Last elements removed in calling script - return raw slot descending order
+            //    lastInFirstOut.Insert(spinAtIndexInPath, paddingSlot);
+            //    lastInFirstOut.Insert(0, lastInFirstOut[lastInFirstOut.Count - 1]);
+            //    lastInFirstOut.RemoveAt(lastInFirstOut.Count - 1);
+            //}
+
             NodeDisplaySymbolContainer[] output = new NodeDisplaySymbolContainer[lastInFirstOut.Count];
             for (int i = 0; i < lastInFirstOut.Count; i++)
             {
                 output[i] = new NodeDisplaySymbolContainer(lastInFirstOut[i].currentPresentingSymbolID);
+            }
+            if(output.Length < objectsInGroup.Length)
+            {
+                Debug.LogWarning($"Getting slots descending did not return all objects for {gameObject.name} logic is based on current slot positions matching positions in path. Sync up slot positions to set positions in path or visa versa using the Configuration Object Manager Editor Options");
             }
             return output;
         }
@@ -439,7 +578,7 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// Initializes Ending Display Symbols for Strip.
         /// </summary>
-        internal void InitializeEndingDisplayForNewSpin()
+        internal void InitializeEndDisplaySequenceToSet()
         {
             SetDisplaySymbolsForNextSpin();
         }
@@ -516,12 +655,12 @@ namespace BoomSports.Prototype.Managers
             endSymbolsSetFromConfiguration = 0;
             BaseObjectManager[] slotsDecendingOrder = GetSlotsDecending().ToArray();
             Debug.Log($"{gameObject.name} slotsDecendingOrder.Length = {slotsDecendingOrder.Length} Slot Order = {PrintGameObjectNames(slotsDecendingOrder)}");
-            Debug.Log($"reelStripStruct.displaySymbols.Length = {reelStripStruct.displaySymbolSequence.Length}");
+            Debug.Log($"reelStripStruct.displaySymbols.Length = {reelStripStruct.displaySymbolsToLoad.Length}");
 
             List<NodeDisplaySymbolContainer> symbolsToDisplay = new List<NodeDisplaySymbolContainer>();
-            for (int symbol = 0; symbol < reelStripStruct.displaySymbolSequence.Length; symbol++)
+            for (int symbol = 0; symbol < reelStripStruct.displaySymbolsToLoad.Length; symbol++)
             {
-                symbolsToDisplay.Add(reelStripStruct.displaySymbolSequence[symbol]);
+                symbolsToDisplay.Add(reelStripStruct.displaySymbolsToLoad[symbol]);
             }
             Debug.Log($"symbolsToDisplay.Count = {symbolsToDisplay.Count}");
 
@@ -533,12 +672,12 @@ namespace BoomSports.Prototype.Managers
             {
                 if (slot < configurationGroupDisplayZones.paddingBefore)
                 {
-                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbolSequence[endSymbolsSetFromConfiguration]);
+                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbolsToLoad[endSymbolsSetFromConfiguration]);
                 }
                 else
                 {
                     Debug.Log($"Setting {slotsDecendingOrder[slot].gameObject.name} to symbol reelStripStruct.displaySymbols[{endSymbolsSetFromConfiguration}]");
-                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbolSequence[endSymbolsSetFromConfiguration]);
+                    slotsDecendingOrder[slot].SetDisplaySymbolTo(reelStripStruct.displaySymbolsToLoad[endSymbolsSetFromConfiguration]);
                     endSymbolsSetFromConfiguration += 1;
                 }
             }
@@ -788,6 +927,11 @@ namespace BoomSports.Prototype.Managers
         }
 
         internal void SetDisplaySymbolsToCurrentSequence()
+        {
+            SetObjectsDisplaySymbolsToSequence(objectsInGroup);
+        }
+
+        internal void SetObjectsDisplaySymbolsToSequence(BaseObjectManager[] objectsInGroup)
         {
             for (int i = 0; i < objectsInGroup.Length; i++)
             {

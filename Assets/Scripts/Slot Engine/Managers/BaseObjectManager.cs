@@ -10,20 +10,36 @@
 //
 using System;
 using System.Collections.Generic;
+using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 using UnityEngine;
 namespace BoomSports.Prototype.Managers
 {
+    [Serializable]
+    public struct BaseObjectManagerData
+    {
+        //Temporary housing for win multiplier when apart of a symbol win - if symbol SA02 in Cash Crossing with x multiplier assigned at initialize and symbol set
+        /// <summary>
+        /// win multiplier applies whwn you have base win amount
+        /// </summary>
+        [SerializeField]
+        public int winMultiplier;
+
+    }
     /// <summary>
-    /// 
+    /// Base Object Container class for within a group object manager 
     /// </summary>
     public class BaseObjectManager : MonoBehaviour
     {
         public delegate void ObjectPointOnPathEvent(BaseObjectManager objectManagerInGroup);
         public event ObjectPointOnPathEvent startSpinCheckNextPointInPath;
         public event ObjectPointOnPathEvent nextPointInPathChanged;
+        /// <summary>
+        /// Contains multipler data and other data the affects managers within the slot engine
+        /// </summary>
+        public BaseObjectManagerData baseSymbolData;
         /// <summary>
         /// Holds the display sequence for symbols. Stepper strips require length == steps allowed per spin. Directional Constant requires length == active display zone positions in group
         /// </summary>
@@ -315,6 +331,17 @@ namespace BoomSports.Prototype.Managers
             //Debug.Log($"baseObjectGroupParent.configurationObjectParent = {baseObjectGroupParent.configurationObjectParent.gameObject.name}");
             ShowSymbolRenderer(baseObjectGroupParent.configurationObjectParent.DrawRandomSymbolFromCurrentMode());
         }
+
+        private void HideSymbolRenderer(int symbol_to_show)        
+        {
+            MeshRenderer[] renderers;
+
+            renderers = symbolPrefabs[symbol_to_show].GetChild(0).GetComponentsInChildren<MeshRenderer>();
+            for (int renderer = 0; renderer < renderers.Length; renderer++)
+            {
+                renderers[renderer].enabled = false;
+            }
+        }
         /// <summary>
         /// Shows a symbols renderer
         /// </summary>
@@ -322,8 +349,74 @@ namespace BoomSports.Prototype.Managers
         /// <param name="force_hide_others">will force hide other symbol renderers defaulttrue</param>
         private void ShowSymbolRenderer(int symbol_to_show, bool force_hide_others = true)
         {
+            //If symbol is multiplier set text to random range and apply to win total on next round.
             //Debug.Log(String.Format("Enabling symbol_prefabs[{0}] = {1}", symbol_to_show, symbol_prefabs[symbol_to_show].gameObject.ToString()));
             //Ensure Symbol Prefab Objects are instantiated
+            EnsureSymbolPrefabsGeneratesAndReferenced();
+            MeshRenderer[] renderers;
+            //Set the renderer true for symbol active
+            for (int symbol_prefab = 0; symbol_prefab < symbolPrefabs.Length; symbol_prefab++)
+            {
+                //ensure all renderers gameobjects are active but renderers are disabled/enabled
+                if (symbolPrefabs[symbol_prefab].gameObject.activeSelf == false)
+                    symbolPrefabs[symbol_prefab].gameObject.SetActive(true);
+                if (force_hide_others)
+                {
+                    //Get all mesh renderers in prefab
+                    renderers = symbolPrefabs[symbol_prefab].GetChild(0).GetComponentsInChildren<MeshRenderer>();
+                    for (int renderer = 0; renderer < renderers.Length; renderer++)
+                    {
+                        //If renderer enabled and not symbol to show then disbale
+                        if (renderers[renderer].enabled && symbol_prefab != symbol_to_show)
+                            renderers[renderer].enabled = false;
+                    }
+                }
+            }
+            //Enable symbol to show
+            renderers = symbolPrefabs[symbol_to_show].GetChild(0).GetComponentsInChildren<MeshRenderer>();
+            for (int renderer = 0; renderer < renderers.Length; renderer++)
+            {
+                renderers[renderer].enabled = true;
+            }
+            //if symbol is multiplier feature then set sub text renderer to random multiplier range
+            //TODO refactor cash crossing specific
+            if(BaseConfigurationObjectManager.instance.isFeatureSymbol(symbol_to_show, Features.multiplier))
+            {
+                TMPro.TextMeshPro temp;
+                for (int renderer = 0; renderer < renderers.Length; renderer++)
+                {
+                    temp = renderers[renderer].GetComponent<TMPro.TextMeshPro>();
+                    if (temp != null)
+                    {
+                        //Sets the symbols base data win multiplier here
+                        baseSymbolData.winMultiplier = SetTMPTextToRandomRange(ref temp, 2, 10);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                //Default to 1x
+                baseSymbolData.winMultiplier = 1;
+            }
+        }
+
+        /// <summary>
+        /// Sets the multiplier for tmp text to range
+        /// </summary>
+        /// <param name="tmpText"></param>
+        /// <param name="lowerRange"></param>
+        /// <param name="upperRange"></param>
+        private int SetTMPTextToRandomRange(ref TextMeshPro tmpText, int lowerRange, int upperRange)
+        {
+            int output = UnityEngine.Random.Range(lowerRange, upperRange);
+            tmpText.text = $"{output}x";
+            Debug.Log($"Setting Multiplier text for {gameObject.name} to {tmpText.text}");
+            return output;
+        }
+
+        private void EnsureSymbolPrefabsGeneratesAndReferenced()
+        {
             if (symbolPrefabs?.Length != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
             {
                 if (baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length == transform.childCount)
@@ -339,7 +432,7 @@ namespace BoomSports.Prototype.Managers
             //null check
             for (int i = 0; i < symbolPrefabs.Length; i++)
             {
-                if(symbolPrefabs[i] == null && transform.childCount != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
+                if (symbolPrefabs[i] == null && transform.childCount != baseObjectGroupParent.configurationObjectParent.symbolDataScriptableObject.symbols.Length)
                 {
                     InstantiateSymbolPrefabs();
                     break;
@@ -355,26 +448,6 @@ namespace BoomSports.Prototype.Managers
                     }
                     break;
                 }
-            }
-            MeshRenderer[] renderers;
-            for (int symbol_prefab = 0; symbol_prefab < symbolPrefabs.Length; symbol_prefab++)
-            {
-                if (symbolPrefabs[symbol_prefab].gameObject.activeSelf == false)
-                    symbolPrefabs[symbol_prefab].gameObject.SetActive(true);
-                if (force_hide_others)
-                {
-                    renderers = symbolPrefabs[symbol_prefab].GetChild(0).GetComponentsInChildren<MeshRenderer>();
-                    for (int renderer = 0; renderer < renderers.Length; renderer++)
-                    {
-                        if (renderers[renderer].enabled && symbol_prefab != symbol_to_show)
-                            renderers[renderer].enabled = false;
-                    }
-                }
-            }
-            renderers = symbolPrefabs[symbol_to_show].GetChild(0).GetComponentsInChildren<MeshRenderer>();
-            for (int renderer = 0; renderer < renderers.Length; renderer++)
-            {
-                renderers[renderer].enabled = true;
             }
         }
 
@@ -494,13 +567,9 @@ namespace BoomSports.Prototype.Managers
 
         internal void SetDisplaySymbolTo(NodeDisplaySymbolContainer symbol_to_display)
         {
-            Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primarySymbol}");
+            //Debug.Log($"Setting Display symbol for {gameObject.name} to {symbol_to_display.primarySymbol}");
             SetPresentationSymbolTo(symbol_to_display.primarySymbol);
             ShowSymbolRenderer(symbol_to_display.primarySymbol);
-            //if (symbol_to_display.is_overlay)
-            //{
-            //    ShowSymbolRenderer(symbol_to_display.overlay_symbol, false);
-            //}
         }
 
         internal void SetPresentationSymbolTo(int toSymbolID)
@@ -509,7 +578,7 @@ namespace BoomSports.Prototype.Managers
                 currentPresentingSymbolName = "Not on Matrix";
             else
                 currentPresentingSymbolName = ReturnSymbolNameFromID(toSymbolID);
-            Debug.Log($"{gameObject.name} presentation symbol set to {toSymbolID} {currentPresentingSymbolName} ");
+            //Debug.Log($"{gameObject.name} presentation symbol set to {toSymbolID} {currentPresentingSymbolName} ");
             currentPresentingSymbolID = toSymbolID; 
         }
         internal void UpdateSpinTimerFromSpinManager()

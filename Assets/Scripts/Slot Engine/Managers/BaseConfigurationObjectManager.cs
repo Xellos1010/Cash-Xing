@@ -40,7 +40,7 @@ namespace BoomSports.Prototype.Managers
         /// Configuration Group Managers that make up the matrix - Generated with ConfigurationGenerator Script - Order determines strip spin delay and Symbol Evaluation Logic
         /// </summary>
         [SerializeField]
-        internal BaseObjectGroupManager[] configurationGroupManagers;
+        internal BaseObjectGroupManager[] groupObjectManagers;
         /// <summary>
         /// Symbol information for the matrix - Loaded from each game folder
         /// </summary>
@@ -115,7 +115,7 @@ namespace BoomSports.Prototype.Managers
         /// <returns></returns>
         internal async Task SpinStartGroupManagers(DisplayConfigurationContainer displayConfigurationToUse)
         {
-            int[] spinObjectsOrder = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
+            int[] spinObjectsOrder = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.groupObjectManagers);
             //Set the end configuraiton manager current configuraiton in use to displayConfiguration
             managers.endConfigurationManager._displayConfigurationInUse = displayConfigurationToUse;
             //Debug.Log($"Spinning objects in order {String.Join("|", spinObjectsOrder)}");
@@ -123,7 +123,7 @@ namespace BoomSports.Prototype.Managers
             for (int i = 0; i < spinObjectsOrder.Length; i++)
             {
                 //Each group will Start their spin and evaluate based on spin type. Slots need to evaluate incoming symbol for events or outgoing symbol events
-                await configurationGroupManagers[spinObjectsOrder[i]].StartSpin();
+                await groupObjectManagers[spinObjectsOrder[i]].StartSpin();
             }
         }
 
@@ -133,22 +133,22 @@ namespace BoomSports.Prototype.Managers
             DisplayConfigurationContainer displayConfiguration = EndConfigurationManager.displayConfigurationInUse;
 
             //Get Order of stopping configuration objects from baseSpinSettingsScriptableObject - Independant reels will have to be taken into consideration
-            int[] orderStopObjects = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.configurationGroupManagers);
+            int[] orderStopObjects = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.groupObjectManagers);
             //Determine whether to stop reels forwards or backwards.
             for (int i = 0; i < orderStopObjects.Length; i++)
             {
                 //If reel strip delays are enabled wait between strips to stop
                 if (managers.spinManager.baseSpinSettingsScriptableObject.delayStartEnabled)
                 {
-                    await configurationGroupManagers[orderStopObjects[i]].StopReel();
+                    await groupObjectManagers[orderStopObjects[i]].StopReel();
                 }
                 else
                 {
-                    configurationGroupManagers[orderStopObjects[i]].StopReel();
+                    groupObjectManagers[orderStopObjects[i]].StopReel();
                 }
             }
             //Wait for all reels to be in spin.end state before continuing
-            await WaitForGroupManagersToStopSpin(configurationGroupManagers);
+            await WaitForGroupManagersToStopSpin(groupObjectManagers);
             //ensure symbols have proper id's set
             SyncCurrentSymbolDisplayedToPresentationID();
             //Evaluate the reels - 
@@ -157,9 +157,9 @@ namespace BoomSports.Prototype.Managers
 
         internal void SyncCurrentSymbolDisplayedToPresentationID()
         {
-            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                configurationGroupManagers[i].SyncDisplaySymbolInformation();
+                groupObjectManagers[i].SyncDisplaySymbolInformation();
             }
         }
 
@@ -201,17 +201,17 @@ namespace BoomSports.Prototype.Managers
 
         internal void SetAllSlotAnimatorSyncStates()
         {
-            for (int group = 0; group < configurationGroupManagers.Length; group++)
+            for (int group = 0; group < groupObjectManagers.Length; group++)
             {
-                configurationGroupManagers[group].SetAllSlotContainersAnimatorSyncStates();
+                groupObjectManagers[group].SetAllSlotContainersAnimatorSyncStates();
             }
         }
 
         internal void SetSubStatesAllSlotAnimatorStateMachines()
         {
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                configurationGroupManagers[reel].SetAllSlotContainersSubAnimatorStates();
+                groupObjectManagers[reel].SetAllSlotContainersSubAnimatorStates();
             }
         }
 
@@ -225,18 +225,18 @@ namespace BoomSports.Prototype.Managers
         private string[] GatherKeysFromSubStates()
         {
             List<string> keys = new List<string>();
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                keys.AddRange(configurationGroupManagers[reel].ReturnAllKeysFromSubStates());
+                keys.AddRange(groupObjectManagers[reel].ReturnAllKeysFromSubStates());
             }
             return keys.ToArray();
         }
         private AnimatorSubStateMachine[] GatherValuesFromSubStates()
         {
             List<AnimatorSubStateMachine> values = new List<AnimatorSubStateMachine>();
-            for (int reel = 0; reel < configurationGroupManagers.Length; reel++)
+            for (int reel = 0; reel < groupObjectManagers.Length; reel++)
             {
-                values.AddRange(configurationGroupManagers[reel].ReturnAllValuesFromSubStates());
+                values.AddRange(groupObjectManagers[reel].ReturnAllValuesFromSubStates());
             }
             return values.ToArray();
         }
@@ -277,15 +277,20 @@ namespace BoomSports.Prototype.Managers
 
         internal int GetIndexOfGroupManager(BaseObjectGroupManager baseObjectGroupManager)
         {
-            for (int i = 0; i < configurationGroupManagers.Length; i++)
+            for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                if(configurationGroupManagers[i] == baseObjectGroupManager)
+                if(groupObjectManagers[i] == baseObjectGroupManager)
                 {
                     return i;
                 }
             }
             Debug.Log($"object group manager {baseObjectGroupManager.gameObject.name} not in configuration object group managers array. Returning -1 for index");
             return -1;
+        }
+
+        internal void SetSpinAtIndexFrom(ScriptableObjects.TriggerFeatureEvaluationScriptableObject triggerFeatureEvaluationScriptableObject, int column, int indexToSpinAt)
+        {
+            groupObjectManagers[column].SetSpinAtIndexWithParamaters(triggerFeatureEvaluationScriptableObject, indexToSpinAt);
         }
 
         private async Task AddSymbolStateWeightByDict(Dictionary<GameModes, List<float>> symbol_weight_state)
@@ -407,6 +412,10 @@ namespace BoomSports.Prototype.Managers
         internal bool isFeatureSymbol(int symbol)
         {
             return managers.evaluationManager.IsSymbolFeatureSymbol(symbolDataScriptableObject.symbols[symbol]);
+        }
+        internal bool isFeatureSymbol(int symbol, Features featureTriggerToCheck)
+        {
+            return managers.evaluationManager.IsSymbolFeatureSymbol(symbolDataScriptableObject.symbols[symbol], featureTriggerToCheck);
         }
         /// <summary>
         /// Sets all symbol animators to REsolve Win States
