@@ -4,10 +4,11 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
 #endif
-#if UNITY_EDITOR
 
 namespace BoomSports.Prototype.Managers
 {
+
+#if UNITY_EDITOR
     [CustomEditor(typeof(AnimatorStateMachineManager))]
     class AnimatorStateMachineManagerEditor : BoomSportsEditor
     {

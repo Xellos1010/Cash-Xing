@@ -61,26 +61,40 @@ namespace BoomSports.Prototype.Managers
         }
     }
 #endif
-
-    public class SpinManager : MonoBehaviour
+    
+    public class SpinManager : BaseBoomSportsManager
     {
         //TODO abstract reference to base configurationObject class
-        /// <summary>
-        /// Class get for connected Configuration Object
-        /// </summary>
-        public StripConfigurationObject configurationObject
+        //Spin Manager Event System
+        public delegate void SpinStateUpdated(SpinStates updatedState);
+        public event SpinStateUpdated spinStateUpdated;
+        //Static instance reference
+        internal static SpinManager instance
         {
             get
             {
-                if (_configurationObject == null)
-                    _configurationObject = GameObject.FindGameObjectWithTag("ConfigurationObject").GetComponent<StripConfigurationObject>();
-                return _configurationObject;
+                if (_instance == null)
+                    _instance = GameObject.FindObjectOfType<SpinManager>();
+                return _instance;
             }
         }
+        internal static SpinManager _instance;
         /// <summary>
-        /// Reference for configuration object
+        /// Class get for connected Configuration Object
         /// </summary>
-        public StripConfigurationObject _configurationObject;
+        //public StripConfigurationObject configurationObject
+        //{
+        //    get
+        //    {
+        //        if (_configurationObject == null)
+        //            _configurationObject = GameObject.FindGameObjectWithTag("ConfigurationObject").GetComponent<StripConfigurationObject>();
+        //        return _configurationObject;
+        //    }
+        //}
+        ///// <summary>
+        ///// Reference for configuration object
+        ///// </summary>
+        //public StripConfigurationObject _configurationObject;
         /// <summary>
         /// The Base Settings - how long till autospin - timer for spin loop to switch to spin outro - etc...
         /// </summary>
@@ -171,14 +185,16 @@ namespace BoomSports.Prototype.Managers
         /// Start spinning the reels
         /// </summary>
         /// <returns></returns>
-        public async Task StartSpinReels()
+        public async Task SpinReelsStart()
         {
             await configurationObject.SpinStartGroupManagers();
+            //Evaluate generated strips - Used at end of spin to activate bridge animators
+            //EvaluationManager.instance.EvaluateWinningSymbolsFromCurrentConfiguration();
         }
         /// <summary>
         /// Stop the reels - include display reel highlight if the feature is toggled
         /// </summary>
-        internal async Task ReelsStopSpinning()
+        internal async Task StopReelsSpinning()
         {
             await configurationObject.SpinStopGroupManagers();
         }
@@ -289,7 +305,7 @@ namespace BoomSports.Prototype.Managers
         internal async void SetSpinStateTo(SpinStates state)
         {
             //Debug.Log(String.Format("current state = {0}",state));
-            currentState = state;
+            SetCurrentSpinStateTo(state);
             //Debug.Log(String.Format("Setting Spin Manager Spin State to {0}",state.ToString()));            
             switch (state)
             {
@@ -305,7 +321,7 @@ namespace BoomSports.Prototype.Managers
                     await configurationObject.isAllSlotAnimatorsThruState("Idle_Outro");
                     StaticStateManager.SetStateTo(States.Spin_Intro);
                     //Start the reels spinning
-                    await StartSpinReels();
+                    await SpinReelsStart();
                     if (!StaticStateManager.isInterupt)
                         StaticStateManager.SetStateTo(States.Spin_Idle);
                     else
@@ -322,7 +338,7 @@ namespace BoomSports.Prototype.Managers
                 case SpinStates.spin_outro:
                     ResetUseTimer();
                     //Debug.Log("Timer Reset");
-                    await ReelsStopSpinning();
+                    await StopReelsSpinning();
                     configurationObject.SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, false);
                     //Debug.Log("All reels Stopped Spinning");
                     await configurationObject.isAllAnimatorsThruStateAndAtPauseState("Spin_Outro");
@@ -336,6 +352,14 @@ namespace BoomSports.Prototype.Managers
                     break;
             }
         }
+
+        private void SetCurrentSpinStateTo(SpinStates state)
+        {
+            currentState = state;
+            //Send update state event
+            spinStateUpdated?.Invoke(state);
+        }
+
         /// <summary>
         /// Set behaviour depending on which spin state to enact
         /// </summary>
@@ -355,7 +379,7 @@ namespace BoomSports.Prototype.Managers
                     Debug.Log("Starting Spin - Debug - no Animator Hooks");
                     StaticStateManager.SetStateTo(States.Spin_Intro);
                     //Start the reels spinning
-                    await StartSpinReels();
+                    await SpinReelsStart();
                     if (!StaticStateManager.isInterupt)
                         StaticStateManager.SetStateTo(States.Spin_Idle);
                     else
@@ -372,7 +396,7 @@ namespace BoomSports.Prototype.Managers
                     break;
                 case SpinStates.spin_outro:
                     Debug.Log("Timer Reset");
-                    await ReelsStopSpinning();
+                    await StopReelsSpinning();
                     ResetUseTimer();
                     configurationObject.SetAllAnimatorsBoolTo(supportedAnimatorBools.SpinStart, false);
                     Debug.Log("All reels Stopped Spinning");

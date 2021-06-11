@@ -30,6 +30,10 @@ namespace BoomSports.Prototype.Managers
     {
         StripObjectGroupManager myTarget;
         int selectedSymbolToGenerate = 0;
+
+        [Range(0, 50)]
+        float spinCurrentTimerSlider = 0;
+
         public void OnEnable()
         {
             myTarget = (StripObjectGroupManager)target;
@@ -37,32 +41,47 @@ namespace BoomSports.Prototype.Managers
 
         public override void OnInspectorGUI()
         {
+            BoomEditorUtilities.DrawUILine(Color.red);
+            EditorGUILayout.LabelField("Debug Options");
+            EditorGUI.BeginChangeCheck();
+            spinCurrentTimerSlider = EditorGUILayout.Slider("Spin Current Time Debug Slider", spinCurrentTimerSlider, 0, 5);
+            if (EditorGUI.EndChangeCheck())
+            {
+                myTarget.DebugMoveObjectsToTimeInPath(spinCurrentTimerSlider);
+                serializedObject.Update();
+            }
+            if (GUILayout.Button("Set Current Presentation ID To Display Symbol"))
+            {
+                myTarget.SetPresentationIdToDisplaySymbol();
+            }
+            if (GUILayout.Button("Test OoO(Order of Operations) for Start Spin"))
+            {
+                //Clear Ending Symbols - Set new ending symbols
+                myTarget.InitializeEndDisplaySequenceToSet(true);
+                //Switching to ObjectManager of spin object to invoke check of display symbol and row in strip.
+                //Check each symbols next position - any symbol activating a condition send event to recieving object
+                //Cash Crossing when a bonus symbol enters a slot it sends idle trigger to associated bridge animator
+                //was a crash earlier
+                //myTarget.InitializeConditionalEvents();
+                //myTarget.CheckForConditionalEventsFromEndDisplaySequence(myTarget.symbolsDisplaySequence);
+            }
+            BoomEditorUtilities.DrawUILine(Color.red);
+
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Controls");
             if(!Application.isPlaying)
             {
-                if (GUILayout.Button("print ABS sqr magnitude of positions 1 and 3 and offset"))
-                {
-                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] = {Mathf.Abs(myTarget.localPositionsInStrip[0].sqrMagnitude)}");
-                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] + offset = {Mathf.Abs((myTarget.localPositionsInStrip[0] + (Vector3.back * 10)).sqrMagnitude)}");
-                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] = {myTarget.localPositionsInStrip[0].sqrMagnitude}");
-                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] + offset = {(myTarget.localPositionsInStrip[0] + (Vector3.back * 10)).sqrMagnitude}");
-                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] = {Mathf.Abs(myTarget.localPositionsInStrip[2].sqrMagnitude)}");
-                    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] + offset = {Mathf.Abs((myTarget.localPositionsInStrip[2] + (Vector3.back * 10)).sqrMagnitude)}");
-                }
+                //Used to test path options
+                //if (GUILayout.Button("print ABS sqr magnitude of positions 1 and 3 and offset"))
+                //{
+                //    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] = {Mathf.Abs(myTarget.localPositionsInStrip[0].sqrMagnitude)}");
+                //    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] + offset = {Mathf.Abs((myTarget.localPositionsInStrip[0] + (Vector3.back * 10)).sqrMagnitude)}");
+                //    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] = {myTarget.localPositionsInStrip[0].sqrMagnitude}");
+                //    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[0] + offset = {(myTarget.localPositionsInStrip[0] + (Vector3.back * 10)).sqrMagnitude}");
+                //    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] = {Mathf.Abs(myTarget.localPositionsInStrip[2].sqrMagnitude)}");
+                //    Debug.Log($"ABS sqrmagnitude of localPositionsInStrip[2] + offset = {Mathf.Abs((myTarget.localPositionsInStrip[2] + (Vector3.back * 10)).sqrMagnitude)}");
+                //}
 
-                if(GUILayout.Button("Test OoO(Order of Operations) for Start Spin"))
-                {
-                    //Initialize Padding slot start position - Ensure graphic of padding slot set to next graphic in sequence
-                    myTarget.InitializePaddingSlotPositionAndSymbol();
-                    //Clear Ending Symbols - Set new ending symbols
-                    myTarget.InitializeEndDisplaySequenceToSet();
-                    //Switching to ObjectManager of spin object to invoke check of display symbol and row in strip.
-                    //Check each symbols next position - any symbol activating a condition send event to recieving object
-                    //Cash Crossing when a bonus symbol enters a slot it sends idle trigger to associated bridge animator
-                    myTarget.InitializeConditionalEvents();
-                    myTarget.CheckForConditionalEventsFromEndDisplaySequence(myTarget.symbolsDisplaySequence);
-                }
                 if (GUILayout.Button("Set Intial Padding Slot object"))
                 {
                     myTarget.paddingSlot = myTarget.objectsInGroup[0];
@@ -449,6 +468,14 @@ namespace BoomSports.Prototype.Managers
             for (int groupedObject = 0; groupedObject < objectsInGroup.Length; groupedObject++)
             {
                 objectsInGroup[groupedObject].SetIndexOnPathfromCurrentPosition(ref localPositionsInStrip);
+            }
+        }
+
+        internal void DebugMoveObjectsToTimeInPath(float spinCurrentTimerSlider)
+        {
+            for (int groupedObject = 0; groupedObject < objectsInGroup.Length; groupedObject++)
+            {
+                Debug.Log($"{objectsInGroup[groupedObject].name}.MoveObjectBasedOnTime({spinCurrentTimerSlider}) = {objectsInGroup[groupedObject].MoveObjectBasedOnTime(spinCurrentTimerSlider)}");
             }
         }
     }

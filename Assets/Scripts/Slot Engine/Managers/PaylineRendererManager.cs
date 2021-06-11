@@ -134,30 +134,29 @@ namespace BoomSports.Prototype.Managers
         /// <param name="createAndReturnTextObject">Should we generate and return payline text to be destroyed?</param>
         internal GameObject ShowWinningPayline(WinningPayline payline_to_show, out List<Vector3> linePositions,bool createAndReturnTextObject = false, bool fillEndToEnd = true)
         {
-            GameObject output; //Returns the text amount object so can lerp to bank if feature active
-            //Used to hold reference to active display slot next to current slot
+            GameObject output; //Returns the Cash Crossing : text amount object so can lerp to bank if feature active
             int adjacentSlot = -1;
-            ToggleRenderer(true);
+            ToggleLineRendererActive(true);
             Payline toShowPayline = new Payline(payline_to_show.payline);
             //Used to fill the payline end to end
             List<int> paylineTemp = new List<int>();
             paylineTemp.AddRange(toShowPayline.configuration.payline);
             //Used to add payline nodes based on root node and group managers
-            if (fillEndToEnd)
+            if (fillEndToEnd) //Fill the payline to the last reel in based on evaluation direction
             {
                 //Check if the length of the payline is the length of the group managers
                 if (payline_to_show.payline.configuration.payline.Length < matrix.groupObjectManagers.Length)
                 {
-                    //Check if evaluating left right
-                    if (payline_to_show.payline.left_right)
+                    if (payline_to_show.payline.left_right) //True : left False : right
                     {
+                        //TODO Evauate whether needed
                         if (payline_to_show.payline.rootNode.column != 0)
                         {
                             //Fill the payline backwards - the amount difference but as straight line - In future base this off 
                             for (int toFill = payline_to_show.payline.rootNode.column; toFill > 0; toFill--)
                             {
                                 adjacentSlot = matrix.groupObjectManagers[toFill].ReturnValidActiveDisplayFromRow(payline_to_show.payline.rootNode.row);
-                                //Will fill anything before the root node with the node adjacent\
+                                //Will fill anything before the root node with the node adjacent
                                 paylineTemp.Insert(0, adjacentSlot);
                             }
                         }
@@ -250,7 +249,7 @@ namespace BoomSports.Prototype.Managers
             return left_right ? i : (count - 1) - i;
         }
 
-        internal void ToggleRenderer(bool on_off)
+        internal void ToggleLineRendererActive(bool on_off)
         {
             //Debug.Log(String.Format("Toggle Renderer {0}",on_off));
             for (int i = 0; i < payline_renderers.Length; i++)
@@ -284,7 +283,7 @@ namespace BoomSports.Prototype.Managers
             switch (state)
             {
                 default:
-                    ToggleRenderer(false);
+                    ToggleLineRendererActive(false);
                     break;
             }
         }

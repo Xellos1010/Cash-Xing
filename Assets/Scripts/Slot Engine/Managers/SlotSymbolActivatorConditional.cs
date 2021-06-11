@@ -13,6 +13,39 @@ using System;
 using BoomSports.Prototype.Managers;
 namespace BoomSports.Prototype
 {
+    public class SlotWinActivatorConditional : BaseSlotActivatorEventConditional
+    {
+        public NodeEvaluationCondition[] evaluationConditions;
+        public override bool EvaluateCondition(BaseObjectManager objectToEvaluate)
+        {
+            throw new NotImplementedException();
+        }
+        public override bool EvaluateCondition(SymbolObjectGroupEvaluatorContainer symbolEvaluationContainer)
+        {
+            Debug.Log($"Evaluating {symbolEvaluationContainer.symbolID} win with index in sequence {symbolEvaluationContainer.indexInEndSequence}. Activating a condition");
+            //Get all winning Paylines evaluated and check if node appears on payline implement later hack now
+            //for (int i = 0; i < evaluationConditions.Length; i++)
+            //{
+            //    if(evaluationConditions[i].EvaluateCondition())
+            //}
+            //Activate Bridge Animator - Cash Crossing Specifc
+            for (int target = 0; target < targetConditionalContainer.targetsForConditionalTrue.Length; target++)
+            {
+                Debug.Log($"symbolEvaluationContainer.symbolID {symbolEvaluationContainer.symbolID} at index in sequence {symbolEvaluationContainer.indexInEndSequence} activated a condition");
+                //Animators are 0-5 but start on row 1 - index on path is current index which is same number as index in animator without adding 0-1 etc
+                targetConditionalContainer.targetsForConditionalTrue[target].ActivateConditionalAtIndex(symbolEvaluationContainer.indexInEndSequence - symbolEvaluationContainer.objectGroupManagerDisplayZones.paddingBefore);
+            }
+            return true;
+        }
+
+        internal override void Initialize()
+        {
+            for (int target = 0; target < targetConditionalContainer.targetsForConditionalTrue.Length; target++)
+            {
+                targetConditionalContainer.targetsForConditionalTrue[target].Initialize();
+            }
+        }
+    }
     /// <summary>
     /// A slot activator that triggered by a symbol on a row. Use-Case - Send 
     /// </summary>

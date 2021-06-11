@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using UnityEngine;
 using System.Threading;
 using System.Collections.Generic;
+using System;
+using static BoomSports.Prototype.StripConfigurationObject;
+using static BoomSports.Prototype.Managers.BaseConfigurationObjectManager;
 //************
 #if UNITY_EDITOR
 using UnityEditor;
@@ -157,7 +160,7 @@ namespace BoomSports.Prototype.Managers
         {
             cycle_paylines = true;
             current_winning_payline_shown = -1;
-            payline_renderer_manager.ToggleRenderer(true);
+            payline_renderer_manager.ToggleLineRendererActive(true);
             StartCoroutine(InitializeAndCycleWinningPaylines());
 
         }
@@ -181,34 +184,49 @@ namespace BoomSports.Prototype.Managers
         {
             //On First Pass thru
             //matrix.InitializeSymbolsForWinConfigurationDisplay();
-            int payline_to_show = current_winning_payline_shown + 1 < winningObjects.Length ? current_winning_payline_shown + 1 : 0;
+            int paylineToShow = current_winning_payline_shown + 1 < winningObjects.Length ? current_winning_payline_shown + 1 : 0;
             //Debug.Log(String.Format("Showing Payline {0}", payline_to_show));
             _winningObjects = EvaluationManager.GetFirstInstanceCoreEvaluationObject<PaylinesEvaluationScriptableObject>(ref configurationObject.managers.evaluationManager.coreEvaluationObjects).winningObjects.ToArray();
             
-            ShowWinningPayline(payline_to_show);
+            ShowWinningPayline(paylineToShow);
             //Debug.Log(String.Format("Waiting for {0} seconds", wininng_payline_highlight_time));
             yield return new WaitForSeconds(winningObjectDisplayTime);
-            //Debug.Log("Hiding Payline");
             yield return HideWinningPayline();
             //Debug.Log(String.Format("Delaying for {0} seconds", delay_between_wininng_payline));
             yield return new WaitForSeconds(delayBetweenWinningObjectDisplayed);
         }
 
+        private void DeActivateBridgeAnimatorsOnPayline(int paylineToShow)
+        {
+            if (paylineToShow < winningObjects.Length)
+            {
+                configurationObject.SetPresentingBridgeAnimatorsOff(winningObjects[paylineToShow]);
+            }
+        }
+
         private IEnumerator HideWinningPayline()
         {
+            SetPaylineCyceStateTo(PaylineCycleStates.hide);
             yield return configurationObject.InitializeSymbolsForWinConfigurationDisplay();
         }
 
         internal Task ShowWinningPayline(int v)
         {
+            SetPaylineCyceStateTo(PaylineCycleStates.show);
             //Debug.Log($"winningObjects.Length = {winningObjects.Length}");
             if (v < winningObjects.Length)
             {
                 current_winning_payline_shown = v;
                 //Debug.Log($"Current wining payline shown = {v}");
+                //Cash Crossing UseCase - On Outer/Center (3)Reels Activate Bridxge Animator row - 1 of node in outer reel apart of winning payline
                 RenderWinningPayline(winningObjects[current_winning_payline_shown]);
             }
             return Task.CompletedTask;
+        }
+        //Hack for bridges - TODO refactor into payline manager
+        private void SetPaylineCyceStateTo(PaylineCycleStates toState)
+        {
+            StripConfigurationObject.instance.SetPaylineCycleStateTo(toState);
         }
 
         internal void ClearWinningPaylines()
@@ -226,7 +244,7 @@ namespace BoomSports.Prototype.Managers
             switch (state)
             {
                 case States.Idle_Intro:
-                    payline_renderer_manager.ToggleRenderer(false);
+                    payline_renderer_manager.ToggleLineRendererActive(false);
                     cycle_paylines = false;
                     ClearWinningPaylines();
                     break;

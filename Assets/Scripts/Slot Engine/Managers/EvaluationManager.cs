@@ -202,6 +202,23 @@ namespace BoomSports.Prototype.Managers
                 output_filtered.AddRange((T[])Convert.ChangeType(output_raw[i], typeof(T[])));
             }
 
+            //for (int payline = 0; payline < output_filtered.Count; payline++)
+            //{
+            //    if(output_filtered[payline].)
+            //    if (temp.nodesActivatingEvaluationConditions[i].column == 0) //Left Bridge Animator
+            //    {
+            //        targetBridgeAnimatorsLeft.ActivateConditionalAtIndex(indexOfRowInAnimators);
+            //    }
+            //    else if (temp.nodesActivatingEvaluationConditions[i].column == 6)// Right Bridge Animator
+            //    {
+            //        targetBridgeAnimatorsRight.ActivateConditionalAtIndex(indexOfRowInAnimators);
+            //    }
+            //    else if (temp.nodesActivatingEvaluationConditions[i].column == 3)// Center Animator
+            //    {
+            //        targetBridgeAnimatorCenter.ActivateConditional();
+            //    }
+            //}
+
             //Check that feature conditions are met and activated after return
             return Task.FromResult<T[]>(output_filtered.ToArray());
         }
@@ -227,9 +244,9 @@ namespace BoomSports.Prototype.Managers
                         //Check the nodes column - Target the animator in the column and row - Set to active
                         //Need to use row - padding of display slots
                         indexOfRowInAnimators = temp.nodesActivatingEvaluationConditions[i].row - displayZones[temp.nodesActivatingEvaluationConditions[i].column].paddingBefore;
-
-                        //Temporary hook for cash crossing - may be extracted for further use
-                        StripConfigurationObject.instance.SetSpinAtIndexFrom(temp,temp.nodesActivatingEvaluationConditions[i].column, indexOfRowInAnimators);
+                        //Check if node has activated already
+                        //Temporary hook for cash crossing - may be extracted for further use - Temporary fix - index sent id 1 position off not including padding - todo refactor to remove padding sent to evaluator.
+                        StripConfigurationObject.instance.SetSpinAtIndexFrom(temp,temp.nodesActivatingEvaluationConditions[i].column, indexOfRowInAnimators + 1);
                         if (temp.nodesActivatingEvaluationConditions[i].column == 0) //Left Bridge Animator
                         {
                             targetBridgeAnimatorsLeft.ActivateConditionalAtIndex(indexOfRowInAnimators);
@@ -419,7 +436,7 @@ namespace BoomSports.Prototype.Managers
 
         internal bool IsSymbolFeatureSymbol(SymbolObject symbolObject, Features featureTriggerToCheck)
         {
-            //for every slot evaluation object see which 
+            //For every slot evaluation object see which 
             bool output = false;
             for (int evaluator = 0; evaluator < slotEvaluationObjects.Length; evaluator++)
             {

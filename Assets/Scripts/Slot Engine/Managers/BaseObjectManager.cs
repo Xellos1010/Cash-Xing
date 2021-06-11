@@ -59,7 +59,7 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// current position of slot in Path: current issues with memory reference staying set in unity
         /// </summary>
-        public int indexOnPath;
+        public int currentIndexOnPath;
         /// <summary>
         /// Cached reference to calculate toPosition for the object within spin cycle
         /// </summary>
@@ -382,13 +382,13 @@ namespace BoomSports.Prototype.Managers
             //TODO refactor cash crossing specific
             if(BaseConfigurationObjectManager.instance.isFeatureSymbol(symbol_to_show, Features.multiplier))
             {
-                TMPro.TextMeshPro temp;
+                TextMeshPro temp;
                 for (int renderer = 0; renderer < renderers.Length; renderer++)
                 {
-                    temp = renderers[renderer].GetComponent<TMPro.TextMeshPro>();
+                    temp = renderers[renderer].GetComponent<TextMeshPro>();
                     if (temp != null)
                     {
-                        //Sets the symbols base data win multiplier here
+                        //Sets the symbols base data win multiplier here - Hack TODO Refactor and assign to static number
                         baseSymbolData.winMultiplier = SetTMPTextToRandomRange(ref temp, 2, 10);
                         break;
                     }
@@ -458,7 +458,7 @@ namespace BoomSports.Prototype.Managers
                 //If the sqr magnitude of local position is 
                 if(Mathf.Abs(transform.localPosition.sqrMagnitude) <= Mathf.Abs(localPositionsInStrip[position].sqrMagnitude))
                 {
-                    indexOnPath = position;
+                    currentIndexOnPath = position;
                     break;
                 }
             }
@@ -523,7 +523,7 @@ namespace BoomSports.Prototype.Managers
             return true;
         }
 
-        internal void SyncSymbolInfoToCurrentDisplay()
+        internal void SetPresentationIdCurrenPresentation()
         {
             MeshRenderer activeMeshrenderer = null;
             //Get sub symbol active
@@ -540,7 +540,7 @@ namespace BoomSports.Prototype.Managers
             currentPresentingSymbolName = activeMeshrenderer.transform.parent.name;
         }
 
-        internal void SyncCurrentDisplaySymbolInfo()
+        internal void SetDisplaySymbolToPresentationID()
         {
             ShowSymbolRenderer(currentPresentingSymbolID);
         }
@@ -586,6 +586,14 @@ namespace BoomSports.Prototype.Managers
             SetLocalCurrentSpinTimerTo(baseObjectGroupParent.configurationObjectParent.managers.spinManager.timeCounter);
         }
 
+
+        internal virtual Vector3 MoveObjectToSpinPosition(float spinCurrentTimerValue) { return Vector3.zero; }
+        /// <summary>
+        /// Moves an objects along SpinCycle (Spin Sequence/Path) and returns the calculated to position based on spinCurrentTimer;
+        /// </summary>
+        /// <returns></returns>
+        internal virtual Vector3 MoveObjectBasedOnTime(float spinCurrentTimer){ return Vector3.zero; }
+
         private void SetLocalCurrentSpinTimerTo(float toValue)
         {
             spinCurrentTimer = toValue;
@@ -606,5 +614,11 @@ namespace BoomSports.Prototype.Managers
             presentationSymbolSetToEnd = false;
         }
         internal virtual void Update() { }
+
+        internal void SetCurrentIndexInPathTo(int indexOnPath)
+        {
+            Debug.Log($"{gameObject.name} current index in path = {indexOnPath}");
+            currentIndexOnPath = indexOnPath;
+        }
     }
 }

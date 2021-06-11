@@ -10,6 +10,7 @@
 //
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 
 namespace BoomSports.Prototype
 {
@@ -24,12 +25,21 @@ namespace BoomSports.Prototype
         /// </summary>
         [SerializeField]
         public SlotSymbolActivatorConditional[] slotSymbolActivators;
+        //public SlotWinActivatorConditional[] slotWinActivators;
         /// <summary>
         /// returns all conditionals from all sources in a list
         /// </summary>
         /// <returns></returns>
         internal BaseSlotActivatorEventConditional[] GetAllConditionalChecks()
         {
+            //List<BaseSlotActivatorEventConditional> output = new List<BaseSlotActivatorEventConditional>();
+            //if(slotSymbolActivators != null)
+            //    if(slotSymbolActivators.Length > 0)
+            //        output.AddRange(slotSymbolActivators);
+            //if(slotWinActivators != null)
+            //    if(slotWinActivators.Length > 0)
+            //        output.AddRange(slotWinActivators);
+            //return output.ToArray();
             return slotSymbolActivators;
         }
     }

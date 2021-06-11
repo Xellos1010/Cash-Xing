@@ -32,7 +32,7 @@ public partial class WinningPayline : WinningObject
                 //Point to symbol container data from matrix and get multiplier value
                 List<BaseObjectManager> temp = matrix.groupObjectManagers[winningNodes[i].nodeInfo.column].GetSlotsDecending();
                 //Should account for padding slot already - If you refactor without understanding may break.
-                Debug.Log($"Found multiplier win - setting multiplier from node {winningNodes[i].nodeInfo.Print()} {matrix.groupObjectManagers[winningNodes[i].nodeInfo.column].gameObject.name} {temp[winningNodes[i].nodeInfo.row].gameObject.name} ");
+                Debug.Log($"Found multiplier win on node {winningNodes[i].nodeInfo.Print()} - symbol {winningNodes[i].symbol} - gameobject name = {matrix.groupObjectManagers[winningNodes[i].nodeInfo.column].gameObject.name} {temp[winningNodes[i].nodeInfo.row].gameObject.name}");
                 //Add all multipliers in the winning array
                 multiplier += temp[winningNodes[i].nodeInfo.row].baseSymbolData.winMultiplier;
             }
@@ -98,5 +98,25 @@ public partial class WinningPayline : WinningObject
             }
         }
         return output;
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="columnsToCheckForNode"></param>
+    /// <returns>int arraw of colunns to get row</returns>
+    internal SuffixTreeNodeInfo[] ContainsNodeFromColumns(int[] columnsToCheckForNode)
+    {
+        List<SuffixTreeNodeInfo> output = new List<SuffixTreeNodeInfo>();
+        int index = 0;
+        for (int winningNode = 0; winningNode < winningNodes.Length; winningNode++)
+        {
+            Debug.Log($"Checking if {String.Join("|", columnsToCheckForNode)} contains {winningNodes[winningNode].nodeInfo.column}");
+            if(columnsToCheckForNode.Contains<int>(winningNodes[winningNode].nodeInfo.column,out index))
+            {
+                Debug.Log($"{String.Join("|", columnsToCheckForNode)} Contains {winningNodes[winningNode].nodeInfo.column} adding {winningNodes[winningNode].nodeInfo.Print()} to output");
+                output.Add(winningNodes[winningNode].nodeInfo);
+            }
+        }
+        return output.ToArray();
     }
 }

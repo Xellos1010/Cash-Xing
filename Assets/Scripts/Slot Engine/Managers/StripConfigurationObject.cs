@@ -36,6 +36,10 @@ namespace BoomSports.Prototype
             EditorGUILayout.EnumPopup(StaticStateManager.enCurrentState);
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Matrix Controls");
+            if (GUILayout.Button("Initialize Index in Path for slot objects"))
+            {
+                myTarget.SetGroupManagersObjectsIndexOnPathToCurrentPositionInPath();
+            }
             if (GUILayout.Button("Set Object Group Managers to Children"))
             {
                 myTarget.groupObjectManagers = myTarget.transform.GetComponentsInChildren<BaseObjectGroupManager>(true);
@@ -48,13 +52,13 @@ namespace BoomSports.Prototype
             {
                 myTarget.SetSlotsDisplayToCurrentSequence();
             }
-            if (GUILayout.Button("Set Slots PresentationID to symbol currently active"))
-            {
-                myTarget.SyncCurrentSymbolDisplayedToPresentationID();
-            }
             if (GUILayout.Button("Set Slot Render Graphics to current presentation ID"))
             {
-                myTarget.SyncPresentationIDToCurrentSymbolDisplayed();
+                myTarget.SetCurrentSymbolDisplayedToCurrentPresentationID();
+            }
+            if (GUILayout.Button("Set current presentation ID to current Slot Render Graphics "))
+            {
+                myTarget.SetPresentationIDToCurrentSymbolDisplayed();
             }
             if (GUILayout.Button("Create Empty Animation Container"))
             {
@@ -356,18 +360,196 @@ namespace BoomSports.Prototype
 
         internal IEnumerator InitializeSymbolsForWinConfigurationDisplay()
         {
+            //set slots animators bool
             SetSlotsAnimatorBoolTo(supportedAnimatorBools.LoopPaylineWins, false);
             yield return 0;
         }
+        [Serializable]
+        public struct BridgeAnimatorTriggerSignalerContainer
+        {
+            [SerializeField]
+            public BridgeAnimatorTriggerSignaler bridgeAnimatorTriggerSignaler;
+            [SerializeField]
+            public int columnTarget;
+        }
+
+        //Build Bridge Animator Reference - Hack Cash Crossing
+        public BridgeAnimatorTriggerSignalerContainer leftBridgeAnimatorTriggerSignaler;
+        public BridgeAnimatorTriggerSignalerContainer centerBridgeAnimatorTriggerSignaler;
+        public BridgeAnimatorTriggerSignalerContainer rightBridgeAnimatorTriggerSignaler;
         internal Task SetSymbolsForWinConfigurationDisplay(WinningPayline winning_payline, List<Vector3> linePositions)
         {
+            //Set Bridge Animator in outer reel or center reel on column win
             //Debug.Log(String.Format("Showing Winning Payline {0} with winning symbols {1}",String.Join(" ", winning_payline.payline.payline_configuration.ToString()), String.Join(" ",winning_payline.winning_symbols)));
             //Get Winning Slots and loosing slots
             current_payline_displayed = winning_payline;
             ReturnWinLoseSlots(winning_payline, linePositions,out winning_slots, out losing_slots, ref groupObjectManagers);
+            //Initialize and activate bridge Animators - Hook into Cycle Changed as well and register to event
+            InitializeBridgeAnimatorsAndSetWinningOn(winning_payline);
+
             SetSlotsToResolveWinLose(ref winning_slots, true);
             SetSlotsToResolveWinLose(ref losing_slots, false);
+
             return Task.CompletedTask;
+        }
+        public List<SetTriggerForBridgeByNodeDataContainer> dataContainerBridgeCurrentlyActiveCyclePayline
+        {
+            get
+            {
+                if (_dataContainerBridgeCurrentlyActiveCyclePayline == null)
+                    _dataContainerBridgeCurrentlyActiveCyclePayline = new List<SetTriggerForBridgeByNodeDataContainer>();
+                return _dataContainerBridgeCurrentlyActiveCyclePayline;
+            }
+        }
+        public List<SetTriggerForBridgeByNodeDataContainer> _dataContainerBridgeCurrentlyActiveCyclePayline;
+        private void InitializeBridgeAnimatorsAndSetWinningOn(WinningPayline winning_payline)
+        {
+            int[] targetBridgeColumn = new int[3]
+            {
+                leftBridgeAnimatorTriggerSignaler.columnTarget,
+                centerBridgeAnimatorTriggerSignaler.columnTarget,
+                rightBridgeAnimatorTriggerSignaler.columnTarget
+            };
+            SuffixTreeNodeInfo[] bridgeNodesToActivateColumns = winning_payline.ContainsNodeFromColumns(targetBridgeColumn);
+            Debug.Log($"WinningNodes {winning_payline.PrintWinningNodes()} bridgeNodesToActivate = {bridgeNodesToActivateColumns.Length}");
+            if (bridgeNodesToActivateColumns.Length > 0)
+            {
+                //Debug.Log($"Getting target bridge for node = }");
+                SetTriggerForBridgeByNodeDataContainer dataContainer;
+                BridgeAnimatorTriggerSignalerContainer targetBridge;
+                //Set bridge activators on columns at row to active
+                for (int i = 0; i < bridgeNodesToActivateColumns.Length; i++)
+                {
+                    Debug.Log($"Getting target bridge for node = {bridgeNodesToActivateColumns[i].Print()}");
+                    targetBridge = ReturnBridgeSignalerFromNode(bridgeNodesToActivateColumns[i]);
+                    Debug.Log($"targetBridge = {targetBridge.bridgeAnimatorTriggerSignaler.gameObject.name}");
+                    dataContainer = new SetTriggerForBridgeByNodeDataContainer(bridgeNodesToActivateColumns[i],BaseConfigurationObjectManager.instance.configurationSettings.displayZones, targetBridge);
+                    ActivateBridgeAnimatorAtIndex(dataContainer);
+                    dataContainerBridgeCurrentlyActiveCyclePayline.Add(dataContainer);
+                }
+                paylineCycleStateUpdated += StripConfigurationObject_paylineCycleStateUpdated;
+            }
+        }
+
+        private void StripConfigurationObject_paylineCycleStateUpdated(PaylineCycleStates newState)
+        {
+            Debug.Log($"{newState.ToString()} new state recieved");
+            if(newState == PaylineCycleStates.hide)
+            {
+                Debug.Log($"{newState.ToString()} was activated - initializing bridge animators");
+                for (int i = dataContainerBridgeCurrentlyActiveCyclePayline.Count - 1; i >= 0; i--)
+                {
+                    Debug.Log($"DeActivateBridgeAnimator(dataContainerBridgeCurrentlyActiveCyclePayline[{i}] = {dataContainerBridgeCurrentlyActiveCyclePayline[i].targetBridge.bridgeAnimatorTriggerSignaler.gameObject.name}");
+                    DeActivateBridgeAnimator(dataContainerBridgeCurrentlyActiveCyclePayline[i]);
+                    dataContainerBridgeCurrentlyActiveCyclePayline.RemoveAt(i);
+                }
+            }
+            paylineCycleStateUpdated -= StripConfigurationObject_paylineCycleStateUpdated;
+        }
+
+        private BridgeAnimatorTriggerSignalerContainer ReturnBridgeSignalerFromNode(SuffixTreeNodeInfo suffixTreeNodeInfo)
+        {
+            Debug.Log($"Returning Target Bridge for {suffixTreeNodeInfo.Print()} leftBridgeAnimatorTriggerSignaler.columnTarget = {leftBridgeAnimatorTriggerSignaler.columnTarget} centerBridgeAnimatorTriggerSignaler.columnTarget = {centerBridgeAnimatorTriggerSignaler.columnTarget} rightBridgeAnimatorTriggerSignaler.columnTarget = {rightBridgeAnimatorTriggerSignaler.columnTarget}");
+
+            //Hack Cash Crossing - Activate Bridge Animators
+            //Need to - padding before matrix of strip from row due to padding display zones start symbol used in evaluation manager as inactive payzone
+            //Debug.Log($"suffixTreeNodeInfo.column == leftBridgeAnimatorTriggerSignaler.columnTarget {suffixTreeNodeInfo.column == leftBridgeAnimatorTriggerSignaler.columnTarget}");
+            //Debug.Log($"suffixTreeNodeInfo.column == centerBridgeAnimatorTriggerSignaler.columnTarget {suffixTreeNodeInfo.column == centerBridgeAnimatorTriggerSignaler.columnTarget}");
+            //Debug.Log($"suffixTreeNodeInfo.column == rightBridgeAnimatorTriggerSignaler.columnTarget {suffixTreeNodeInfo.column == rightBridgeAnimatorTriggerSignaler.columnTarget}");
+
+            if (suffixTreeNodeInfo.column == leftBridgeAnimatorTriggerSignaler.columnTarget)
+            {
+                return leftBridgeAnimatorTriggerSignaler;
+            }
+            else if (suffixTreeNodeInfo.column == centerBridgeAnimatorTriggerSignaler.columnTarget)
+            {
+                return centerBridgeAnimatorTriggerSignaler;
+            }
+            else if (suffixTreeNodeInfo.column == rightBridgeAnimatorTriggerSignaler.columnTarget)
+            {
+                return rightBridgeAnimatorTriggerSignaler;
+            }
+            Debug.Log($"Node {suffixTreeNodeInfo.Print()} has no associated bridge - defaulting return to null");
+            return new BridgeAnimatorTriggerSignalerContainer();
+        }
+
+        internal void SetPresentingBridgeAnimatorsOff(WinningPayline winning_payline)
+        {
+            SuffixTreeNodeInfo[] bridgeNodesToActivateColumns = winning_payline.ContainsNodeFromColumns(new int[3] { 0, 4, 7 });
+            Debug.Log($"bridgeNodesToActivate = {bridgeNodesToActivateColumns.Length}");
+            if (bridgeNodesToActivateColumns.Length > 0)
+            {
+                SetTriggerForBridgeByNodeDataContainer dataContainer;
+                BridgeAnimatorTriggerSignalerContainer targetBridge;
+                //Set bridge activators on columns at row to active
+                for (int i = 0; i < bridgeNodesToActivateColumns.Length; i++)
+                {
+                    targetBridge = ReturnBridgeSignalerFromNode(bridgeNodesToActivateColumns[i]);
+                    dataContainer = new SetTriggerForBridgeByNodeDataContainer(bridgeNodesToActivateColumns[i], BaseConfigurationObjectManager.instance.configurationSettings.displayZones, targetBridge);
+                    DeActivateBridgeAnimator(dataContainer);
+                }
+            }
+        }
+        [Serializable]
+        public struct SetTriggerForBridgeByNodeDataContainer
+        {
+            [SerializeField]
+            public BridgeAnimatorTriggerSignalerContainer targetBridge;
+            [SerializeField]
+            public SuffixTreeNodeInfo suffixTreeNodeInfo;
+            /// <summary>
+            /// Used to get padding information
+            /// </summary>
+            [SerializeField]
+            public ConfigurationDisplayZonesStruct[] displayZones;
+            /// <summary>
+            /// Initialize Container and set bridge signaller reference later when logic parsed for which bridge to target
+            /// </summary>
+            /// <param name="suffixTreeNodeInfo"></param>
+            /// <param name="displayZones"></param>
+            public SetTriggerForBridgeByNodeDataContainer(SuffixTreeNodeInfo suffixTreeNodeInfo, ConfigurationDisplayZonesStruct[] displayZones, BridgeAnimatorTriggerSignalerContainer targetBridge)
+            {
+                this.suffixTreeNodeInfo = suffixTreeNodeInfo;
+                this.displayZones = displayZones;
+                this.targetBridge = targetBridge;
+            }
+
+            internal int ReturnTargetAnimatorIndex()
+            {
+                return suffixTreeNodeInfo.row - displayZones[suffixTreeNodeInfo.column].paddingBefore;
+            }
+        }
+        
+
+        private void ActivateBridgeAnimatorAtIndex(SetTriggerForBridgeByNodeDataContainer dataContainer)
+        {
+            int bridgeIndex = dataContainer.ReturnTargetAnimatorIndex();
+            Debug.Log($"dataContainer.bridgeAnimatorTriggerSignaler == null is {dataContainer.targetBridge.bridgeAnimatorTriggerSignaler == null}");
+            Debug.Log($"dataContainer.bridgeAnimatorTriggerSignaler.bridgeAnimators == null is {dataContainer.targetBridge.bridgeAnimatorTriggerSignaler == null}");
+
+            if (bridgeIndex < dataContainer.targetBridge.bridgeAnimatorTriggerSignaler.bridgeAnimators.Length)
+            {
+                Debug.Log($"dataContainer.{dataContainer.targetBridge.bridgeAnimatorTriggerSignaler.gameObject.name}SetTriggerOnBridgeAnimatorAtIndexTo({bridgeIndex}, supportedAnimatorTriggers.FeatureWin)");
+                dataContainer.targetBridge.bridgeAnimatorTriggerSignaler.SetTriggerOnBridgeAnimatorAtIndexTo(bridgeIndex, supportedAnimatorTriggers.FeatureWin);
+            }
+            else
+            {
+                Debug.LogWarning($"Index {bridgeIndex} is bigger than length of bridge animators");
+            }
+        }
+        private void DeActivateBridgeAnimator(SetTriggerForBridgeByNodeDataContainer dataContainer)
+        {
+
+            int bridgeIndex = dataContainer.ReturnTargetAnimatorIndex();
+            if (bridgeIndex < dataContainer.targetBridge.bridgeAnimatorTriggerSignaler.bridgeAnimators.Length)
+            {
+                dataContainer.targetBridge.bridgeAnimatorTriggerSignaler.SetTriggerOnBridgeAnimatorAtIndexTo(bridgeIndex, supportedAnimatorTriggers.FeatureOff);
+            }
+            else
+            {
+                Debug.LogWarning($"Index {bridgeIndex} is bigger than length of bridge animators");
+            }
+
         }
 
         private void ReturnWinLoseSlots(WinningPayline winningPayline, List<Vector3> linePositions, out List<BaseObjectManager> winningSlots, out List<BaseObjectManager> losingSlots, ref BaseObjectGroupManager[] objectGroupManagers)
@@ -1552,11 +1734,11 @@ namespace BoomSports.Prototype
             }
         }
 
-        internal void SyncPresentationIDToCurrentSymbolDisplayed()
+        internal void SetPresentationIDToCurrentSymbolDisplayed()
         {
             for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                groupObjectManagers[i].SyncInformationToDisplaySymbol();
+                groupObjectManagers[i].SetPresentationIdToDisplaySymbol();
             }
         }
 
@@ -1567,12 +1749,14 @@ namespace BoomSports.Prototype
                 groupObjectManagers[i].SetDisplaySymbolsForNextSpinToCurrent();
             }
         }
-
-        internal void SetSlotsDisplayToCurrentSequence()
+        /// <summary>
+        /// Sets all group managers objects index in path to the objects current position in path - Objects need to be at local position in path
+        /// </summary>
+        internal void SetGroupManagersObjectsIndexOnPathToCurrentPositionInPath()
         {
             for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                groupObjectManagers[i].SetDisplaySymbolsToCurrentSequence();
+                groupObjectManagers[i].SetObjectsIndexOnPathToCurrentPositionInPath();
             }
         }
     }

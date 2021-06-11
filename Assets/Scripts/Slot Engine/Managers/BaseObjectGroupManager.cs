@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using BoomSports.Prototype.ScriptableObjects;
+using System.Collections;
 
 namespace BoomSports.Prototype.Managers
 {
@@ -245,7 +246,32 @@ namespace BoomSports.Prototype.Managers
             {
                 if (conditionalsToCheck[i].EvaluateCondition(symbolEvaluationContainer))
                 {
+                    bridgesInIdle.Add(conditionalsToCheck[i]);
                     //Evaluate Condition handles invoking events - may change in future
+                    //Hook into spin manager on spin end for triggering the bridge off
+                    SpinManager.instance.spinStateUpdated += Instance_spinStateUpdated;
+                }
+            }
+        }
+
+        public List<BaseSlotActivatorEventConditional> bridgesInIdle
+        {
+            get
+            {
+                if (_bridgesInIdle == null)
+                    _bridgesInIdle = new List<BaseSlotActivatorEventConditional>();
+                return _bridgesInIdle;
+            }
+        }
+        public List<BaseSlotActivatorEventConditional> _bridgesInIdle;
+        private void Instance_spinStateUpdated(SpinStates updatedState)
+        {
+            if(updatedState == SpinStates.end)
+            {
+                for (int i = bridgesInIdle.Count-1; i >= 0; i--)
+                {
+                    bridgesInIdle[i].Initialize();
+                    bridgesInIdle.RemoveAt(i);
                 }
             }
         }
@@ -317,10 +343,8 @@ namespace BoomSports.Prototype.Managers
             spinAtIndexInPath = indexToSpinAt;
             spinAtIndexFor = 3;//TODO refactor Hardcoding 
             trailingActive = true;
-            if(triggerFeatureEvaluationScriptableObject.featureToTrigger == Features.multiplier)
-            {
-                DebugLoadSymbols(9,3);
-            }
+            //Hack for now - need to account for wild - cash crossing specific
+            SetDebugSymbolsToLoadTo(9, 3);
         }
 
         /// <summary>
@@ -328,9 +352,12 @@ namespace BoomSports.Prototype.Managers
         /// </summary>
         /// <param name="symbolToLoad"></param>
         /// <param name="howManyToLoad"></param>
-        private void DebugLoadSymbols(int symbolToLoad, int howManyToLoad)
+        private void SetDebugSymbolsToLoadTo(int symbolToLoad, int howManyToLoad)
         {
-            for (int i = 0; i < symbolToLoad; i++)
+            Debug.Log($"Adding Debug symbol to load {symbolToLoad} {howManyToLoad} times");
+            //Hack - is called twice - Cash Crossing
+            debugNextSymbolsToLoad.Clear();
+            for (int i = 0; i < howManyToLoad; i++)
             {
                 debugNextSymbolsToLoad.Add(symbolToLoad);
             }
@@ -353,6 +380,7 @@ namespace BoomSports.Prototype.Managers
         /// ---OOP Reel Split - Set index on reel path to start spin - initiale padding slot to index on path - calculate number of symbols to replace per spin - padding slot becomes first symbol at index to be inserted - all symbols until padding before are inserted at index - all padding symbols inserted at beggining of sequence so evaluation manager can process.
         public virtual Task StartSpin()
         {
+            Debug.Log($"Testing {gameObject.name}");
             //Invoke spin event
             objectGroupStartSpin?.Invoke(indexInGroupManager);
             //Initialize if spin at index expired based on debug symbols set on strip - temporary hack
@@ -362,12 +390,12 @@ namespace BoomSports.Prototype.Managers
                 SetSpinAtIndexTo(0);
             }
             //Initialize Padding slot start position - Ensure graphic of padding slot set to next graphic in sequence - will return a list of slots 
-            InitializePaddingSlotPositionAndSymbol();
+            //InitializePaddingSlotPositionAndSymbol();
             //Set new ending symbols based on reel. if padding slot was moved then first symbol is a non-evaluated symbol anyway.
+            //Since we are not initializing padding slot the end sequence needs to pull degbug symbol and set to index on path - Bottom slot becomes top slot and the symbols betweeen top and spin at index are locked
             InitializeEndDisplaySequenceToSet();
-            PrintSymbolSequence(ref symbolsDisplaySequence, "symbolsDisplaySequence after InitializeEndDisplaySequenceToSet() ");
             //Ensure display sequence is set to symbols in list since padding slot can move
-            List<BaseObjectManager> baseObjectsToSpin =  GetSlotsDecending();
+            List<BaseObjectManager> baseObjectsToSpin = GetSlotsDecending();
             string debugMessage = "";
             for (int i = 0; i < baseObjectsToSpin.Count; i++)
             {
@@ -381,6 +409,7 @@ namespace BoomSports.Prototype.Managers
             //Switching to ObjectManager of spin object to invoke check of display symbol and row in strip.
             //Check each symbols next position - any symbol activating a condition send event to recieving object
             //Cash Crossing when a bonus symbol enters a slot it sends idle trigger to associated bridge animator
+
             InitializeConditionalEvents();
             CheckForConditionalEventsFromEndDisplaySequence(symbolsDisplaySequence);
 
@@ -389,6 +418,8 @@ namespace BoomSports.Prototype.Managers
             //Need to account for index in path
             //if symbols to replace on reel < objectsInGroup.Length then set reel to end spin 
             //for (int i = 0; i < objectsInGroup.Length; i++)
+            if (spinAtIndexInPath > 0)
+                Debug.Log($"spinAtIndexInPath = {spinAtIndexInPath} spinning from object in group");
             for (int i = spinAtIndexInPath; i < objectsInGroup.Length; i++)
             {
                 objectsInGroup[i].StartSpin();
@@ -515,7 +546,12 @@ namespace BoomSports.Prototype.Managers
         {
             //If padding slot is initialized to index at path then need to search and insert padding slot into list - move last symbol out to first position in - padding slot will spin into place
             List<BaseObjectManager> lastInFirstOut = GetSlotsDecending();
-            Debug.Log($"{gameObject.name} GetSlotsDecending() raw count = {GetSlotsDecending().Count}");
+            string lastInFirstOutDebugItemsPrint = "";
+            for (int i = 0; i < lastInFirstOut.Count; i++)
+            {
+                lastInFirstOutDebugItemsPrint += $"|{lastInFirstOut[i].gameObject.name}";
+            }
+            Debug.Log($"{gameObject.name} GetSlotsDecending() raw count = {lastInFirstOut.Count} with items {lastInFirstOutDebugItemsPrint}");
             //TODO Refactor and abstract - hack for cash crossing
             //if (spinAtIndexInPath > 0) //
             //{
@@ -578,9 +614,11 @@ namespace BoomSports.Prototype.Managers
         /// <summary>
         /// Initializes Ending Display Symbols for Strip.
         /// </summary>
-        internal void InitializeEndDisplaySequenceToSet()
+        internal void InitializeEndDisplaySequenceToSet(bool printDebug = false)
         {
             SetDisplaySymbolsForNextSpin();
+            if(printDebug)
+                PrintSymbolSequence(ref symbolsDisplaySequence, "symbolsDisplaySequence after InitializeEndDisplaySequenceToSet() ");
         }
         /// <summary>
         /// Gets the display slots for the next spin - Stepper is partial clear depending on steps per spin - constant is full clear
@@ -692,17 +730,27 @@ namespace BoomSports.Prototype.Managers
             }
             return output;
         }
-
+        /// <summary>
+        /// Gets slots decending based on Index in Path
+        /// </summary>
+        /// <returns></returns>
         internal virtual List<BaseObjectManager> GetSlotsDecending()
         {
             Debug.Log($"Using Base Class Get Slots Decending foir {gameObject.name}");
             //Use sqr magnitude
             List<BaseObjectManager> output = new List<BaseObjectManager>();
             output.AddRange(objectsInGroup);
-            output.Sort(); // Temporary sorting method - only ascending
-            //Not efficient but gets the job done for 5-7 objects
-            
+            //Sort the output of objects in group by current index on path. Index on Path will default to order in sequence if symbols perform spins not based on translation.
+            output.Sort((x, y) => x.currentIndexOnPath.CompareTo(y.currentIndexOnPath));
             return output;
+        }
+        /// <summary>
+        /// Used as a base class for objects that spin along path to return 
+        /// </summary>
+        /// <returns></returns>
+        internal virtual Vector3[] ReturnPositionsOnPath() {
+            Debug.Log("Inherit from this class and override this function");
+            return null; 
         }
         /// <summary>
         /// Sets the reel to end state and slots to end configuration
@@ -873,19 +921,19 @@ namespace BoomSports.Prototype.Managers
 
             }
         }
-        internal void SyncInformationToDisplaySymbol ()
+        internal void SetPresentationIdToDisplaySymbol ()
         {
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
-                objectsInGroup[i].SyncCurrentDisplaySymbolInfo();
+                objectsInGroup[i].SetPresentationIdCurrenPresentation();
             }
         }
 
-        internal void SyncDisplaySymbolInformation()
+        internal void SetDisplayToPresentationId()
         {
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
-                objectsInGroup[i].SyncCurrentDisplaySymbolInfo();
+                objectsInGroup[i].SetDisplaySymbolToPresentationID();
             }
         }
 
@@ -936,6 +984,17 @@ namespace BoomSports.Prototype.Managers
             for (int i = 0; i < objectsInGroup.Length; i++)
             {
                 objectsInGroup[i].SetDisplaySymbolTo(symbolsDisplaySequence[i]);
+            }
+        }
+        /// <summary>
+        /// Used before game starts - Sets objects index in path based on local position
+        /// </summary>
+        internal void SetObjectsIndexOnPathToCurrentPositionInPath()
+        {
+            List<BaseObjectManager> baseObjectsInOrder = GetSlotsDecending();
+            for (int indexOnPath = 0; indexOnPath < baseObjectsInOrder.Count; indexOnPath++)
+            {
+                baseObjectsInOrder[indexOnPath].SetCurrentIndexInPathTo(indexOnPath);
             }
         }
     }

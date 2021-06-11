@@ -1,8 +1,13 @@
 ﻿
+using BoomSports.Prototype.Managers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+/// <summary>
+/// Compares the index of 
+/// </summary>
 public static class StaticUtilities
 {
     public static bool ContainsNull<T>(T[] array)

@@ -9,6 +9,8 @@
 //
 //
 using UnityEngine;
+using System.Collections.Generic;
+using System;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -21,18 +23,30 @@ namespace BoomSports.Prototype.Managers
     {
         StripObjectManager myTarget;
         [Range(0,50)]
-        float sliderTimerSpin;
+        float spinCurrentTimerSlider;
         BasePathTransformSpinEvaluatorScriptableObject temp;
         public void OnEnable()
         {
             myTarget = (StripObjectManager)target;
+            spinCurrentTimerSlider = serializedObject.FindProperty("spinCurrentTimer").floatValue;
         }
 
         public override void OnInspectorGUI()
         {
-            //base.OnInspectorGUI();
+            BoomEditorUtilities.DrawUILine(Color.red);
+            EditorGUILayout.LabelField("Debug Options");
+            EditorGUI.BeginChangeCheck();
+            spinCurrentTimerSlider = EditorGUILayout.Slider("Spin Current Time Debug Slider", spinCurrentTimerSlider, 0, 5);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Debug.Log($"{myTarget.gameObject.name}.MoveObjectToSpinPosition({spinCurrentTimerSlider}) = {myTarget.MoveObjectToSpinPosition(spinCurrentTimerSlider)}");
+                serializedObject.Update();
+            }
+            BoomEditorUtilities.DrawUILine(Color.red);
+
             BoomEditorUtilities.DrawUILine(Color.white);
             EditorGUILayout.LabelField("Commands");
+            
             if (GUILayout.Button("Calculate MoveObjectToSpinPosition()"))
             {
                 Debug.Log($"MoveObjectToSpinPosition() output toPosition = {myTarget.MoveObjectToSpinPosition()}");
@@ -133,7 +147,7 @@ namespace BoomSports.Prototype.Managers
         {
             Debug.Log($"Setting {gameObject.name}.transform.localPosition = {toPosition}, setting start index to {index}");
             transform.localPosition = toPosition;
-            indexOnPath = index;
+            currentIndexOnPath = index;
             localStartPositionIndex = index;
             return toPosition; //new Vector3(transform.localPosition.x, transform.localPosition.y + amount_to_add, transform.localPosition.z);
         }
@@ -163,24 +177,44 @@ namespace BoomSports.Prototype.Managers
             }
             return MoveObjectBasedOnTime(spinCurrentTimer);
         }
+
+        internal override Vector3 MoveObjectToSpinPosition(float spinCurrentTimerValue)
+        {
+            spinCurrentTimer = spinCurrentTimerValue;
+            return MoveObjectBasedOnTime(spinCurrentTimer);
+        }
         /// <summary>
         /// Moves an objects along SpinCycle (Spin Sequence/Path) and returns the calculated to position based on spinCurrentTimer;
         /// </summary>
         /// <returns></returns>
-        internal Vector3 MoveObjectBasedOnTime(float spinCurrentTimer)
+        internal override Vector3 MoveObjectBasedOnTime(float spinCurrentTimer)
         {
             //Debug.Log($"{gameObject.name} is MoveObjectToSpinPosition( spinCurrentTimer ={spinCurrentTimer})");
             toPosition = Vector3.zero;
             BasePathTransformSpinEvaluatorScriptableObject spinParameters = stripManager.GetSpinParameters();
-            //TODO Test Generic Evaluate Spin - TODO Add abtract function to return positions in object group
+            //TODO Test Generic Evaluate Spin - TODO Add abtract function to return positions in object group Hack for cash crossing
             StripObjectGroupManager temp2 = baseObjectGroupParent as StripObjectGroupManager;
             //Debug.Log($"new SpinPath({temp2.localPositionsInStrip}, {startPositionIndex},{temp2.configurationObjectParent.configurationSettings.slotSize}, {temp2.configurationObjectParent.configurationSettings.slotPadding});");
             //Sets up our spin path - calculates sqr magnitudes between each point in path - Compare absolute sqr magnitude of object local position and last position in path to move to start of path
+
+            //TODO Implement with partial path list - Currenrly crash's unity if implemented
+            //Passing in partial path when index at path is set > 0
+            //Vector3[] pathList = new Vector3[temp2.localPositionsInStrip.Length - temp2.spinAtIndexInPath]; 
+            //Array.Copy(temp2.localPositionsInStrip,temp2.spinAtIndexInPath, pathList,0,temp2.localPositionsInStrip.Length -1 - temp2.spinAtIndexInPath);
+            //SpinPath pathToEvaluate = new SpinPath(pathList, localStartPositionIndex, temp2.spinAtIndexInPath, temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
+            
+            //if spin at index > 0 then set first slot in path to spin at index - enable change symbol graphic to symbol graphic to graphic in display sequence
+            //Currently uses the whole path even with spin at index
             SpinPath pathToEvaluate = new SpinPath(temp2.localPositionsInStrip, localStartPositionIndex, temp2.spinAtIndexInPath, temp2.configurationObjectParent.configurationSettings.slotSize, temp2.configurationObjectParent.configurationSettings.slotPadding);
             //Debug.Log($"pathToEvaluate.GetType() == null = {pathToEvaluate.GetType() == null}");
             //Stepper Logic - The evaluating object checks if you have a set amount of steps or rotations to make in spin then to return constant value once ceiling has been reached 
+            //Remove initialize of padding slot - evaluator will parse spin at path logic and the first return will have padding slots new position and to change display graphic. when spin ends bottom slot will return to top as normal
+            //Spin start and end are set in here
+
             spinParameters.EvaluateSpin(spinCurrentTimer, ref pathToEvaluate);
-            indexOnPath = pathToEvaluate.currentToIndexInPath;
+            //Sync index on path based on spin evaluation
+            if (currentIndexOnPath != pathToEvaluate.currentToIndexInPath)
+                SetCurrentIndexInPathTo(pathToEvaluate.currentToIndexInPath);
             toPosition = pathToEvaluate.toPositionEvaluated;
             //Debug.Log($"{gameObject.name} toPosition = {toPosition} timesReachedEndOfPath = {timesReachedEndOfPath} pathToEvaluate.timesReachedEndOfPath = {pathToEvaluate.timesReachedEndOfPath} pathToEvaluate.changeSymbolGraphic {pathToEvaluate.changeSymbolGraphic} ");
             if (timesReachedEndOfPath != pathToEvaluate.timesReachedEndOfPath)
@@ -297,13 +331,12 @@ namespace BoomSports.Prototype.Managers
                     }
                 }
 
-                //In-case nothing was set, set to random 
-                if (!symbolSet)
+                if (!symbolSet)//If no symbol was set then set random symbol to display
                 {
                     Debug.LogWarning("Symbol was not set - auto setting random");
                     symbol = stripManager.configurationObjectParent.managers.endConfigurationManager.GetRandomWeightedSymbol(StaticStateManager.enCurrentMode).Result;
+                    SetDisplaySymbolTo(symbol);
                 }
-                SetDisplaySymbolTo(symbol);
             }
             
         }

@@ -85,15 +85,25 @@ namespace BoomSports.Prototype.Managers
             await CheckSymbolWeightsWork();
             //On Play editor referenced state machines loos reference. Temp Solution to build on game start. TODO find way to store info between play and edit mode - Has to do with prefabs
             InitializeStateMachine();
-            //Initialize Machine and Player  Information
+            //Initialize Machine and Player Information - TODO refactor to implement container
             managers.machineInfoManager.InitializeTestMachineValues(10000.0f, 0.0f, managers.machineInfoManager.machineInfoScriptableObject.supported_bet_amounts.Length / 2 - 1, 0, 0);
             //Debug.Log(String.Format("Initial pop of end_configiuration_manager = {0}", print_string));
             //This is temporary - we need to initialize the slot engine in a different scene then when preloading is done swithc to demo_attract.
-            SyncCurrentSymbolDisplayedToPresentationID();
+            //SyncCurrentSymbolDisplayedToPresentationID();
+            SetSlotsDisplayToCurrentSequence();
             managers.endConfigurationManager.ClearConfigurations();
             await managers.endConfigurationManager.GenerateMultipleDisplayConfigurations(GameModes.baseGame,20);
-
             StaticStateManager.SetStateTo(States.Idle_Intro);
+        }
+        /// <summary>
+        /// Used to set slots display graphics to current display sequence on reel
+        /// </summary>
+        internal void SetSlotsDisplayToCurrentSequence()
+        {
+            for (int i = 0; i < groupObjectManagers.Length; i++)
+            {
+                groupObjectManagers[i].SetDisplaySymbolsToCurrentSequence();
+            }
         }
         /// <summary>
         /// Use Next Configuration from endConfigurationManager
@@ -102,18 +112,18 @@ namespace BoomSports.Prototype.Managers
         internal async Task SpinStartGroupManagers()
         {
             //The end reel configuration is set when spin starts to the next item in the list
+            //Doesn't work right now since each group manager sets its own display symbol sequence
             DisplayConfigurationContainer nextConfiguration = managers.endConfigurationManager.UseNextConfigurationInList();
             //Evaluation is ran over those symbols and if there is a bonus trigger the matrix will be set into display bonus state
             //managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
-
-            await SpinStartGroupManagers(nextConfiguration);
+            await StartSpinGroupManagers(nextConfiguration);
         }
         /// <summary>
         /// Start the group managers spin and set to Configuraiton
         /// </summary>
         /// <param name="displayConfigurationToUse">Configuration to set the objects to display</param>
         /// <returns></returns>
-        internal async Task SpinStartGroupManagers(DisplayConfigurationContainer displayConfigurationToUse)
+        internal async Task StartSpinGroupManagers(DisplayConfigurationContainer displayConfigurationToUse)
         {
             int[] spinObjectsOrder = managers.spinManager.baseSpinSettingsScriptableObject.GetStopObjectOrder<BaseObjectGroupManager>(ref managers.configurationObject.groupObjectManagers);
             //Set the end configuraiton manager current configuraiton in use to displayConfiguration
@@ -150,16 +160,16 @@ namespace BoomSports.Prototype.Managers
             //Wait for all reels to be in spin.end state before continuing
             await WaitForGroupManagersToStopSpin(groupObjectManagers);
             //ensure symbols have proper id's set
-            SyncCurrentSymbolDisplayedToPresentationID();
-            //Evaluate the reels - 
-            managers.evaluationManager.EvaluateWinningSymbolsFromCurrentConfiguration();
+            SetCurrentSymbolDisplayedToCurrentPresentationID();
+            //Evaluate the reels - Used to activate conditional events in cash crossing for bridge activators
+            EvaluationManager.instance.EvaluateWinningSymbolsFromCurrentConfiguration();
         }
 
-        internal void SyncCurrentSymbolDisplayedToPresentationID()
+        internal void SetCurrentSymbolDisplayedToCurrentPresentationID()
         {
             for (int i = 0; i < groupObjectManagers.Length; i++)
             {
-                groupObjectManagers[i].SyncDisplaySymbolInformation();
+                groupObjectManagers[i].SetDisplayToPresentationId();
             }
         }
 
@@ -190,6 +200,20 @@ namespace BoomSports.Prototype.Managers
                     }
                 }
             }
+        }
+        [SerializeField]
+        public PaylineCycleStates currentCycleState;
+        public enum PaylineCycleStates
+        {
+            show,
+            hide,
+            count
+        }
+        public delegate void PaylineCycleStateUpdate(PaylineCycleStates newState);
+        public event PaylineCycleStateUpdate paylineCycleStateUpdated;
+        internal void SetPaylineCycleStateTo(StripConfigurationObject.PaylineCycleStates toState)
+        {
+            paylineCycleStateUpdated?.Invoke(toState);
         }
 
         private void InitializeStateMachine()
@@ -290,6 +314,7 @@ namespace BoomSports.Prototype.Managers
 
         internal void SetSpinAtIndexFrom(ScriptableObjects.TriggerFeatureEvaluationScriptableObject triggerFeatureEvaluationScriptableObject, int column, int indexToSpinAt)
         {
+            Debug.Log($"Setting groupObjectManagers[{column}]{gameObject.name} Spin at index to {indexToSpinAt} with feature to trigger {triggerFeatureEvaluationScriptableObject.featureToTrigger.ToString()}");
             groupObjectManagers[column].SetSpinAtIndexWithParamaters(triggerFeatureEvaluationScriptableObject, indexToSpinAt);
         }
 
@@ -415,7 +440,7 @@ namespace BoomSports.Prototype.Managers
         }
         internal bool isFeatureSymbol(int symbol, Features featureTriggerToCheck)
         {
-            return managers.evaluationManager.IsSymbolFeatureSymbol(symbolDataScriptableObject.symbols[symbol], featureTriggerToCheck);
+            return EvaluationManager.instance.IsSymbolFeatureSymbol(symbolDataScriptableObject.symbols[symbol], featureTriggerToCheck);
         }
         /// <summary>
         /// Sets all symbol animators to REsolve Win States
@@ -427,7 +452,9 @@ namespace BoomSports.Prototype.Managers
             for (int slot = 0; slot < slots.Count; slot++)
             {
                 if (v)
+                {
                     slots[slot].SetSymbolResolveWin();
+                }
                 else
                     slots[slot].SetSymbolResolveToLose();
             }

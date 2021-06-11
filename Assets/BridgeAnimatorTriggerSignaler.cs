@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,15 +22,10 @@ public class BridgeAnimatorTriggerSignaler : MonoBehaviour
         }
     }
     public Animator?[] _bridgeAnimators;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
-    // Update is called once per frame
-    void Update()
+    internal void SetTriggerOnBridgeAnimatorAtIndexTo(int index, supportedAnimatorTriggers triggerToSet)
     {
-        
+        Debug.Log($"{bridgeAnimators[index].gameObject.name}.SetTrigger({triggerToSet.ToString()});");
+        bridgeAnimators[index].SetTrigger(triggerToSet.ToString());
     }
 }

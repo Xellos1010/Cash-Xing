@@ -116,6 +116,8 @@ namespace BoomSports.Prototype.Managers
         {
             get
             {
+                //if (endConfigurationsScriptableObject.currentConfigurationInUse.configuration.Length < 1)
+                //    return popEndDisplayConfiguration;
                 return endConfigurationsScriptableObject.currentConfigurationInUse;
             }
             set
@@ -236,8 +238,11 @@ namespace BoomSports.Prototype.Managers
              //- if index on path != 0 then Padding slot is next symbol at index and using the next debug symbol at path position for x spins.
              //- while set symbols at path position (x) > 0 Symbols to replace per spin then set symbol in last position to index on path untilspin end then last symbol in end position will go to start of path to be adjusted again and align with symbol sequence.
              //Spin at index in path needs to be accounted for
-                //Add initial range of current symbols in decending order; then adjust for symbols to replace per spin - take from end - insert at path until enough left to fill padding at top - insert at top
+
                 //Debug.Log($"symbolSequence.Count before raw add slots decending = {symbolSequence.Count}");
+                //Add initial range of current symbols in decending order; then adjust for symbols to replace per spin
+                //*Remove X Symbols to Replace from End
+                //Insert X symbols @ index at path symbol debug_symbol if available (The debug symbol will be poped later by the slot changing to the debug symbol)
                 symbolSequence.AddRange(objectGroupManager.GetCurrentDisplaySymbolsFromDecending());
                 //Debug.Log($"symbolSequence.Count from raw add slots decending = {symbolSequence.Count}");
                 //Build Debug Message
@@ -255,15 +260,14 @@ namespace BoomSports.Prototype.Managers
                 {
                     symbolSequenceDebugMessage += $"|{symbolSequence[i].primarySymbol}";
                 }
-                Debug.Log($"current sequence after symbolSequence.RemoveRange(symbolSequence.Count{symbolSequence.Count} - symbolsToReplaceReel {symbolsToReplaceReel}, symbolsToReplaceReel);= {symbolSequenceDebugMessage}");
+                Debug.Log($"Symol sequence after symbolSequence.RemoveRange(symbolSequence.Count{symbolSequence.Count} - symbolsToReplaceReel {symbolsToReplaceReel}, symbolsToReplaceReel);= {symbolSequenceDebugMessage}");
             }
             //Starts our printout for symbol sequence in unity console.
 
             //Debug.Log($"{objectGroupManager.gameObject.name}.GetIndexInGroup() = {objectGroupManager.GetIndexInGroup()}");
             //Build the data container required to add symbols to display sequence
-            
-            BuildSymbolSequenceDataContainer buildSymbolSequenceDataContainer = new BuildSymbolSequenceDataContainer(symbolsToReplaceReel, objectGroupManager.spinAtIndexInPath, _displayConfigurationInUse.configuration[objectGroupManager.GetIndexInGroup()], objectGroupManager);
-            //symbolSequence comes in pre-formatted Cash Crossing specific
+            BuildSymbolSequenceDataContainer buildSymbolSequenceDataContainer = new BuildSymbolSequenceDataContainer(symbolsToReplaceReel, objectGroupManager.spinAtIndexInPath, displayConfigurationInUse.configuration[objectGroupManager.GetIndexInGroup()], objectGroupManager);
+            //Use container data to build symbolSequence
             AddSymbolsToDisplaySequence(buildSymbolSequenceDataContainer, ref symbolSequence);
             
             symbolSequenceDebugMessage = "";
@@ -304,8 +308,21 @@ namespace BoomSports.Prototype.Managers
             //Works for Stepper reels and constant directional reels use-case only - more testing required
             for (int displaySymbolSequenceIndex = 0; displaySymbolSequenceIndex < dataContainer.symbolsToReplaceReel; displaySymbolSequenceIndex++)
             {
-                //TODO change random range to pull list of symbols valid for column
+                //TODO change random range to pull list of symbols valid for column - Testing features only Cash Crossing
+                //Initialize symbol ID to set
                 symbol = UnityEngine.Random.Range(0, 3);
+                Debug.Log($"Symbol generated on add symbol to sequence init = {symbol}");
+                //Check Object Manager for debug symbols and use until debug list is empty or displaySymbolSequenceIndex > debugSymbols.Length
+                if (dataContainer.objectGroupManager.debugNextSymbolsToLoad != null)
+                {
+                    Debug.Log($"dataContainer.objectGroupManager.debugNextSymbolsToLoad.Count = {dataContainer.objectGroupManager.debugNextSymbolsToLoad.Count}");
+                    if (displaySymbolSequenceIndex < dataContainer.objectGroupManager.debugNextSymbolsToLoad.Count)
+                    {
+                        symbol = dataContainer.objectGroupManager.debugNextSymbolsToLoad[displaySymbolSequenceIndex];
+                        Debug.Log($"Symbol Set to debugNextSymbolsToLoad[{displaySymbolSequenceIndex}] = {symbol}");
+                    }
+                }
+                //Load symbol into index on path and re
 
                 Debug.Log($"displaySymbolSequenceIndex {displaySymbolSequenceIndex} >= groupSpinInformationStruct.displaySymbolSequence.Length {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length} = {displaySymbolSequenceIndex >= dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length}");
                 
@@ -314,7 +331,7 @@ namespace BoomSports.Prototype.Managers
                 {
                     Debug.Log($"displaySymbolSequenceIndex {displaySymbolSequenceIndex} >= dataContainer.groupSpinInformationStruct.displaySymbolsToLoad{dataContainer.groupSpinInformationStruct.displaySymbolsToLoad} = {displaySymbolSequenceIndex >= dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length}");
                     //Refactored to include index at path
-                    if (displaySymbolSequenceIndex == dataContainer.symbolsToReplaceReel-1)//If we are on the last symbol then insert at start of strip - will break if padding is > 1
+                    if (displaySymbolSequenceIndex == dataContainer.symbolsToReplaceReel - 1)//If we are on the last symbol then insert at start of strip - will break if padding is > 1
                     {//TODO include in data container group display struct for reel and account for padding before reel to replace symbols at top
                         Debug.Log($"Inserting symbolID {symbol} into symbolsSequenceList at {dataContainer.spinAtIndexInPath}");
                         symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(symbol)); //Insert at start of array
@@ -327,30 +344,11 @@ namespace BoomSports.Prototype.Managers
                 }
                 else //Stepper only replaces 1 slot per spin
                 {
-                    if (dataContainer.objectGroupManager.trailingActive)
-                    {
-                        //Hard coded to add multiplier symbol to Cash Crossing
-                        //When padding slot is initialized it is set to position at path - if we are at last symbol to replace set to top symbol
-                        if (displaySymbolSequenceIndex == dataContainer.symbolsToReplaceReel)//If we are on the last symbol then insert at start of strip - will break if padding is > 1
-                        {//TODO include in data container group display struct for reel and account for padding before reel to replace symbols at top
-                            Debug.Log($"Inserting symbolID {9} into symbolsSequenceList at {0}");
-                            symbolsSequenceList.Insert(0, new NodeDisplaySymbolContainer(9)); //Insert at start of array
-                        }
-                        else
-                        {
-                            Debug.Log($"Inserting multiplier symbol into symbolsSequenceList at {dataContainer.spinAtIndexInPath}");
-                            symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath, new NodeDisplaySymbolContainer(symbol)); //Insert at index in path
-                        }
-                        //symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath,new NodeDisplaySymbolContainer(9));
-                    }
-                    else
-                    {//May break in the future - further testing required
-                        Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length} getting index {displaySymbolSequenceIndex}");
-                        Debug.Log($"Adding symbol {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad[displaySymbolSequenceIndex].primarySymbol} to sequence");
-                        //symbolsSequenceList.Insert(0, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
-                        symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath, dataContainer.groupSpinInformationStruct.displaySymbolsToLoad[displaySymbolSequenceIndex]);
-                        Debug.Log($"symbolsSequenceList[0] = {symbolsSequenceList[0].primarySymbol}");
-                    }
+                    Debug.Log($"groupSpinInformationStruct.displaySymbolSequence.Length = {dataContainer.groupSpinInformationStruct.displaySymbolsToLoad.Length} getting index {displaySymbolSequenceIndex}");
+                    Debug.Log($"Adding symbol {symbol} to sequence");
+                    //symbolsSequenceList.Insert(0, groupSpinInformationStruct.displaySymbolSequence[displaySymbolSequenceIndex]);
+                    symbolsSequenceList.Insert(dataContainer.spinAtIndexInPath, new NodeDisplaySymbolContainer(symbol));
+                    Debug.Log($"symbolsSequenceList[dataContainer.spinAtIndexInPath] = {symbolsSequenceList[dataContainer.spinAtIndexInPath].primarySymbol}");
                 }
             }  
         }
