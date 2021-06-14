@@ -182,7 +182,18 @@ namespace BoomSports.Prototype.Managers
                 output_raw.Add(coreEvaluationsToRun[evaluation].Evaluate());
             }
 
-            //After items are filtered
+            // === Filter Winning Paylinesoutput == Use-Case Cash-Crossing. Multiplier and bonus wilds needs to be on a payline that has 3 or more symbol wins
+            for (int i = output_raw.Count - 1; i >= 0 ; i--)
+            {
+                if (DoesPaylineContainsWild(output_raw[i] as WinningObject, slotEvaluationObjects))
+                {
+                    if (DoesPaylineHaveConditionalsNotMet(output_raw[i] as WinningObject, output_raw))
+                    {
+                    }
+                }
+            }
+
+            // == After items are filtered ===
             //Scan the slot activators for any slots that activate conditions and run connected events
             for (int slotEvaluationObject = 0; slotEvaluationObject < slotEvaluationObjects.Length; slotEvaluationObject++)
             {
@@ -222,6 +233,28 @@ namespace BoomSports.Prototype.Managers
             //Check that feature conditions are met and activated after return
             return Task.FromResult<T[]>(output_filtered.ToArray());
         }
+
+        private bool DoesPaylineContainsWild(WinningObject winningObject, SlotEvaluationScriptableObject[] slotEvaluationObjects)
+        {
+            //Does the winning object
+            bool ouput = false;
+            for (int i = 0; i < slotEvaluationObjects.Length; i++)
+            {
+                if(slotEvaluationObjects[i].featureName == Features.wild)
+                {
+                    if(winningObject.ContainsSymbol(BaseConfigurationObjectManager.instance.symbolDataScriptableObject.ReturnIDByName(slotEvaluationObjects[i].symbolTargetName)))
+                    {
+                        //Check each evaluate that is a wild with symbol name as target that all conditions are met to be a valid line win
+                        for (int j = 0; j < slotEvaluationObjects.Length; j++)
+                        {
+
+                        }
+                    }
+                }
+            }
+            return output;
+        }
+
         //Cash Crossing Specific - Needs to b e refactored
         public TargetAnimatorsTriggerSetOnActive targetBridgeAnimatorsLeft;
         public TargetAnimatorsTriggerSetOnActive targetBridgeAnimatorsRight;

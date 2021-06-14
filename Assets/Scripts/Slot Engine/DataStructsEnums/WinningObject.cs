@@ -42,4 +42,14 @@ public partial class WinningObject
         }
         return output;
     }
+
+    internal bool ContainsSymbol(int symbolID)
+    {
+        for (int i = 0; i < winningNodes.Length; i++)
+        {
+            if (winningNodes[i].symbol == symbolID)
+                return true;
+        }
+        return false;
+    }
 }

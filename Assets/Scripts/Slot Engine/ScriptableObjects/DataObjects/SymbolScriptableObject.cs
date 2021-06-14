@@ -16,6 +16,24 @@ using UnityEngine;
 public class SymbolScriptableObject : ScriptableObject
 {
     public SymbolObject[] symbols;
+
+    internal int ReturnIDByName(string symbolTargetName)
+    {
+        int output = -1;
+        for (int symbol = 0; symbol < symbols.Length; symbol++)
+        {
+            if(symbols[symbol].symbolName == symbolTargetName)
+            {
+                output = symbol;
+                break;
+            }
+        }
+        if(output == -1)
+        {
+            Debug.LogWarning($"ReturnIDByName for {symbolTargetName} not in symbol data - returning -1 index");
+        }
+        return output;
+    }
 }
 
 
